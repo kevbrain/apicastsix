@@ -8,7 +8,13 @@ This Dockerfile creates a [3scale](http://www.3scale.net) gateway, and configure
 
 ### Running docker-gateway image
 
-The 3scale gateway image requires to ENV variables:
+You can download a ready to use docker image from our repository:
+
+```
+docker pull quay.io/3scale/gateway
+```
+
+The 3scale gateway image requires two ENV variables:
 
 * **THREESCALE_PROVIDER_KEY**
 

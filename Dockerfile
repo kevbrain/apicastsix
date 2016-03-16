@@ -1,7 +1,7 @@
 FROM alpine:3.3
 MAINTAINER 3scale <operations@3scale.net>
 
-ENV OPENRESTY_VERSION=1.9.7.3 NGINX_PREFIX=/opt/openresty/nginx
+ENV OPENRESTY_VERSION=1.9.7.3 NGINX_PREFIX=/opt/openresty/nginx AUTO_UPDATE=false CHECK_TIMER=300
 
 EXPOSE 80
 
@@ -13,7 +13,7 @@ RUN export OPENRESTY_PREFIX=/opt/openresty VAR_PREFIX=/var/nginx \
     make gcc musl-dev \
     pcre-dev openssl-dev zlib-dev ncurses-dev readline-dev \
     perl \
- && apk add curl unzip \
+ && apk add curl unzip diffutils \
  && mkdir -p /root/ngx_openresty \
  && cd /root/ngx_openresty \
  && curl -sSL http://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz | tar -xvz \

@@ -35,3 +35,24 @@ for example: "https://MyCompany-admin.3scale.net"
 ```
 $ docker run -d -p 80:80 -e THREESCALE_PROVIDER_KEY=ABCDFEGHIJLMNOPQRST -e THREESCALE_ENDPOINT=https://your-domain.3scale.net quay.io/3scale/gateway
 ```
+
+### Auto updating
+
+The gateway is able of checking the configuration from time to time and self update, you can enable this by adjusting the AUTO_UPDATE_INTERVAL (seconds) to some value greater than 60:
+
+```
+-e AUTO_UPDATE_INTERVAL=300
+```
+
+This variable is set to 0 by default.
+
+
+### Signals
+
+You can send some signals to the container (All signals will be passed to openresty):
+
+* USR1: Downloads 3scale configurations and updates running openresty.
+
+* HUP: reloads openresty.
+
+Use docker kill -s $SIGNAL container-name to send them.

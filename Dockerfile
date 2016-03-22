@@ -1,7 +1,7 @@
 FROM alpine:3.3
 MAINTAINER 3scale <operations@3scale.net>
 
-ENV OPENRESTY_VERSION=1.9.7.3 NGINX_PREFIX=/opt/openresty/nginx AUTO_UPDATE=false CHECK_TIMER=300
+ENV OPENRESTY_VERSION=1.9.7.3 NGINX_PREFIX=/opt/openresty/nginx AUTO_UPDATE_INTERVAL=0
 
 EXPOSE 80
 
@@ -47,7 +47,9 @@ RUN export OPENRESTY_PREFIX=/opt/openresty VAR_PREFIX=/var/nginx \
  && apk add \
     libpcrecpp libpcre16 libpcre32 openssl libssl1.0 pcre libgcc libstdc++ \
  && rm -rf /var/cache/apk/* \
- && rm -rf /root/ngx_openresty
+ && rm -rf /root/ngx_openresty \
+ && curl -L https://github.com/Yelp/dumb-init/releases/download/v1.0.1/dumb-init_1.0.1_amd64 -o /usr/local/bin/dumb-init \
+ && chmod a+x /usr/local/bin/dumb-init
 
 COPY entrypoint.sh /
 

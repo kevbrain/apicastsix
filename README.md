@@ -38,26 +38,21 @@ $ docker run -d -p 80:80 -e THREESCALE_PROVIDER_KEY=ABCDFEGHIJLMNOPQRST -e THREE
 
 ### Auto updating
 
-The gateway is able of checking the configuration from time to time and self update, you can enable this setting the var AUTO_UPDATE to true:
+The gateway is able of checking the configuration from time to time and self update, you can enable this by adjusting the AUTO_UPDATE_INTERVAL (seconds) to some value greater than 60:
 
 ```
--e AUTO_UPDATE=true
+-e AUTO_UPDATE_INTERVAL=300
 ```
 
-By default this is disabled
-
-NOTE: Not recommended to use in a production environment, this can have some side effects if the update runs in the middle of modifications in the 3scale UI. 
-      If you want to automate this step, is better to issue a USR2 signal to the container once changes are completed in the 3scale UI. (check Signals section)
+This variable is set to 0 by default.
 
 
 ### Signals
 
-You can send some signals to the container:
+You can send some signals to the container (All signals will be passed to openresty):
 
-* USR1: Reloads openresty.
+* USR1: Downloads 3scale configurations and updates running openresty.
 
-* USR2: Downloads 3scale configurations and updates running openresty.
+* HUP: reloads openresty.
 
-Use docker kill -$SIGNAL container-name to send them. 
-
-
+Use docker kill -s $SIGNAL container-name to send them.

@@ -23,7 +23,7 @@ You can find the provider_key inside your "Account" page.
 ![provider_key](https://www.dropbox.com/s/6u1qae5huv602ft/Accounts_-_Show___3scale_API_Management.png?dl=1)
 
 
-* **THREESCALE_ENDPOINT**
+* **THREESCALE_ADMIN_URL**
 
 It's the full URL you use for accessing 3scale admin portal,
 
@@ -33,7 +33,7 @@ for example: "https://MyCompany-admin.3scale.net"
 #### Docker command
 
 ```
-$ docker run -d -p 8080:80 -e THREESCALE_PROVIDER_KEY=ABCDFEGHIJLMNOPQRST -e THREESCALE_ENDPOINT=https://your-domain.3scale.net quay.io/3scale/gateway
+$ docker run -d -p 8080:80 -e THREESCALE_PROVIDER_KEY=ABCDFEGHIJLMNOPQRST -e THREESCALE_ADMIN_URL=https://your-domain.3scale.net quay.io/3scale/gateway
 ```
 
 ### Auto updating

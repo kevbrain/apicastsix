@@ -107,8 +107,8 @@ objects:
       spec:
         containers:
         - env:
-          - name: THREESCALE_ENDPOINT
-            value: ${THREESCALE_ENDPOINT}
+          - name: THREESCALE_ADMIN_URL
+            value: ${THREESCALE_ADMIN_URL}
           - name: THREESCALE_PROVIDER_KEY
             value: ${THREESCALE_PROVIDER_KEY}
           image: ${THREESCALE_GATEWAY_NAME}
@@ -159,7 +159,7 @@ objects:
     loadBalancer: {}
 parameters:
 - description: 3scale account endpoint
-  name: THREESCALE_ENDPOINT
+  name: THREESCALE_ADMIN_URL
   value: https://your-domain-admin.3scale.net
   required: true
 - description: 3scale account provider key

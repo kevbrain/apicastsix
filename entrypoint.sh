@@ -14,8 +14,8 @@ reload_openresty() {
 
 download_threescale_config() {
 	TEMP_DIR=`mktemp -d`
-  echo "Downloading threescale configuration, using endpoint: ${THREESCALE_ENDPOINT}"
-  curl  ${THREESCALE_ENDPOINT}/admin/api/nginx.zip?provider_key=${THREESCALE_PROVIDER_KEY} -o $TEMP_DIR/nginx.zip
+  echo "Downloading threescale configuration, using endpoint: ${THREESCALE_ADMIN_URL}"
+  curl  ${THREESCALE_ADMIN_URL}/admin/api/nginx.zip?provider_key=${THREESCALE_PROVIDER_KEY} -o $TEMP_DIR/nginx.zip
 	cd $TEMP_DIR || exit
 	unzip nginx.zip
 	# Most docker PaaS doesn't allow docker to run as root

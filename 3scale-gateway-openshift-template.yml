@@ -1,0 +1,172 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: 3scale-gateway
+  annotations:
+    description: "3scale API Gateway"
+    iconClass: "icon-load-balancer"
+    tags: "api,gateway,3scale"
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    creationTimestamp: null
+    generation: 2
+    name: ${THREESCALE_GATEWAY_NAME}-alpine
+  spec:
+    dockerImageRepository: library/alpine
+    tags:
+    - from:
+        kind: DockerImage
+        name: library/alpine:3.3
+      name: "3.3"
+    - from:
+        kind: DockerImage
+        name: library/alpine:latest
+      name: latest
+  status:
+    dockerImageRepository: ""
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    creationTimestamp: null
+    generation: 1
+    labels:
+      app: docker-gateway
+    name: ${THREESCALE_GATEWAY_NAME}
+  spec:
+    tags:
+    - from:
+        kind: DockerImage
+        name: ${THREESCALE_GATEWAY_NAME}:latest
+      name: latest
+  status:
+    dockerImageRepository: ""
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    creationTimestamp: null
+    name: ${THREESCALE_GATEWAY_NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${THREESCALE_GATEWAY_NAME}:latest
+    resources: {}
+    source:
+      git:
+        ref: master
+        uri: https://github.com/3scale/docker-gateway.git
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: ${THREESCALE_GATEWAY_NAME}-alpine:3.3
+      type: Docker
+    triggers:
+    - github:
+        secret: secret
+      type: GitHub
+    - generic:
+        secret: secret
+      type: Generic
+    - type: ConfigChange
+    - imageChange: {}
+      type: ImageChange
+  status:
+    lastVersion: 0
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    name: ${THREESCALE_GATEWAY_NAME}
+  spec:
+    replicas: 2
+    selector:
+      app: docker-gateway
+      deploymentconfig: ${THREESCALE_GATEWAY_NAME}
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          app: docker-gateway
+          deploymentconfig: ${THREESCALE_GATEWAY_NAME}
+      spec:
+        containers:
+        - env:
+          - name: THREESCALE_ENDPOINT
+            value: ${THREESCALE_ENDPOINT}
+          - name: THREESCALE_PROVIDER_KEY
+            value: ${THREESCALE_PROVIDER_KEY}
+          image: ${THREESCALE_GATEWAY_NAME}
+          imagePullPolicy: Always
+          name: docker-gateway
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - docker-gateway
+        from:
+          kind: ImageStreamTag
+          name: ${THREESCALE_GATEWAY_NAME}:latest
+      type: ImageChange
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: ${THREESCALE_GATEWAY_NAME}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: docker-gateway
+      deploymentconfig: ${THREESCALE_GATEWAY_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+parameters:
+- description: 3scale account endpoint
+  name: THREESCALE_ENDPOINT
+  value: https://your-domain-admin.3scale.net
+  required: true
+- description: 3scale account provider key
+  value: 
+  name: THREESCALE_PROVIDER_KEY
+  required: true
+- description: Name for the 3scale API Gateway
+  value: threescalegw
+  name: THREESCALE_GATEWAY_NAME
+  required: true

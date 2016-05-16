@@ -16,8 +16,12 @@ download_threescale_config() {
 	TEMP_DIR=`mktemp -d`
   echo "Downloading threescale configuration, using endpoint: ${THREESCALE_ENDPOINT}"
   curl  ${THREESCALE_ENDPOINT}/admin/api/nginx.zip?provider_key=${THREESCALE_PROVIDER_KEY} -o $TEMP_DIR/nginx.zip
-	cd $TEMP_DIR
+	cd $TEMP_DIR || exit
 	unzip nginx.zip
+	# Most docker PaaS doesn't allow docker to run as root
+        # lets use the 8080 port instead of 80
+	sed -E -i "s/listen\s+80;/listen 8080;/g" nginx_*.conf 
+	sed -E -i "/server\s+\{/a access_log /dev/stdout combined;" nginx_*.conf
 }
 
 deploy_threescale_config() {
@@ -29,12 +33,12 @@ deploy_threescale_config() {
 
 compare_threescale_config() {
 
-	download_threescale_config
+  download_threescale_config
 
   CURRENT_CONF_FILE=/opt/openresty/nginx/conf/nginx.conf
-  NEW_CONF_FILE=$TEMP_DIR/nginx_*.conf
-  CURRENT_LUA_FILE=/opt/openresty/lualib/nginx_*.lua
-  NEW_LUA_FILE=$TEMP_DIR/nginx_*.lua
+  NEW_CONF_FILE="$TEMP_DIR/nginx_*.conf"
+  CURRENT_LUA_FILE="/opt/openresty/lualib/nginx_*.lua"
+  NEW_LUA_FILE="$TEMP_DIR/nginx_*.lua"
   CHANGES=0
 
   diff -I "proxy_set_header  X-3scale-Version" $CURRENT_CONF_FILE $NEW_CONF_FILE
@@ -42,7 +46,7 @@ compare_threescale_config() {
     CHANGES=1
   fi
 
-  diff $NEW_LUA_FILE $NEW_LUA_FILE
+  diff $NEW_LUA_FILE $CURRENT_LUA_FILE
   if [ $? -eq 1 ]; then
     CHANGES=1
   fi
@@ -54,7 +58,9 @@ compare_threescale_config() {
   fi
 }
 
-nginx -g "daemon off; error_log /dev/stderr info;" &
+sed -E -i "s/listen\s+80;/listen 8080;/g" /opt/openresty/nginx/conf/nginx.conf
+
+nginx -g "daemon off; error_log stderr info;" &
 
 download_threescale_config
 deploy_threescale_config
@@ -67,7 +73,7 @@ trap '' WINCH
 while true
 do
   if [ ${AUTO_UPDATE_INTERVAL} -ge 60 ]; then
-    for i in $(seq 1 ${AUTO_UPDATE_INTERVAL}); do sleep 1; done
+    for _ in $(seq 1 ${AUTO_UPDATE_INTERVAL}); do sleep 1; done
     compare_threescale_config
     rm -rf $TEMP_DIR
   else

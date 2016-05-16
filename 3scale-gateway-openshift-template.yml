@@ -56,7 +56,7 @@ objects:
     resources: {}
     source:
       git:
-        ref: openshift
+        ref: master
         uri: https://github.com/3scale/docker-gateway.git
       type: Git
     strategy:

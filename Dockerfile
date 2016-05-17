@@ -7,10 +7,8 @@ EXPOSE 8080
 
 # Based on https://github.com/ficusio/openresty
 RUN export OPENRESTY_PREFIX=/opt/openresty VAR_PREFIX=/var/nginx \
- && yum update -y \
- && yum groupinstall -y "Development Tools" \
- && yum install -y pcre-devel openssl-devel \
- && cp -v /usr/bin/envsubst /usr/local/bin/ \
+ && yum -y update \
+ && yum -y install wget tar perl gcc-c++ readline-devel pcre-devel openssl-devel git make unzip curl \
  && mkdir -p /root/ngx_openresty \
  && cd /root/ngx_openresty \
  && curl -sSL http://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz | tar -xvz \
@@ -44,6 +42,7 @@ RUN export OPENRESTY_PREFIX=/opt/openresty VAR_PREFIX=/var/nginx \
  && rm -rf /root/ngx_openresty \
  && curl -L https://github.com/Yelp/dumb-init/releases/download/v1.0.1/dumb-init_1.0.1_amd64 -o /usr/local/bin/dumb-init \
  && chmod a+x /usr/local/bin/dumb-init \
+ && yum -y remove perl gcc-c++ readline-devel pcre-devel openssl-devel git make \
  && useradd openresty \
  && chown openresty -R /var/nginx ; chown openresty -R /opt/openresty 
  

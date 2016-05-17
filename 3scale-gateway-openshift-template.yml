@@ -13,17 +13,17 @@ objects:
   metadata:
     creationTimestamp: null
     generation: 2
-    name: ${THREESCALE_GATEWAY_NAME}-alpine
+    name: ${THREESCALE_GATEWAY_NAME}-centos
   spec:
-    dockerImageRepository: library/alpine
+    dockerImageRepository: library/centos
     tags:
     - from:
         kind: DockerImage
-        name: library/alpine:3.3
-      name: "3.3"
+        name: library/centos:7
+      name: "7"
     - from:
         kind: DockerImage
-        name: library/alpine:latest
+        name: library/centos:latest
       name: latest
   status:
     dockerImageRepository: ""
@@ -63,7 +63,7 @@ objects:
       dockerStrategy:
         from:
           kind: ImageStreamTag
-          name: ${THREESCALE_GATEWAY_NAME}-alpine:3.3
+          name: ${THREESCALE_GATEWAY_NAME}-centos:7
       type: Docker
     triggers:
     - github:

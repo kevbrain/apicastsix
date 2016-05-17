@@ -46,7 +46,7 @@ compare_threescale_config() {
     CHANGES=1
   fi
 
-  diff $NEW_LUA_FILE $CURRENT_LUA_FILE
+  diff -I "-- Generated.*--" $NEW_LUA_FILE $CURRENT_LUA_FILE
   if [ $? -eq 1 ]; then
     CHANGES=1
   fi

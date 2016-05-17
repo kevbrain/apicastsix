@@ -160,7 +160,7 @@ objects:
 parameters:
 - description: 3scale account endpoint
   name: THREESCALE_ADMIN_URL
-  value: https://your-domain-admin.3scale.net
+  value: https://MYDOMAIN-admin.3scale.net
   required: true
 - description: 3scale account provider key
   value: 

@@ -15,18 +15,14 @@ objects:
     generation: 2
     name: ${THREESCALE_GATEWAY_NAME}-centos
   spec:
-    dockerImageRepository: library/centos
+    dockerImageRepository: quay.io/centos/centos
     tags:
     - from:
         kind: DockerImage
-        name: library/centos:7
+        name: centos/centos:7
       name: "7"
-    - from:
-        kind: DockerImage
-        name: library/centos:latest
-      name: latest
   status:
-    dockerImageRepository: ""
+    dockerImageRepository: "quay.io/centos/centos"
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -163,7 +159,7 @@ parameters:
   value: https://MYDOMAIN-admin.3scale.net
   required: true
 - description: 3scale account provider key
-  value: 
+  value:
   name: THREESCALE_PROVIDER_KEY
   required: true
 - description: Name for the 3scale API Gateway

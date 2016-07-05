@@ -1,4 +1,4 @@
-FROM centos:7
+FROM quay.io/centos/centos:7
 MAINTAINER 3scale <operations@3scale.net>
 
 ENV OPENRESTY_VERSION=1.9.7.3 NGINX_PREFIX=/opt/openresty/nginx AUTO_UPDATE_INTERVAL=0

@@ -7,8 +7,8 @@ export RESOLVER=${RESOLVER:-${NAMESERVER}}
 
 
 if [ "${AUTO_UPDATE_INTERVAL}" != 0 ] && [ "${AUTO_UPDATE_INTERVAL}" -lt 60 ]; then
-	echo "AUTO_UPDATE_INTERVAL should be 60 or greater"
-	exit 1
+  echo "AUTO_UPDATE_INTERVAL should be 60 or greater"
+  exit 1
 fi
 
 reload_openresty() {
@@ -25,14 +25,14 @@ download_threescale_config() {
   # Most docker PaaS doesn't allow docker to run as root
   # lets use the 8080 port instead of 80
   sed -E -i "s/listen\s+80;/listen 8080;/g" nginx_*.conf
-	sed -E -i "s/resolver\s+8.8.8.8\s+8.8.4.4;/resolver ${RESOLVER};/g" nginx_*.conf
+  sed -E -i "s/resolver\s+8.8.8.8\s+8.8.4.4;/resolver ${RESOLVER};/g" nginx_*.conf
 }
 
 deploy_threescale_config() {
   echo "Deploying new configuration"
   cp -f "$TEMP_DIR"/nginx_*.conf /opt/openresty/nginx/conf/nginx.conf
   cp -f "$TEMP_DIR"/nginx_*.lua /opt/openresty/lualib/
-	reload_openresty
+  reload_openresty
 }
 
 compare_threescale_config() {

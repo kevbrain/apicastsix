@@ -2,9 +2,13 @@
 # 3scale (operations@3scale.net)
 set -u
 
-if [ ${AUTO_UPDATE_INTERVAL} != 0 ] && [ ${AUTO_UPDATE_INTERVAL} -lt 60 ]; then
-	echo "AUTO_UPDATE_INTERVAL should be 60 or greater"
-	exit 1
+NAMESERVER=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}' | tr '\n' ' ')
+export RESOLVER=${RESOLVER:-${NAMESERVER}}
+
+
+if [ "${AUTO_UPDATE_INTERVAL}" != 0 ] && [ "${AUTO_UPDATE_INTERVAL}" -lt 60 ]; then
+  echo "AUTO_UPDATE_INTERVAL should be 60 or greater"
+  exit 1
 fi
 
 reload_openresty() {
@@ -13,22 +17,22 @@ reload_openresty() {
 }
 
 download_threescale_config() {
-	TEMP_DIR=`mktemp -d`
+  TEMP_DIR=$(mktemp -d)
   echo "Downloading threescale configuration, using endpoint: ${THREESCALE_ADMIN_URL}"
-  curl  ${THREESCALE_ADMIN_URL}/admin/api/nginx.zip?provider_key=${THREESCALE_PROVIDER_KEY} -o $TEMP_DIR/nginx.zip
-	cd $TEMP_DIR || exit
-	unzip nginx.zip
-	# Most docker PaaS doesn't allow docker to run as root
-        # lets use the 8080 port instead of 80
-	sed -E -i "s/listen\s+80;/listen 8080;/g" nginx_*.conf 
-	sed -E -i "/server\s+\{/a access_log /dev/stdout combined;" nginx_*.conf
+  curl  "${THREESCALE_ADMIN_URL}"/admin/api/nginx.zip?provider_key="${THREESCALE_PROVIDER_KEY}" -o "$TEMP_DIR"/nginx.zip
+  cd "$TEMP_DIR" || exit
+  unzip nginx.zip
+  # Most docker PaaS doesn't allow docker to run as root
+  # lets use the 8080 port instead of 80
+  sed -E -i "s/listen\s+80;/listen 8080;/g" nginx_*.conf
+  sed -E -i "s/resolver\s+8.8.8.8\s+8.8.4.4;/resolver ${RESOLVER};/g" nginx_*.conf
 }
 
 deploy_threescale_config() {
   echo "Deploying new configuration"
-  cp -f $TEMP_DIR/nginx_*.conf /opt/openresty/nginx/conf/nginx.conf
-  cp -f $TEMP_DIR/nginx_*.lua /opt/openresty/lualib/
-	reload_openresty
+  cp -f "$TEMP_DIR"/nginx_*.conf /opt/openresty/nginx/conf/nginx.conf
+  cp -f "$TEMP_DIR"/nginx_*.lua /opt/openresty/lualib/
+  reload_openresty
 }
 
 compare_threescale_config() {
@@ -59,7 +63,6 @@ compare_threescale_config() {
 }
 
 sed -E -i "s/listen\s+80;/listen 8080;/g" /opt/openresty/nginx/conf/nginx.conf
-
 nginx -g "daemon off; error_log stderr info;" &
 
 download_threescale_config
@@ -72,10 +75,10 @@ trap '' WINCH
 
 while true
 do
-  if [ ${AUTO_UPDATE_INTERVAL} -ge 60 ]; then
-    for _ in $(seq 1 ${AUTO_UPDATE_INTERVAL}); do sleep 1; done
+  if [ "${AUTO_UPDATE_INTERVAL}" -ge 60 ]; then
+    for _ in $(seq 1 "${AUTO_UPDATE_INTERVAL}"); do sleep 1; done
     compare_threescale_config
-    rm -rf $TEMP_DIR
+    rm -rf "$TEMP_DIR"
   else
     tail -f /dev/null & wait ${!}
   fi

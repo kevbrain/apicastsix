@@ -28,8 +28,6 @@ objects:
   metadata:
     creationTimestamp: null
     generation: 1
-    labels:
-      app: docker-gateway
     name: ${THREESCALE_GATEWAY_NAME}
   spec:
     tags:
@@ -81,7 +79,6 @@ objects:
   spec:
     replicas: 2
     selector:
-      app: docker-gateway
       deploymentconfig: ${THREESCALE_GATEWAY_NAME}
     strategy:
       resources: {}
@@ -94,11 +91,7 @@ objects:
       type: Rolling
     template:
       metadata:
-        annotations:
-          openshift.io/generated-by: OpenShiftNewApp
-        creationTimestamp: null
         labels:
-          app: docker-gateway
           deploymentconfig: ${THREESCALE_GATEWAY_NAME}
       spec:
         containers:
@@ -147,7 +140,6 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
-      app: docker-gateway
       deploymentconfig: ${THREESCALE_GATEWAY_NAME}
     sessionAffinity: None
     type: ClusterIP

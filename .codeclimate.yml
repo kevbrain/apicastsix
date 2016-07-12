@@ -1,0 +1,10 @@
+---
+engines:
+  shellcheck:
+    enabled: true
+    checks:
+      SC1008:
+        enabled: false
+ratings:
+  paths:
+  - "**.sh"

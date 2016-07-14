@@ -2,7 +2,14 @@
 # 3scale (operations@3scale.net)
 set -u
 
-NAMESERVER=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}' | tr '\n' ' ')
+export NAMESERVER
+
+if [ -v OPENSHIFT_BUILD_NAME ]; then
+	NAMESERVER=$(ip route | awk '/default/ {print $3}')
+	else
+	NAMESERVER=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}' | tr '\n' ' ')
+fi
+
 export RESOLVER=${RESOLVER:-${NAMESERVER}}
 
 

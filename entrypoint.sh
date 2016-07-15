@@ -75,9 +75,7 @@ compare_threescale_config() {
 
 export NAMESERVER
 
-if [ ! -v RESOLVER ]; then
-	NAMESERVER=$(pick_dns_server)
-fi
+NAMESERVER=$(pick_dns_server)
 
 export RESOLVER=${RESOLVER:-${NAMESERVER}}
 

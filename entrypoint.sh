@@ -2,13 +2,22 @@
 # 3scale (operations@3scale.net)
 set -u
 
-export NAMESERVER
+echo ">> Looking for a valid DNS server"
 
-if [ -v OPENSHIFT_BUILD_NAME ]; then
-	NAMESERVER=$(ip route | awk '/default/ {print $3}')
-	else
-	NAMESERVER=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}' | tr '\n' ' ')
-fi
+export NAMESERVER=""
+
+DNS=$(grep nameserver /etc/resolv.conf | awk {'print $2'})
+
+for server in $DNS; do
+ nslookup redhat.com "$server" &> /dev/null
+ if [ $? -eq 0 ]; then
+        echo "$server is valid"
+        NAMESERVER=$server
+        break
+ else
+	echo "$server is NOT valid"
+ fi
+done
 
 export RESOLVER=${RESOLVER:-${NAMESERVER}}
 

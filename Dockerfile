@@ -8,7 +8,7 @@ EXPOSE 8080
 # Based on https://github.com/ficusio/openresty
 RUN export OPENRESTY_PREFIX=/opt/openresty VAR_PREFIX=/var/nginx \
  && yum -y update \
- && yum -y install wget tar perl gcc-c++ readline-devel pcre-devel openssl-devel git make unzip curl \
+ && yum -y install wget tar perl gcc-c++ readline-devel pcre-devel openssl-devel git make unzip curl bind-utils\
  && mkdir -p /root/ngx_openresty \
  && cd /root/ngx_openresty \
  && curl -sSL http://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz | tar -xvz \

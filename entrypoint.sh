@@ -8,16 +8,19 @@ if [ "${AUTO_UPDATE_INTERVAL}" != 0 ] && [ "${AUTO_UPDATE_INTERVAL}" -lt 60 ]; t
 fi
 
 pick_dns_server() {
-  
-  DNS=$(grep nameserver /etc/resolv.conf | awk {'print $2'})
 
-  for server in $DNS; do
-    nslookup redhat.com "$server" &> /dev/null
-    if [ $? -eq 0 ]; then
-      echo "$server"
-      break
-    fi
-  done
+  DNS=$(grep nameserver /etc/resolv.conf | awk {'print $2'})
+  if [ -z "$DNS" ]; then
+    echo "127.0.0.1"
+  else
+    for server in $DNS; do
+      nslookup redhat.com "$server" &> /dev/null
+      if [ $? -eq 0 ]; then
+        echo "$server"
+        break
+      fi
+    done
+  fi
 
 
 }

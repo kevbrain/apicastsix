@@ -2,21 +2,30 @@
 # 3scale (operations@3scale.net)
 set -u
 
-export NAMESERVER
-
-if [ -v OPENSHIFT_BUILD_NAME ]; then
-	NAMESERVER=$(ip route | awk '/default/ {print $3}')
-	else
-	NAMESERVER=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}' | tr '\n' ' ')
-fi
-
-export RESOLVER=${RESOLVER:-${NAMESERVER}}
-
-
 if [ "${AUTO_UPDATE_INTERVAL}" != 0 ] && [ "${AUTO_UPDATE_INTERVAL}" -lt 60 ]; then
   echo "AUTO_UPDATE_INTERVAL should be 60 or greater"
   exit 1
 fi
+
+pick_dns_server() {
+  
+  echo ">> Looking for a valid DNS server"
+
+  DNS=$(grep nameserver /etc/resolv.conf | awk {'print $2'})
+
+  for server in $DNS; do
+    nslookup redhat.com "$server" &> /dev/null
+    if [ $? -eq 0 ]; then
+      echo "$server is valid"
+      NAMESERVER=$server
+      break
+    else
+       echo "$server is NOT valid"
+    fi
+  done
+
+
+}
 
 reload_openresty() {
   echo "Reloading Openresty"
@@ -68,6 +77,14 @@ compare_threescale_config() {
     reload_openresty
   fi
 }
+
+export NAMESERVER
+
+if [ ! -v RESOLVER ]; then
+	pick_dns_server
+fi
+
+export RESOLVER=${RESOLVER:-${NAMESERVER}}
 
 sed -E -i "s/listen\s+80;/listen 8080;/g" /opt/openresty/nginx/conf/nginx.conf
 nginx -g "daemon off; error_log stderr info;" &

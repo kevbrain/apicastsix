@@ -9,18 +9,13 @@ fi
 
 pick_dns_server() {
   
-  echo ">> Looking for a valid DNS server"
-
   DNS=$(grep nameserver /etc/resolv.conf | awk {'print $2'})
 
   for server in $DNS; do
     nslookup redhat.com "$server" &> /dev/null
     if [ $? -eq 0 ]; then
-      echo "$server is valid"
-      NAMESERVER=$server
+      echo "$server"
       break
-    else
-       echo "$server is NOT valid"
     fi
   done
 
@@ -81,7 +76,7 @@ compare_threescale_config() {
 export NAMESERVER
 
 if [ ! -v RESOLVER ]; then
-	pick_dns_server
+	NAMESERVER=$(pick_dns_server)
 fi
 
 export RESOLVER=${RESOLVER:-${NAMESERVER}}

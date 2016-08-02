@@ -48,7 +48,7 @@ RUN export OPENRESTY_PREFIX=/opt/openresty VAR_PREFIX=/var/nginx \
  
 #Openshift v3 patch
 RUN chmod og+w -R /opt/openresty /var/nginx
-USER openresty
+USER 1001
 
 COPY entrypoint.sh /
 

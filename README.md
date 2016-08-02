@@ -33,7 +33,7 @@ for example: "https://MyCompany-admin.3scale.net"
 #### Docker command
 
 ```
-$ docker run -d -p 8080:80 -e THREESCALE_PROVIDER_KEY=ABCDFEGHIJLMNOPQRST -e THREESCALE_ADMIN_URL=https://MYDOMAIN-admin.3scale.net quay.io/3scale/gateway
+$ docker run -d -p 8080:8080 -e THREESCALE_PROVIDER_KEY=ABCDFEGHIJLMNOPQRST -e THREESCALE_ADMIN_URL=https://MYDOMAIN-admin.3scale.net quay.io/3scale/gateway
 ```
 
 ### Auto updating

@@ -1,7 +1,7 @@
 all: test
 
 test: dependencies
-	busted
+	@bin/busted
 
 dependencies:
 	luarocks make --local

@@ -13,58 +13,15 @@ local _M = {
   configuration = {}
 }
 
-function _M.configure(config)
-  local contents = configuration.read('spec.json')
+function _M.configure(contents)
   local config = configuration.parse(contents)
 
   _M.configuration = config
-  _M.services = config.services or {}-- for compatibility reasons
+  _M.services = config.services or {} -- for compatibility reasons
 end
 
-function _M.init()
-  _M.configure({
-    services = {
-      {
-        api_backend = 'https://echo-api.3scale.net',
-        backend_version = '1',
-        hosts = { 'localhost' },
-        backend_authentication_type = 'service_token',
-        backend_authentication_value = 'token_value',
-        proxy_rules = {
-          {
-            http_method = "GET",
-            pattern = "/get/{value}?param={other}&q=v",
-            metric_system_name = "hits",
-            delta = 1,
-            parameters = {"value" },
-            querystring_parameters = {
-              param = "{other}",
-              q = "v"
-            }
-          },
-          {
-            http_method = "POST",
-            pattern = "/post/{something}?p={v}&k=b",
-            metric_system_name = "hits",
-            delta = 1,
-            parameters = {"something"},
-            querystring_parameters = {
-              p = "{v}",
-              k = "b"
-            }
-          },
-          {
-            http_method = "GET",
-            pattern = "/",
-            metric_system_name = "hits",
-            delta = 1,
-            parameters = {},
-            querystring_parameters = { }
-          }
-        }
-      }
-    }
-  })
+function _M.init(config)
+  _M.configure(config)
 
   math.randomseed(ngx.now())
   -- First calls to math.random after a randomseed tend to be similar; discard them

@@ -163,4 +163,45 @@ function _M.new(configuration)
   return setmetatable({ services = map(_M.parse_service, services) }, mt)
 end
 
+function _M.boot()
+  local endpoint = os.getenv('THREESCALE_PORTAL_ENDPOINT')
+  local file = os.getenv('THREESCALE_CONFIG_FILE')
+
+  return (file and _M.read(file)) or _M.download(endpoint)
+end
+
+function _M.download(endpoint)
+
+  local http = require "resty.http"
+
+
+  local httpc = http.new()
+
+  httpc:set_timeout(10000)
+  local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+)(\\/.+)?$")
+
+  local scheme, userinfo, host, path = unpack(match)
+
+  local url = table.concat({ scheme, '://', host, path or '/admin/api/nginx/spec.json' }, '')
+
+  local match = ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$")
+  local user, pass = unpack(match)
+
+  local headers = {}
+
+  if user or pass then
+    headers['Authorization'] = "Basic " .. ngx.encode_base64(table.concat({ user or '', pass or '' }, ':'))
+  end
+
+  -- TODO: this does not fully implement HTTP spec, it first should send
+  -- request without Authentication and then send it after gettting 401
+
+  local res, err = httpc:request_uri(url, {
+    method = "GET",
+    headers = headers
+  })
+
+  return res and res.body or res:read_body() or '{}'
+end
+
 return _M

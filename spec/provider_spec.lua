@@ -25,7 +25,16 @@ describe('Provider', function()
   end)
 
   it('has services', function()
+    assert.falsy(provider.services)
+    provider.init()
     assert.truthy(provider.services)
     assert.same('table', type(provider.services))
+  end)
+
+  it('finds service by host', function()
+    local example = { hosts = { 'example.com'} }
+    provider.services = { example }
+    assert.same(example, provider.find_service('example.com'))
+    assert.falsy(provider.find_service('unknown'))
   end)
 end)

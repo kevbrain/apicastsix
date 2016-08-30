@@ -148,6 +148,8 @@ function _M.parse_service(service)
 end
 
 function _M.parse(contents, encoder)
+  if not contents then return _M.new() end
+
   encoder = encoder or require 'cjson'
   local config = encoder.decode(contents)
 
@@ -201,7 +203,11 @@ function _M.download(endpoint)
     headers = headers
   })
 
-  return res and res.body or res:read_body() or '{}'
+  if res then
+    return res.body or res:read_body()
+  else
+    return nil, err
+  end
 end
 
 return _M

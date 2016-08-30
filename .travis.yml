@@ -1,0 +1,39 @@
+language: c
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - perl-modules
+      - wget
+      - cpanminus
+cache:
+  apt: true
+  directories:
+    - $HOME/openresty
+    - $HOME/perl5
+    - $HOME/local
+    - $HOME/.luarocks
+env:
+  global:
+    - PERL_MM_USE_DEFAULT=1
+    - PERL_CPANM_OPT="--local-lib=~/perl5"
+    - PERL_CARTON_PATH="~/local"
+  matrix:
+    - OPENRESTY_VERSION=openresty-1.11.2.1 LUAROCKS_VERSION=2.3.0
+
+before_install:
+  - travis/install-openresty.sh
+  - travis/install-luarocks.sh
+  - find ${HOME}/openresty
+  - eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
+  - cpanm Carton
+  - export PATH="${PATH}:${HOME}/openresty/bin:${HOME}/openresty/luajit/bin:${HOME}/openresty/nginx/sbin"
+
+install:
+  - make dependencies
+  - carton install
+
+script:
+  - make test
+  - make test-nginx

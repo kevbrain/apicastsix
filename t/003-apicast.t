@@ -82,6 +82,7 @@ The message is configurable and default status is 403.
           backend_version = 1,
           proxy = {
             error_auth_failed = 'credentials invalid!',
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             error_status_auth_failed = 402,
             proxy_rules = {
               { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
@@ -93,11 +94,56 @@ The message is configurable and default status is 403.
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
   location /transactions/authrep.xml {
-    deny all;
+      deny all;
+  }
+
+  location /api-backend/ {
+     echo 'yay';
   }
 --- request
 GET /?user_key=value
 --- response_body chomp
 credentials invalid!
 --- error_code: 402
+
+
+=== TEST 4: api backend gets the request
+
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration').save({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /transactions/authrep.xml {
+      echo 'yes'; # TODO: check request parameters
+  }
+
+  location /api-backend/ {
+     echo 'yay, api backend';
+  }
+--- request
+GET /?user_key=value
+--- response_body
+yay, api backend
+--- error_code: 200

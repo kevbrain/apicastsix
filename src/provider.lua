@@ -245,9 +245,6 @@ function _M.access(host)
     return error_no_credentials(service)
   end
 
-  ngx.var.service_id = tostring(service.id)
-  ngx.var.proxy_pass = service.api_backend
-
   usage, matched_patterns = service:extract_usage(ngx.var.request)
 
   ngx.log(ngx.INFO, inspect{usage, matched_patterns})
@@ -266,6 +263,9 @@ function _M.access(host)
     ngx.header["X-3scale-usage"]         = ngx.var.usage
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
+
+  ngx.var.service_id = tostring(service.id)
+  ngx.var.proxy_pass = service.api_backend or error('missing api backend')
 
   _M.authorize(backend_version, params, service)
 end

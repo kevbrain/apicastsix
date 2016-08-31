@@ -172,7 +172,7 @@ end
 local function authrep(params, service)
   local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local api_keys = ngx.shared.api_keys
-  local is_known = api_keys:get(cached_key)
+  local is_known = api_keys and api_keys:get(cached_key)
 
   if is_known == 200 then
     ngx.var.cached_key = cached_key
@@ -181,9 +181,9 @@ local function authrep(params, service)
     local res = http.get("/threescale_authrep")
 
     if res.status == 200 then
-      api_keys:set(cached_key,200)
+      if api_keys then api_keys:set(cached_key,200) end
     else -- TODO: proper error handling
-      api_keys:delete(cached_key)
+      if api_keys then api_keys:delete(cached_key) end
       ngx.status = res.status
       ngx.header.content_type = "application/json"
       -- error_authorization_failed is an early return, so we have to reset cached_key to nil before -%>
@@ -250,6 +250,7 @@ function _M.access(host)
 
   usage, matched_patterns = service:extract_usage(ngx.var.request)
 
+  ngx.log(ngx.INFO, inspect{usage, matched_patterns})
   ngx.var.credentials = build_query(params)
   ngx.var.usage = build_querystring(usage)
 
@@ -282,9 +283,15 @@ function _M.post_action_content()
     ngx.log(ngx.INFO, '[async] reporting to backend asynchronously')
     local status_code = ngx.var.status
     local res1 = http.get("/threescale_authrep?code=".. status_code .. "&req=" .. ngx.escape_uri(req) .. "&resp=" .. ngx.escape_uri(resp))
+
     if res1.status ~= 200 then
       local api_keys = ngx.shared.api_keys
-      api_keys:delete(cached_key)
+
+      if api_keys then
+        api_keys:delete(cached_key)
+      else
+        ngx.log(ngx.ALERT, '[cache] shared memory zone `api_keys` does not exist. caching disabled.')
+      end
     end
   else
     ngx.log(ngx.INFO, '[async] skipping after action, no cached key')

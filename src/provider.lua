@@ -75,9 +75,9 @@ local function first_values(a)
   local r = {}
   for k,v in pairs(a) do
     if type(v) == "table" then
-      r[k] = v[1]
+      r[string.lower(k)] = v[1] -- TODO: use metatable to convert all access to lowercase
     else
-      r[k] = v
+      r[string.lower(k)] = v
     end
   end
   return r
@@ -119,8 +119,7 @@ local function get_auth_params(where, method)
 end
 
 local function get_debug_value()
-  local h = ngx.req.get_headers()
-  if h["X-3scale-debug"] == configuration.provider_key then
+  if ngx.var.http_x_3scale_debug == _M.configuration.debug_header then
     return true
   else
     return false
@@ -228,6 +227,11 @@ function _M.access(host)
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
 
+  ngx.var.backend_endpoint = service.backend.endpoint
+  ngx.var.backend_host = service.backend.host
+
+  ngx.var.version = _M.configuration.version
+
   if backend_version == '1' then
     params.user_key = parameters[credentials.user_key]
     ngx.var.cached_key = table.concat({service.id, params.user_key}, ':')
@@ -272,6 +276,7 @@ function _M.access(host)
 
   ngx.var.service_id = tostring(service.id)
   ngx.var.proxy_pass = service.api_backend or error('missing api backend')
+  ngx.req.set_header('Host', service.hostname_rewrite or ngx.var.host)
 
   _M.authorize(backend_version, params, service)
 end

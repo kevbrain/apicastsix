@@ -76,6 +76,7 @@ end
 function _M.parse_service(service)
   local backend_version = service.backend_version
   local proxy = service.proxy or {}
+  local backend = proxy.backend or {}
 
   return {
       id = service.id or 'default',
@@ -91,16 +92,21 @@ function _M.parse_service(service)
       no_match_status = proxy.error_status_no_match or 404,
       auth_failed_status = proxy.error_status_auth_failed or 403,
       auth_missing_status = proxy.error_status_auth_missing or 401,
-      secret_token = service.secret_token,
+      secret_token = proxy.secret_token,
+      hostname_rewrite = type(proxy.hostname_rewrite) == 'string' and proxy.hostname_rewrite,
       backend_authentication = {
         type = service.backend_authentication_type,
         value = service.backend_authentication_value
       },
+      backend = {
+        endpoint = backend.endpoint,
+        host = backend.host
+      },
       credentials = {
-        location = service.credentials_location or 'query',
-        user_key = service.auth_user_key or 'user_key',
-        app_id = service.auth_app_id or 'app_id',
-        app_key = service.auth_app_key or 'app_key' -- TODO: use App-Key if location is headers
+        location = proxy.credentials_location or 'query',
+        user_key = string.lower(proxy.auth_user_key or 'user_key'),
+        app_id = string.lower(proxy.auth_app_id or 'app_id'),
+        app_key = string.lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
       },
       get_credentials = function(service, params)
         local credentials
@@ -158,12 +164,19 @@ function _M.parse(contents, encoder)
 end
 
 function _M.read(path)
+  ngx.log(ngx.INFO, 'configuration loading file ' .. path)
   return assert(io.open(path)):read('*a')
 end
 
 function _M.new(configuration)
+  configuration = configuration or {}
   local services = (configuration or {}).services or {}
-  return setmetatable({ services = map(_M.parse_service, services) }, mt)
+
+  return setmetatable({
+    version = configuration.timestamp,
+    services = map(_M.parse_service, services),
+    debug_header = configuration.provider_key -- TODO: change this to something secure
+  }, mt)
 end
 
 function _M.boot()

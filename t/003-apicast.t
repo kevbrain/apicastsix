@@ -4,10 +4,6 @@ use Cwd qw(cwd);
 my $pwd = cwd();
 
 $ENV{TEST_NGINX_LUA_PATH} = "$pwd/src/?.lua;;";
-our $HttpConfig = qq{
-    lua_package_path "$pwd/src/?.lua;;";
-    init_by_lua_block { require('luarocks.loader') }
-};
 
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$pwd/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$pwd/conf.d/apicast.conf";

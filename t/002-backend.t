@@ -10,7 +10,6 @@ our $HttpConfig = qq{
 our $backendConfig = "$pwd/conf.d/backend.conf";
 
 repeat_each(2);
-no_root_location();
 run_tests();
 
 __DATA__
@@ -21,7 +20,7 @@ echo directive provided by ngx_http_echo_module.
 --- http_config eval: $::HttpConfig
 --- config eval: "include $::backendConfig;"
 --- request
-GET /
+GET /transactions/authrep.xml
 --- response_body
-backend endpoint!
+transactions authrep!
 --- error_code: 200

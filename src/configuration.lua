@@ -13,11 +13,9 @@ local function map(func, tbl)
   return newtbl
 end
 
-
 local function set_or_inc(t, name, delta)
-  return (t[name] or 0) + delta
+  return (t[name] or 0) + (delta or 0)
 end
-
 
 local function regexpify(path)
   return path:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
@@ -26,14 +24,14 @@ end
 local function check_rule(req, rule, usage_t, matched_rules)
   local param = {}
   local p = regexpify(rule.pattern)
-  local m = ngx.re.match(req.path,
-    string.format("^%s",p))
+  local m = ngx.re.match(req.path, string.format("^%s",p))
+
   if m and req.method == rule.method then
     local args = req.args
     if rule.querystring_params(args) then -- may return an empty table
     -- when no querystringparams
     -- in the rule. it's fine
-    for i,p in ipairs(rule.parameters) do
+    for i,p in ipairs(rule.parameters or {}) do
       param[p] = m[i]
     end
 
@@ -82,17 +80,17 @@ function _M.parse_service(service)
   return {
       id = service.id or 'default',
       backend_version = tostring(service.backend_version),
-      hosts = proxy.hosts or {},
+      hosts = proxy.hosts or { 'localhost' }, -- TODO: verify localhost is good default
       api_backend = proxy.api_backend,
-      error_auth_failed = service.error_auth_failed,
-      error_auth_missing = service.error_auth_missing,
-      auth_failed_headers = service.error_headers_auth_failed,
-      auth_missing_headers = service.error_headers_auth_missing,
-      error_no_match = service.error_no_match,
-      no_match_headers = service.error_headers_no_match,
-      no_match_status = service.error_status_no_match or 404,
-      auth_failed_status = service.error_status_auth_failed or 403,
-      auth_missing_status = service.error_status_auth_missing or 401,
+      error_auth_failed = proxy.error_auth_failed,
+      error_auth_missing = proxy.error_auth_missing,
+      auth_failed_headers = proxy.error_headers_auth_failed,
+      auth_missing_headers = proxy.error_headers_auth_missing,
+      error_no_match = proxy.error_no_match,
+      no_match_headers = proxy.error_headers_no_match,
+      no_match_status = proxy.error_status_no_match or 404,
+      auth_failed_status = proxy.error_status_auth_failed or 403,
+      auth_missing_status = proxy.error_status_auth_missing or 401,
       secret_token = service.secret_token,
       backend_authentication = {
         type = service.backend_authentication_type,
@@ -125,6 +123,8 @@ function _M.parse_service(service)
 
         local args = get_auth_params(method)
 
+        ngx.log(ngx.DEBUG, '[mapping] service ' .. service.id .. ' has ' .. #service.rules .. ' rules')
+
         for i,r in ipairs(service.rules) do
           check_rule({path=path, method=method, args=args}, r, usage_t, matched_rules)
         end
@@ -138,9 +138,9 @@ function _M.parse_service(service)
           pattern = proxy_rule.pattern,
           parameters = proxy_rule.parameters,
           querystring_params = function(args)
-            return check_querystring_params(proxy_rule.querystring_parameters, args)
+            return check_querystring_params(proxy_rule.querystring_parameters or {}, args)
           end,
-          system_name = proxy_rule.metric_system_name,
+          system_name = proxy_rule.metric_system_name or error('missing metric name of rule ' .. inspect(proxy_rule)),
           delta = proxy_rule.delta
         }
       end, proxy.proxy_rules or {})
@@ -149,6 +149,7 @@ end
 
 function _M.parse(contents, encoder)
   if not contents then return _M.new() end
+  if type(contents) == 'table' then return _M.new(contents) end
 
   encoder = encoder or require 'cjson'
   local config = encoder.decode(contents)
@@ -169,10 +170,21 @@ function _M.boot()
   local endpoint = os.getenv('THREESCALE_PORTAL_ENDPOINT')
   local file = os.getenv('THREESCALE_CONFIG_FILE')
 
-  return (file and _M.read(file)) or _M.download(endpoint)
+  return _M.load() or (file and _M.read(file)) or _M.download(endpoint)
+end
+
+function _M.save(config)
+  _M.config = config -- TODO: use shmem
+end
+
+function _M.load()
+  return _M.config
 end
 
 function _M.download(endpoint)
+  if not endpoint then
+    return nil, 'missing endpoint'
+  end
 
   local http = require "resty.http"
 
@@ -182,7 +194,13 @@ function _M.download(endpoint)
   httpc:set_timeout(10000)
   local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+)(\\/.+)?$")
 
+  if not match then
+    return nil, 'invalid endpoint' -- TODO: maybe improve the error message?
+  end
+
   local scheme, userinfo, host, path = unpack(match)
+
+  if path == '/' then path = nil end
 
   local url = table.concat({ scheme, '://', host, path or '/admin/api/nginx/spec.json' }, '')
 

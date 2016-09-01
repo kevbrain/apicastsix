@@ -9,6 +9,10 @@ describe('Configuration object', function()
     it('returns new configuration object', function()
       assert.same(configuration.new({}), configuration.parse('{}', cjson))
     end)
+
+    it('works with table', function()
+      assert.same(configuration.new({}), configuration.parse({}))
+    end)
   end)
 
   describe('provides information from the config file', function()
@@ -17,6 +21,16 @@ describe('Configuration object', function()
     it('returns services', function()
       assert.truthy(config.services)
       assert.equals(1, #config.services)
+    end)
+  end)
+
+  describe('.download', function()
+    it('returns error on missing endpoint', function()
+      assert.same({nil, 'missing endpoint'}, { configuration.download() })
+    end)
+
+    it('returns error on invalid URI', function()
+      assert.same({nil, 'invalid endpoint'}, { configuration.download('foobar') })
     end)
   end)
 

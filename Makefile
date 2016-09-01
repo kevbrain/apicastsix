@@ -1,4 +1,4 @@
-all: test
+all: test test-nginx
 
 test: dependencies
 	@bin/busted
@@ -6,6 +6,7 @@ test: dependencies
 
 # TODO: implement check to verify carton is there
 carton:
+	@carton install > /dev/null
 
 test-nginx: carton
 	@carton exec prove

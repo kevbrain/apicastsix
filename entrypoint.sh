@@ -27,7 +27,7 @@ pick_dns_server() {
 
 reload_openresty() {
   echo "Reloading Openresty"
-  pkill -HUP -o nginx
+  pkill -HUP -o openresty
 }
 
 download_threescale_config() {
@@ -44,8 +44,8 @@ download_threescale_config() {
 
 deploy_threescale_config() {
   echo "Deploying new configuration"
-  cp -f "$TEMP_DIR"/nginx_*.conf /opt/openresty/nginx/conf/nginx.conf
-  cp -f "$TEMP_DIR"/nginx_*.lua /opt/openresty/lualib/
+  cp -f "$TEMP_DIR"/nginx_*.conf "${NGINX_PREFIX}"/conf/nginx.conf
+  cp -f "$TEMP_DIR"/nginx_*.lua "${LUALIB_PREFIX}"
   reload_openresty
 }
 
@@ -53,9 +53,9 @@ compare_threescale_config() {
 
   download_threescale_config
 
-  CURRENT_CONF_FILE=/opt/openresty/nginx/conf/nginx.conf
+  CURRENT_CONF_FILE="${NGINX_PREFIX}/conf/nginx.conf"
   NEW_CONF_FILE="$TEMP_DIR/nginx_*.conf"
-  CURRENT_LUA_FILE="/opt/openresty/lualib/nginx_*.lua"
+  CURRENT_LUA_FILE="${LUALIB_PREFIX}/nginx_*.lua"
   NEW_LUA_FILE="$TEMP_DIR/nginx_*.lua"
   CHANGES=0
 
@@ -82,8 +82,8 @@ NAMESERVER=$(pick_dns_server)
 
 export RESOLVER=${RESOLVER:-${NAMESERVER}}
 
-sed -E -i "s/listen\s+80;/listen 8080;/g" /opt/openresty/nginx/conf/nginx.conf
-nginx -g "daemon off; error_log stderr info;" &
+sed -E -i "s/listen\s+80;/listen 8080;/g" "${NGINX_PREFIX}"/conf/nginx.conf
+openresty -g "daemon off; error_log stderr info;" &
 
 download_threescale_config
 deploy_threescale_config

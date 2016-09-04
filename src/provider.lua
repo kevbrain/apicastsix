@@ -75,9 +75,9 @@ local function first_values(a)
   local r = {}
   for k,v in pairs(a) do
     if type(v) == "table" then
-      r[k] = v[1]
+      r[string.lower(k)] = v[1] -- TODO: use metatable to convert all access to lowercase
     else
-      r[k] = v
+      r[string.lower(k)] = v
     end
   end
   return r
@@ -119,8 +119,7 @@ local function get_auth_params(where, method)
 end
 
 local function get_debug_value()
-  local h = ngx.req.get_headers()
-  if h["X-3scale-debug"] == configuration.provider_key then
+  if ngx.var.http_x_3scale_debug == _M.configuration.debug_header then
     return true
   else
     return false
@@ -175,13 +174,19 @@ local function authrep(params, service)
   local is_known = api_keys and api_keys:get(cached_key)
 
   if is_known == 200 then
+    ngx.log(ngx.DEBUG, 'apicast cache hit key: ' .. cached_key)
     ngx.var.cached_key = cached_key
   else
-    ngx.log(ngx.INFO, '[cache] key: ' .. cached_key .. ' not known, performing auth')
+    ngx.log(ngx.INFO, 'apicast cache miss key: ' .. cached_key)
     local res = http.get("/threescale_authrep")
 
+    ngx.log(ngx.DEBUG, '[backend] response status: ' .. tostring(res.status) .. ' body: ' .. tostring(res.body))
+
     if res.status == 200 then
-      if api_keys then api_keys:set(cached_key,200) end
+      if api_keys then
+        ngx.log(ngx.INFO, 'apicast cache write key: ' .. tostring(cached_key))
+        api_keys:set(cached_key, 200)
+      end
     else -- TODO: proper error handling
       if api_keys then api_keys:delete(cached_key) end
       ngx.status = res.status
@@ -221,6 +226,11 @@ function _M.access(host)
   ngx.var.secret_token = service.secret_token
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
+
+  ngx.var.backend_endpoint = service.backend.endpoint
+  ngx.var.backend_host = service.backend.host
+
+  ngx.var.version = _M.configuration.version
 
   if backend_version == '1' then
     params.user_key = parameters[credentials.user_key]
@@ -266,6 +276,7 @@ function _M.access(host)
 
   ngx.var.service_id = tostring(service.id)
   ngx.var.proxy_pass = service.api_backend or error('missing api backend')
+  ngx.req.set_header('Host', service.hostname_rewrite or ngx.var.host)
 
   _M.authorize(backend_version, params, service)
 end
@@ -282,15 +293,16 @@ function _M.post_action_content()
   if cached_key and cached_key ~= "null" then
     ngx.log(ngx.INFO, '[async] reporting to backend asynchronously')
     local status_code = ngx.var.status
-    local res1 = http.get("/threescale_authrep?code=".. status_code .. "&req=" .. ngx.escape_uri(req) .. "&resp=" .. ngx.escape_uri(resp))
+    local res = http.get("/threescale_authrep?code=".. status_code .. "&req=" .. ngx.escape_uri(req) .. "&resp=" .. ngx.escape_uri(resp))
 
-    if res1.status ~= 200 then
+    if res.status ~= 200 then
       local api_keys = ngx.shared.api_keys
 
       if api_keys then
+        ngx.log(ngx.NOTICE, 'apicast cache delete key: ' .. cached_key .. ' cause status ' .. tostring(res.status))
         api_keys:delete(cached_key)
       else
-        ngx.log(ngx.ALERT, '[cache] shared memory zone `api_keys` does not exist. caching disabled.')
+        ngx.log(ngx.ALERT, 'apicast cache error missing shared memory zone api_keys')
       end
     end
   else

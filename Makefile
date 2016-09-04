@@ -1,3 +1,5 @@
+DOCKER_COMPOSE = docker-compose
+
 all: test test-nginx
 
 test: dependencies
@@ -13,3 +15,12 @@ test-nginx: carton
 
 dependencies:
 	luarocks make --local
+
+build:
+	$(DOCKER_COMPOSE) build
+
+bash:
+	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
+
+test-docker: build
+	$(DOCKER_COMPOSE) run --rm gateway -t

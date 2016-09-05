@@ -1,3 +1,7 @@
+
+# **WARNING**: this is documentation for development branch, that might not be working at any point. To see stable version go to [`master` branch](https://github.com/3scale/docker-gateway/tree/master).
+
+
 DOCKER-GATEWAY
 ==============
 

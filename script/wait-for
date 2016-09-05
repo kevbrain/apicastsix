@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -e
+
+function wait_for {
+  echo "while ! timeout 1 bash -c 'cat < /dev/null > /dev/tcp/$1/$2' 2> /dev/null; do echo \"Waiting for tcp://$1:$2\"; sleep 1; done; echo \"tcp://$1:$2 is opened\""
+}
+
+function boot {
+  echo "Booting ${1}"
+  timeout 30 bash -c "${!1}"
+}
+
+timeout 30 bash -c "$(wait_for $1 $2)"

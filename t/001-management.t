@@ -95,3 +95,42 @@ GET /config
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 6: config endpoint can write configuration
+And can be later retrieved.
+
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+
+  location = /test {
+    echo_subrequest GET /config;
+    echo_subrequest PUT /config -b '{"services":[{"id":42}]}';
+    echo_subrequest GET /config;
+  }
+
+  include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+GET /test
+--- response_body
+null
+{"status":"ok","config":{"services":[{"id":42}]}}
+{"services":[{"id":42}]}
+--- error_code: 200
+--- no_error_log
+[error]
+--- ONLY
+
+=== TEST 7: unknown route
+returns nice error
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+GET /foobar
+--- response_body
+Could not resolve GET /foobar - nil
+--- error_code: 404
+--- no_error_log
+[error]

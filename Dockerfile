@@ -41,8 +41,12 @@ RUN yum install -y \
 LABEL io.k8s.description 3scale Gateway
 LABEL io.openshift.expose-services 8080:http
 
+WORKDIR /opt/app
+
+ADD *.rockspec /opt/app
+RUN bin/luarocks make *.rockspec
+
 ADD . /opt/app
-WORKDIR /opt/app/
 
 RUN chmod g+w /opt/app/ /opt/app/http.d/resolver.conf /opt/app/logs/
 

@@ -1,6 +1,6 @@
 DOCKER_COMPOSE = docker-compose
 
-all: test test-nginx
+all: test test-nginx test-docker
 
 test: dependencies
 	@bin/busted

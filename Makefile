@@ -24,4 +24,6 @@ bash:
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
 
 test-docker: build
+	$(DOCKER_COMPOSE) down --volumes --remove-orphans
 	$(DOCKER_COMPOSE) run --rm gateway -t
+	$(DOCKER_COMPOSE) run --rm test curl -v http://gateway:8090/status/live

@@ -10,12 +10,17 @@ local configuration = require 'configuration'
 local inspect = require 'inspect'
 
 local _M = {
+  -- FIXME: this is really bad idea, this file is shared across all requests,
+  -- so that means sharing something in this module would be sharing it acros all requests
+  -- and in multi-tenant environment that would mean leaking information
   configuration = {}
 }
 
 function _M.configure(contents)
   local config = configuration.parse(contents)
 
+  _M.contents = contents
+  _M.configured = true
   _M.configuration = config
   _M.services = config.services or {} -- for compatibility reasons
 end

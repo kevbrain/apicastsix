@@ -1,0 +1,9 @@
+*_temp/
+local/
+logs/
+t/
+*.swp
+docker-compose.yml
+Dockerfile
+.dockerignore
+.git*

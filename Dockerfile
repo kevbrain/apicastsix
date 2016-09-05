@@ -1,60 +1,52 @@
-FROM quay.io/centos/centos:7
+FROM centos:7
 MAINTAINER 3scale <operations@3scale.net>
 
-ENV OPENRESTY_VERSION=1.9.7.3 NGINX_PREFIX=/opt/openresty/nginx AUTO_UPDATE_INTERVAL=0
+ARG OPENRESTY_RPM_VERSION="1.11.2.1-3.el7.centos"
+ARG LUAROCKS_VERSION="2.3.0"
+ENV AUTO_UPDATE_INTERVAL=0 NGINX_PREFIX=/usr/local/openresty/nginx LUALIB_PREFIX=/usr/local/openresty/lualib
 
 EXPOSE 8080
 
-# Based on https://github.com/ficusio/openresty
-RUN export OPENRESTY_PREFIX=/opt/openresty VAR_PREFIX=/var/nginx \
- && yum -y update \
- && yum -y install wget tar perl gcc-c++ readline-devel pcre-devel openssl-devel git make unzip curl bind-utils\
- && mkdir -p /root/ngx_openresty \
- && cd /root/ngx_openresty \
- && curl -sSL http://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz | tar -xvz \
- && cd openresty-* \
- && readonly NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
- && ./configure \
-    --prefix=$OPENRESTY_PREFIX \
-    --http-client-body-temp-path=$VAR_PREFIX/client_body_temp \
-    --http-proxy-temp-path=$VAR_PREFIX/proxy_temp \
-    --http-log-path=$VAR_PREFIX/access.log \
-    --error-log-path=$VAR_PREFIX/error.log \
-    --pid-path=$VAR_PREFIX/nginx.pid \
-    --lock-path=$VAR_PREFIX/nginx.lock \
-    --with-luajit \
-    --with-pcre-jit \
-    --with-ipv6 \
-    --with-http_ssl_module \
-    --without-http_ssi_module \
-    --without-http_userid_module \
-    --without-http_uwsgi_module \
-    --without-http_scgi_module \
-    -j${NPROC} \
- && make -j${NPROC} \
- && make install \
- && ln -sf $NGINX_PREFIX/sbin/nginx /usr/local/bin/nginx \
- && ln -sf $NGINX_PREFIX/sbin/nginx /usr/local/bin/openresty \
- && ln -sf $OPENRESTY_PREFIX/bin/resty /usr/local/bin/resty \
- && ln -sf $OPENRESTY_PREFIX/luajit/bin/luajit-* $OPENRESTY_PREFIX/luajit/bin/lua \
- && ln -sf $OPENRESTY_PREFIX/luajit/bin/luajit-* /usr/local/bin/lua \
- && yum clean all \
- && rm -rf /root/ngx_openresty \
- && curl -L https://github.com/Yelp/dumb-init/releases/download/v1.0.1/dumb-init_1.0.1_amd64 -o /usr/local/bin/dumb-init \
- && chmod a+x /usr/local/bin/dumb-init \
- && yum -y remove perl gcc-c++ readline-devel pcre-devel openssl-devel git make \
- && useradd openresty \
- && chown openresty -R /var/nginx ; chown openresty -R /opt/openresty 
- 
-#Openshift v3 patch
-RUN chmod og+w -R /opt/openresty /var/nginx
-USER 1001
+ADD openresty.repo /etc/yum.repos.d/openresty.repo
 
-COPY entrypoint.sh /
+WORKDIR /tmp
 
-WORKDIR $NGINX_PREFIX/
+RUN yum install -y \
+        make \
+        unzip \
+        git \
+        wget \
+        bind-utils \ 
+        openresty-${OPENRESTY_RPM_VERSION} \
+        openresty-resty-${OPENRESTY_RPM_VERSION} \
+    && wget https://github.com/Yelp/dumb-init/releases/download/v1.0.1/dumb-init_1.0.1_amd64 -O /usr/local/bin/dumb-init \
+    && chmod a+x /usr/local/bin/dumb-init \
+    && wget http://luarocks.org/releases/luarocks-${LUAROCKS_VERSION}.tar.gz \
+    && tar -xzvf luarocks-${LUAROCKS_VERSION}.tar.gz \
+    && cd luarocks-${LUAROCKS_VERSION}/ \
+    && ./configure --prefix=/opt/app --sysconfdir=/opt/app/luarocks --force-config \
+        --with-lua=/usr/local/openresty/luajit \
+        --lua-suffix=jit \
+        --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
+        --with-lua-version=5.1 \
+    && make build \
+    && make install \
+    && rm -rf /tmp/* \
+    && yum remove -y make \
+    && yum clean all \
+    && mkdir -p /opt/app/logs \
+    && ln -sf /dev/stdout /opt/app/logs/access.log \
+    && ln -sf /dev/stderr /opt/app/logs/error.log
 
 LABEL io.k8s.description 3scale Gateway
 LABEL io.openshift.expose-services 8080:http
 
-ENTRYPOINT ["/entrypoint.sh"]
+ADD . /opt/app
+WORKDIR /opt/app/
+
+RUN chmod g+w /opt/app/ /opt/app/http.d/resolver.conf /opt/app/logs/
+
+USER 1001
+
+ENTRYPOINT ["/opt/app/entrypoint.sh"]
+CMD ["-g", "daemon off;"]

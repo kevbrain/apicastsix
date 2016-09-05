@@ -2,8 +2,8 @@
 # **WARNING**: this is documentation for development branch, that might not be working at any point. To see stable version go to [`master` branch](https://github.com/3scale/docker-gateway/tree/master).
 
 
-DOCKER-GATEWAY
-==============
+Gateway
+=======
 
 ### Description
 
@@ -15,32 +15,27 @@ This Dockerfile creates a [3scale](http://www.3scale.net) gateway, and configure
 You can download a ready to use docker image from our repository:
 
 ```
-docker pull quay.io/3scale/gateway
+docker pull quay.io/3scale/gateway:v2
 ```
 
 The 3scale gateway image requires two ENV variables:
 
-* **THREESCALE_PROVIDER_KEY**
+* **THREESCALE_PORTAL_ENDPOINT**
 
-You can find the provider_key inside your "Account" page.
+URI that includes your password and portal endpoint in following format: `schema://access-token@domain`.
+Example: https://provider-key@test-admin.3scale.net
 
-![provider_key](https://www.dropbox.com/s/6u1qae5huv602ft/Accounts_-_Show___3scale_API_Management.png?dl=1)
+* **THREESCALE_CONFIG_FILE**
 
-
-* **THREESCALE_ADMIN_URL**
-
-It's the full URL you use for accessing 3scale admin portal,
-
-for example: "https://MyCompany-admin.3scale.net"
-
+Path to saved JSON file with configuration for the gateway. Has to be injected to the docker image as read only volume.
 
 #### Docker command
 
 ```
-$ docker run -d -p 8080:8080 -e THREESCALE_PROVIDER_KEY=ABCDFEGHIJLMNOPQRST -e THREESCALE_ADMIN_URL=https://MYDOMAIN-admin.3scale.net quay.io/3scale/gateway
+$ docker run -d -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://access-token@test-admin.3scale.net quay.io/3scale/gateway:v2
 ```
 
-### Auto updating
+### Auto updating (not working yet)
 
 The gateway is able of checking the configuration from time to time and self update, you can enable this by adjusting the AUTO_UPDATE_INTERVAL (seconds) to some value greater than 60:
 
@@ -50,13 +45,9 @@ The gateway is able of checking the configuration from time to time and self upd
 
 This variable is set to 0 by default.
 
-
 ### Signals
 
-You can send some signals to the container (All signals will be passed to openresty):
-
-* USR1: Downloads 3scale configurations and updates running openresty.
-
-* HUP: reloads openresty.
+Signals are the same as normal nginx.
 
 Use docker kill -s $SIGNAL container-name to send them.
+

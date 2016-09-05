@@ -38,4 +38,10 @@ export RESOLVER=${RESOLVER:-${NAMESERVER}}
 mkdir -p /opt/app/http.d
 echo "resolver ${RESOLVER};" > /opt/app/http.d/resolver.conf
 
+if [ -z "${THREESCALE_PORTAL_ENDPOINT:-}" ] && [ -z "${THREESCALE_CONFIG_FILE:-}" ]; then
+  # TODO: improve the error messsage
+  echo "missing either THREESCALE_PORTAL_ENDPOINT or THREESCALE_CONFIG_FILE envirionment variable"
+  exit 1
+fi
+
 exec openresty -p /opt/app/ -c nginx.conf "$@"

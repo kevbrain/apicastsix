@@ -183,7 +183,7 @@ function _M.boot()
   local endpoint = os.getenv('THREESCALE_PORTAL_ENDPOINT')
   local file = os.getenv('THREESCALE_CONFIG_FILE')
 
-  return _M.load() or (file and _M.read(file)) or _M.download(endpoint)
+  return _M.load() or (file and _M.read(file)) or _M.download(endpoint) or error('missing configuration')
 end
 
 function _M.save(config)

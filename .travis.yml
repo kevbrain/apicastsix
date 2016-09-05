@@ -1,6 +1,9 @@
 language: c
 sudo: false
 
+services:
+  - docker
+
 addons:
   apt:
     packages:
@@ -38,3 +41,4 @@ install:
 script:
   - make test
   - make test-nginx
+  - make test-docker

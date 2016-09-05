@@ -24,27 +24,29 @@ RUN yum install -y \
     && wget http://luarocks.org/releases/luarocks-${LUAROCKS_VERSION}.tar.gz \
     && tar -xzvf luarocks-${LUAROCKS_VERSION}.tar.gz \
     && cd luarocks-${LUAROCKS_VERSION}/ \
-    && ./configure --prefix=/usr/local/openresty/luajit \
+    && ./configure --prefix=/opt/app --sysconfdir=/opt/app/luarocks --force-config \
         --with-lua=/usr/local/openresty/luajit \
-        --lua-suffix=jit-2.1.0-beta2 \
+        --lua-suffix=jit \
         --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1 \
-    && make \ 
+        --with-lua-version=5.1 \
+    && make build \
     && make install \
     && rm -rf /tmp/* \
     && yum remove -y make \
     && yum clean all \
-    && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
-    && ln -sf /dev/stderr /usr/local/openresty/nginx/logs/error.log
-
-#Openshift v3 patch
-RUN chmod og+w -R /usr/local/openresty/
-USER 1001
-
-COPY entrypoint.sh /
-
-WORKDIR $NGINX_PREFIX/
+    && mkdir -p /opt/app/logs \
+    && ln -sf /dev/stdout /opt/app/logs/access.log \
+    && ln -sf /dev/stderr /opt/app/logs/error.log
 
 LABEL io.k8s.description 3scale Gateway
 LABEL io.openshift.expose-services 8080:http
 
-ENTRYPOINT ["/entrypoint.sh"]
+ADD . /opt/app
+WORKDIR /opt/app/
+
+RUN chmod g+w /opt/app/ /opt/app/http.d/resolver.conf /opt/app/logs/
+
+USER 1001
+
+ENTRYPOINT ["/opt/app/entrypoint.sh"]
+CMD ["-g", "daemon off;"]

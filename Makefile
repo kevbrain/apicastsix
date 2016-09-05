@@ -14,7 +14,8 @@ test-nginx: carton
 	@carton exec prove
 
 dependencies:
-	luarocks make --local
+	luarocks make --local *.rockspec
+	luarocks make --local rockspec
 
 build:
 	$(DOCKER_COMPOSE) build

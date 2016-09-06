@@ -19,7 +19,7 @@ dependencies:
 	luarocks make --local rockspec
 
 build:
-	$(S2I) build . openresty-builder docker-gateway-test
+	$(S2I) build . quay.io/3scale/openresty-builder docker-gateway-test
 
 bash:
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i

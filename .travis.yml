@@ -16,6 +16,7 @@ cache:
     - $HOME/openresty
     - $HOME/perl5
     - $HOME/local
+    - $HOME/bin
     - $HOME/.luarocks
 env:
   global:
@@ -24,15 +25,16 @@ env:
     - PERL_CARTON_PATH="~/local"
     - TEST_NGINX_INIT_BY_LUA="require('luarocks.loader')"
   matrix:
-    - OPENRESTY_VERSION=openresty-1.11.2.1 LUAROCKS_VERSION=2.3.0
+    - OPENRESTY_VERSION=openresty-1.11.2.1 LUAROCKS_VERSION=2.3.0 S2I_VERSION=1.1.1-724c0dd
 
 before_install:
   - travis/install-openresty.sh
   - travis/install-luarocks.sh
+  - travis/install-s2i.sh
   - find ${HOME}/openresty
   - eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
   - cpanm Carton
-  - export PATH="${PATH}:${HOME}/openresty/bin:${HOME}/openresty/luajit/bin:${HOME}/openresty/nginx/sbin"
+  - export PATH="${PATH}:${HOME}/openresty/bin:${HOME}/openresty/luajit/bin:${HOME}/openresty/nginx/sbin:${HOME}/bin"
 
 install:
   - make dependencies

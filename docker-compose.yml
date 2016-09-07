@@ -2,6 +2,7 @@ version: '2'
 services:
   gateway:
     image: docker-gateway-test
+    user: '1000001'
     build: .
     ports:
       - "8080:8080"

@@ -1,5 +1,4 @@
-#!/usr/local/bin/dumb-init /bin/sh
-
+#!/bin/sh
 
 # 3scale (operations@3scale.net)
 set -eu

@@ -41,6 +41,7 @@ script:
 - make test
 - make test-nginx
 - make test-docker
+- make build
 after_success:
 - if [ "$TRAVIS_BRANCH" == "v2" ]; then
   docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" quay.io;

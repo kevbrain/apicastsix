@@ -21,7 +21,7 @@ dependencies:
 	luarocks make --local rockspec
 
 build:
-	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) -p always -c
+	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --pull-policy=always --copy
 
 bash:
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i

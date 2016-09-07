@@ -51,3 +51,18 @@ Signals are the same as normal nginx.
 
 Use docker kill -s $SIGNAL container-name to send them.
 
+# Development & Testing
+
+## OSX
+
+To install openresty and luarocks, just use Homebrew:
+
+```shell
+brew install apitools/openresty/luarocks
+```
+
+To run tests, you'll also need Test::Nginx from cpan:
+
+```shell
+cpan Test::Nginx
+```

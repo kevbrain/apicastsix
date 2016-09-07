@@ -31,4 +31,6 @@ test-docker: build
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p .
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway /opt/app/entrypoint.sh
+	$(DOCKER_COMPOSE) run --rm test /opt/app/entrypoint.sh | grep 'error: no working DNS server'
 	$(DOCKER_COMPOSE) run --rm test curl -v http://gateway:8090/status/live

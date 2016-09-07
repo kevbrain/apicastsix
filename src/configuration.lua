@@ -73,6 +73,10 @@ local function check_querystring_params(params, args)
   return true
 end
 
+local function isBlank(x)
+  return not not tostring(x):find("^%s*$")
+end
+
 function _M.parse_service(service)
   local backend_version = service.backend_version
   local proxy = service.proxy or {}
@@ -164,6 +168,9 @@ function _M.parse(contents, encoder)
 end
 
 function _M.read(path)
+  if not path or isBlank(path) then
+    return nil, 'missing path'
+  end
   ngx.log(ngx.INFO, 'configuration loading file ' .. path)
   return assert(io.open(path)):read('*a')
 end
@@ -183,7 +190,7 @@ function _M.boot()
   local endpoint = os.getenv('THREESCALE_PORTAL_ENDPOINT')
   local file = os.getenv('THREESCALE_CONFIG_FILE')
 
-  return _M.load() or (file and _M.read(file)) or _M.download(endpoint) or error('missing configuration')
+  return _M.load() or _M.read(file) or _M.download(endpoint) or error('missing configuration')
 end
 
 function _M.save(config)

@@ -18,12 +18,14 @@ pick_dns_server() {
     echo "127.0.0.1"
   else
     for server in $DNS; do
-      ret=$(nslookup -timeout=1 -retry=3 redhat.com "$server" &> /dev/null) 
-      if [ $? -eq 0 ]; then
+      if (nslookup -timeout=1 -retry=3 redhat.com "$server" &> /dev/null); then
         echo "$server"
-        break
+	 exit 0
       fi
     done
+
+    (>&2 echo "error: no working DNS server found")
+    exit 1
   fi
 }
 

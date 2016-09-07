@@ -18,7 +18,7 @@ pick_dns_server() {
     echo "127.0.0.1"
   else
     for server in $DNS; do
-      nslookup redhat.com "$server" &> /dev/null
+      ret=$(nslookup -timeout=1 -retry=3 redhat.com "$server" &> /dev/null) 
       if [ $? -eq 0 ]; then
         echo "$server"
         break

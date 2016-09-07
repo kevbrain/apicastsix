@@ -3,13 +3,12 @@ services:
   gateway:
     image: docker-gateway-test
     user: '1000001'
-    build: .
     ports:
       - "8080:8080"
       - "8090:8090"
     env_file: .env
   test:
-    build: .
+    image: docker-gateway-test
     depends_on:
       - gateway
     entrypoint: ""

@@ -26,6 +26,7 @@ build:
 bash:
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
 
+test-docker: IMAGE_NAME = docker-gateway-test
 test-docker: build
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t

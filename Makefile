@@ -26,5 +26,6 @@ bash:
 
 test-docker: build
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -c nginx.conf -t
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p .
 	$(DOCKER_COMPOSE) run --rm test curl -v http://gateway:8090/status/live

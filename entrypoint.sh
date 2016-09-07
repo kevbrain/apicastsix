@@ -43,4 +43,4 @@ if [ -z "${THREESCALE_PORTAL_ENDPOINT:-}" ] && [ -z "${THREESCALE_CONFIG_FILE:-}
   exit 1
 fi
 
-exec openresty -p /opt/app/ -c nginx.conf "$@"
+exec openresty -p "$(pwd)" "$@"

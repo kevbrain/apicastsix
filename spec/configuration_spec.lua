@@ -32,6 +32,10 @@ describe('Configuration object', function()
     it('returns error on invalid URI', function()
       assert.same({nil, 'invalid endpoint'}, { configuration.download('foobar') })
     end)
+
+    it('returns error on invalid URI', function()
+      assert.same({nil, 'connection refused'}, { configuration.download('http://127.0.0.1:1234/config/') })
+    end)
   end)
 
   it('.download', function()

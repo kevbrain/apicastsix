@@ -119,7 +119,6 @@ null
 --- error_code: 200
 --- no_error_log
 [error]
---- ONLY
 
 === TEST 7: unknown route
 returns nice error
@@ -132,5 +131,25 @@ GET /foobar
 --- response_body
 Could not resolve GET /foobar - nil
 --- error_code: 404
+--- no_error_log
+[error]
+
+=== TEST 7: boot
+exposes boot function
+--- main_config
+env THREESCALE_PORTAL_ENDPOINT=http://127.0.0.1.xip.io:$TEST_NGINX_SERVER_PORT/config/;
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  resolver 8.8.8.8;
+  init_by_lua_block {
+      require('provider').configure({ services = { { id = 42 } } })
+  }
+--- config
+include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+POST /boot
+--- response_body
+{"status":"ok","config":{"services":[{"id":42}]}}
+--- error_code: 200
 --- no_error_log
 [error]

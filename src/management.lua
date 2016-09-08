@@ -3,6 +3,8 @@ local _M = {}
 local cjson = require('cjson')
 local provider = require('provider')
 local router = require('router')
+local configuration = require('configuration')
+local inspect = require('inspect')
 
 local live = cjson.encode({status = 'live', success = true})
 
@@ -59,6 +61,18 @@ function _M.update_config()
   ngx.say(response)
 end
 
+function _M.boot()
+  local config = configuration.boot()
+  local configuration = cjson.decode(config)
+  local response = cjson.encode({ status = 'ok', config = configuration })
+
+  ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(config))
+
+  provider.init(config)
+
+  ngx.say(response)
+end
+
 function _M.router()
   local r = router.new()
 
@@ -68,6 +82,8 @@ function _M.router()
 
   r:get('/status/ready', _M.ready)
   r:get('/status/live', _M.live)
+
+  r:post('/boot', _M.boot)
 
   return r
 end

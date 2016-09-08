@@ -3,6 +3,7 @@ local _M = {
 }
 
 local inspect = require 'inspect'
+local cjson = require 'cjson'
 local mt = { __index = _M }
 
 local function map(func, tbl)
@@ -157,8 +158,15 @@ function _M.parse(contents, encoder)
   if not contents then return _M.new() end
   if type(contents) == 'table' then return _M.new(contents) end
 
-  encoder = encoder or require 'cjson'
+  encoder = encoder or cjson
+
+  local null = encoder.null
   local config = encoder.decode(contents)
+
+
+  if config == null then
+    config = nil
+  end
 
   return _M.new(config)
 end
@@ -229,13 +237,22 @@ function _M.download(endpoint)
   -- TODO: this does not fully implement HTTP spec, it first should send
   -- request without Authentication and then send it after gettting 401
 
+  ngx.log(ngx.INFO, 'configuration request sent: ' .. url)
+
   local res, err = httpc:request_uri(url, {
     method = "GET",
     headers = headers
   })
 
-  if res then
-    return res.body or res:read_body()
+  if err then
+    ngx.log(ngx.NOTICE, 'configuration download error: ' .. err)
+  end
+
+  local body = res and (res.body or res:read_body())
+
+  if body then
+    ngx.log(ngx.DEBUG, 'configuration response received:' .. body)
+    return body
   else
     return nil, err
   end

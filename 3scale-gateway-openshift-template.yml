@@ -9,72 +9,8 @@ metadata:
     tags: "api,gateway,3scale"
 objects:
 - apiVersion: v1
-  kind: ImageStream
-  metadata:
-    creationTimestamp: null
-    generation: 2
-    name: ${THREESCALE_GATEWAY_NAME}-centos
-  spec:
-    dockerImageRepository: quay.io/centos/centos
-    tags:
-    - from:
-        kind: DockerImage
-        name: centos/centos:7
-      name: "7"
-  status:
-    dockerImageRepository: "quay.io/centos/centos"
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    creationTimestamp: null
-    generation: 1
-    name: ${THREESCALE_GATEWAY_NAME}
-  spec:
-    tags:
-    - from:
-        kind: DockerImage
-        name: ${THREESCALE_GATEWAY_NAME}:latest
-      name: latest
-  status:
-    dockerImageRepository: ""
-- apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    creationTimestamp: null
-    name: ${THREESCALE_GATEWAY_NAME}
-  spec:
-    output:
-      to:
-        kind: ImageStreamTag
-        name: ${THREESCALE_GATEWAY_NAME}:latest
-    resources: {}
-    source:
-      git:
-        ref: master
-        uri: https://github.com/3scale/docker-gateway.git
-      type: Git
-    strategy:
-      dockerStrategy:
-        from:
-          kind: ImageStreamTag
-          name: ${THREESCALE_GATEWAY_NAME}-centos:7
-      type: Docker
-    triggers:
-    - github:
-        secret: secret
-      type: GitHub
-    - generic:
-        secret: secret
-      type: Generic
-    - type: ConfigChange
-    - imageChange: {}
-      type: ImageChange
-  status:
-    lastVersion: 0
-- apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    creationTimestamp: null
     name: ${THREESCALE_GATEWAY_NAME}
   spec:
     replicas: 2
@@ -96,19 +32,29 @@ objects:
       spec:
         containers:
         - env:
-          - name: THREESCALE_ADMIN_URL
-            value: ${THREESCALE_ADMIN_URL}
-          - name: THREESCALE_PROVIDER_KEY
-            value: ${THREESCALE_PROVIDER_KEY}
+          - name: THREESCALE_PORTAL_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: ${THREESCALE_PORTAL_ENDPOINT_SECRET}
+                key: password
+          - name: THREESCALE_CONFIG_FILE
+            value: ${THREESCALE_CONFIG_FILE}
           - name: RESOLVER
             value: ${RESOLVER}
-          image: ${THREESCALE_GATEWAY_NAME}
+          image: ${THREESCALE_GATEWAY_IMAGE}
           imagePullPolicy: Always
-          name: docker-gateway
+          name: ${THREESCALE_GATEWAY_NAME}
           livenessProbe:
-            tcpSocket:
-              port: 8080
-            initialDelaySeconds: 30
+            httpGet:
+              path: /status/live
+              port: 8090
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /status/ready
+              port: 8090
+            initialDelaySeconds: 15
             timeoutSeconds: 1
           ports:
           - containerPort: 8080
@@ -121,14 +67,6 @@ objects:
         terminationGracePeriodSeconds: 30
     triggers:
     - type: ConfigChange
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - docker-gateway
-        from:
-          kind: ImageStreamTag
-          name: ${THREESCALE_GATEWAY_NAME}:latest
-      type: ImageChange
   status: {}
 - apiVersion: v1
   kind: Service
@@ -148,19 +86,23 @@ objects:
   status:
     loadBalancer: {}
 parameters:
-- description: 3scale account endpoint
-  name: THREESCALE_ADMIN_URL
-  value: https://MYDOMAIN-admin.3scale.net
+- description: Name of the secret containing the THREESCALE_PORTAL_ENDPOINT with the access-token or provider key
+  value: threescale-portal-endpoint-secret
+  name: THREESCALE_PORTAL_ENDPOINT_SECRET
   required: true
-- description: 3scale account provider key
+- description: Path to saved JSON file with configuration for the gateway. Has to be injected to the docker image as read only volume.
   value:
-  name: THREESCALE_PROVIDER_KEY
-  required: true
+  name: THREESCALE_CONFIG_FILE
+  required: false
 - description: Name for the 3scale API Gateway
   value: threescalegw
   name: THREESCALE_GATEWAY_NAME
   required: true
-- description: DNS Resolver for openresty
+- description: Docker image to use.
+  value: 'quay.io/3scale/gateway:v2'
+  name: THREESCALE_GATEWAY_IMAGE
+  required: true
+- description: DNS Resolver for openresty, if empty it will be autodiscovered
   value:
   name: RESOLVER
   required: false

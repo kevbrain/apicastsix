@@ -2,6 +2,8 @@ local _M = {
   _VERSION = '0.01',
 }
 
+local str_len = string.len
+
 local inspect = require 'inspect'
 local mt = { __index = _M }
 
@@ -164,6 +166,9 @@ function _M.parse(contents, encoder)
 end
 
 function _M.read(path)
+  if not path or str_len(tostring(path)) == 0 then
+    return nil, 'missing path'
+  end
   ngx.log(ngx.INFO, 'configuration loading file ' .. path)
   return assert(io.open(path)):read('*a')
 end
@@ -183,7 +188,7 @@ function _M.boot()
   local endpoint = os.getenv('THREESCALE_PORTAL_ENDPOINT')
   local file = os.getenv('THREESCALE_CONFIG_FILE')
 
-  return _M.load() or (file and _M.read(file)) or _M.download(endpoint) or error('missing configuration')
+  return _M.load() or _M.read(file) or _M.download(endpoint) or error('missing configuration')
 end
 
 function _M.save(config)

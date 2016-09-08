@@ -207,6 +207,26 @@ function _M.load()
   return _M.config
 end
 
+function _M.init()
+  local tmpname = os.tmpname()
+  local exit = os.execute(ngx.config.prefix() .. '/libexec/boot > ' .. tmpname)
+
+  if exit == 0 then
+    local handle, err = io.open(tmpname)
+
+    if handle then
+      local config = handle:read("*a")
+      handle:close()
+
+      return config
+    else
+      ngx.log(ngx.ERR, 'boot failed read: ' .. tmpname .. ' ' .. tostring(err))
+    end
+  else
+    ngx.log(ngx.NOTICE, 'boot could not get configuration, code: ' .. tostring(exit))
+  end
+end
+
 function _M.download(endpoint)
   if not endpoint then
     return nil, 'missing endpoint'

@@ -34,4 +34,6 @@ test-docker: build
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway /opt/app/entrypoint.sh
 	$(DOCKER_COMPOSE) run --rm test /opt/app/entrypoint.sh | grep 'error: no working DNS server'
 	$(DOCKER_COMPOSE) run --rm test curl --fail http://gateway:8090/status/live
+	$(DOCKER_COMPOSE) run --rm test curl --fail -X PUT http://gateway:8090/config --data '{"services":[{"id":42}]}'
+	$(DOCKER_COMPOSE) run --rm test curl --fail http://gateway:8090/status/ready
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X POST http://gateway:8090/boot

@@ -2,6 +2,8 @@ local _M = {
   _VERSION = '0.01',
 }
 
+local str_len = string.len
+
 local inspect = require 'inspect'
 local mt = { __index = _M }
 
@@ -71,10 +73,6 @@ local function check_querystring_params(params, args)
   end
 
   return true
-end
-
-local function isBlank(x)
-  return not not tostring(x):find("^%s*$")
 end
 
 function _M.parse_service(service)
@@ -168,7 +166,7 @@ function _M.parse(contents, encoder)
 end
 
 function _M.read(path)
-  if not path or isBlank(path) then
+  if not path or str_len(tostring(path)) == 0 then
     return nil, 'missing path'
   end
   ngx.log(ngx.INFO, 'configuration loading file ' .. path)

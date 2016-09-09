@@ -212,25 +212,19 @@ function _M.load()
   return _M.config
 end
 
+local util = require 'util'
+
 function _M.init()
-  local tmpname = os.tmpname()
-  local success, exit, code = os.execute(ngx.config.prefix() .. '/libexec/boot > ' .. tmpname)
+  local config, exit, code = util.system(ngx.config.prefix() .. '/libexec/boot')
 
-  -- os.execute returns exit code as first return value on OSX
-  -- even though the documentation says otherwise (true/false)
-  if success == 0 or success then
-    local handle, err = io.open(tmpname)
-
-    if handle then
-      local config = handle:read("*a")
-      handle:close()
-
-      if str_len(config) > 0 then return config end
+  if config then
+    if str_len(config) > 0 then return config end
+  elseif exit then
+    if code then
+      ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
     else
-      ngx.log(ngx.ERR, 'boot failed read: ' .. tmpname .. ' ' .. tostring(err))
+      ngx.log(ngx.ERR, 'boot failed read: '.. tostring(exit))
     end
-  else
-    ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
   end
 end
 

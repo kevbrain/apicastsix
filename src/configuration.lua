@@ -201,7 +201,7 @@ function _M.boot()
   local endpoint = os.getenv('THREESCALE_PORTAL_ENDPOINT')
   local file = os.getenv('THREESCALE_CONFIG_FILE')
 
-  return _M.load() or _M.read(file) or _M.download(endpoint) or error('missing configuration')
+  return _M.load() or _M.read(file) or _M.download(endpoint) or _M.curl(endpoint) or error('missing configuration')
 end
 
 function _M.save(config)
@@ -212,55 +212,37 @@ function _M.load()
   return _M.config
 end
 
+local util = require 'util'
+
 function _M.init()
-  local tmpname = os.tmpname()
-  local success, exit, code = os.execute(ngx.config.prefix() .. '/libexec/boot > ' .. tmpname)
+  local config, exit, code = util.system(ngx.config.prefix() .. '/libexec/boot')
 
-  -- os.execute returns exit code as first return value on OSX
-  -- even though the documentation says otherwise (true/false)
-  if success == 0 or success then
-    local handle, err = io.open(tmpname)
-
-    if handle then
-      local config = handle:read("*a")
-      handle:close()
-
-      if str_len(config) > 0 then return config end
+  if config then
+    if str_len(config) > 0 then return config end
+  elseif exit then
+    if code then
+      ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
     else
-      ngx.log(ngx.ERR, 'boot failed read: ' .. tmpname .. ' ' .. tostring(err))
+      ngx.log(ngx.ERR, 'boot failed read: '.. tostring(exit))
     end
-  else
-    ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
   end
 end
 
 function _M.download(endpoint)
-  if not endpoint then
-    return nil, 'missing endpoint'
+  local url, err = _M.url(endpoint)
+
+  if not url and err then
+    return nil, err
   end
+
+  local scheme, user, pass, host, path = unpack(url)
+  local url = table.concat({ scheme, '://', host, path }, '')
 
   local http = require "resty.http"
-
-
   local httpc = http.new()
+  local headers = {}
 
   httpc:set_timeout(10000)
-  local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+)(\\/.+)?$")
-
-  if not match then
-    return nil, 'invalid endpoint' -- TODO: maybe improve the error message?
-  end
-
-  local scheme, userinfo, host, path = unpack(match)
-
-  if path == '/' then path = nil end
-
-  local url = table.concat({ scheme, '://', host, path or '/admin/api/nginx/spec.json' }, '')
-
-  local match = ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$")
-  local user, pass = unpack(match)
-
-  local headers = {}
 
   if user or pass then
     headers['Authorization'] = "Basic " .. ngx.encode_base64(table.concat({ user or '', pass or '' }, ':'))
@@ -288,6 +270,57 @@ function _M.download(endpoint)
     return body
   else
     return nil, err
+  end
+end
+
+function _M.url(endpoint)
+  if not endpoint then
+    return nil, 'missing endpoint'
+  end
+
+  local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+)(\\/.+)?$")
+
+  if not match then
+    return nil, 'invalid endpoint' -- TODO: maybe improve the error message?
+  end
+
+  local scheme, userinfo, host, path = unpack(match)
+
+  if path == '/' then path = nil end
+
+  local match = ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$")
+  local user, pass = unpack(match)
+
+  return { scheme, user or nil, pass or nil, host, path or '/admin/api/nginx/spec.json' }
+end
+
+
+function _M.curl(endpoint)
+  local url, err = _M.url(endpoint)
+
+  if not url and err then
+    return nil, err
+  end
+
+  local scheme, user, pass, host, path = unpack(url)
+
+  local url = table.concat({ scheme, '://', table.concat({user or '', pass or ''}, ':'), '@', host, path }, '')
+
+  local config, exit, code = util.system('curl --silent --show-error --fail --max-time 3 ' .. url)
+
+  ngx.log(ngx.INFO, 'configuration request sent: ' .. url)
+
+  if config then
+    ngx.log(ngx.DEBUG, 'configuration response received:' .. config)
+    return config
+  else
+    if code then
+      ngx.log(ngx.ERR, 'configuration download error ' .. exit .. ' ' .. code)
+      return nil, 'curl fished with ' .. exit .. ' ' .. code
+    else
+      ngx.log(ngx.WARN, 'configuration download error: ' .. exit)
+      return nil, exit
+    end
   end
 end
 

@@ -266,7 +266,8 @@ function _M.download(endpoint)
 
   local res, err = httpc:request_uri(url, {
     method = "GET",
-    headers = headers
+    headers = headers,
+    ssl_verify = false
   })
 
   if err then

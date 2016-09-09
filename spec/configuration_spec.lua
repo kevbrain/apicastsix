@@ -70,4 +70,22 @@ describe('Configuration object', function()
       assert.same(nil, configuration.decode(''))
     end)
   end)
+
+  describe('.url', function()
+    it('works with port', function()
+      assert.same({'https', false, false, 'example.com', '8443'}, configuration.url('https://example.com:8443'))
+    end)
+
+    it('works with user', function()
+      assert.same({'https', 'user', false, 'example.com', false }, configuration.url('https://user@example.com'))
+    end)
+
+    it('works with user and password', function()
+      assert.same({'https', 'user', 'password', 'example.com', false }, configuration.url('https://user:password@example.com'))
+    end)
+
+    it('works with port and path', function()
+      assert.same({'http', false, false, 'example.com', '8080', '/path'}, configuration.url('http://example.com:8080/path'))
+    end)
+  end)
 end)

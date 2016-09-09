@@ -145,7 +145,7 @@ It asks backend and then forwards the request to the api.
   }
 
   location /api-backend/ {
-     echo 'yay, api backend: $host';
+     echo 'yay, api backend: $http_host';
   }
 --- request
 GET /?user_key=value

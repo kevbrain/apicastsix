@@ -2,15 +2,22 @@
 # **WARNING**: this is documentation for development branch, that might not be working at any point. To see stable version go to [`master` branch](https://github.com/3scale/docker-gateway/tree/master).
 
 
-Gateway
-=======
+# Gateway
 
-### Description
+## Description
 
 This Dockerfile creates a [3scale](http://www.3scale.net) gateway, and configures itself according to your 3scale params.
 
+## OpenShift
 
-### Running docker-gateway image
+To run the gateway on OpenShift, just use template and create a Secret to point to your 3scale Admin Portal.
+
+```shell
+oc secret new-basicauth threescale-portal-endpoint-secret --password=https://provider-key@account-admin.3scale.net
+oc new-app -f https://raw.githubusercontent.com/3scale/docker-gateway/v2/3scale-gateway-openshift-template.yml
+```
+
+## Docker
 
 You can download a ready to use docker image from our repository:
 

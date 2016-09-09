@@ -216,6 +216,7 @@ end
 function _M.access(host)
   local host = host or ngx.var.host
   local service = _M.find_service(host) or ngx.exit(404)
+  local host = (configuration.url(service.api_backend) or {})[4]
   local backend_version = service.backend_version
   local params = {}
   local usage = {}
@@ -281,7 +282,7 @@ function _M.access(host)
 
   ngx.var.service_id = tostring(service.id)
   ngx.var.proxy_pass = service.api_backend or error('missing api backend')
-  ngx.req.set_header('Host', service.hostname_rewrite or service.api_backend_host or ngx.var.host)
+  ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
 
   _M.authorize(backend_version, params, service)
 end

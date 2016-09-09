@@ -4,6 +4,7 @@ local _M = {
 
 function _M.system(command)
   local tmpname = os.tmpname()
+  ngx.log(ngx.DEBUG, 'os execute ' .. command)
   local success, exit, code = os.execute(command .. ' > ' .. tmpname)
 
   -- os.execute returns exit code as first return value on OSX

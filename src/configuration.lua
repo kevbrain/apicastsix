@@ -158,6 +158,7 @@ end
 
 function _M.decode(contents, encoder)
   if not contents then return nil end
+  if type(contents) == 'string' and str_len(contents) == 0 then return nil end
   if type(contents) == 'table' then return contents end
 
   encoder = encoder or cjson
@@ -213,21 +214,23 @@ end
 
 function _M.init()
   local tmpname = os.tmpname()
-  local exit = os.execute(ngx.config.prefix() .. '/libexec/boot > ' .. tmpname)
+  local success, exit, code = os.execute(ngx.config.prefix() .. '/libexec/boot > ' .. tmpname)
 
-  if exit == 0 then
+  -- os.execute returns exit code as first return value on OSX
+  -- even though the documentation says otherwise (true/false)
+  if success == 0 or success then
     local handle, err = io.open(tmpname)
 
     if handle then
       local config = handle:read("*a")
       handle:close()
 
-      return config
+      if str_len(config) > 0 then return config end
     else
       ngx.log(ngx.ERR, 'boot failed read: ' .. tmpname .. ' ' .. tostring(err))
     end
   else
-    ngx.log(ngx.NOTICE, 'boot could not get configuration, code: ' .. tostring(exit))
+    ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
   end
 end
 

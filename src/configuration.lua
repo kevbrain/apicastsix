@@ -156,19 +156,23 @@ function _M.parse_service(service)
     }
 end
 
-function _M.parse(contents, encoder)
-  if not contents then return _M.new() end
-  if type(contents) == 'table' then return _M.new(contents) end
+function _M.decode(contents, encoder)
+  if not contents then return nil end
+  if type(contents) == 'table' then return contents end
 
   encoder = encoder or cjson
 
-  local null = encoder.null
   local config = encoder.decode(contents)
 
-
-  if config == null then
-    config = nil
+  if config == encoder.null then
+    return nil
   end
+
+  return config
+end
+
+function _M.parse(contents, encoder)
+  local config = _M.decode(contents, encoder)
 
   return _M.new(config)
 end

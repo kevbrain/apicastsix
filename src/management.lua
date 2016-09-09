@@ -53,7 +53,7 @@ function _M.update_config()
     data = assert(io.open(file)):read('*a')
   end
 
-  local configuration = cjson.decode(data)
+  local configuration = configuration.decode(data)
 
   provider.configure(configuration)
   -- TODO: respond with proper 304 Not Modified when config is the same
@@ -63,12 +63,12 @@ end
 
 function _M.boot()
   local config = configuration.boot()
-  local configuration = cjson.decode(config)
+  local configuration = configuration.decode(config)
   local response = cjson.encode({ status = 'ok', config = configuration })
 
   ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(config))
 
-  provider.init(config)
+  provider.init(configuration)
 
   ngx.say(response)
 end

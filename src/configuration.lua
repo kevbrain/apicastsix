@@ -86,6 +86,7 @@ function _M.parse_service(service)
       backend_version = tostring(service.backend_version),
       hosts = proxy.hosts or { 'localhost' }, -- TODO: verify localhost is good default
       api_backend = proxy.api_backend,
+      api_backend_host = (_M.url(proxy.api_backend) or {})[4],
       error_auth_failed = proxy.error_auth_failed,
       error_auth_missing = proxy.error_auth_missing,
       auth_failed_headers = proxy.error_headers_auth_failed,
@@ -96,7 +97,7 @@ function _M.parse_service(service)
       auth_failed_status = proxy.error_status_auth_failed or 403,
       auth_missing_status = proxy.error_status_auth_missing or 401,
       secret_token = proxy.secret_token,
-      hostname_rewrite = type(proxy.hostname_rewrite) == 'string' and proxy.hostname_rewrite,
+      hostname_rewrite = type(proxy.hostname_rewrite) == 'string' and str_len(proxy.hostname_rewrite) > 0 and proxy.hostname_rewrite,
       backend_authentication = {
         type = service.backend_authentication_type,
         value = service.backend_authentication_value

@@ -51,6 +51,20 @@ describe('Configuration object', function()
     end)
   end)
 
+  describe('.parse_service', function()
+    it('ignores empty hostname_rewrite', function()
+      local config = configuration.parse_service({ proxy = { hostname_rewrite = '' }})
+
+      assert.same(false, config.hostname_rewrite)
+    end)
+
+    it('populates hostname_rewrite', function()
+      local config = configuration.parse_service({ proxy = { hostname_rewrite = 'example.com' }})
+
+      assert.same('example.com', config.hostname_rewrite)
+    end)
+  end)
+
   describe('.decode', function()
     it('ignores empty string', function()
       assert.same(nil, configuration.decode(''))

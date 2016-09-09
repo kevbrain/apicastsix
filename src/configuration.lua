@@ -96,7 +96,7 @@ function _M.parse_service(service)
       auth_failed_status = proxy.error_status_auth_failed or 403,
       auth_missing_status = proxy.error_status_auth_missing or 401,
       secret_token = proxy.secret_token,
-      hostname_rewrite = type(proxy.hostname_rewrite) == 'string' and proxy.hostname_rewrite,
+      hostname_rewrite = type(proxy.hostname_rewrite) == 'string' and str_len(proxy.hostname_rewrite) > 0 and proxy.hostname_rewrite,
       backend_authentication = {
         type = service.backend_authentication_type,
         value = service.backend_authentication_value

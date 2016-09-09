@@ -275,7 +275,7 @@ function _M.download(endpoint)
   })
 
   if err then
-    ngx.log(ngx.NOTICE, 'configuration download error: ' .. err)
+    ngx.log(ngx.WARN, 'configuration download error: ' .. err)
   end
 
   local body = res and (res.body or res:read_body())

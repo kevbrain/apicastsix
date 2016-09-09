@@ -153,3 +153,29 @@ POST /boot
 --- error_code: 200
 --- no_error_log
 [error]
+
+
+=== TEST 7: boot called twice
+keeps the same configuration
+--- main_config
+env THREESCALE_PORTAL_ENDPOINT=http://127.0.0.1.xip.io:$TEST_NGINX_SERVER_PORT/config/;
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  resolver 8.8.8.8;
+  init_by_lua_block {
+      require('provider').configure({ services = { { id = 42 } } })
+  }
+--- config
+include $TEST_NGINX_MANAGEMENT_CONFIG;
+location = /test {
+    echo_subrequest POST /boot;
+    echo_subrequest POST /boot;
+  }
+--- request
+POST /test
+--- response_body
+{"status":"ok","config":{"services":[{"id":42}]}}
+{"status":"ok","config":{"services":[{"id":42}]}}
+--- error_code: 200
+--- no_error_log
+[error]

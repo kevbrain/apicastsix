@@ -21,7 +21,7 @@ dependencies:
 	luarocks make --local rockspec
 
 build:
-	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --pull-policy=always --copy
+	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --copy --incremental --pull-policy=always
 
 bash:
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
@@ -37,3 +37,4 @@ test-docker: build
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X PUT http://gateway:8090/config --data '{"services":[{"id":42}]}'
 	$(DOCKER_COMPOSE) run --rm test curl --fail http://gateway:8090/status/ready
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X POST http://gateway:8090/boot
+	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep lua-resty-http

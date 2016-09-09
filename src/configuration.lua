@@ -156,19 +156,24 @@ function _M.parse_service(service)
     }
 end
 
-function _M.parse(contents, encoder)
-  if not contents then return _M.new() end
-  if type(contents) == 'table' then return _M.new(contents) end
+function _M.decode(contents, encoder)
+  if not contents then return nil end
+  if type(contents) == 'string' and str_len(contents) == 0 then return nil end
+  if type(contents) == 'table' then return contents end
 
   encoder = encoder or cjson
 
-  local null = encoder.null
   local config = encoder.decode(contents)
 
-
-  if config == null then
-    config = nil
+  if config == encoder.null then
+    return nil
   end
+
+  return config
+end
+
+function _M.parse(contents, encoder)
+  local config = _M.decode(contents, encoder)
 
   return _M.new(config)
 end
@@ -209,21 +214,23 @@ end
 
 function _M.init()
   local tmpname = os.tmpname()
-  local exit = os.execute(ngx.config.prefix() .. '/libexec/boot > ' .. tmpname)
+  local success, exit, code = os.execute(ngx.config.prefix() .. '/libexec/boot > ' .. tmpname)
 
-  if exit == 0 then
+  -- os.execute returns exit code as first return value on OSX
+  -- even though the documentation says otherwise (true/false)
+  if success == 0 or success then
     local handle, err = io.open(tmpname)
 
     if handle then
       local config = handle:read("*a")
       handle:close()
 
-      return config
+      if str_len(config) > 0 then return config end
     else
       ngx.log(ngx.ERR, 'boot failed read: ' .. tmpname .. ' ' .. tostring(err))
     end
   else
-    ngx.log(ngx.NOTICE, 'boot could not get configuration, code: ' .. tostring(exit))
+    ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
   end
 end
 
@@ -266,11 +273,12 @@ function _M.download(endpoint)
 
   local res, err = httpc:request_uri(url, {
     method = "GET",
-    headers = headers
+    headers = headers,
+    ssl_verify = false
   })
 
   if err then
-    ngx.log(ngx.NOTICE, 'configuration download error: ' .. err)
+    ngx.log(ngx.WARN, 'configuration download error: ' .. err)
   end
 
   local body = res and (res.body or res:read_body())

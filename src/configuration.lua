@@ -235,8 +235,10 @@ function _M.download(endpoint)
     return nil, err
   end
 
-  local scheme, user, pass, host, path = unpack(url)
-  local url = table.concat({ scheme, '://', host, path }, '')
+  local scheme, user, pass, host, port, path = unpack(url)
+  if port then host = table.concat({host, port}, ':') end
+
+  local url = table.concat({ scheme, '://', host, path or '/admin/api/nginx/spec.json' }, '')
 
   local http = require "resty.http"
   local httpc = http.new()
@@ -278,20 +280,20 @@ function _M.url(endpoint)
     return nil, 'missing endpoint'
   end
 
-  local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+)(\\/.+)?$")
+  local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+?)(?::(\\d+))?(\\/.+)?$")
 
   if not match then
     return nil, 'invalid endpoint' -- TODO: maybe improve the error message?
   end
 
-  local scheme, userinfo, host, path = unpack(match)
+  local scheme, userinfo, host, port, path = unpack(match)
 
   if path == '/' then path = nil end
 
-  local match = ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$")
-  local user, pass = unpack(match)
+  local match = userinfo and ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$")
+  local user, pass = unpack(match or {})
 
-  return { scheme, user or nil, pass or nil, host, path or '/admin/api/nginx/spec.json' }
+  return { scheme, user or false, pass or false, host, port or false, path or nil }
 end
 
 
@@ -302,9 +304,11 @@ function _M.curl(endpoint)
     return nil, err
   end
 
-  local scheme, user, pass, host, path = unpack(url)
+  local scheme, user, pass, host, port, path = unpack(url)
 
-  local url = table.concat({ scheme, '://', table.concat({user or '', pass or ''}, ':'), '@', host, path }, '')
+  if port then host = table.concat({host, port}, ':') end
+
+  local url = table.concat({ scheme, '://', table.concat({user or '', pass or ''}, ':'), '@', host, path or '/admin/api/nginx/spec.json' }, '')
 
   local config, exit, code = util.system('curl --silent --show-error --fail --max-time 3 ' .. url)
 

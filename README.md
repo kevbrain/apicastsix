@@ -4,6 +4,8 @@
 
 # Gateway
 
+**`v2` branch is not yet stable and recommended for production use.**
+
 ## Description
 
 This Dockerfile creates a [3scale](http://www.3scale.net) gateway, and configures itself according to your 3scale params.

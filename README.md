@@ -4,7 +4,7 @@
 
 # Gateway
 
-**`v2` branch is not yet stable and recommended for production use.**
+`v2` branch is **not stable** yet and **not recommended for production** use.
 
 ## Description
 

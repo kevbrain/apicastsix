@@ -283,4 +283,3 @@ apicast cache miss key: 42:one-key:usage[hits]=1
 apicast cache write key: 42:one-key:usage[hits]=1
 apicast cache miss key: 21:two-id:two-key:usage[hits]=2
 apicast cache write key: 21:two-id:two-key:usage[hits]=2
---- ONLY

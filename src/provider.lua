@@ -281,10 +281,11 @@ function _M.access(host)
   end
 
   ngx.var.service_id = tostring(service.id)
-  ngx.var.proxy_pass = service.api_backend or error('missing api backend')
-  ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
 
   _M.authorize(backend_version, params, service)
+
+  ngx.var.proxy_pass = service.api_backend or error('missing api backend')
+  ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
 end
 
 

@@ -31,15 +31,16 @@ local function check_rule(req, rule, usage_t, matched_rules)
 
   if m and req.method == rule.method then
     local args = req.args
-    if rule.querystring_params(args) then -- may return an empty table
-    -- when no querystringparams
-    -- in the rule. it's fine
-    for i,p in ipairs(rule.parameters or {}) do
-      param[p] = m[i]
-    end
 
-    table.insert(matched_rules, rule.pattern)
-    usage_t[rule.system_name] = set_or_inc(usage_t, rule.system_name, rule.delta)
+    if rule.querystring_params(args) then -- may return an empty table
+      -- when no querystringparams
+      -- in the rule. it's fine
+      for i,p in ipairs(rule.parameters or {}) do
+        param[p] = m[i]
+      end
+
+      table.insert(matched_rules, rule.pattern)
+      usage_t[rule.system_name] = set_or_inc(usage_t, rule.system_name, rule.delta)
     end
   end
 end
@@ -68,9 +69,26 @@ local function get_auth_params(method)
   return first_values(params)
 end
 
+local regex_variable = '\\{[-\\w_]+\\}'
+
 local function check_querystring_params(params, args)
-  for k,v in pairs(params) do
-    -- TODO: rewrite the function from ruby
+  for param, expected in pairs(params) do
+    local m, err = ngx.re.match(expected, regex_variable)
+    local value = args[param]
+
+    if m then
+      if not value then -- regex variable have to have some value
+        ngx.log(ngx.DEBUG, 'check query params ' .. param .. ' value missing ' .. tostring(expected))
+        return false
+      end
+    else
+      if err then ngx.log(ngx.ERR, 'check match error ' .. err) end
+
+      if value ~= expected then -- normal variables have to have exact value
+        ngx.log(ngx.DEBUG, 'check query params does not match ' .. param .. ' value ' .. tostring(value) .. ' == ' .. tostring(expected))
+        return false
+      end
+    end
   end
 
   return true

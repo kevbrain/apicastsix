@@ -12,3 +12,4 @@
 ##### Additional Information
 
 * [Gist with minimal reproducible configuration, see guidelines for contributing for details]
+* [Gist with nginx log output]

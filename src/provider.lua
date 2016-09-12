@@ -233,8 +233,8 @@ function _M.access(host)
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
 
-  ngx.var.backend_endpoint = service.backend.endpoint
-  ngx.var.backend_host = service.backend.host
+  ngx.var.backend_endpoint = service.backend.endpoint or ngx.var.backend_endpoint
+  ngx.var.backend_host = service.backend.host or ngx.var.backend_host
 
   ngx.var.version = _M.configuration.version
 

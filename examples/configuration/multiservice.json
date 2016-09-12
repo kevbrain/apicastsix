@@ -1,0 +1,44 @@
+{
+  "services": [
+    {
+      "id": 16,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "value-one",
+      "backend_version": "1",
+      "proxy": {
+        "api_backend": "https://echo-api.3scale.net/one",
+        "hosts": [
+          "api"
+        ],
+        "proxy_rules": [
+          {
+            "http_method": "GET",
+            "pattern": "/",
+            "metric_system_name": "one",
+            "delta": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": 32,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "value-two",
+      "backend_version": "1",
+      "proxy": {
+        "api_backend": "https://echo-api.3scale.net/two",
+        "hosts": [
+          "monitoring"
+        ],
+        "proxy_rules": [
+          {
+            "http_method": "GET",
+            "pattern": "/",
+            "metric_system_name": "two",
+            "delta": 2
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -36,6 +36,7 @@ end
 -- Error Codes
 local function error_no_credentials(service)
   ngx.log(ngx.INFO, 'no credentials provided for service ' .. tostring(service.id))
+  ngx.var.cached_key = nil
   ngx.status = service.auth_missing_status
   ngx.header.content_type = service.auth_missing_headers
   ngx.print(service.error_auth_missing)
@@ -44,7 +45,7 @@ end
 
 local function error_authorization_failed(service)
   ngx.log(ngx.INFO, 'authorization failed for service ' .. tostring(service.id))
-
+  ngx.var.cached_key = nil
   ngx.status = service.auth_failed_status
   ngx.header.content_type = service.auth_failed_headers
   ngx.print(service.error_auth_failed)
@@ -53,6 +54,7 @@ end
 
 local function error_no_match(service)
   ngx.log(ngx.INFO, 'no rules matched for service ' .. tostring(service.id))
+  ngx.var.cached_key = nil
   ngx.status = service.no_match_status
   ngx.header.content_type = service.no_match_headers
   ngx.print(service.error_no_match)
@@ -163,7 +165,6 @@ local function oauth(params, service)
       access_tokens:delete(ngx.var.cached_key)
       ngx.status = res.status
       ngx.header.content_type = "application/json"
-      ngx.var.cached_key = nil
       error_authorization_failed(service)
     else
       access_tokens:set(ngx.var.cached_key,200)
@@ -197,7 +198,6 @@ local function authrep(params, service)
       ngx.status = res.status
       ngx.header.content_type = "application/json"
       -- error_authorization_failed is an early return, so we have to reset cached_key to nil before -%>
-      ngx.var.cached_key = nil
       error_authorization_failed(service)
     end
     -- set this request_to_3scale_backend to nil to avoid doing the out of band authrep -%>

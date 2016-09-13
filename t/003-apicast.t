@@ -66,6 +66,8 @@ GET /?user_key=value
 --- response_body chomp
 no mapping rules!
 --- error_code: 412
+--- error_log
+skipping after action, no cached key
 
 === TEST 3: authentication credentials invalid
 The message is configurable and default status is 403.

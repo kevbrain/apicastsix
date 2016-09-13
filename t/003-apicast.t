@@ -212,7 +212,7 @@ apicast cache miss key: 42:value:usage[hits]=2
 apicast cache write key: 42:value:usage[hits]=2
 apicast cache hit key: 42:value:usage[hits]=2
 
-=== TEST 5: multi service configuration
+=== TEST 6: multi service configuration
 Two services can exist together and are split by their hostname.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -283,4 +283,125 @@ apicast cache miss key: 42:one-key:usage[hits]=1
 apicast cache write key: 42:one-key:usage[hits]=1
 apicast cache miss key: 21:two-id:two-key:usage[hits]=2
 apicast cache write key: 21:two-id:two-key:usage[hits]=2
---- ONLY
+
+=== TEST 7: mapping rule with fixed value is mandatory
+When mapping rule has a parameter with fixed value it has to be matched.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration').save({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          proxy = {
+            error_no_match = 'no mapping rules matched!',
+            error_status_no_match = 412,
+            proxy_rules = {
+              { pattern = '/foo?bar=baz',  querystring_parameters = { bar = 'baz' },
+                http_method = 'GET', metric_system_name = 'bar', delta = 1 }
+            }
+          }
+        },
+      }
+    })
+  }
+  lua_shared_dict api_keys 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+--- request
+GET /foo?bar=foo&user_key=somekey
+--- response_body chomp
+no mapping rules matched!
+--- error_code: 412
+
+=== TEST 8: mapping rule with fixed value is mandatory
+When mapping rule has a parameter with fixed value it has to be matched.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration').save({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          proxy = {
+            api_backend = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/',
+            proxy_rules = {
+              { pattern = '/foo?bar=baz',  querystring_parameters = { bar = 'baz' },
+                http_method = 'GET', metric_system_name = 'bar', delta = 1 }
+            }
+          }
+        },
+      }
+    })
+  }
+  lua_shared_dict api_keys 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /api/ {
+    echo "api response";
+  }
+
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+--- request
+GET /foo?bar=baz&user_key=somekey
+--- response_body
+api response
+--- response_headers
+X-3scale-matched-rules: /foo?bar=baz
+--- error_code: 200
+
+=== TEST 8: mapping rule with variable value is required to be sent
+When mapping rule has a parameter with variable value it has to exist.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration').save({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          proxy = {
+            api_backend = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/',
+            proxy_rules = {
+              { pattern = '/foo?bar={baz}',  querystring_parameters = { bar = '{baz}' },
+                http_method = 'GET', metric_system_name = 'bar', delta = 3 }
+            }
+          }
+        },
+      }
+    })
+  }
+  lua_shared_dict api_keys 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /api/ {
+    echo "api response";
+  }
+
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+--- request
+GET /foo?bar={foo}&user_key=somekey
+--- response_body
+api response
+--- error_code: 200
+--- response_headers
+X-3scale-matched-rules: /foo?bar={baz}
+X-3scale-usage: usage[bar]=3

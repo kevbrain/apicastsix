@@ -133,7 +133,7 @@ local function get_debug_value()
   end
 end
 
-function _M.find_service(host)
+local function find_service_strict(host)
   for _,service in ipairs(_M.services or {}) do
     for _,_host in ipairs(service.hosts or {}) do
       if _host == host then
@@ -141,6 +141,33 @@ function _M.find_service(host)
       end
     end
   end
+end
+
+local function find_service_cascade(host)
+  local request = ngx.var.request
+  for _,service in ipairs(_M.services or {}) do
+    for _,_host in ipairs(service.hosts or {}) do
+      if _host == host then
+        local name = service.system_name or service.id
+        ngx.log(ngx.DEBUG, 'service ' .. name .. ' matched host ' .. _host)
+        local usage, matched_patterns = service:extract_usage(request)
+
+        if next(usage) and matched_patterns ~= '' then
+          ngx.log(ngx.DEBUG, 'service ' .. name .. ' matched patterns ' .. matched_patterns)
+          return service
+        end
+      end
+    end
+  end
+
+  return find_service_strict(host)
+end
+
+if os.getenv('APICAST_PATH_ROUTING_ENABLED') then
+  ngx.log(ngx.WARN, 'apicast experimental path routing enabled')
+  _M.find_service = find_service_cascade
+else
+  _M.find_service = find_service_strict
 end
 
 local http = {

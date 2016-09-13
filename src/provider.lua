@@ -5,7 +5,7 @@
 -- Error Messages per service
 
 local cjson = require 'cjson'
-local custom_config = false
+local custom_config = os.getenv('APICAST_CUSTOM_CONFIG')
 local configuration = require 'configuration'
 local inspect = require 'inspect'
 
@@ -320,12 +320,23 @@ function _M.post_action_content()
 end
 
 if custom_config then
-  local ok, c = pcall(function() return require(custom_config) end)
-  if ok and type(c) == 'table' and type(c.setup) == 'function' then
-    c.setup(_M)
+  local path = package.path
+  local module = string.gsub(custom_config, '%.lua$', '') -- strip .lua from end of the file
+  package.path = package.path .. ';' .. ngx.config.prefix() .. '?.lua;'
+  local ok, c = pcall(function() return require(module) end)
+  package.path = path
+
+  if ok then
+    if type(c) == 'table' and type(c.setup) == 'function' then
+      ngx.log(ngx.DEBUG, 'executing custom config ' .. custom_config)
+      c.setup(_M)
+    else
+      ngx.log(ngx.ERR, 'failed to load custom config ' .. tostring(custom_config) .. ' because it does not return table with function setup')
+    end
+  else
+    ngx.log(ngx.ERR, 'failed to load custom config ' .. tostring(custom_config) .. ' with ' .. tostring(c))
   end
 end
-
 
 return _M
 

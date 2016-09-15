@@ -2,6 +2,19 @@
 # 3scale (operations@3scale.net)
 set -u
 
+#Old docker version have a bug that prevents a non-root user to write
+#directly to /dev/stdout. (https://github.com/docker/docker/issues/6880) 
+export STDOUT_WRITABLE
+
+if [ -w "/dev/stdout" ]; then
+  echo "/dev/stdout is writable, enabling access_log output"
+  STDOUT_WRITABLE=true
+else 
+  echo "/dev/stdout is NOT writable, disabling access_log output"
+  STDOUT_WRITABLE=false  
+fi
+
+
 if [ "${AUTO_UPDATE_INTERVAL}" != 0 ] && [ "${AUTO_UPDATE_INTERVAL}" -lt 60 ]; then
   echo "AUTO_UPDATE_INTERVAL should be 60 or greater"
   exit 1
@@ -38,8 +51,12 @@ download_threescale_config() {
   unzip nginx.zip
   # Most docker PaaS doesn't allow docker to run as root
   # lets use the 8080 port instead of 80
+  if [ $STDOUT_WRITABLE = "true" ]; then
+    sed -E -i "/server\s+\{/a access_log /dev/stdout combined;" nginx_*.conf
+  fi
   sed -E -i "s/listen\s+80;/listen 8080;/g" nginx_*.conf
   sed -E -i "s/resolver\s+8.8.8.8\s+8.8.4.4;/resolver ${RESOLVER};/g" nginx_*.conf
+
 }
 
 deploy_threescale_config() {

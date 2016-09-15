@@ -1,9 +1,16 @@
 [provide a description of the issue]
 
+
+##### Version
+
+[provide output of the `nginx -V` or `openresty -V` command from openshift/local terminal]
+[provide timestamp of the docker image from `docker inspect --format='{{.Created}}' quay.io/3scale/gateway:v2` ]
+
 ##### Steps To Reproduce
 
-1. [step 1]
-2. [step 2]
+1. [step 1 (json configuration file, if applies)]
+2. [step 2 (curl commands to reproduce, if applies)]
+3. [step 3]
 
 ##### Current Result
 

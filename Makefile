@@ -34,6 +34,10 @@ push:
 bash:
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
 
+prove-docker: IMAGE_NAME = docker-gateway-test
+prove-docker:
+	$(DOCKER_COMPOSE) run --rm prove
+
 test-docker: IMAGE_NAME = docker-gateway-test
 test-docker: build
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans

@@ -70,8 +70,10 @@ function _M.delete_config()
   ngx.say(response)
 end
 
+local util = require 'util'
+
 function _M.boot()
-  local config = configuration.boot()
+  local config = util.timer('configuration.boot', configuration.boot)
   local configuration = configuration.decode(config)
   local response = cjson.encode({ status = 'ok', config = configuration or cjson.null })
 

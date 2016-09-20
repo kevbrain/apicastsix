@@ -2,6 +2,17 @@ local _M = {
   VERSION = '0.0.1'
 }
 
+local ngx_now = ngx.now
+
+function _M.timer(name, fun, ...)
+  local start = ngx_now()
+  ngx.log(ngx.INFO, 'benchmark start ' .. name .. ' at ' .. start)
+  local ret = { fun(...) }
+  local time = ngx_now() - start
+  ngx.log(ngx.INFO, 'benchmark ' .. name .. ' took ' .. time)
+  return unpack(ret)
+end
+
 function _M.system(command)
   local tmpname = os.tmpname()
   ngx.log(ngx.DEBUG, 'os execute ' .. command)

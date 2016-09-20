@@ -1,5 +1,6 @@
 DOCKER_COMPOSE = docker-compose
 S2I = s2i
+REGISTRY ?= quay.io/3scale
 
 IMAGE_NAME ?= docker-gateway-test
 
@@ -21,7 +22,14 @@ dependencies:
 	luarocks make --local rockspec
 
 build:
-	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --copy --incremental --pull-policy=always
+	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --copy --incremental
+
+release:
+	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --pull-policy=always
+
+push:
+	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)
+	docker push $(REGISTRY)/$(IMAGE_NAME)
 
 bash:
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i

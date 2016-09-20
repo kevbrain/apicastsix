@@ -57,7 +57,7 @@ function _M.update_config()
 
   provider.configure(configuration)
   -- TODO: respond with proper 304 Not Modified when config is the same
-  local response = cjson.encode({ status = 'ok', config = configuration })
+  local response = cjson.encode({ status = 'ok', config = configuration or cjson.null })
   ngx.say(response)
 end
 
@@ -73,7 +73,7 @@ end
 function _M.boot()
   local config = configuration.boot()
   local configuration = configuration.decode(config)
-  local response = cjson.encode({ status = 'ok', config = configuration })
+  local response = cjson.encode({ status = 'ok', config = configuration or cjson.null })
 
   ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(config))
 

@@ -8,7 +8,7 @@ $ENV{TEST_NGINX_LUA_PATH} = "$pwd/src/?.lua;;";
 $ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$pwd/conf.d/management.conf";
 
 log_level('debug');
-repeat_each(1);
+repeat_each(2);
 no_root_location();
 run_tests();
 
@@ -104,6 +104,7 @@ And can be later retrieved.
 --- config
 
   location = /test {
+    echo_subrequest DELETE /config;
     echo_subrequest GET /config;
     echo_subrequest PUT /config -b '{"services":[{"id":42}]}';
     echo_subrequest GET /config;
@@ -113,6 +114,7 @@ And can be later retrieved.
 --- request
 GET /test
 --- response_body
+{"status":"ok","config":null}
 null
 {"status":"ok","config":{"services":[{"id":42}]}}
 {"services":[{"id":42}]}

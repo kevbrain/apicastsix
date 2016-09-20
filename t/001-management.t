@@ -179,3 +179,26 @@ POST /test
 --- error_code: 200
 --- no_error_log
 [error]
+
+
+=== TEST 8: config endpoint can delete configuration
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+
+  location = /test {
+    echo_subrequest PUT /config -b '{"services":[{"id":42}]}';
+    echo_subrequest DELETE /config;
+    echo_subrequest GET /config;
+  }
+
+  include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+GET /test
+--- response_body
+{"status":"ok","config":{"services":[{"id":42}]}}
+{"status":"ok","config":null}
+null
+--- error_code: 200
+--- no_error_log
+[error]

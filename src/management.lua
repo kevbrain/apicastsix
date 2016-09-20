@@ -57,14 +57,25 @@ function _M.update_config()
 
   provider.configure(configuration)
   -- TODO: respond with proper 304 Not Modified when config is the same
-  local response = cjson.encode({ status = 'ok', config = configuration })
+  local response = cjson.encode({ status = 'ok', config = configuration or cjson.null })
   ngx.say(response)
 end
 
+function _M.delete_config()
+  ngx.log(ngx.DEBUG, 'management config delete')
+
+  provider.configure(nil)
+  -- TODO: respond with proper 304 Not Modified when config is the same
+  local response = cjson.encode({ status = 'ok', config = cjson.null })
+  ngx.say(response)
+end
+
+local util = require 'util'
+
 function _M.boot()
-  local config = configuration.boot()
+  local config = util.timer('configuration.boot', configuration.boot)
   local configuration = configuration.decode(config)
-  local response = cjson.encode({ status = 'ok', config = configuration })
+  local response = cjson.encode({ status = 'ok', config = configuration or cjson.null })
 
   ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(config))
 
@@ -79,6 +90,7 @@ function _M.router()
   r:get('/config', _M.config)
   r:put('/config', _M.update_config)
   r:post('/config', _M.update_config)
+  r:delete('/config', _M.delete_config)
 
   r:get('/status/ready', _M.ready)
   r:get('/status/live', _M.live)

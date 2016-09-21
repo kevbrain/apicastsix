@@ -9,7 +9,7 @@ $ENV{TEST_NGINX_BACKEND_CONFIG} = "$pwd/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$pwd/conf.d/apicast.conf";
 
 log_level('debug');
-repeat_each(1);
+repeat_each(1); # TODO: set it to 2, but first figure out how not to share redis connection
 no_root_location();
 run_tests();
 

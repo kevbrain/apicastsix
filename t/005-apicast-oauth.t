@@ -69,7 +69,7 @@ Location: http://example.com/redirect?error=invalid_client
     }
   }
 --- request
-GET /authorize?client_id=id&client_secret=secret&redirect_uri=otheruri&response_type=code&scope=whatever
+GET /authorize?client_id=id&redirect_uri=otheruri&response_type=code&scope=whatever
 --- error_code: 302
 --- response_headers_like
 Location: http://example.com/redirect\?scope=whatever&response_type=code&state=\w+&tok=\w+&redirect_uri=otheruri&client_id=id

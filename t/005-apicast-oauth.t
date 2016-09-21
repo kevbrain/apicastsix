@@ -195,6 +195,7 @@ include $TEST_NGINX_APICAST_CONFIG;
 ^<html>
 
 === TEST 4: calling /callback redirects to correct error when state is missing
+
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -213,6 +214,7 @@ include $TEST_NGINX_APICAST_CONFIG;
 "Location: http://127.0.0.1:$ENV{TEST_NGINX_SERVER_PORT}/redirect_uri#error=invalid_request&error_description=invalid_or_expired_state&state=foo"
 
 === TEST 7: calling /callback works
+Not part of the RFC. This is the Gateway API to create access tokens and redirect back to the Client.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {

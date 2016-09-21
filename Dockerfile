@@ -44,7 +44,8 @@ RUN export OPENRESTY_PREFIX=/opt/openresty VAR_PREFIX=/var/nginx \
  && chmod a+x /usr/local/bin/dumb-init \
  && yum -y remove perl gcc-c++ readline-devel pcre-devel openssl-devel git make \
  && useradd openresty \
- && chown openresty -R /var/nginx ; chown openresty -R /opt/openresty 
+ && mkdir -p ${NGINX_PREFIX}/log \
+ && chown openresty -R /var/nginx ; chown openresty -R /opt/openresty
  
 #Openshift v3 patch
 RUN chmod og+w -R /opt/openresty /var/nginx

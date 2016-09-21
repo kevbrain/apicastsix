@@ -4,14 +4,12 @@ set -u
 
 #Old docker version have a bug that prevents a non-root user to write
 #directly to /dev/stdout. (https://github.com/docker/docker/issues/6880) 
-export STDOUT_WRITABLE
-
 if [ -w "/dev/stdout" ]; then
   echo "/dev/stdout is writable, enabling access_log output"
-  STDOUT_WRITABLE=true
+  ln -s /dev/stdout ${NGINX_PREFIX}/log/access.log 
 else 
   echo "/dev/stdout is NOT writable, disabling access_log output"
-  STDOUT_WRITABLE=false  
+  ln -s /dev/null ${NGINX_PREFIX}/log/access.log
 fi
 
 
@@ -51,9 +49,7 @@ download_threescale_config() {
   unzip nginx.zip
   # Most docker PaaS doesn't allow docker to run as root
   # lets use the 8080 port instead of 80
-  if [ $STDOUT_WRITABLE = "true" ]; then
-    sed -E -i "/server\s+\{/a access_log /dev/stdout combined;" nginx_*.conf
-  fi
+  sed -E -i "/server\s+\{/a access_log log/access.log combined;" nginx_*.conf
   sed -E -i "s/listen\s+80;/listen 8080;/g" nginx_*.conf
   sed -E -i "s/resolver\s+8.8.8.8\s+8.8.4.4;/resolver ${RESOLVER};/g" nginx_*.conf
 
@@ -61,7 +57,7 @@ download_threescale_config() {
 
 deploy_threescale_config() {
   echo "Deploying new configuration"
-  cp -f "$TEMP_DIR"/nginx_*.conf /opt/openresty/nginx/conf/nginx.conf
+  cp -f "$TEMP_DIR"/nginx_*.conf ${NGINX_PREFIX}/conf/nginx.conf
   cp -f "$TEMP_DIR"/nginx_*.lua /opt/openresty/lualib/
   reload_openresty
 }
@@ -70,7 +66,7 @@ compare_threescale_config() {
 
   download_threescale_config
 
-  CURRENT_CONF_FILE=/opt/openresty/nginx/conf/nginx.conf
+  CURRENT_CONF_FILE=${NGINX_PREFIX}/conf/nginx.conf
   NEW_CONF_FILE="$TEMP_DIR/nginx_*.conf"
   CURRENT_LUA_FILE="/opt/openresty/lualib/nginx_*.lua"
   NEW_LUA_FILE="$TEMP_DIR/nginx_*.lua"
@@ -99,7 +95,7 @@ NAMESERVER=$(pick_dns_server)
 
 export RESOLVER=${RESOLVER:-${NAMESERVER}}
 
-sed -E -i "s/listen\s+80;/listen 8080;/g" /opt/openresty/nginx/conf/nginx.conf
+sed -E -i "s/listen\s+80;/listen 8080;/g" ${NGINX_PREFIX}/conf/nginx.conf
 nginx -g "daemon off; error_log stderr info;" &
 
 download_threescale_config

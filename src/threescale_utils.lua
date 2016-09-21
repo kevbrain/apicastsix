@@ -87,16 +87,16 @@ end
 function M.connect_redis(red)
   local ok, err = red:connect("127.0.0.1", 6379)
   if not ok then
-    ngx.say("failed to connect: ", err)
-    ngx.exit(ngx.HTTP_OK)
+    M.error("failed to connect to redis on 127.0.0.1:6379:", err)
   end
   return ok, err
 end
 
 -- error and exist
-function M.error(text)
-  ngx.say(text)
-  ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+function M.error(...)
+  ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+  ngx.say(...)
+  ngx.exit(ngx.status)
 end
 
 function M.missing_args(text)

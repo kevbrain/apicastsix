@@ -37,7 +37,9 @@ GET /authorize
 Location: http://example.com/redirect?error=invalid_client
 
 
-=== TEST 2: calling /authorize works
+=== TEST 2: calling /authorize works (Authorization Code)
+[Section 1.3.1 of RFC 6749](https://tools.ietf.org/html/rfc6749#section-1.3.1)
+
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
@@ -73,6 +75,48 @@ GET /authorize?client_id=id&redirect_uri=otheruri&response_type=code&scope=whate
 --- error_code: 302
 --- response_headers_like
 Location: http://example.com/redirect\?scope=whatever&response_type=code&state=\w+&tok=\w+&redirect_uri=otheruri&client_id=id
+--- no_error_log
+[error]
+
+
+
+=== TEST 3: calling /authorize works (Implicit)
+[Section 1.3.2 of RFC 6749](https://tools.ietf.org/html/rfc6749#section-1.3.2)
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require('configuration').save({
+      services = {
+        { backend_version = 'oauth' }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $auth_url "http://example.com/redirect"; # TODO: this will have to be set from the service configuration
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
+  set $service_id 42;
+  set $backend_authentication_type 'provider_key';
+  set $backend_authentication_value 'fookey';
+
+  location = /backend/transactions/oauth_authorize.xml {
+    content_by_lua_block {
+      expected = "provider_key=fookey&service_id=42&redirect_uri=otheruri&app_id=id"
+      if ngx.var.args == expected then
+        ngx.exit(200)
+      else
+        ngx.exit(403)
+      end
+    }
+  }
+--- request
+GET /authorize?client_id=id&redirect_uri=otheruri&response_type=token&scope=whatever
+--- error_code: 302
+--- response_headers_like
+Location: http://example.com/redirect\?scope=whatever&response_type=token&error=unsupported_response_type&redirect_uri=otheruri&client_id=id
 --- no_error_log
 [error]
 

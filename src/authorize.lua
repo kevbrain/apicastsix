@@ -1,7 +1,5 @@
 local random = require 'resty.random'
 local ts = require 'threescale_utils'
-local redis = require 'resty.redis'
-local red = redis:new()
 
 -- returns a unique string for the client_id. it will be short lived
 local function nonce(client_id)
@@ -31,7 +29,7 @@ local function persist_nonce(params)
   local n = nonce(params.client_id)
   params.state = n
 
-  ts.connect_redis(red)
+  local red = ts.connect_redis()
   local pre_token = generate_access_token(params.client_id)
   params.tok = pre_token
 

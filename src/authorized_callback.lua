@@ -7,7 +7,6 @@
 local random = require 'resty.random'
 local ts = require 'threescale_utils'
 local redis = require 'resty.redis'
-local red = redis:new()
 
 -- The authorization server should send some data in the callback response to let the
 -- API Gateway know which user to associate with the token.
@@ -36,7 +35,7 @@ local function check_state(params)
   local required_params = {'state'}
 
   if ts.required_params_present(required_params, params) then
-    ts.connect_redis(red)
+    local red = ts.connect_redis()
     local tmp_data = ngx.var.service_id .. "#tmp_data:".. params.state
     local ok, err = red:exists(tmp_data)
 
@@ -56,7 +55,7 @@ end
 local function retrieve_client_data(params)
   local tmp_data = ngx.var.service_id .. "#tmp_data:".. params.state
 
-  ts.connect_redis(red)
+  local red = ts.connect_redis()
   local ok, err = red:hgetall(tmp_data)
 
   if not ok then
@@ -79,7 +78,7 @@ local function generate_code(client_data)
 end
 
 local function persist_code(client_data, params, code)
-  ts.connect_redis(red)
+  local red = ts.connect_redis()
 
   local ok, err = red:hmset("c:".. code, {
     client_id = client_data.client_id,

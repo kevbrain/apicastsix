@@ -1,44 +1,47 @@
--- threescale_utils.lua
-local M = {} -- public interface
+
+local redis = require 'resty.redis'
+
+local _M = {} -- public interface
 
 -- private
 -- Logging Helpers
-function M.show_table(t, ...)
+function _M.show_table(t, ...)
   local indent = 0 --arg[1] or 0
   local indentStr=""
+  local msg
   for i = 1,indent do indentStr=indentStr.."  " end
 
   for k,v in pairs(t) do
     if type(v) == "table" then
-      msg = indentStr .. M.show_table(v or '', indent+1)
+      msg = indentStr .. _M.show_table(v or '', indent+1)
     else
       msg = indentStr ..  k .. " => " .. v
     end
-    M.log_message(msg)
+    _M.log_message(msg)
   end
 end
 
-function M.log_message(str)
+function _M.log_message(str)
   ngx.log(0, str)
 end
 
-function M.newline()
+function _M.newline()
   ngx.log(0,"  ---   ")
 end
 
-function M.log(content)
+function _M.log(content)
   if type(content) == "table" then
-    M.log_message(M.show_table(content))
+    _M.log_message(_M.show_table(content))
   else
-    M.log_message(content)
+    _M.log_message(content)
   end
-  M.newline()
+  _M.newline()
 end
 
 -- End Logging Helpers
 
 -- Table Helpers
-function M.keys(t)
+function _M.keys(t)
   local n=0
   local keyset = {}
   for k,v in pairs(t) do
@@ -50,14 +53,14 @@ end
 -- End Table Helpers
 
 
-function M.dump(o)
+function _M.dump(o)
   if type(o) == 'table' then
     local s = '{ '
     for k,v in pairs(o) do
       if type(k) ~= 'number' then
         k = '"'..k..'"'
       end
-      s = s .. '['..k..'] = ' .. M.dump(v) .. ','
+      s = s .. '['..k..'] = ' .. _M.dump(v) .. ','
     end
     return s .. '} '
   else
@@ -65,13 +68,13 @@ function M.dump(o)
   end
 end
 
-function M.sha1_digest(s)
+function _M.sha1_digest(s)
   local str = require "resty.string"
   return str.to_hex(ngx.sha1_bin(s))
 end
 
 -- returns true iif all elems of f_req are among actual's keys
-function M.required_params_present(f_req, actual)
+function _M.required_params_present(f_req, actual)
   local req = {}
   for k,v in pairs(actual) do
     req[k] = true
@@ -84,22 +87,25 @@ function M.required_params_present(f_req, actual)
   return true
 end
 
-function M.connect_redis(red)
-  local ok, err = red:connect("127.0.0.1", 6379)
+function _M.connect_redis(host, port)
+  local h = host or "127.0.0.1"
+  local p = port or 6379
+  local red = redis:new()
+  local ok, err = red:connect(h, p)
   if not ok then
-    M.error("failed to connect to redis on 127.0.0.1:6379:", err)
+    return nil, _M.error("failed to connect to redis on " .. h .. ":" .. p .. ":", err)
   end
-  return ok, err
+  return red
 end
 
 -- error and exist
-function M.error(...)
+function _M.error(...)
   ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
   ngx.say(...)
   ngx.exit(ngx.status)
 end
 
-function M.missing_args(text)
+function _M.missing_args(text)
   ngx.say(text)
   ngx.exit(ngx.HTTP_OK)
 end
@@ -112,7 +118,7 @@ end
 -- <code>value</code>.
 -- @return A query string (like <code>"name=value2&name=value2"</code>).
 -----------------------------------------------------------------------------
-function M.build_query(query)
+function _M.build_query(query)
   local qstr = ""
 
   for i,v in pairs(query) do
@@ -121,7 +127,7 @@ function M.build_query(query)
   return string.sub(qstr, 0, #qstr-1)
 end
 
-return M
+return _M
 
 -- -- Example usage:
 -- local MM = require 'mymodule'

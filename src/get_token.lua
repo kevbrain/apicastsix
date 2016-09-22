@@ -1,7 +1,6 @@
 local cjson = require 'cjson'
 local ts = require 'threescale_utils'
 local redis = require 'resty.redis'
-local red = redis:new()
 
 -- As per RFC for Authorization Code flow: extract params from Authorization header and body
 -- If implementation deviates from RFC, this function should be over-ridden
@@ -32,8 +31,8 @@ end
 -- Returns the access token (stored in redis) for the client identified by the id
 -- This needs to be called within a minute of it being stored, as it expires and is deleted
 local function request_token(params)
-  local ok, err = ts.connect_redis(red)
-  ok, err =  red:hgetall("c:".. params.code)
+  local red = ts.connect_redis()
+  local ok, err =  red:hgetall("c:".. params.code)
 
   if ok[1] == nil then
     return { ["status"] = 403, ["body"] = '{"error": "expired_code"}' }

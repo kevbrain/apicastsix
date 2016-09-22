@@ -7,6 +7,34 @@ $ENV{TEST_NGINX_LUA_PATH} = "$pwd/src/?.lua;;";
 
 $ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$pwd/conf.d/management.conf";
 
+# TODO: make this a module so it can be used in other test files
+our $dns = sub ($$$) {
+  my ($host, $ip) = @_;
+
+  return sub {
+    # Get DNS request ID from passed UDP datagram
+    my $dns_id = unpack("n", shift);
+    # Set name and encode it
+    my $name = $host;
+    $name =~ s/([^.]+)\.?/chr(length($1)) . $1/ge;
+    $name .= "\0";
+    my $s = '';
+    $s .= pack("n", $dns_id);
+    # DNS response flags, hardcoded
+    my $flags = (1 << 15) + (0 << 11) + (0 << 10) + (0 << 9) + (1 << 8) + (1 << 7) + 0;
+    $flags = pack("n", $flags);
+    $s .= $flags;
+    $s .= pack("nnnn", 1, 1, 0, 0);
+    $s .= $name;
+    $s .= pack("nn", 1, 1);
+    # Set response address and pack it
+    my @addr = split /\./, $ip;
+    my $data = pack("CCCC", @addr);
+    $s .= $name. pack("nnNn", 1, 1, 1, 4) . $data;
+    return $s;
+  }
+};
+
 log_level('debug');
 repeat_each(2);
 no_root_location();
@@ -139,10 +167,10 @@ Could not resolve GET /foobar - nil
 === TEST 7: boot
 exposes boot function
 --- main_config
-env THREESCALE_PORTAL_ENDPOINT=http://127.0.0.1.xip.io:$TEST_NGINX_SERVER_PORT/config/;
+env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
-  resolver 8.8.8.8;
+  resolver 127.0.0.1:1953;
   init_by_lua_block {
       require('provider').configure({ services = { { id = 42 } } })
   }
@@ -153,17 +181,19 @@ POST /boot
 --- response_body
 {"status":"ok","config":{"services":[{"id":42}]}}
 --- error_code: 200
+--- udp_listen: 1953
+--- udp_reply eval
+$::dns->("localhost", "127.0.0.1")
 --- no_error_log
 [error]
-
 
 === TEST 7: boot called twice
 keeps the same configuration
 --- main_config
-env THREESCALE_PORTAL_ENDPOINT=http://127.0.0.1.xip.io:$TEST_NGINX_SERVER_PORT/config/;
+env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
-  resolver 8.8.8.8;
+  resolver 127.0.0.1:1953;
   init_by_lua_block {
       require('provider').configure({ services = { { id = 42 } } })
   }
@@ -179,6 +209,9 @@ POST /test
 {"status":"ok","config":{"services":[{"id":42}]}}
 {"status":"ok","config":{"services":[{"id":42}]}}
 --- error_code: 200
+--- udp_listen: 1953
+--- udp_reply eval
+$::dns->("localhost", "127.0.0.1")
 --- no_error_log
 [error]
 

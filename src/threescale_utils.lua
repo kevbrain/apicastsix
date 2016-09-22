@@ -88,8 +88,8 @@ function _M.required_params_present(f_req, actual)
 end
 
 function _M.connect_redis(host, port)
-  local h = host or "127.0.0.1"
-  local p = port or 6379
+  local h = host or os.getenv('REDIS_HOST') or "127.0.0.1"
+  local p = port or os.getenv('REDIS_PORT') or 6379
   local red = redis:new()
   local ok, err = red:connect(h, p)
   if not ok then

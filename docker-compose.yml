@@ -2,6 +2,8 @@ version: '2'
 services:
   gateway:
     image: docker-gateway-test
+    depends_on:
+    - redis
     ports:
       - "8080:8080"
       - "8090:8090"
@@ -21,3 +23,5 @@ services:
     command: prove
     volumes:
             - ./t:/opt/app/t
+  redis:
+    image: redis

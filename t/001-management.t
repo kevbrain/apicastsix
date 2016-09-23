@@ -21,16 +21,23 @@ our $dns = sub ($$$) {
     my $s = '';
     $s .= pack("n", $dns_id);
     # DNS response flags, hardcoded
-    my $flags = (1 << 15) + (0 << 11) + (0 << 10) + (0 << 9) + (1 << 8) + (1 << 7) + 0;
+    # response, opcode, authoritative, truncated, recursion desired, recursion available, reserved
+    my $flags = (1 << 15) + (0 << 11) + (1 << 10) + (0 << 9) + (1 << 8) + (1 << 7) + 0;
     $flags = pack("n", $flags);
     $s .= $flags;
     $s .= pack("nnnn", 1, 1, 0, 0);
     $s .= $name;
-    $s .= pack("nn", 1, 1);
+    $s .= pack("nn", 1, 1); # query class A
+
     # Set response address and pack it
     my @addr = split /\./, $ip;
     my $data = pack("CCCC", @addr);
-    $s .= $name. pack("nnNn", 1, 1, 1, 4) . $data;
+
+    # pointer reference to the first name
+    # $name = pack("n", 0b1100000000001100);
+
+    # name + type A + class IN + TTL + length + data(ip)
+    $s .= $name. pack("nnNn", 1, 1, 0, 4) . $data;
     return $s;
   }
 };
@@ -170,7 +177,7 @@ exposes boot function
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
-  resolver 127.0.0.1:1953;
+  resolver 127.0.0.1:1953 ipv6=off;
   init_by_lua_block {
       require('provider').configure({ services = { { id = 42 } } })
   }
@@ -193,7 +200,7 @@ keeps the same configuration
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
-  resolver 127.0.0.1:1953;
+  resolver 127.0.0.1:1953 ipv6=off;
   init_by_lua_block {
       require('provider').configure({ services = { { id = 42 } } })
   }

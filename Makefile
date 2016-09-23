@@ -3,6 +3,8 @@
 DOCKER_COMPOSE = docker-compose
 S2I = s2i
 REGISTRY ?= quay.io/3scale
+TEST_NGINX_BINARY ?= nginx
+NGINX = $(shell which $(TEST_NGINX_BINARY))
 
 IMAGE_NAME ?= docker-gateway-test
 
@@ -12,11 +14,14 @@ busted: dependencies ## Test Lua.
 	@bin/busted
 	@- luacov
 
+nginx:
+	@ ($(NGINX) -V 2>&1 | grep -e '--with-ipv6' > /dev/null) || (>&2 echo "$(NGINX) `$(NGINX) -v 2>&1` does not have ipv6 support" && exit 1)
+
 # TODO: implement check to verify carton is there
 carton:
 	@carton install > /dev/null
 
-prove: carton ## Test nginx
+prove: carton nginx ## Test nginx
 	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: IMAGE_NAME = docker-gateway-test

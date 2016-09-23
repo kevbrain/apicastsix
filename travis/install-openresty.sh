@@ -9,7 +9,7 @@ if [ ! -d "${PREFIX}/bin" ]; then
   tar -xzf ${OPENRESTY_VERSION}.tar.gz
   rm -rf ${OPENRESTY_VERSION}.tar.gz
   cd ${OPENRESTY_VERSION}
-  ./configure --prefix="${PREFIX}" --with-luajit-xcflags=-DLUAJIT_ENABLE_LUA52COMPAT --with-debug
+  ./configure --prefix="${PREFIX}" --with-ipv6 --with-luajit-xcflags=-DLUAJIT_ENABLE_LUA52COMPAT --with-debug
   make -j$(cat /proc/cpuinfo  | grep -c processor)
   make install
   ln -sf "${PREFIX}"/luajit/bin/luajit-* "${PREFIX}/luajit/bin/luajit"

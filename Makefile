@@ -17,7 +17,7 @@ carton:
 	@carton install > /dev/null
 
 prove: carton ## Test nginx
-	@carton exec prove
+	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: IMAGE_NAME = docker-gateway-test
 prove-docker: ## Test nginx inside docker

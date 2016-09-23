@@ -8,6 +8,9 @@ $ENV{TEST_NGINX_LUA_PATH} = "$pwd/src/?.lua;;";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$pwd/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$pwd/conf.d/apicast.conf";
 
+$ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
+$ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | tr '\n' ' '`;
+
 log_level('debug');
 repeat_each(2);
 no_root_location();
@@ -39,8 +42,10 @@ Location: http://example.com/redirect?error=invalid_client
 
 === TEST 2: calling /authorize works (Authorization Code)
 [Section 1.3.1 of RFC 6749](https://tools.ietf.org/html/rfc6749#section-1.3.1)
-
+--- main_config
+  env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
 --- http_config
+  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
@@ -195,8 +200,10 @@ include $TEST_NGINX_APICAST_CONFIG;
 ^<html>
 
 === TEST 4: calling /callback redirects to correct error when state is missing
-
+--- main_config
+  env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
 --- http_config
+  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({
@@ -215,7 +222,10 @@ include $TEST_NGINX_APICAST_CONFIG;
 
 === TEST 7: calling /callback works
 Not part of the RFC. This is the Gateway API to create access tokens and redirect back to the Client.
+--- main_config
+  env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
 --- http_config
+  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({
@@ -252,7 +262,10 @@ GET /fake-authorize
 Location: http://example.com/redirect\?code=\w+&state=\w+
 
 === TEST 8: calling /oauth/token returns correct error message on invalid parameters
+--- main_config
+  env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
 --- http_config
+  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({

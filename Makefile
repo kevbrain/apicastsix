@@ -8,7 +8,8 @@ NGINX = $(shell which $(TEST_NGINX_BINARY))
 
 IMAGE_NAME ?= docker-gateway-test
 
-test: busted prove test-docker prove-docker ## Run all tests
+test: ## Run all tests
+	$(MAKE) --keep-going busted prove test-docker prove-docker
 
 busted: dependencies ## Test Lua.
 	@bin/busted

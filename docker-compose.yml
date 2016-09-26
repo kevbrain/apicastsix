@@ -17,4 +17,7 @@ services:
     user: root
     environment:
       TEST_NGINX_BINARY: openresty
+      TEST_NGINX_APICAST_PATH: /opt/app
     command: prove
+    volumes:
+            - ./t:/opt/app/t

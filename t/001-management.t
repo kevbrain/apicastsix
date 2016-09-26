@@ -2,10 +2,10 @@ use Test::Nginx::Socket::Lua 'no_plan';
 use Cwd qw(cwd);
 
 my $pwd = cwd();
+my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 
-$ENV{TEST_NGINX_LUA_PATH} = "$pwd/src/?.lua;;";
-
-$ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$pwd/conf.d/management.conf";
+$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
+$ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$apicast/conf.d/management.conf";
 
 # TODO: make this a module so it can be used in other test files
 our $dns = sub ($$$) {

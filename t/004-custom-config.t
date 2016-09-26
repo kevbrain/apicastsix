@@ -2,11 +2,11 @@ use Test::Nginx::Socket::Lua 'no_plan';
 use Cwd qw(cwd);
 
 my $pwd = cwd();
+my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 
-$ENV{TEST_NGINX_LUA_PATH} = "$pwd/src/?.lua;;";
-
-$ENV{TEST_NGINX_BACKEND_CONFIG} = "$pwd/conf.d/backend.conf";
-$ENV{TEST_NGINX_APICAST_CONFIG} = "$pwd/conf.d/apicast.conf";
+$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
+$ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
+$ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 
 log_level('debug');
 repeat_each(1);

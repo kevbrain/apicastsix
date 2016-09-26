@@ -21,6 +21,7 @@ Lua Dependencies are defined in [`apicast-VERSION.rockspec`](https://github.com/
 ## Components
 
 APIcast is using [source-to-image](https://github.com/openshift/source-to-image) to build the final Docker image.
+You'll need to have source-to-image installed and available on your system.
 
 The builder image used is [s2i-openresty](https://github.com/3scale/s2i-openresty).
 It is not very light builder image as it builds on heavy openshift base images.

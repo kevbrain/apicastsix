@@ -2,12 +2,12 @@ use Test::Nginx::Socket::Lua 'no_plan';
 use Cwd qw(cwd);
 
 my $pwd = cwd();
+my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 
 our $HttpConfig = qq{
-    lua_package_path "$pwd/src/?.lua;;";
+    lua_package_path "$apicast/src/?.lua;;";
 };
-
-our $backendConfig = "$pwd/conf.d/backend.conf";
+our $backendConfig = "$apicast/conf.d/backend.conf";
 
 repeat_each(2);
 run_tests();

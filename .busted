@@ -1,0 +1,8 @@
+return {
+  _all = {
+  },
+  default = {
+    verbose = true,
+    lpath = "./spec/?.lua;./apicast/src/?.lua;"
+  },
+}

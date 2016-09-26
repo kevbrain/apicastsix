@@ -8,7 +8,8 @@ NGINX = $(shell which $(TEST_NGINX_BINARY))
 
 IMAGE_NAME ?= docker-gateway-test
 
-test: busted prove test-docker prove-docker ## Run all tests
+test: ## Run all tests
+	$(MAKE) --keep-going busted prove test-docker prove-docker
 
 busted: dependencies ## Test Lua.
 	@bin/busted
@@ -29,10 +30,10 @@ prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm prove
 
 build: ## Build image for development
-	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --copy --incremental
+	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --context-dir=apicast --copy --incremental
 
 release: ## Build image for release
-	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --pull-policy=always
+	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --context-dir=apicast --pull-policy=always
 
 push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)
@@ -55,7 +56,7 @@ test-docker: build ## Test build docker
 	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep lua-resty-http
 
 dependencies:
-	luarocks make --local *.rockspec
+	luarocks make --local apicast/*.rockspec
 	luarocks make --local rockspec
 
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html

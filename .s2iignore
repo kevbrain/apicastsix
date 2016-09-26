@@ -1,2 +1,14 @@
-local/
+*_temp/
 .idea/
+local/
+logs/
+*.swp
+docker-compose.yml
+Dockerfile
+.s2iignore
+.git*
+share/
+travis/
+examples/
+.*
+schema.json

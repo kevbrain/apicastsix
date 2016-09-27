@@ -1,0 +1,10 @@
+#!/bin/bash
+
+APICAST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../apicast" && pwd )"
+
+if (which luarocks 2>&1 > /dev/null); then
+  eval `luarocks path`
+fi
+
+NGINX_BINARY=${APICAST_NGINX_BINARY:-nginx}
+exec ${NGINX_BINARY} -p ${APICAST_DIR} -c conf/nginx.conf -g 'daemon off;'

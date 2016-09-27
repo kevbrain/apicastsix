@@ -234,7 +234,7 @@ end
 local util = require 'util'
 
 function _M.init()
-  local config, exit, code = util.system(ngx.config.prefix() .. '/libexec/boot')
+  local config, exit, code = util.system("cd '" .. ngx.config.prefix() .."' && libexec/boot")
 
   if config then
     if str_len(config) > 0 then return config end

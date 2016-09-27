@@ -1,6 +1,5 @@
 local cjson = require 'cjson'
 local ts = require 'threescale_utils'
-local redis = require 'resty.redis'
 
 -- As per RFC for Authorization Code flow: extract params from Authorization header and body
 -- If implementation deviates from RFC, this function should be over-ridden
@@ -55,14 +54,14 @@ local function check_client_credentials(params)
     { args = { app_id = params.client_id, app_key = params.client_secret, redirect_uri = params.redirect_uri },
       copy_all_vars = true })
 
-  if res.status ~= 200 then
+  if res.status == 200 then
+    return { ["status"] = res.status, ["body"] = res.body }
+  else
     ngx.status = 401
     ngx.header.content_type = "application/json; charset=utf-8"
     ngx.print('{"error":"invalid_client"}')
     ngx.exit(ngx.HTTP_OK)
   end
-
-  return { ["status"] = res.status, ["body"] = res.body }
 end
 
 
@@ -82,7 +81,8 @@ end
 -- Stores the token in 3scale. You can change the default ttl value of 604800 seconds (7 days) to your desired ttl.
 local function store_token(params, token)
   local body = ts.build_query({ app_id = params.client_id, token = token.access_token, user_id = params.user_id, ttl = token.expires_in })
-  local stored = ngx.location.capture( "/_threescale/oauth_store_token", { method = ngx.HTTP_POST, body = body } )
+  local stored = ngx.location.capture( "/_threescale/oauth_store_token", {
+    method = ngx.HTTP_POST, body = body, vars = { service_id = ngx.ctx.service.id } } )
   stored.body = stored.body or stored.status
   return { ["status"] = stored.status , ["body"] = stored.body }
 end

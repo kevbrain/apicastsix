@@ -25,14 +25,13 @@ __DATA__
   init_by_lua_block {
     require('configuration').save({
       services = {
-        { backend_version = 'oauth' }
+        { backend_version = 'oauth',
+          proxy = { oauth_login_url = "http://example.com/redirect" } }
       }
     })
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $auth_url "http://example.com/redirect"; # TODO: this will have to be set from the service configuration
 --- request
 GET /authorize
 --- error_code: 302
@@ -51,14 +50,13 @@ Location: http://example.com/redirect?error=invalid_client
   init_by_lua_block {
     require('configuration').save({
       services = {
-        { backend_version = 'oauth' }
+        { backend_version = 'oauth',
+          proxy = { oauth_login_url = "http://example.com/redirect" } }
       }
     })
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $auth_url "http://example.com/redirect"; # TODO: this will have to be set from the service configuration
 
   set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
   set $service_id 42;
@@ -93,24 +91,23 @@ Location: http://example.com/redirect\?scope=whatever&response_type=code&state=\
   init_by_lua_block {
     require('configuration').save({
       services = {
-        { backend_version = 'oauth' }
+        {
+         id = 42, backend_version = 'oauth',
+         proxy = { oauth_login_url = "http://example.com/redirect" }
+        }
       }
     })
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $auth_url "http://example.com/redirect"; # TODO: this will have to be set from the service configuration
-
   set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-  set $service_id 42;
   set $backend_authentication_type 'provider_key';
   set $backend_authentication_value 'fookey';
 
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
-      expected = "provider_key=fookey&service_id=42&redirect_uri=otheruri&app_id=id"
-      if ngx.var.args == expected then
+      if ngx.var.args == "provider_key=fookey&service_id=42&redirect_uri=otheruri&app_id=id" then
         ngx.exit(200)
       else
         ngx.exit(403)
@@ -138,7 +135,7 @@ Location: http://example.com/redirect\?scope=whatever&response_type=token&error=
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
 --- request
-GET /oauth/token
+POST /oauth/token
 --- response_body chomp
 {"error":"invalid_client"}
 --- error_code: 401
@@ -156,7 +153,7 @@ GET /oauth/token
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
 --- request
-GET /oauth/token?grant_type=authorization_code&client_id=client_id&redirect_uri=redirect_uri&client_secret=client_secret&code=code
+POST /oauth/token?grant_type=authorization_code&client_id=client_id&redirect_uri=redirect_uri&client_secret=client_secret&code=code
 --- response_body chomp
 {"error":"invalid_client"}
 --- error_code: 401
@@ -230,25 +227,22 @@ Not part of the RFC. This is the Gateway API to create access tokens and redirec
   init_by_lua_block {
     require('configuration').save({
       services = {
-        { backend_version = 'oauth' }
+        { id = 42, backend_version = 'oauth', oauth_login_url = "" }
       }
     })
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $auth_url ""; # TODO: this will have to be set from the service configuration
-  set $service_id "null"; # TODO: this will have to be set from the service configuration
-
   location = /fake-authorize {
     content_by_lua_block {
       local authorize = require('authorize')
       local redirect_uri = 'http://example.com/redirect'
-      local nonce = authorize.persist_nonce({
+      local nonce = authorize.persist_nonce(42, {
         client_id = 'foo',
         state = 'somestate',
         redirect_uri = redirect_uri,
-        scope = 42
+        scope = 'plan'
       })
       ngx.exec('/callback?redirect_uri=' .. redirect_uri .. '&state=' .. nonce)
     }
@@ -270,7 +264,7 @@ Location: http://example.com/redirect\?code=\w+&state=\w+
   init_by_lua_block {
     require('configuration').save({
       services = {
-        { backend_version = 'oauth' }
+        { id = 42, backend_version = 'oauth' }
       }
     })
   }
@@ -283,13 +277,13 @@ Location: http://example.com/redirect\?code=\w+&state=\w+
       local authorize = require('authorize')
       local authorized_callback = require('authorized_callback')
       local redirect_uri = 'http://example.com/redirect'
-      local nonce = authorize.persist_nonce({
+      local nonce = authorize.persist_nonce(42, {
         client_id = 'foo',
         state = 'somestate',
         redirect_uri = redirect_uri,
-        scope = 42
+        scope = 'plan'
       })
-      local client_data = authorized_callback.retrieve_client_data({ state = nonce })
+      local client_data = authorized_callback.retrieve_client_data(42, { state = nonce })
       local code = authorized_callback.generate_code(client_data)
 
       assert(authorized_callback.persist_code(client_data, { state = 'somestate', user_id = 'someuser', redirect_uri = 'redirect_uri' }, code))
@@ -301,7 +295,6 @@ Location: http://example.com/redirect\?code=\w+&state=\w+
   }
 
   set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-    set $service_id 42;
     set $backend_authentication_type 'provider_key';
     set $backend_authentication_value 'fookey';
 

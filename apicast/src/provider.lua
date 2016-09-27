@@ -8,6 +8,7 @@ local cjson = require 'cjson'
 local custom_config = os.getenv('APICAST_CUSTOM_CONFIG')
 local configuration = require 'configuration'
 local inspect = require 'inspect'
+local oauth = require 'oauth'
 
 local _M = {
   -- FIXME: this is really bad idea, this file is shared across all requests,
@@ -179,7 +180,8 @@ local http = {
     return res
   end
 }
-local function oauth(params, service)
+
+local function oauth_authrep(params, service)
   ngx.var.cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local access_tokens = ngx.shared.api_keys
   local is_known = access_tokens:get(ngx.var.cached_key)
@@ -234,15 +236,32 @@ end
 
 function _M.authorize(backend_version, params, service)
   if backend_version == 'oauth' then
-    oauth(params, service)
+    oauth_authrep(params, service)
   else
     authrep(params, service)
   end
 end
 
-function _M.access(host)
+function _M.call(host)
   local host = host or ngx.var.host
   local service = _M.find_service(host) or ngx.exit(404)
+
+  ngx.ctx.service = service
+  ngx.var.backend_authentication_type = service.backend_authentication.type
+  ngx.var.backend_authentication_value = service.backend_authentication.value
+  ngx.var.service_id = tostring(service.id)
+
+  local f, params = oauth.call()
+
+  if f then
+    ngx.log(ngx.DEBUG, 'apicast oauth flow')
+    f(params)
+  else
+    _M.access(service)
+  end
+end
+
+function _M.access(service)
   local host = (configuration.url(service.api_backend) or {})[4]
   local backend_version = service.backend_version
   local params = {}
@@ -256,9 +275,8 @@ function _M.access(host)
 
   local credentials = service.credentials
   local parameters = get_auth_params(credentials.location, string.split(ngx.var.request, " ")[1] )
+
   ngx.var.secret_token = service.secret_token
-  ngx.var.backend_authentication_type = service.backend_authentication.type
-  ngx.var.backend_authentication_value = service.backend_authentication.value
 
   ngx.var.backend_endpoint = service.backend.endpoint or ngx.var.backend_endpoint
   ngx.var.backend_host = service.backend.host or ngx.var.backend_host
@@ -306,8 +324,6 @@ function _M.access(host)
     ngx.header["X-3scale-usage"]         = ngx.var.usage
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
-
-  ngx.var.service_id = tostring(service.id)
 
   _M.authorize(backend_version, params, service)
 

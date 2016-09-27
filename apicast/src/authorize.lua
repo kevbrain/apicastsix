@@ -25,7 +25,7 @@ local function extract_params()
   return params
 end
 
-local function persist_nonce(params)
+local function persist_nonce(service_id, params)
   local n = nonce(params.client_id)
   params.state = n
 
@@ -33,7 +33,7 @@ local function persist_nonce(params)
   local pre_token = generate_access_token(params.client_id)
   params.tok = pre_token
 
-  local ok, err = red:hmset(ngx.var.service_id .. "#tmp_data:".. n,
+  local ok, err = red:hmset(service_id .. "#tmp_data:".. n,
     {client_id = params.client_id,
       redirect_uri = params.redirect_uri,
       plan_id = params.scope,
@@ -50,15 +50,19 @@ end
 -- 'state' which will be used when the form redirects the user back to
 -- this server.
 local function redirect_to_auth(params)
+  local service = ngx.ctx.service
 
-  if not params.error then
-    persist_nonce(params)
+  if params.error then
+    ngx.log(ngx.DEBUG, 'oauth params error: ' .. tostring(params.error))
+  else
+    persist_nonce(service.id, params)
   end
 
   local args = ts.build_query(params)
+  local login_url = service.oauth_login_url or error('missing oauth login url')
 
   ngx.header.content_type = "application/x-www-form-urlencoded"
-  return ngx.redirect( ngx.var.auth_url .. "?" .. args )
+  return ngx.redirect(login_url .. "?" .. args)
 end
 
 -- Authorizes the client for the given scope
@@ -78,7 +82,16 @@ end
 -- Check valid params ( client_id / secret / redirect_url, whichever are sent) against 3scale
 local function check_client_credentials(params)
   local res = ngx.location.capture("/_threescale/check_credentials",
-    { args = { app_id = params.client_id, app_key = params.client_secret, redirect_uri = params.redirect_uri }})
+    {
+      args = {
+        app_id = params.client_id,
+        app_key = params.client_secret,
+        redirect_uri = params.redirect_uri
+      },
+      vars = {
+        service_id = ngx.ctx.service.id
+      }
+    })
 
   if res.status ~= 200 then
     params.error = "invalid_client"
@@ -101,12 +114,13 @@ local _M = {
 
 function _M.call()
   local params = extract_params()
-
   local is_valid = check_credentials(params)
 
   if is_valid then
+    ngx.log(ngx.DEBUG, 'oauth params valid')
     authorize(params)
   else
+    ngx.log(ngx.DEBUG, 'oauth params invalid')
     params.error = "invalid_client"
     redirect_to_auth(params)
   end

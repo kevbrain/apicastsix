@@ -36,7 +36,7 @@ local function check_state(params)
 
   if ts.required_params_present(required_params, params) then
     local red = ts.connect_redis()
-    local tmp_data = ngx.var.service_id .. "#tmp_data:".. params.state
+    local tmp_data = ngx.ctx.service.id .. "#tmp_data:".. params.state
     local ok, err = red:exists(tmp_data)
 
     if not ok or ok == 0 or err then
@@ -52,8 +52,9 @@ local function check_state(params)
 end
 
 -- Retrieve client data from Redis
-local function retrieve_client_data(params)
-  local tmp_data = ngx.var.service_id .. "#tmp_data:".. params.state
+local function retrieve_client_data(service_id, params)
+
+  local tmp_data = service_id .. "#tmp_data:".. params.state
 
   local red = ts.connect_redis()
   local ok, err = red:hgetall(tmp_data)
@@ -114,8 +115,8 @@ local function send_code(client_data, params, code)
 end
 
 -- Get Authorization Code
-local function get_code(params)
-  local client_data = retrieve_client_data(params)
+local function get_code(service_id, params)
+  local client_data = retrieve_client_data(service_id, params)
   local code = generate_code(client_data)
 
   local stored = store_code(client_data, params, code)
@@ -135,7 +136,7 @@ _M.call = function()
   local is_valid = check_state(params)
 
   if is_valid then
-    get_code(params)
+    get_code(ngx.ctx.service.id, params)
   end
 end
 

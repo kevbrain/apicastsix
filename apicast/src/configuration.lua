@@ -113,7 +113,7 @@ function _M.parse_service(service)
       no_match_status = proxy.error_status_no_match or 404,
       auth_failed_status = proxy.error_status_auth_failed or 403,
       auth_missing_status = proxy.error_status_auth_missing or 401,
-      oauth_login_url = str_len(proxy.oauth_login_url or "") > 0 and proxy.oauth_login_url or nil,
+      oauth_login_url = type(proxy.oauth_login_url) == 'string' and str_len(proxy.oauth_login_url) > 0 and proxy.oauth_login_url or nil,
       secret_token = proxy.secret_token,
       hostname_rewrite = type(proxy.hostname_rewrite) == 'string' and str_len(proxy.hostname_rewrite) > 0 and proxy.hostname_rewrite,
       backend_authentication = {

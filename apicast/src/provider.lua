@@ -142,6 +142,7 @@ local function find_service_strict(host)
       end
     end
   end
+  ngx.log(ngx.ERR, 'service not found for ' .. host)
 end
 
 local function find_service_cascade(host)
@@ -246,19 +247,26 @@ function _M.call(host)
   local host = host or ngx.var.host
   local service = _M.find_service(host) or ngx.exit(404)
 
-  ngx.ctx.service = service
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
+  ngx.var.backend_endpoint = service.backend.endpoint or ngx.var.backend_endpoint
+  ngx.var.backend_host = service.backend.host or ngx.var.backend_host
+
   ngx.var.service_id = tostring(service.id)
+  ngx.ctx.service = service
 
-  local f, params = oauth.call()
+  ngx.var.version = _M.configuration.version
 
-  if f then
-    ngx.log(ngx.DEBUG, 'apicast oauth flow')
-    f(params)
-  else
-    _M.access(service)
+  if service.backend_version == 'oauth' then
+    local f, params = oauth.call()
+
+    if f then
+      ngx.log(ngx.DEBUG, 'apicast oauth flow')
+      return f(params)
+    end
   end
+
+  _M.access(service)
 end
 
 function _M.access(service)
@@ -278,11 +286,6 @@ function _M.access(service)
 
   ngx.var.secret_token = service.secret_token
 
-  ngx.var.backend_endpoint = service.backend.endpoint or ngx.var.backend_endpoint
-  ngx.var.backend_host = service.backend.host or ngx.var.backend_host
-
-  ngx.var.version = _M.configuration.version
-
   if backend_version == '1' then
     params.user_key = parameters[credentials.user_key]
     ngx.var.cached_key = table.concat({service.id, params.user_key}, ':')
@@ -294,7 +297,6 @@ function _M.access(service)
     ngx.var.cached_key = table.concat({service.id, params.app_id, params.app_key}, ':')
 
   elseif backend_version == 'oauth' then
-    error('oauth unsupported')
     ngx.var.access_token = parameters.access_token
     params.access_token = parameters.access_token
     ngx.var.cached_key = table.concat({service.id, params.access_token}, ':')

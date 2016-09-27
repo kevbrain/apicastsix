@@ -82,7 +82,7 @@ end
 local function store_token(params, token)
   local body = ts.build_query({ app_id = params.client_id, token = token.access_token, user_id = params.user_id, ttl = token.expires_in })
   local stored = ngx.location.capture( "/_threescale/oauth_store_token", {
-    method = ngx.HTTP_POST, body = body, vars = { service_id = ngx.ctx.service.id } } )
+    method = ngx.HTTP_POST, body = body, copy_all_vars = true } )
   stored.body = stored.body or stored.status
   return { ["status"] = stored.status , ["body"] = stored.body }
 end

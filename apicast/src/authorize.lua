@@ -88,17 +88,15 @@ local function check_client_credentials(params)
         app_key = params.client_secret,
         redirect_uri = params.redirect_uri
       },
-      vars = {
-        service_id = ngx.ctx.service.id
-      }
+      copy_all_vars = true,
     })
 
-  if res.status ~= 200 then
+  if res.status == 200 then
+    return { ["status"] = res.status, ["body"] = res.body }
+  else
     params.error = "invalid_client"
     redirect_to_auth(params)
   end
-
-  return { ["status"] = res.status, ["body"] = res.body }
 end
 
 -- Check valid credentials

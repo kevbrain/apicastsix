@@ -5,6 +5,7 @@ S2I = s2i
 REGISTRY ?= quay.io/3scale
 TEST_NGINX_BINARY ?= nginx
 NGINX = $(shell which $(TEST_NGINX_BINARY))
+SHELL=/bin/bash -o pipefail
 
 IMAGE_NAME ?= docker-gateway-test
 

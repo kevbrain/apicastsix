@@ -2,6 +2,7 @@ language: c
 sudo: false
 services:
 - docker
+- redis-server
 addons:
   artifacts: true
   apt:

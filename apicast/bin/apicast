@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APICAST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../apicast" && pwd )"
+APICAST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
 if (which luarocks 2>&1 > /dev/null); then
   eval `luarocks path`

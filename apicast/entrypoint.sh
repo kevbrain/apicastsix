@@ -45,4 +45,4 @@ if [ -z "${THREESCALE_PORTAL_ENDPOINT:-}" ] && [ -z "${THREESCALE_CONFIG_FILE:-}
   exit 1
 fi
 
-exec openresty -p "$(pwd)" "$@"
+exec bin/apicast "$@"

@@ -18,6 +18,8 @@ cache:
   - "$HOME/local"
   - "$HOME/bin"
   - "$HOME/.luarocks"
+before_cache:
+  - rm -fr $HOME/local/cache
 env:
   global:
   - PERL_MM_USE_DEFAULT=1

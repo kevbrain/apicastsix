@@ -1,15 +1,53 @@
 #!/bin/bash
 
-APICAST_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+set -euo pipefail
+IFS=$'\n\t'
 
-if (which luarocks 2>&1 > /dev/null); then
+script=${BASH_SOURCE[0]}
+
+if (readlink "${script}" > /dev/null); then
+  path=$(dirname "$(dirname "${script}")/$(readlink "${script}")")
+else
+  path=$(dirname "${script}")
+fi
+
+apicast_dir="$( cd "${path}/.." && pwd )"
+
+if (which luarocks > /dev/null 2>&1 ); then
   eval `luarocks path`
 fi
 
-NGINX_BINARY=${APICAST_NGINX_BINARY:-nginx}
+pick_binary() {
+  for cmd in "$@"
+  do
+    if (which "${cmd}" > /dev/null 2>&1); then
+      echo "${cmd}"
+      exit 0
+    fi
+  done
+
+  exit 1
+}
+
+default_openresty_binary=$(pick_binary openresty-debug openresty cmd)
+
+openresty_binary=${APICAST_OPENRESTY_BINARY:-$default_openresty_binary}
 log_level=${APICAST_LOG_LEVEL:-warn}
 log_file=${APICAST_LOG_FILE:-stderr}
 
-mkdir -p "${APICAST_DIR}/logs"
+mkdir -p "${apicast_dir}/logs"
 
-exec ${NGINX_BINARY} -p ${APICAST_DIR} -c conf/nginx.conf -g "daemon off; error_log ${log_file} ${log_level};"
+daemon=off
+
+while getopts ":d" opt; do
+  case "${opt}" in
+    d)
+      daemon=on
+      ;;
+    \?)
+      echo "Invalid option: -${OPTARG}" >&2
+      ;;
+  esac
+done
+
+exec ${openresty_binary} -p ${apicast_dir} -c conf/nginx.conf -g "daemon ${daemon}; error_log ${log_file} ${log_level};"

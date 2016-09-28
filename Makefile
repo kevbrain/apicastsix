@@ -6,6 +6,7 @@ REGISTRY ?= quay.io/3scale
 TEST_NGINX_BINARY ?= nginx
 NGINX = $(shell which $(TEST_NGINX_BINARY))
 SHELL=/bin/bash -o pipefail
+SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= docker-gateway-test
 
@@ -44,21 +45,33 @@ bash: ## Run bash inside the build image
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
 
 test-docker: IMAGE_NAME = docker-gateway-test
-test-docker: build ## Test build docker
-	$(DOCKER_COMPOSE) down --volumes --remove-orphans
+test-docker: build clean ## Test build docker
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p .
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway /opt/app/entrypoint.sh
-	$(DOCKER_COMPOSE) run --rm test /opt/app/entrypoint.sh | grep 'error: no working DNS server'
+	@echo -e $(SEPARATOR)
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway /opt/app/entrypoint.sh -d
+	@echo -e $(SEPARATOR)
+	$(DOCKER_COMPOSE) run --rm test bash -c '(./entrypoint.sh -d 2>&1 || :) | grep "error: no working DNS server found"'
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail http://gateway:8090/status/live
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X PUT http://gateway:8090/config --data '{"services":[{"id":42}]}'
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail http://gateway:8090/status/ready
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X POST http://gateway:8090/boot
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep lua-resty-http
+	@echo -e $(SEPARATOR)
 
 dependencies:
 	luarocks make --local apicast/*.rockspec
 	luarocks make --local rockspec
+
+clean: ## Remove all running docker containers
+	$(DOCKER_COMPOSE) down --volumes --remove-orphans
 
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help

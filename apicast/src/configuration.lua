@@ -259,7 +259,17 @@ function _M.wait(endpoint, timeout)
     return nil, err
   end
 
-  local _, _, _, host, port, _ = unpack(url)
+  local scheme, _, _, host, port, _ = unpack(url)
+
+  if not port and scheme then
+    if scheme == 'http' then
+      port = 80
+    elseif scheme == 'https' then
+      port = 443
+    else
+      return nil, "unknown scheme " .. tostring(scheme) .. ' and port missing'
+    end
+  end
 
   while not connected and now < fin do
     local sock = ngx.socket.tcp()

@@ -220,7 +220,7 @@ function _M.boot()
   local endpoint = os.getenv('THREESCALE_PORTAL_ENDPOINT')
   local file = os.getenv('THREESCALE_CONFIG_FILE')
 
-  return _M.load() or _M.read(file) or _M.download(endpoint) or _M.curl(endpoint) or error('missing configuration')
+  return _M.load() or _M.read(file) or _M.wait(endpoint, 3) or _M.download(endpoint) or _M.curl(endpoint) or error('missing configuration')
 end
 
 function _M.save(config)
@@ -245,6 +245,40 @@ function _M.init()
       ngx.log(ngx.ERR, 'boot failed read: '.. tostring(exit))
     end
   end
+end
+
+function _M.wait(endpoint, timeout)
+  local now = ngx.now()
+  local fin = now + timeout
+  local connected = false
+  local url, err = _M.url(endpoint)
+
+  ngx.log(ngx.DEBUG, 'going to wait for ' .. tostring(timeout))
+
+  if not url and err then
+    return nil, err
+  end
+
+  local _, _, _, host, port, _ = unpack(url)
+
+  while not connected and now < fin do
+    local sock = ngx.socket.tcp()
+    local ok, err = sock:connect(host, port)
+
+    if ok then
+      ngx.log(ngx.DEBUG, 'connected to ' .. host .. ':' .. tostring(port))
+      sock:close()
+      return
+    else
+      ngx.log(ngx.DEBUG, 'failed to connect to ' .. host .. ':' .. tostring(port) .. ': ' .. err)
+    end
+
+    ngx.sleep(0.1)
+    ngx.update_time()
+    now = ngx.now()
+  end
+
+  return connected, err
 end
 
 function _M.download(endpoint)

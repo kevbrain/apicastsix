@@ -1,7 +1,7 @@
 version: '2'
 services:
   gateway:
-    image: docker-gateway-test
+    image: apicast-test
     depends_on:
     - redis
     ports:
@@ -9,13 +9,13 @@ services:
       - "8090:8090"
     env_file: .env
   test:
-    image: docker-gateway-test
+    image: apicast-test
     depends_on:
       - gateway
     entrypoint: ""
     dns: 127.0.0.1
   prove:
-    image: docker-gateway-test
+    image: apicast-test
     user: root
     environment:
       TEST_NGINX_BINARY: openresty

@@ -8,7 +8,7 @@ NGINX = $(shell which $(TEST_NGINX_BINARY))
 SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
 
-IMAGE_NAME ?= docker-gateway-test
+IMAGE_NAME ?= apicast-test
 
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove test-docker prove-docker
@@ -27,7 +27,7 @@ carton:
 prove: carton nginx ## Test nginx
 	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
-prove-docker: IMAGE_NAME = docker-gateway-test
+prove-docker: IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm prove
 
@@ -44,7 +44,7 @@ push: ## Push image to the registry
 bash: ## Run bash inside the build image
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
 
-test-docker: IMAGE_NAME = docker-gateway-test
+test-docker: IMAGE_NAME = apicast-test
 test-docker: build clean ## Test build docker
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t

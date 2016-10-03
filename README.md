@@ -1,8 +1,8 @@
 
-# **WARNING**: this is documentation for development branch, that might not be working at any point. To see stable version go to [`master` branch](https://github.com/3scale/docker-gateway/tree/master).
+# **WARNING**: this is documentation for development branch, that might not be working at any point. To see stable version go to [`master` branch](https://github.com/3scale/apicast/tree/master).
 
 
-# Gateway
+# APIcast
 
 `v2` branch is **not stable** yet and **not recommended for production** use.
 
@@ -12,11 +12,11 @@ This Dockerfile creates a [3scale](http://www.3scale.net) gateway, and configure
 
 ## OpenShift
 
-To run the gateway on OpenShift, just use template and create a Secret to point to your 3scale Admin Portal.
+To run APIcast on OpenShift, just use template and create a Secret to point to your 3scale Admin Portal.
 
 ```shell
 oc secret new-basicauth threescale-portal-endpoint-secret --password=https://provider-key@account-admin.3scale.net
-oc new-app -f https://raw.githubusercontent.com/3scale/docker-gateway/v2/3scale-gateway-openshift-template.yml
+oc new-app -f https://raw.githubusercontent.com/3scale/apicast/v2/openshift/apicast-template.yml
 ```
 
 ## Docker
@@ -24,7 +24,7 @@ oc new-app -f https://raw.githubusercontent.com/3scale/docker-gateway/v2/3scale-
 You can download a ready to use docker image from our repository:
 
 ```
-docker pull quay.io/3scale/gateway:v2
+docker pull quay.io/3scale/apicast:v2
 ```
 
 The 3scale gateway image requires two ENV variables:
@@ -41,7 +41,7 @@ Path to saved JSON file with configuration for the gateway. Has to be injected t
 #### Docker command
 
 ```
-$ docker run -d -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://access-token@test-admin.3scale.net quay.io/3scale/gateway:v2
+$ docker run -d -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://access-token@test-admin.3scale.net quay.io/3scale/apicast:v2
 ```
 
 ### Auto updating (not working yet)

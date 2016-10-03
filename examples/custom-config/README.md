@@ -5,7 +5,7 @@ Sometimes you might require injecting custom nginx configuration into the gatewa
 That can be done very easily just with mounting a volume inside `sites.d` folder in the container:
 
 ```shell
-docker run --publish 8080:8080 --volume $(pwd)/echo.conf:/opt/app/sites.d/echo.conf --env THREESCALE_PORTAL_ENDPOINT=http://portal.example.com quay.io/3scale/gateway:v2
+docker run --publish 8080:8080 --volume $(pwd)/echo.conf:/opt/app/sites.d/echo.conf --env THREESCALE_PORTAL_ENDPOINT=http://portal.example.com quay.io/3scale/apicast:v2
 ```
 
 And then try a request:

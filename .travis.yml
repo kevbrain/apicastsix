@@ -52,8 +52,8 @@ script:
 - make test-docker
 - make prove-docker
 after_success:
-- if [ "$TRAVIS_BRANCH" == "v2" && "$TRAVIS_PULL_REQUEST" == "false" ]; then
-  docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" quay.io;
+- if [ "${TRAVIS_BRANCH}" = "v2" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+  docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" quay.io;
   make release;
   make push;
   fi

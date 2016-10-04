@@ -2,10 +2,27 @@ local _M = {
   _VERSION = '0.01',
 }
 
-local str_len = string.len
+local len = string.len
+local format = string.format
+local pairs = pairs
+local ipairs = ipairs
+local type = type
+local unpack = unpack
+local error = error
+local tostring = tostring
+local open = io.open
+local getenv = os.getenv
+local assert = assert
+local lower = string.lower
+local insert = table.insert
+local concat = table.concat
+
+local util = require 'util'
+local split = util.string_split
 
 local inspect = require 'inspect'
 local cjson = require 'cjson'
+
 local mt = { __index = _M }
 
 local function map(func, tbl)
@@ -27,7 +44,7 @@ end
 local function check_rule(req, rule, usage_t, matched_rules)
   local param = {}
   local p = regexpify(rule.pattern)
-  local m = ngx.re.match(req.path, string.format("^%s",p))
+  local m = ngx.re.match(req.path, format("^%s",p))
 
   if m and req.method == rule.method then
     local args = req.args
@@ -39,7 +56,7 @@ local function check_rule(req, rule, usage_t, matched_rules)
         param[p] = m[i]
       end
 
-      table.insert(matched_rules, rule.pattern)
+      insert(matched_rules, rule.pattern)
       usage_t[rule.system_name] = set_or_inc(usage_t, rule.system_name, rule.delta)
     end
   end
@@ -113,9 +130,9 @@ function _M.parse_service(service)
       no_match_status = proxy.error_status_no_match or 404,
       auth_failed_status = proxy.error_status_auth_failed or 403,
       auth_missing_status = proxy.error_status_auth_missing or 401,
-      oauth_login_url = type(proxy.oauth_login_url) == 'string' and str_len(proxy.oauth_login_url) > 0 and proxy.oauth_login_url or nil,
+      oauth_login_url = type(proxy.oauth_login_url) == 'string' and len(proxy.oauth_login_url) > 0 and proxy.oauth_login_url or nil,
       secret_token = proxy.secret_token,
-      hostname_rewrite = type(proxy.hostname_rewrite) == 'string' and str_len(proxy.hostname_rewrite) > 0 and proxy.hostname_rewrite,
+      hostname_rewrite = type(proxy.hostname_rewrite) == 'string' and len(proxy.hostname_rewrite) > 0 and proxy.hostname_rewrite,
       backend_authentication = {
         type = service.backend_authentication_type,
         value = service.backend_authentication_value
@@ -126,9 +143,9 @@ function _M.parse_service(service)
       },
       credentials = {
         location = proxy.credentials_location or 'query',
-        user_key = string.lower(proxy.auth_user_key or 'user_key'),
-        app_id = string.lower(proxy.auth_app_id or 'app_id'),
-        app_key = string.lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
+        user_key = lower(proxy.auth_user_key or 'user_key'),
+        app_id = lower(proxy.auth_app_id or 'app_id'),
+        app_key = lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
       },
       get_credentials = function(service, params)
         local credentials
@@ -144,8 +161,8 @@ function _M.parse_service(service)
         return credentials
       end,
       extract_usage = function (service, request, args)
-        local method, url = unpack(string.split(request," "))
-        local path, querystring = unpack(string.split(url, "?"))
+        local method, url = unpack(split(request," "))
+        local path, querystring = unpack(split(url, "?"))
         local usage_t =  {}
         local matched_rules = {}
 
@@ -158,7 +175,7 @@ function _M.parse_service(service)
         end
 
         -- if there was no match, usage is set to nil and it will respond a 404, this behavior can be changed
-        return usage_t, table.concat(matched_rules, ", ")
+        return usage_t, concat(matched_rules, ", ")
       end,
       rules = map(function(proxy_rule)
         return {
@@ -177,7 +194,7 @@ end
 
 function _M.decode(contents, encoder)
   if not contents then return nil end
-  if type(contents) == 'string' and str_len(contents) == 0 then return nil end
+  if type(contents) == 'string' and len(contents) == 0 then return nil end
   if type(contents) == 'table' then return contents end
 
   encoder = encoder or cjson
@@ -198,11 +215,11 @@ function _M.parse(contents, encoder)
 end
 
 function _M.read(path)
-  if not path or str_len(tostring(path)) == 0 then
+  if not path or len(tostring(path)) == 0 then
     return nil, 'missing path'
   end
   ngx.log(ngx.INFO, 'configuration loading file ' .. path)
-  return assert(io.open(path)):read('*a')
+  return assert(open(path)):read('*a')
 end
 
 function _M.new(configuration)
@@ -217,8 +234,8 @@ function _M.new(configuration)
 end
 
 function _M.boot()
-  local endpoint = os.getenv('THREESCALE_PORTAL_ENDPOINT')
-  local file = os.getenv('THREESCALE_CONFIG_FILE')
+  local endpoint = getenv('THREESCALE_PORTAL_ENDPOINT')
+  local file = getenv('THREESCALE_CONFIG_FILE')
 
   return _M.load() or _M.read(file) or _M.wait(endpoint, 3) or _M.download(endpoint) or _M.curl(endpoint) or error('missing configuration')
 end
@@ -231,13 +248,12 @@ function _M.load()
   return _M.config
 end
 
-local util = require 'util'
 
 function _M.init()
   local config, exit, code = util.system("cd '" .. ngx.config.prefix() .."' && libexec/boot")
 
   if config then
-    if str_len(config) > 0 then return config end
+    if len(config) > 0 then return config end
   elseif exit then
     if code then
       ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
@@ -299,9 +315,9 @@ function _M.download(endpoint)
   end
 
   local scheme, user, pass, host, port, path = unpack(url)
-  if port then host = table.concat({host, port}, ':') end
+  if port then host = concat({host, port}, ':') end
 
-  local url = table.concat({ scheme, '://', host, path or '/admin/api/nginx/spec.json' }, '')
+  local url = concat({ scheme, '://', host, path or '/admin/api/nginx/spec.json' }, '')
 
   local http = require "resty.http"
   local httpc = http.new()
@@ -310,7 +326,7 @@ function _M.download(endpoint)
   httpc:set_timeout(10000)
 
   if user or pass then
-    headers['Authorization'] = "Basic " .. ngx.encode_base64(table.concat({ user or '', pass or '' }, ':'))
+    headers['Authorization'] = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
   end
 
   -- TODO: this does not fully implement HTTP spec, it first should send
@@ -369,9 +385,9 @@ function _M.curl(endpoint)
 
   local scheme, user, pass, host, port, path = unpack(url)
 
-  if port then host = table.concat({host, port}, ':') end
+  if port then host = concat({host, port}, ':') end
 
-  local url = table.concat({ scheme, '://', table.concat({user or '', pass or ''}, ':'), '@', host, path or '/admin/api/nginx/spec.json' }, '')
+  local url = concat({ scheme, '://', concat({user or '', pass or ''}, ':'), '@', host, path or '/admin/api/nginx/spec.json' }, '')
 
   local config, exit, code = util.system('curl --silent --show-error --fail --max-time 3 ' .. url)
 

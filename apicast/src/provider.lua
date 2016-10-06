@@ -9,6 +9,22 @@ local custom_config = os.getenv('APICAST_CUSTOM_CONFIG')
 local configuration = require 'configuration'
 local inspect = require 'inspect'
 local oauth = require 'oauth'
+local util = require 'util'
+
+local type = type
+local pairs = pairs
+local ipairs = ipairs
+local find = string.find
+local sub = string.sub
+local insert = table.insert
+local lower = string.lower
+
+local concat = table.concat
+local tostring = tostring
+local format = string.format
+local gsub = string.gsub
+
+local split = util.string_split
 
 local _M = {
   -- FIXME: this is really bad idea, this file is shared across all requests,
@@ -65,27 +81,13 @@ end
 
 -- Aux function to split a string
 
-function string:split(delimiter)
-  local result = { }
-  local from = 1
-  local delim_from, delim_to = string.find( self, delimiter, from )
-  if delim_from == nil then return {self} end
-  while delim_from do
-    table.insert( result, string.sub( self, from , delim_from-1 ) )
-    from = delim_to + 1
-    delim_from, delim_to = string.find( self, delimiter, from )
-  end
-  table.insert( result, string.sub( self, from ) )
-  return result
-end
-
 local function first_values(a)
   local r = {}
   for k,v in pairs(a) do
     if type(v) == "table" then
-      r[string.lower(k)] = v[1] -- TODO: use metatable to convert all access to lowercase
+      r[lower(k)] = v[1] -- TODO: use metatable to convert all access to lowercase
     else
-      r[string.lower(k)] = v
+      r[lower(k)] = v
     end
   end
   return r
@@ -96,12 +98,12 @@ local function build_querystring_formatter(fmt)
     local function kvmap(f, t)
       local res = {}
       for k, v in pairs(t) do
-        table.insert(res, f(k, v))
+        insert(res, f(k, v))
       end
       return res
     end
 
-    return table.concat(kvmap(function(k,v) return string.format(fmt, k, v) end, query or {}), "&")
+    return concat(kvmap(function(k,v) return format(fmt, k, v) end, query or {}), "&")
   end
 end
 
@@ -281,25 +283,26 @@ function _M.access(service)
     ngx.exit(403)
   end
 
+  local request = ngx.var.request
   local credentials = service.credentials
-  local parameters = get_auth_params(credentials.location, string.split(ngx.var.request, " ")[1] )
+  local parameters = get_auth_params(credentials.location, split(request, " ")[1] )
 
   ngx.var.secret_token = service.secret_token
 
   if backend_version == '1' then
     params.user_key = parameters[credentials.user_key]
-    ngx.var.cached_key = table.concat({service.id, params.user_key}, ':')
+    ngx.var.cached_key = concat({service.id, params.user_key}, ':')
 
   elseif backend_version == '2' then
     params.app_id = parameters[credentials.app_id]
     params.app_key = parameters[credentials.app_key] -- or ""  -- Uncoment the first part if you want to allow not passing app_key
 
-    ngx.var.cached_key = table.concat({service.id, params.app_id, params.app_key}, ':')
+    ngx.var.cached_key = concat({service.id, params.app_id, params.app_key}, ':')
 
   elseif backend_version == 'oauth' then
     ngx.var.access_token = parameters.access_token
     params.access_token = parameters.access_token
-    ngx.var.cached_key = table.concat({service.id, params.access_token}, ':')
+    ngx.var.cached_key = concat({service.id, params.access_token}, ':')
   else
     error('unknown backend version: ' .. tostring(backend_version))
   end
@@ -308,7 +311,7 @@ function _M.access(service)
     return error_no_credentials(service)
   end
 
-  usage, matched_patterns = service:extract_usage(ngx.var.request)
+  usage, matched_patterns = service:extract_usage(request)
 
   ngx.log(ngx.INFO, inspect{usage, matched_patterns})
   ngx.var.credentials = build_query(params)
@@ -366,7 +369,7 @@ end
 
 if custom_config then
   local path = package.path
-  local module = string.gsub(custom_config, '%.lua$', '') -- strip .lua from end of the file
+  local module = gsub(custom_config, '%.lua$', '') -- strip .lua from end of the file
   package.path = package.path .. ';' .. ngx.config.prefix() .. '?.lua;'
   local ok, c = pcall(function() return require(module) end)
   package.path = path

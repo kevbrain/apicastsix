@@ -364,6 +364,8 @@ api response
 --- response_headers
 X-3scale-matched-rules: /foo?bar=baz
 --- error_code: 200
+--- no_error_log
+[error]
 
 === TEST 8: mapping rule with variable value is required to be sent
 When mapping rule has a parameter with variable value it has to exist.

@@ -88,4 +88,32 @@ describe('Configuration object', function()
       assert.same({'http', false, false, 'example.com', '8080', '/path'}, configuration.url('http://example.com:8080/path'))
     end)
   end)
+
+  describe('.filter_services', function()
+    local filter_services = configuration.filter_services
+
+    it('works with nil', function()
+      local services = { { id = 42 } }
+      assert.equal(services, filter_services(services))
+    end)
+
+    it('works with table with ids', function()
+      local services = { { id = 42 } }
+
+      assert.same(services, filter_services(services, { 42 }))
+      assert.same({}, filter_services(services, { 21 }))
+    end)
+  end)
+
+  insulate('.services_limit', function()
+    local services_limit = configuration.services_limit
+
+    it('reads from environment', function()
+      stub(os, 'getenv').on_call_with('APICAST_SERVICES').returns('42,21')
+
+      local services = services_limit()
+
+      assert.same({ [42] = true, [21] = true }, services)
+    end)
+  end)
 end)

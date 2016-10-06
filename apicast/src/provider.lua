@@ -144,7 +144,7 @@ local function find_service_strict(host)
       end
     end
   end
-  ngx.log(ngx.ERR, 'service not found for ' .. host)
+  ngx.log(ngx.ERR, 'service not found for host ' .. host)
 end
 
 local function find_service_cascade(host)
@@ -247,7 +247,13 @@ end
 
 function _M.call(host)
   local host = host or ngx.var.host
-  local service = _M.find_service(host) or ngx.exit(404)
+  local service = _M.find_service(host)
+
+  if not service then
+    ngx.status = 404
+    ngx.print('')
+    return ngx.exit(ngx.status)
+  end
 
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value

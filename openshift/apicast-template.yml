@@ -41,6 +41,8 @@ objects:
             value: ${THREESCALE_CONFIG_FILE}
           - name: RESOLVER
             value: ${RESOLVER}
+          - name: APICAST_SERVICES
+            value: ${APICAST_SERVICES}
           image: ${THREESCALE_GATEWAY_IMAGE}
           imagePullPolicy: Always
           name: ${THREESCALE_GATEWAY_NAME}
@@ -105,4 +107,8 @@ parameters:
 - description: DNS Resolver for openresty, if empty it will be autodiscovered
   value:
   name: RESOLVER
+  required: false
+- description: Subset of services to run. Use comma separated list of service ids (eg. 42,1337)
+  value:
+  name: APICAST_SERVICES
   required: false

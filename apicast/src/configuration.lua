@@ -10,6 +10,8 @@ local type = type
 local unpack = unpack
 local error = error
 local tostring = tostring
+local tonumber = tonumber
+local next = next
 local open = io.open
 local getenv = os.getenv
 local assert = assert
@@ -222,13 +224,48 @@ function _M.read(path)
   return assert(open(path)):read('*a')
 end
 
+local function to_hash(table)
+  local t = {}
+
+  for v,id in ipairs(table) do
+    t[tonumber(id)] = true
+  end
+
+  return t
+end
+
+function _M.services_limit()
+  local services = {}
+  local subset = os.getenv('APICAST_SERVICES')
+  if not subset then return services end
+
+  local ids = split(subset, ',')
+
+  return to_hash(ids)
+end
+
+function _M.filter_services(services, subset)
+  subset = subset and to_hash(subset) or _M.services_limit()
+  if not subset or not next(subset) then return services end
+
+  local s = {}
+
+  for _, service in ipairs(services) do
+    if subset[service.id] then
+      s[#s+1] = service
+    end
+  end
+
+  return s
+end
+
 function _M.new(configuration)
   configuration = configuration or {}
   local services = (configuration or {}).services or {}
 
   return setmetatable({
     version = configuration.timestamp,
-    services = map(_M.parse_service, services),
+    services = _M.filter_services(map(_M.parse_service, services)),
     debug_header = configuration.provider_key -- TODO: change this to something secure
   }, mt)
 end

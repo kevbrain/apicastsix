@@ -228,7 +228,11 @@ local function to_hash(table)
   local t = {}
 
   for v,id in ipairs(table) do
-    t[tonumber(id)] = true
+    local n = tonumber(id)
+
+    if n then
+      t[n] = true
+    end
   end
 
   return t
@@ -237,7 +241,7 @@ end
 function _M.services_limit()
   local services = {}
   local subset = os.getenv('APICAST_SERVICES')
-  if not subset then return services end
+  if not subset or subset == '' then return services end
 
   local ids = split(subset, ',')
 

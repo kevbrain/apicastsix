@@ -115,5 +115,14 @@ describe('Configuration object', function()
 
       assert.same({ [42] = true, [21] = true }, services)
     end)
+
+    it('reads from environment', function()
+      stub(os, 'getenv').on_call_with('APICAST_SERVICES').returns('')
+
+      local services = services_limit()
+
+      assert.same({}, services)
+    end)
   end)
+
 end)

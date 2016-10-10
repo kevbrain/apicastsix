@@ -36,10 +36,9 @@ function _M.status()
 end
 
 function _M.config()
-  local config = cjson.encode(provider.contents)
-
+  ngx.header.content_type = 'application/json; charset=utf-8'
   ngx.status = 200
-  ngx.say(config)
+  ngx.say(provider.contents)
 end
 
 function _M.update_config()

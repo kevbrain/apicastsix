@@ -1,10 +1,10 @@
 # Why V2?
 
-3scale provided downloadable nginx configuration for many years and it worked great for our customers. However, some things could be improved.
+3scale provided downloadable NGINX configuration for many years and it worked great for our customers. However, some things could be improved.
 
 ## Splitting code and configuration
 
-When nginx configuration is generated from the Admin Portal, it has all the configuration embedded.
+When NGINX configuration is generated from the Admin Portal, it has all the configuration embedded.
 That means changes to the code will result in conflicts when configuration changes and needs to be regenerated.
 
 Splitting code and configuration makes the code shareable. Now everyone can run the same code and just download new configuration (in JSON format) when needed. That also allows doing customizations to the code without worrying about configs when new configuration needs to be aplied. The configuration is just JSON file.

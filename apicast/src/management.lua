@@ -52,11 +52,11 @@ function _M.update_config()
     data = assert(io.open(file)):read('*a')
   end
 
-  local configuration = configuration.decode(data)
-
-  provider.configure(configuration)
+  local config = configuration.decode(data)
+  provider.configure(config)
   -- TODO: respond with proper 304 Not Modified when config is the same
-  local response = cjson.encode({ status = 'ok', config = configuration or cjson.null })
+  local response = cjson.encode({ status = 'ok', config = config or cjson.null })
+  ngx.header.content_type = 'application/json; charset=utf-8'
   ngx.say(response)
 end
 
@@ -66,19 +66,20 @@ function _M.delete_config()
   provider.configure(nil)
   -- TODO: respond with proper 304 Not Modified when config is the same
   local response = cjson.encode({ status = 'ok', config = cjson.null })
+  ngx.header.content_type = 'application/json; charset=utf-8'
   ngx.say(response)
 end
 
 local util = require 'util'
 
 function _M.boot()
-  local config = util.timer('configuration.boot', configuration.boot)
-  local configuration = configuration.decode(config)
-  local response = cjson.encode({ status = 'ok', config = configuration or cjson.null })
+  local data = util.timer('configuration.boot', configuration.boot)
+  local config = configuration.decode(data)
+  local response = cjson.encode({ status = 'ok', config = config or cjson.null })
 
-  ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(config))
+  ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(data))
 
-  provider.init(configuration)
+  provider.init(config)
 
   ngx.say(response)
 end

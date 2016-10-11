@@ -36,7 +36,7 @@ local _M = {
 function _M.configure(contents)
   local config = configuration.parse(contents)
 
-  _M.contents = contents
+  _M.contents = configuration.encode(contents)
   _M.configured = true
   _M.configuration = config
   _M.services = config.services or {} -- for compatibility reasons

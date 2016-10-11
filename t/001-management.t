@@ -125,6 +125,8 @@ Endpoint that dumps the original configuration.
 include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /config
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
 {"services":[{"id":42}]}
 --- error_code: 200
@@ -242,5 +244,28 @@ GET /test
 {"status":"ok","config":null}
 null
 --- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 9: all endpoints use correct Content-Type
+JSON response body and content type application/json should be returned.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+  include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request eval
+[ 'DELETE /config', 'PUT /config 
+{"services":[{"id":42}]}', 'POST /config
+{"services":[{"id":42}]}', 'GET /config' ]
+--- response_headers eval
+[ 'Content-Type: application/json; charset=utf-8',
+  'Content-Type: application/json; charset=utf-8',
+  'Content-Type: application/json; charset=utf-8', 
+  'Content-Type: application/json; charset=utf-8' ]
+--- response_body eval
+[ '{"status":"ok","config":null}'."\n",
+  '{"status":"ok","config":{"services":[{"id":42}]}}'."\n",
+  '{"status":"ok","config":{"services":[{"id":42}]}}'."\n",
+  '{"services":[{"id":42}]}'."\n" ]  
 --- no_error_log
 [error]

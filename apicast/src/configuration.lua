@@ -210,6 +210,14 @@ function _M.decode(contents, encoder)
   return config
 end
 
+function _M.encode(contents, encoder)
+  if type(contents) == 'string' then return contents end
+  
+  encoder = encoder or cjson
+
+  return encoder.encode(contents)
+end
+
 function _M.parse(contents, encoder)
   local config = _M.decode(contents, encoder)
 

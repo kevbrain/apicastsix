@@ -71,6 +71,22 @@ describe('Configuration object', function()
     end)
   end)
 
+  describe('.encode', function()
+    it('encodes to json by default', function()
+      local t = { a = 1, b = 2 }
+      assert.same('{"a":1,"b":2}', configuration.encode(t))
+    end)
+
+    it('does not do double encoding', function()
+      local str = '{"a":1,"b":2}'
+      assert.same(str, configuration.encode(str))
+    end)
+
+    it('encodes nil to null', function()
+      assert.same('null', configuration.encode(nil))
+    end)
+  end)
+
   describe('.url', function()
     it('works with port', function()
       assert.same({'https', false, false, 'example.com', '8443'}, configuration.url('https://example.com:8443'))

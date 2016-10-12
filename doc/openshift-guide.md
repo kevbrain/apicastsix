@@ -200,6 +200,6 @@ You may wish to now shutdown the OpenShift Origin VM to save resources.
 
 Now that you have an API Gateway up and running on your local machine you can:
 
-1. Explore how to configure access policies for your API, and engage developers with a Developer Portal by following the <a href="/guides/quickstart">Quickstart</a>.
+1. Explore how to configure access policies for your API, and engage developers with a Developer Portal by following the <a href="https://support.3scale.net/guides/quickstart">Quickstart</a>.
 2. Whenever you make changes to your API definition in the 3scale Admin Portal &ndash; in particular the 3scale metrics/methods and mapping rules &ndash; you should create a new deployment in OpenShift. This will start new instances that will download and run your new API definition. Then OpenShift will shut down gracefully the previous instances.
 3. Run OpenShift V3 on your dedicated datacenter or on your favorite cloud platform and then follow the same instructions to open up your API to the world.

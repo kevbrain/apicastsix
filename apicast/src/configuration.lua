@@ -298,6 +298,8 @@ function _M.load()
 end
 
 
+-- Cosocket API is not available in the init_by_lua* context (see more here: https://github.com/openresty/lua-nginx-module#cosockets-not-available-everywhere)
+-- For this reason a new process needs to be started to download the configuration through 3scale API
 function _M.init()
   local config, exit, code = util.system("cd '" .. ngx.config.prefix() .."' && libexec/boot")
 
@@ -312,10 +314,10 @@ function _M.init()
   end
 end
 
+-- wait until a connection to a TCP socket can be established
 function _M.wait(endpoint, timeout)
   local now = ngx.now()
   local fin = now + timeout
-  local connected = false
   local url, err = _M.url(endpoint)
 
   ngx.log(ngx.DEBUG, 'going to wait for ' .. tostring(timeout))
@@ -336,7 +338,7 @@ function _M.wait(endpoint, timeout)
     end
   end
 
-  while not connected and now < fin do
+  while now < fin do
     local sock = ngx.socket.tcp()
     local ok, err = sock:connect(host, port)
 
@@ -353,7 +355,7 @@ function _M.wait(endpoint, timeout)
     now = ngx.now()
   end
 
-  return connected, err
+  return nil, err
 end
 
 function _M.download(endpoint)
@@ -425,6 +427,8 @@ function _M.url(endpoint)
 end
 
 
+-- curl is used because resty command that runs libexec/boot does not have correct DNS resolvers set up
+-- resty is using google's public DNS servers and there is no way to change that
 function _M.curl(endpoint)
   local url, err = _M.url(endpoint)
 

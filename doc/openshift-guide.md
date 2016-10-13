@@ -1,6 +1,6 @@
 # Using 3scale API Gateway on Red Hat OpenShift
 
-This tutorial describes how to use the Dockerized version of the 3scale API Gateway that is packaged for easy installation and operation on Red Hat OpenShift V3.
+This tutorial describes how to use the dockerized 3scale API Gateway v2 (APIcast) that is packaged for easy installation and operation on Red Hat OpenShift V3.
 
 In this tutorial we use the OpenShift Origin VM &ndash; a Virtual Machine image you can download and run locally, so that you can follow this tutorial without running a full OpenShift deployment.
 

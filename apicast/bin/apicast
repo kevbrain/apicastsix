@@ -4,14 +4,16 @@ set -euo pipefail
 IFS=$'\n\t'
 
 script=${BASH_SOURCE[0]}
-
-if (readlink "${script}" > /dev/null); then
-  path=$(dirname "$(dirname "${script}")/$(readlink "${script}")")
+if (readlink -f "${script}" > /dev/null 2>&1); then
+  path=$(readlink -f "${script}")
+elif (readlink "${script}" > /dev/null 2>&1); then
+  path="$(dirname "${script}")/$(readlink "${script}")"
 else
-  path=$(dirname "${script}")
+  path="${script}"
 fi
 
-apicast_dir="$( cd "${path}/.." && pwd )"
+bin_dir=$(dirname "${path}")
+apicast_dir="$( cd "${bin_dir}/.." && pwd )"
 
 if (luarocks help > /dev/null 2>&1 ); then
   eval `luarocks path`

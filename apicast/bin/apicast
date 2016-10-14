@@ -13,14 +13,14 @@ fi
 
 apicast_dir="$( cd "${path}/.." && pwd )"
 
-if (which luarocks > /dev/null 2>&1 ); then
+if (luarocks help > /dev/null 2>&1 ); then
   eval `luarocks path`
 fi
 
-pick_binary() {
+pick_openresty() {
   for cmd in "$@"
   do
-    if (which "${cmd}" > /dev/null 2>&1); then
+    if (${cmd} -V > /dev/null 2>&1); then
       echo "${cmd}"
       exit 0
     fi
@@ -29,7 +29,7 @@ pick_binary() {
   exit 1
 }
 
-default_openresty_binary=$(pick_binary openresty-debug openresty cmd)
+default_openresty_binary=$(pick_openresty openresty-debug openresty nginx)
 
 openresty_binary=${APICAST_OPENRESTY_BINARY:-$default_openresty_binary}
 log_level=${APICAST_LOG_LEVEL:-warn}

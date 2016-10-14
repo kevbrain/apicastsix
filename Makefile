@@ -51,9 +51,9 @@ test-docker: build clean ## Test build docker
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p .
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway /opt/app/entrypoint.sh -d
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/entrypoint -d
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm test bash -c '(./entrypoint.sh -d 2>&1 || :) | grep "error: no working DNS server found"'
+	$(DOCKER_COMPOSE) run --rm test bash -c '(bin/entrypoint -d 2>&1 || :) | grep "error: no working DNS server found"'
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail http://gateway:8090/status/live
 	@echo -e $(SEPARATOR)

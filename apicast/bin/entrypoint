@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # 3scale (operations@3scale.net)
 set -eu
@@ -45,4 +45,12 @@ if [ -z "${THREESCALE_PORTAL_ENDPOINT:-}" ] && [ -z "${THREESCALE_CONFIG_FILE:-}
   exit 1
 fi
 
-exec bin/apicast "$@"
+if [ -f bin/apicast ]; then
+  apicast=bin/apicast
+elif [ -f "${BASH_SOURCE%/*}/apicast" ]; then
+  apicast="${BASH_SOURCE%/*}/apicast"
+else
+  apicast=apicast
+fi
+
+exec "${apicast}" "$@"

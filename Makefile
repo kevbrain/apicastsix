@@ -12,7 +12,7 @@ IMAGE_NAME ?= apicast-test
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7
 
 test: ## Run all tests
-	$(MAKE) --keep-going busted prove test-docker prove-docker
+	$(MAKE) --keep-going busted prove test-docker prove-docker test-docker-release
 
 busted: dependencies ## Test Lua.
 	@bin/busted

@@ -3,8 +3,14 @@
 # 3scale (operations@3scale.net)
 set -eu
 
+luarocks=/opt/app/bin/luarocks
+
 # Load Luarocks paths
-eval `/opt/app/bin/luarocks path`
+if [ -f "${luarocks}" ]; then
+  eval `/opt/app/bin/luarocks path`
+fi
+
+AUTO_UPDATE_INTERVAL=${AUTO_UPDATE_INTERVAL:-0}
 
 if [ "${AUTO_UPDATE_INTERVAL}" != 0 ] && [ "${AUTO_UPDATE_INTERVAL}" -lt 60 ]; then
   echo "AUTO_UPDATE_INTERVAL should be 60 or greater"
@@ -36,12 +42,15 @@ NAMESERVER=$(pick_dns_server)
 
 export RESOLVER=${RESOLVER:-${NAMESERVER}}
 
-mkdir -p /opt/app/http.d
-echo "resolver ${RESOLVER};" > /opt/app/http.d/resolver.conf
+mkdir -pv "$(pwd)/http.d"
+echo "resolver ${RESOLVER};" > "$(pwd)/http.d/resolver.conf"
+
+THREESCALE_PORTAL_ENDPOINT="${THREESCALE_PORTAL_ENDPOINT:-}"
+THREESCALE_CONFIG_FILE="${THREESCALE_CONFIG_FILE:-}"
 
 if [ -z "${THREESCALE_PORTAL_ENDPOINT:-}" ] && [ -z "${THREESCALE_CONFIG_FILE:-}" ]; then
   # TODO: improve the error messsage
-  echo "missing either THREESCALE_PORTAL_ENDPOINT or THREESCALE_CONFIG_FILE envirionment variable"
+  echo "missing either THREESCALE_PORTAL_ENDPOINT or THREESCALE_CONFIG_FILE environment variable"
   exit 1
 fi
 

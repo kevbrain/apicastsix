@@ -9,6 +9,7 @@ SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
+BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7
 
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove test-docker prove-docker
@@ -27,15 +28,15 @@ carton:
 prove: carton nginx ## Test nginx
 	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
-prove-docker: IMAGE_NAME = apicast-test
+prove-docker: export IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm prove
 
 build: ## Build image for development
-	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --context-dir=apicast --copy --incremental
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --copy --incremental
 
 release: ## Build image for release
-	$(S2I) build . quay.io/3scale/s2i-openresty-centos7 $(IMAGE_NAME) --context-dir=apicast --pull-policy=always
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --runtime-image=$(BUILDER_IMAGE)-runtime --pull-policy=always
 
 push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)
@@ -44,7 +45,7 @@ push: ## Push image to the registry
 bash: ## Run bash inside the build image
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
 
-test-docker: IMAGE_NAME = apicast-test
+test-docker: export IMAGE_NAME = apicast-test
 test-docker: build clean ## Test build docker
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
@@ -65,6 +66,13 @@ test-docker: build clean ## Test build docker
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep lua-resty-http
 	@echo -e $(SEPARATOR)
+
+test-docker-release: export IMAGE_NAME = apicast-release-test
+test-docker-release: build clean
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
+	@echo -e $(SEPARATOR)
+	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'
+
 
 dependencies:
 	luarocks make --local apicast/*.rockspec

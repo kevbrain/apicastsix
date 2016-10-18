@@ -15,10 +15,6 @@ fi
 bin_dir=$(dirname "${path}")
 apicast_dir="$( cd "${bin_dir}/.." && pwd )"
 
-if (luarocks help > /dev/null 2>&1 ); then
-  eval `luarocks path`
-fi
-
 pick_openresty() {
   for cmd in "$@"
   do

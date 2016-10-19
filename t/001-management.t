@@ -7,40 +7,7 @@ my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
 $ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$apicast/conf.d/management.conf";
 
-# TODO: make this a module so it can be used in other test files
-our $dns = sub ($$$) {
-  my ($host, $ip) = @_;
-
-  return sub {
-    # Get DNS request ID from passed UDP datagram
-    my $dns_id = unpack("n", shift);
-    # Set name and encode it
-    my $name = $host;
-    $name =~ s/([^.]+)\.?/chr(length($1)) . $1/ge;
-    $name .= "\0";
-    my $s = '';
-    $s .= pack("n", $dns_id);
-    # DNS response flags, hardcoded
-    # response, opcode, authoritative, truncated, recursion desired, recursion available, reserved
-    my $flags = (1 << 15) + (0 << 11) + (1 << 10) + (0 << 9) + (1 << 8) + (1 << 7) + 0;
-    $flags = pack("n", $flags);
-    $s .= $flags;
-    $s .= pack("nnnn", 1, 1, 0, 0);
-    $s .= $name;
-    $s .= pack("nn", 1, 1); # query class A
-
-    # Set response address and pack it
-    my @addr = split /\./, $ip;
-    my $data = pack("CCCC", @addr);
-
-    # pointer reference to the first name
-    # $name = pack("n", 0b1100000000001100);
-
-    # name + type A + class IN + TTL + length + data(ip)
-    $s .= $name. pack("nnNn", 1, 1, 0, 4) . $data;
-    return $s;
-  }
-};
+require("t/dns.pl");
 
 log_level('debug');
 repeat_each(2);

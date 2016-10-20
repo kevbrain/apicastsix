@@ -1,4 +1,5 @@
 local lrucache = require "resty.lrucache"
+local inspect = require 'inspect'
 
 local setmetatable = setmetatable
 local ipairs = ipairs
@@ -59,8 +60,18 @@ function _M.store(self, answer)
     return nil, 'not initialized'
   end
 
-  return cache:set(answer.name, answer, answer.ttl)
+  local name = answer.name
+
+  if not name then
+    ngx.log(ngx.WARN, 'resolver cache write refused invalid answer ', inspect(answer))
+    return nil, 'invalid answer'
+  end
+
+  ngx.log(ngx.DEBUG, 'resolver cache write ', name, ' with TLL ', answer.ttl)
+
+  return cache:set(name, answer, answer.ttl)
 end
+
 
 function _M.save(self, answers)
   local answers = compact_answers(answers or {})
@@ -101,6 +112,8 @@ local function fetch(cache, name, stale)
         return {}
       end
     end
+
+    ngx.log(ngx.DEBUG, 'resolver cache read ', name, ' ', #answers, ' entries')
 
     return answers
   end
@@ -144,7 +157,11 @@ function _M.get(self, name)
     end
   end
 
-  return answers
+  if #answers == 0 then
+    return nil
+  else
+    return answers
+  end
 end
 
 return _M

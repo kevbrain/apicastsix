@@ -1,15 +1,20 @@
 local setmetatable = setmetatable
 local ipairs = ipairs
 
+local resolver_cache = require 'resty.resolver.cache'
+
 local _M = {
   _VERSION = '0.1'
 }
 
 local mt = { __index = _M }
 
-function _M.new(dns)
+function _M.new(dns, opts)
+  local opts = opts or {}
+  local cache = opts.cache or resolver_cache.new()
   return setmetatable({
-    dns = dns
+    dns = dns,
+    cache = cache
   }, mt)
 end
 
@@ -38,6 +43,7 @@ function _M.get_servers(self, qname, opts)
   local opts = opts or {}
   local dns = self.dns
   local port = opts.port
+  local cache = self.cache
 
   if not dns then
     return nil, 'resolver not initialized'
@@ -46,7 +52,12 @@ function _M.get_servers(self, qname, opts)
   -- TODO: implement cache
   -- TODO: pass proper options to dns resolver (like SRV query type)
 
-  local answers, err = dns:query(qname)
+  local answers, err = cache:get(qname)
+
+  if not answers then
+    answers, err = dns:query(qname)
+    cache:save(answers)
+  end
 
   if err then
     return nil, err

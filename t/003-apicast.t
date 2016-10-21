@@ -5,6 +5,7 @@ my $pwd = cwd();
 my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
+$ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 
@@ -111,6 +112,8 @@ credentials invalid!
 === TEST 4: api backend gets the request
 It asks backend and then forwards the request to the api.
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({
@@ -160,6 +163,7 @@ apicast cache miss key: 42:value:usage[hits]=2
 === TEST 5: call to backend is cached
 First call is done synchronously and the second out of band.
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({
@@ -217,6 +221,7 @@ apicast cache hit key: 42:value:usage[hits]=2
 === TEST 6: multi service configuration
 Two services can exist together and are split by their hostname.
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({
@@ -289,6 +294,7 @@ apicast cache write key: 21:two-id:two-key:usage[hits]=2
 === TEST 7: mapping rule with fixed value is mandatory
 When mapping rule has a parameter with fixed value it has to be matched.
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({
@@ -326,6 +332,7 @@ no mapping rules matched!
 === TEST 8: mapping rule with fixed value is mandatory
 When mapping rule has a parameter with fixed value it has to be matched.
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({
@@ -370,6 +377,7 @@ X-3scale-matched-rules: /foo?bar=baz
 === TEST 9: mapping rule with variable value is required to be sent
 When mapping rule has a parameter with variable value it has to exist.
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({

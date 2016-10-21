@@ -32,6 +32,15 @@ describe('resty.resolver', function()
       assert.spy(dns.query).was.called_with(dns, '3scale.net')
     end)
 
+    it('returns servers for ip', function()
+      local answer = { address = '127.0.0.2', ttl = -1 }
+
+      local servers, err = resolver:get_servers('127.0.0.2')
+
+      assert.falsy(err)
+      assert.same({ answer, answers = { answer } }, servers)
+    end)
+
     it('accepts port', function()
       dns.query = function() return { {address = '127.0.0.2'} } end
 

@@ -23,8 +23,12 @@ local concat = table.concat
 local tostring = tostring
 local format = string.format
 local gsub = string.gsub
+local unpack = unpack
 
 local split = util.string_split
+
+local resty_resolver = require 'resty.resolver'
+local dns_resolver = require 'resty.dns.resolver'
 
 local _M = {
   -- FIXME: this is really bad idea, this file is shared across all requests,
@@ -177,7 +181,7 @@ end
 local http = {
   get = function(url)
     ngx.log(ngx.INFO, '[http] requesting ' .. url)
-    local res = ngx.location.capture(assert(url), { share_all_vars = true })
+    local res = ngx.location.capture(assert(url), { share_all_vars = true, ctx = ngx.ctx })
 
     ngx.log(ngx.INFO, '[http] status: ' .. tostring(res.status))
     return res
@@ -257,7 +261,6 @@ function _M.call(host)
 
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
-  ngx.var.backend_endpoint = service.backend.endpoint or ngx.var.backend_endpoint
   ngx.var.backend_host = service.backend.host or ngx.var.backend_host
 
   ngx.var.service_id = tostring(service.id)
@@ -274,11 +277,30 @@ function _M.call(host)
     end
   end
 
+  -- set backend
+  local scheme, _, _, host, port, path = unpack(configuration.url(service.backend.endpoint or ngx.var.backend_endpoint))
+
+  if not port then
+    if scheme == 'http' then
+      port = 80
+    elseif scheme == 'https' then
+      port = 443
+    end
+  end
+
+  ngx.ctx.dns = dns_resolver:new{ nameservers = { { "127.0.0.1", 53 } } }
+  ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
+
+  ngx.ctx.backend_upstream = ngx.ctx.resolver:get_servers(host, { port = port or nil })
+  ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. (path or '')
+
+  -- call access phase
+
   _M.access(service)
 end
 
 function _M.access(service)
-  local host = (configuration.url(service.api_backend) or {})[4]
+  local scheme, _, _, host, port, path = unpack(configuration.url(service.api_backend) or {})
   local backend_version = service.backend_version
   local params = {}
   local usage = {}
@@ -338,8 +360,11 @@ function _M.access(service)
 
   _M.authorize(backend_version, params, service)
 
-  ngx.var.proxy_pass = service.api_backend or error('missing api backend')
+  -- set upstream
+  ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')
   ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
+
+  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(host, { port = port })
 end
 
 

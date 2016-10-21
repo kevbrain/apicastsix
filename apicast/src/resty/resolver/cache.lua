@@ -1,4 +1,4 @@
-local lrucache = require "resty.lrucache"
+local resty_lrucache = require "resty.lrucache"
 local inspect = require 'inspect'
 
 local setmetatable = setmetatable
@@ -6,11 +6,13 @@ local ipairs = ipairs
 local pairs = pairs
 local min = math.min
 local insert = table.insert
+local concat = table.concat
 
 local co_yield = coroutine.yield
 local co_create = coroutine.create
 local co_resume = coroutine.resume
 
+local lrucache = resty_lrucache.new(1000)
 
 local _M = {
   _VERSION = '0.1'
@@ -19,10 +21,8 @@ local _M = {
 local mt = { __index = _M }
 
 function _M.new(cache)
-  local cache = cache or lrucache.new(1000)
-
   return setmetatable({
-    cache = cache
+    cache = cache or lrucache
   }, mt)
 end
 
@@ -31,7 +31,7 @@ local function compact_answers(servers)
   local compact = {}
 
   for _, server in ipairs(servers) do
-    local name = server.name
+    local name = server.name or server.address
 
     local packed = hash[name]
 
@@ -158,8 +158,10 @@ function _M.get(self, name)
   end
 
   if #answers == 0 then
+    ngx.log(ngx.DEBUG, 'resolver cache miss: ', name)
     return nil
   else
+    ngx.log(ngx.DEBUG, 'resolver cache hit: ', name, ' ', concat(answers.addresses, ', '))
     return answers
   end
 end

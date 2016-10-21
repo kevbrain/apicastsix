@@ -37,10 +37,10 @@ describe('resty.balancer', function()
 
     it('returns peers from servers', function()
       local servers = {
-        { }
+        { address = '127.0.0.2' }
       }
 
-      local peers, err = balancer:peers(servers)
+      local peers, err = balancer:peers(servers, 80)
 
       assert.falsy(err)
       assert.equal(1, #peers)
@@ -62,6 +62,22 @@ describe('resty.balancer', function()
       assert.falsy(err)
       assert.truthy(ok)
       assert.spy(b.balancer.set_current_peer).was.called_with('127.0.0.2', 8091)
+    end)
+  end)
+
+  describe('round-robin balancer', function()
+    local balancer = resty_balancer.new('round-robin')
+
+    local servers = {
+      { address = '127.0.0.1', port = 80 },
+      { address = '127.0.0.2', port = 80 },
+      { address = '127.0.0.3', port = 80 },
+    }
+
+    local peers = balancer:peers()
+
+    it('loops through peers', function()
+
     end)
   end)
 end)

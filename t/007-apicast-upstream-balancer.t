@@ -70,6 +70,8 @@ GET /t
         ngx.exit(ngx.status)
       end
     }
+
+    keepalive 32;
   }
 --- config
 location /api {
@@ -107,6 +109,8 @@ yay
         ngx.exit(ngx.status)
       end
     }
+
+    keepalive 32;
   }
 --- config
 location /api {

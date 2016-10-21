@@ -1,5 +1,6 @@
 local setmetatable = setmetatable
 local ipairs = ipairs
+local next = next
 
 local resolver_cache = require 'resty.resolver.cache'
 
@@ -27,6 +28,24 @@ local function new_server(answer, port)
   }
 end
 
+local function new_answer(address, port)
+  return {
+    address = address,
+    ttl = -1,
+    port = port
+  }
+end
+
+local function is_ip(address)
+  local m, err = ngx.re.match(address, '^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$', 'o')
+
+  if m then
+    return next(m)
+  else
+    return nil, err
+  end
+end
+
 local function convert_answers(answers, port)
   local servers = {}
 
@@ -49,13 +68,25 @@ function _M.get_servers(self, qname, opts)
     return nil, 'resolver not initialized'
   end
 
+  if not qname then
+    return nil, 'query missing'
+  end
+
   -- TODO: implement cache
   -- TODO: pass proper options to dns resolver (like SRV query type)
 
   local answers, err = cache:get(qname)
 
   if not answers then
-    answers, err = dns:query(qname)
+    ngx.log(ngx.DEBUG, 'resolver query ', qname)
+
+    if is_ip(qname) then
+      ngx.log(ngx.DEBUG, 'host is ip address: ', qname)
+      answers = { new_answer(qname) }
+    else
+      answers, err = dns:query(qname)
+    end
+
     cache:save(answers)
   end
 

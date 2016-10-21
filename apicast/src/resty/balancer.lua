@@ -3,6 +3,8 @@ local tostring = tostring
 local pairs = pairs
 local ipairs = ipairs
 local unpack = unpack
+local insert = table.insert
+local tonumber = tonumber
 
 local balancer = require "ngx.balancer"
 
@@ -37,16 +39,22 @@ function _M.modes()
   local m = {}
 
   for name, _ in pairs(modes) do
-    m[#m+1] = name
+    insert(m,name)
   end
 
   return m
 end
 
 local function new_peer(server, port)
+  local address = server.address
+
+  if not address then
+    return nil, 'server missing address'
+  end
+
   return {
-    server.address,
-    server.port or port or 80
+    address,
+    tonumber(server.port or port or 80, 10)
   }
 end
 
@@ -54,7 +62,13 @@ local function convert_servers(servers, port)
   local peers = {}
 
   for _, server in ipairs(servers) do
-    peers[#peers+1] = new_peer(server, port)
+    local peer = new_peer(server, port)
+
+    if peer and #peer == 2 then
+      insert(peers, peer)
+    else
+      ngx.log(ngx.WARN, 'skipping peer because it misses address or port')
+    end
   end
 
   peers.servers = servers

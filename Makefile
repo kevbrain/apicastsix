@@ -42,8 +42,10 @@ push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)
 	docker push $(REGISTRY)/$(IMAGE_NAME)
 
+bash: export IMAGE_NAME = apicast-test
+bash: export SERVICE = gateway
 bash: ## Run bash inside the build image
-	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash gateway -i
+	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash $(SERVICE) -i
 
 test-docker: export IMAGE_NAME = apicast-test
 test-docker: build clean ## Test build docker

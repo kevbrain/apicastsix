@@ -81,7 +81,7 @@ GET /status/ready
 --- no_error_log
 [error]
 
-=== TEST 2: readiness probe with 0 services
+=== TEST 3: readiness probe with 0 services
 Should respond with error status and a reason.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -173,7 +173,7 @@ Could not resolve GET /foobar - nil
 --- no_error_log
 [error]
 
-=== TEST 7: boot
+=== TEST 8: boot
 exposes boot function
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
@@ -196,7 +196,7 @@ $::dns->("localhost", "127.0.0.1")
 --- no_error_log
 [error]
 
-=== TEST 7: boot called twice
+=== TEST 9: boot called twice
 keeps the same configuration
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
@@ -225,7 +225,7 @@ $::dns->("localhost", "127.0.0.1")
 [error]
 
 
-=== TEST 8: config endpoint can delete configuration
+=== TEST 10: config endpoint can delete configuration
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config
@@ -247,7 +247,7 @@ null
 --- no_error_log
 [error]
 
-=== TEST 9: all endpoints use correct Content-Type
+=== TEST 11: all endpoints use correct Content-Type
 JSON response body and content type application/json should be returned.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";

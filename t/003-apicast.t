@@ -367,7 +367,7 @@ X-3scale-matched-rules: /foo?bar=baz
 --- no_error_log
 [error]
 
-=== TEST 8: mapping rule with variable value is required to be sent
+=== TEST 9: mapping rule with variable value is required to be sent
 When mapping rule has a parameter with variable value it has to exist.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";

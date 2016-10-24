@@ -1,6 +1,5 @@
 local setmetatable = setmetatable
 local tostring = tostring
-local pairs = pairs
 local ipairs = ipairs
 local unpack = unpack
 local insert = table.insert
@@ -14,35 +13,15 @@ local _M = {
 
 local mt = { __index = _M }
 
-local function round_robin(peers)
-  return peers[1]
-end
-
-local modes = {
-  ['round-robin'] = round_robin
-}
-
 function _M.new(mode)
-  local m = modes[mode]
-
-  if not m then
-    return nil, 'invalid mode: ' .. tostring(mode)
+  if not mode then
+    return nil, 'missing balancing function'
   end
 
   return setmetatable({
-    mode = m,
+    mode = mode,
     balancer = balancer
   }, mt)
-end
-
-function _M.modes()
-  local m = {}
-
-  for name, _ in pairs(modes) do
-    insert(m,name)
-  end
-
-  return m
 end
 
 local function new_peer(server, port)
@@ -60,6 +39,7 @@ end
 
 local function convert_servers(servers, port)
   local peers = {}
+  local query = servers.query
 
   for _, server in ipairs(servers) do
     local peer = new_peer(server, port)
@@ -69,6 +49,10 @@ local function convert_servers(servers, port)
     else
       ngx.log(ngx.WARN, 'skipping peer because it misses address or port')
     end
+  end
+
+  if query then
+    peers.hash = ngx.crc32_short(query)
   end
 
   peers.servers = servers
@@ -120,7 +104,7 @@ function _M.set_peer(self, peers)
 
   if ok then return peer end
 
-  return nil, err
+  return nil, err or 'balancer could not set the peer'
 end
 
 return _M

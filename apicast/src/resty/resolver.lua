@@ -173,6 +173,8 @@ function _M.get_servers(self, qname, opts)
 
   local servers = convert_answers(answers, port)
 
+  servers.query = qname
+
   return servers
 end
 

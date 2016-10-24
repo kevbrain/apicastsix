@@ -34,7 +34,11 @@ location /t {
   }
 
   content_by_lua_block {
-    ngx.say(require('cjson').encode(ngx.ctx.upstream))
+    local upstream = {}
+    for _,server in ipairs(ngx.ctx.upstream) do
+      table.insert(upstream, server)
+    end
+    ngx.say(require('cjson').encode(upstream))
   }
 }
 --- udp_listen: 1953
@@ -56,9 +60,9 @@ GET /t
     server 0.0.0.1:1;
 
     balancer_by_lua_block {
-      local resty_balancer = require 'resty.balancer'
+      local round_robin = require 'resty.balancer.round_robin'
 
-      local balancer = resty_balancer.new('round-robin')
+      local balancer = round_robin.new()
       local servers = { { address = '127.0.0.1', port = $TEST_NGINX_SERVER_PORT } }
       local peers = balancer:peers(servers)
 
@@ -96,9 +100,9 @@ yay
     server 0.0.0.1:1;
 
     balancer_by_lua_block {
-      local resty_balancer = require 'resty.balancer'
+      local round_robin = require 'resty.balancer.round_robin'
 
-      local balancer = resty_balancer.new('round-robin')
+      local balancer = round_robin.new()
       local peers = balancer:peers(ngx.ctx.upstream)
 
       local peer, err = balancer:set_peer(peers)

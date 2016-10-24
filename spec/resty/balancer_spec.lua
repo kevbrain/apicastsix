@@ -1,4 +1,5 @@
 local resty_balancer = require 'resty.balancer'
+local round_robin = require 'resty.balancer.round_robin'
 
 describe('resty.balancer', function()
 
@@ -6,34 +7,22 @@ describe('resty.balancer', function()
     local new = resty_balancer.new
 
     it('accepts mode', function()
-      local b, err = new('round-robin')
+      local b, err = new(function() end)
 
       assert.equal('function', type(b.mode))
       assert.falsy(err)
     end)
 
     it('returns error on invalid mode', function()
-      local b, err = new('invalid-mode')
+      local b, err = new()
 
-      assert.equal('invalid mode: invalid-mode', err)
+      assert.equal('missing balancing function', err)
       assert.falsy(b)
     end)
   end)
 
-  describe('.modes', function()
-    local modes = resty_balancer.modes
-
-    it('returns available modes', function()
-      local available_modes = {
-        'round-robin'
-      }
-
-      assert.same(available_modes, modes())
-    end)
-  end)
-
   describe(':peers', function()
-    local balancer = resty_balancer.new('round-robin')
+    local balancer = resty_balancer.new(function() end)
 
     it('returns peers from servers', function()
       local servers = {
@@ -48,7 +37,7 @@ describe('resty.balancer', function()
   end)
 
   describe(':set_peer', function()
-    local b = resty_balancer.new('round-robin')
+    local b = resty_balancer.new(function(peers) return peers[1] end)
     b.balancer = { }
 
     it('returns peers from servers', function()
@@ -66,18 +55,32 @@ describe('resty.balancer', function()
   end)
 
   describe('round-robin balancer', function()
-    local balancer = resty_balancer.new('round-robin')
+    local balancer = round_robin.new()
+
+    balancer.balancer = {
+      set_current_peer = function() return true end
+    }
 
     local servers = {
       { address = '127.0.0.1', port = 80 },
-      { address = '127.0.0.2', port = 80 },
-      { address = '127.0.0.3', port = 80 },
+      { address = '127.0.0.2', port = 8080 },
+      { address = '127.0.0.3', port = 8090 },
+      query = 'example.com'
     }
 
-    local peers = balancer:peers()
+    local peers = balancer:peers(servers)
+    peers.cur = 1
 
     it('loops through peers', function()
+      local first = balancer:set_peer(peers)
+      local second = balancer:set_peer(peers)
+      local third = balancer:set_peer(peers)
 
+      assert.same({
+        { '127.0.0.1', 80 },
+        { '127.0.0.2', 8080 },
+        { '127.0.0.3', 8090 }
+      }, { first, second, third})
     end)
   end)
 end)

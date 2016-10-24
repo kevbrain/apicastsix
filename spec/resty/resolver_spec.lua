@@ -38,7 +38,7 @@ describe('resty.resolver', function()
       local servers, err = resolver:get_servers('127.0.0.2')
 
       assert.falsy(err)
-      assert.same({ answer, answers = { answer } }, servers)
+      assert.same({ answer, answers = { answer }, query = '127.0.0.2' }, servers)
     end)
 
     it('accepts port', function()
@@ -51,6 +51,13 @@ describe('resty.resolver', function()
       assert.truthy(server)
       assert.equal(1337, server.port)
       assert.equal('127.0.0.2', server.address)
+    end)
+
+    it('returns back the query', function()
+      local answer, err = resolver:get_servers('example.com')
+
+      assert.falsy(err)
+      assert.equal('example.com', answer.query)
     end)
   end)
 

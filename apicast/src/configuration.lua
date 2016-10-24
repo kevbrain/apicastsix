@@ -46,7 +46,7 @@ end
 local function check_rule(req, rule, usage_t, matched_rules)
   local param = {}
   local p = regexpify(rule.pattern)
-  local m = ngx.re.match(req.path, format("^%s",p))
+  local m = ngx.re.match(req.path, format("^%s",p), 'oj')
 
   if m and req.method == rule.method then
     local args = req.args
@@ -92,7 +92,7 @@ local regex_variable = '\\{[-\\w_]+\\}'
 
 local function check_querystring_params(params, args)
   for param, expected in pairs(params) do
-    local m, err = ngx.re.match(expected, regex_variable)
+    local m, err = ngx.re.match(expected, regex_variable, 'oj')
     local value = args[param]
 
     if m then
@@ -410,7 +410,7 @@ function _M.url(endpoint)
     return nil, 'missing endpoint'
   end
 
-  local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+?)(?::(\\d+))?(\\/.+)?$")
+  local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+?)(?::(\\d+))?(\\/.+)?$", 'oj')
 
   if not match then
     return nil, 'invalid endpoint' -- TODO: maybe improve the error message?
@@ -420,7 +420,7 @@ function _M.url(endpoint)
 
   if path == '/' then path = nil end
 
-  local match = userinfo and ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$")
+  local match = userinfo and ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$", 'oj')
   local user, pass = unpack(match or {})
 
   return { scheme, user or false, pass or false, host, port or false, path or nil }

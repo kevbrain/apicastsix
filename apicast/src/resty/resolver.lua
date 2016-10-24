@@ -110,7 +110,7 @@ local function new_answer(address, port)
 end
 
 local function is_ip(address)
-  local m, err = ngx.re.match(address, '^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$', 'o')
+  local m, err = ngx.re.match(address, '^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$', 'oj')
 
   if m then
     return next(m)

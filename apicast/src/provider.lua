@@ -286,7 +286,7 @@ function _M.call(host)
     end
   end
 
-  ngx.ctx.dns = dns_resolver:new{ nameservers = { { "127.0.0.1", 53 } } }
+  ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
   ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
 
   local backend_upstream = ngx.ctx.resolver:get_servers(host, { port = port or nil })

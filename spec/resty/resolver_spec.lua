@@ -54,4 +54,19 @@ describe('resty.resolver', function()
     end)
   end)
 
+  describe('.parse_nameservers', function()
+    local tmpname = io.tmpfile()
+
+    tmpname:write('nameserver 127.0.0.2\n')
+    tmpname:write('nameserver 127.0.0.1\n')
+
+    it('returns nameserver touples', function()
+      local nameservers = resty_resolver.parse_nameservers(tmpname)
+
+      assert.equal(2, #nameservers)
+      assert.same({ {'127.0.0.2' }, { '127.0.0.1' } }, nameservers)
+    end)
+
+  end)
+
 end)

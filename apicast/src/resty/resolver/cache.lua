@@ -69,7 +69,13 @@ function _M.store(self, answer)
 
   ngx.log(ngx.DEBUG, 'resolver cache write ', name, ' with TLL ', answer.ttl)
 
-  return cache:set(name, answer, answer.ttl)
+  local ttl = answer.ttl
+
+  if ttl == -1 then
+    ttl = nil
+  end
+
+  return cache:set(name, answer, ttl)
 end
 
 

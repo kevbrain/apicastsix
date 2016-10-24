@@ -76,6 +76,20 @@ describe('resty.resolver.cache', function()
 
       assert.spy(c.cache.set).was.called(1)
     end)
+
+    it('works with -1 ttl', function()
+      local answer = { { 'something' }, ttl = -1, name = 'foo.example.com' }
+
+      c.cache.set = spy.new(function(self, key, value, ttl)
+        assert.same('foo.example.com', key)
+        assert.same(answer, value)
+        assert.same(nil, ttl)
+      end)
+
+      c:store(answer)
+
+      assert.spy(c.cache.set).was.called(1)
+    end)
   end)
 
   describe('.get', function()
@@ -88,7 +102,6 @@ describe('resty.resolver.cache', function()
 
       assert.same({ "54.221.208.116", "54.221.221.16" }, answers.addresses)
     end)
-
   end)
 
 end)

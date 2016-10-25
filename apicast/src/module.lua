@@ -10,7 +10,7 @@ local _M = {
 local mt = { __index = _M }
 
 function _M.new(name)
-  local name = name or os.getenv('APICAST_MODULE') or 'apicast'
+  name = name or os.getenv('APICAST_MODULE') or 'apicast'
 
   ngx.log(ngx.DEBUG, 'init plugin ', name)
   return setmetatable({
@@ -31,7 +31,7 @@ function _M.call(self, phase, ...)
     return nil, 'not initialized'
   end
 
-  local phase = phase or ngx.get_phase()
+  phase = phase or ngx.get_phase()
 
   local fun = _M.load(name, phase)
 
@@ -52,18 +52,18 @@ function _M.load(name, phase)
     [ name ] = phase -- like apicast exposing .init
   }
 
-  for file, name in pairs(files) do
+  for file, method in pairs(files) do
     local ok, ret = prequire(file)
 
     if ok then
       ngx.log(ngx.DEBUG, 'plugin loaded: ', file)
 
-      local f = ret[name]
+      local f = ret[method]
 
       if f then
         return f
       else
-        ngx.log(ngx.ERR, 'plugin ', file, ' missing function ', name)
+        ngx.log(ngx.ERR, 'plugin ', file, ' missing function ', method)
       end
     else
       ngx.log(ngx.DEBUG, 'plugin not loaded: ', file)

@@ -11,12 +11,18 @@ SEPARATOR="\n=============================================\n"
 IMAGE_NAME ?= apicast-test
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7
 
+lua_files = $(wildcard apicast/src/*.lua)
+spec_files = $(wildcard apicast/spec/*.lua)
+
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove test-docker prove-docker test-docker-release
 
 busted: dependencies ## Test Lua.
 	@bin/busted
 	@- luacov
+
+check: dependencies ## Run luacheck to lint lua files
+	luacheck $(lua_files) $(spec_files)
 
 nginx:
 	@ ($(NGINX) -V 2>&1 | grep -e '--with-ipv6' > /dev/null) || (>&2 echo "$(NGINX) `$(NGINX) -v 2>&1` does not have ipv6 support" && exit 1)

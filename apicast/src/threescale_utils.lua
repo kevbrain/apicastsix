@@ -5,11 +5,11 @@ local _M = {} -- public interface
 
 -- private
 -- Logging Helpers
-function _M.show_table(t, ...)
+function _M.show_table(t)
   local indent = 0 --arg[1] or 0
   local indentStr=""
   local msg
-  for i = 1,indent do indentStr=indentStr.."  " end
+  for _ = 1,indent do indentStr=indentStr.."  " end
 
   for k,v in pairs(t) do
     if type(v) == "table" then
@@ -44,7 +44,7 @@ end
 function _M.keys(t)
   local n=0
   local keyset = {}
-  for k,v in pairs(t) do
+  for k,_ in pairs(t) do
     n=n+1
     keyset[n]=k
   end
@@ -76,10 +76,10 @@ end
 -- returns true iif all elems of f_req are among actual's keys
 function _M.required_params_present(f_req, actual)
   local req = {}
-  for k,v in pairs(actual) do
+  for k,_ in pairs(actual) do
     req[k] = true
   end
-  for i,v in ipairs(f_req) do
+  for _,v in ipairs(f_req) do
     if not req[v] then
       return false
     end

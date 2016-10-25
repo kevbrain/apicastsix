@@ -14,8 +14,6 @@ local util = require 'util'
 local type = type
 local pairs = pairs
 local ipairs = ipairs
-local find = string.find
-local sub = string.sub
 local insert = table.insert
 local lower = string.lower
 
@@ -120,7 +118,7 @@ local build_query = build_querystring_formatter("%s=%s")
 ]]--
 
 local function get_auth_params(where, method)
-  local params = {}
+  local params
   if where == "headers" then
     params = ngx.req.get_headers()
   elseif method == "GET" then
@@ -194,7 +192,7 @@ local http = {
   end
 }
 
-local function oauth_authrep(params, service)
+local function oauth_authrep(_, service)
   ngx.var.cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local access_tokens = ngx.shared.api_keys
   local is_known = access_tokens:get(ngx.var.cached_key)
@@ -216,7 +214,7 @@ local function oauth_authrep(params, service)
   end
 end
 
-local function authrep(params, service)
+local function authrep(_, service)
   local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local api_keys = ngx.shared.api_keys
   local is_known = api_keys and api_keys:get(cached_key)
@@ -256,7 +254,7 @@ function _M.authorize(backend_version, params, service)
 end
 
 function _M.call(host)
-  local host = host or ngx.var.host
+  host = host or ngx.var.host
   local service = _M.find_service(host)
 
   if not service then
@@ -276,7 +274,7 @@ function _M.call(host)
   ngx.var.version = _M.configuration.version
 
   -- set backend
-  local scheme, _, _, host, port, path = unpack(configuration.url(service.backend.endpoint or ngx.var.backend_endpoint))
+  local scheme, _, _, server, port, path = unpack(configuration.url(service.backend.endpoint or ngx.var.backend_endpoint))
 
   if not port then
     if scheme == 'http' then
@@ -289,7 +287,7 @@ function _M.call(host)
   ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
   ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
 
-  local backend_upstream = ngx.ctx.resolver:get_servers(host, { port = port or nil })
+  local backend_upstream = ngx.ctx.resolver:get_servers(server, { port = port or nil })
   ngx.log(ngx.DEBUG, '[resolver] resolved backend upstream: ', #backend_upstream)
   ngx.ctx.backend_upstream = backend_upstream
   ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. (path or '')
@@ -314,8 +312,8 @@ function _M.access(service)
   local scheme, _, _, host, port, path = unpack(configuration.url(service.api_backend) or {})
   local backend_version = service.backend_version
   local params = {}
-  local usage = {}
-  local matched_patterns = ''
+  local usage
+  local matched_patterns
 
   if ngx.status == 403  then
     ngx.say("Throttling due to too many requests")

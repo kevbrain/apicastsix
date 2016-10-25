@@ -6,7 +6,6 @@
 -- moment of the first redirect
 local random = require 'resty.random'
 local ts = require 'threescale_utils'
-local redis = require 'resty.redis'
 
 -- The authorization server should send some data in the callback response to let the
 -- API Gateway know which user to associate with the token.

@@ -24,9 +24,9 @@ function _M.router()
 end
 
 function _M.call(method, uri, ...)
-  local router = _M.router()
+  local r = _M.router()
 
-  local f, params = router:resolve(method or ngx.req.get_method(),
+  local f, params = r:resolve(method or ngx.req.get_method(),
     uri or ngx.var.uri,
     unpack(... or {}))
 

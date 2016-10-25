@@ -89,6 +89,7 @@ local function check_client_credentials(params)
         redirect_uri = params.redirect_uri
       },
       copy_all_vars = true,
+      ctx = ngx.ctx
     })
 
   if res.status == 200 then

@@ -52,7 +52,7 @@ end
 local function check_client_credentials(params)
   local res = ngx.location.capture("/_threescale/check_credentials",
     { args = { app_id = params.client_id, app_key = params.client_secret, redirect_uri = params.redirect_uri },
-      copy_all_vars = true })
+      copy_all_vars = true, ctx = ngx.ctx })
 
   if res.status == 200 then
     return { ["status"] = res.status, ["body"] = res.body }
@@ -82,7 +82,7 @@ end
 local function store_token(params, token)
   local body = ts.build_query({ app_id = params.client_id, token = token.access_token, user_id = params.user_id, ttl = token.expires_in })
   local stored = ngx.location.capture( "/_threescale/oauth_store_token", {
-    method = ngx.HTTP_POST, body = body, copy_all_vars = true } )
+    method = ngx.HTTP_POST, body = body, copy_all_vars = true, ctx = ngx.ctx } )
   stored.body = stored.body or stored.status
   return { ["status"] = stored.status , ["body"] = stored.body }
 end

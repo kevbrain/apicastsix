@@ -122,7 +122,7 @@ Location: http://example.com/redirect\?scope=whatever&response_type=token&error=
 --- no_error_log
 [error]
 
-=== TEST 1: calling /oauth/token returns correct error message on missing parameters
+=== TEST 4: calling /oauth/token returns correct error message on missing parameters
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -140,7 +140,7 @@ POST /oauth/token
 {"error":"invalid_client"}
 --- error_code: 401
 
-=== TEST 2: calling /oauth/token returns correct error message on invalid parameters
+=== TEST 5: calling /oauth/token returns correct error message on invalid parameters
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -158,7 +158,7 @@ POST /oauth/token?grant_type=authorization_code&client_id=client_id&redirect_uri
 {"error":"invalid_client"}
 --- error_code: 401
 
-=== TEST 3: calling /callback without params returns correct erro message
+=== TEST 6: calling /callback without params returns correct erro message
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -176,7 +176,7 @@ GET /callback
 {"error":"missing redirect_uri"}
 --- error_code: 400
 
-=== TEST 4: calling /callback redirects to correct error when state is missing
+=== TEST 7: calling /callback redirects to correct error when state is missing
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -196,7 +196,7 @@ include $TEST_NGINX_APICAST_CONFIG;
 --- response_body_like chomp
 ^<html>
 
-=== TEST 4: calling /callback redirects to correct error when state is missing
+=== TEST 8: calling /callback redirects to correct error when state is missing
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
 --- http_config
@@ -217,7 +217,7 @@ include $TEST_NGINX_APICAST_CONFIG;
 --- response_headers eval
 "Location: http://127.0.0.1:$ENV{TEST_NGINX_SERVER_PORT}/redirect_uri#error=invalid_request&error_description=invalid_or_expired_state&state=foo"
 
-=== TEST 7: calling /callback works
+=== TEST 9: calling /callback works
 Not part of the RFC. This is the Gateway API to create access tokens and redirect back to the Client.
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
@@ -255,7 +255,7 @@ GET /fake-authorize
 --- response_headers_like
 Location: http://example.com/redirect\?code=\w+&state=\w+
 
-=== TEST 8: calling /oauth/token returns correct error message on invalid parameters
+=== TEST 10: calling /oauth/token returns correct error message on invalid parameters
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
 --- http_config

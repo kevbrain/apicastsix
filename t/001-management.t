@@ -7,40 +7,7 @@ my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
 $ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$apicast/conf.d/management.conf";
 
-# TODO: make this a module so it can be used in other test files
-our $dns = sub ($$$) {
-  my ($host, $ip) = @_;
-
-  return sub {
-    # Get DNS request ID from passed UDP datagram
-    my $dns_id = unpack("n", shift);
-    # Set name and encode it
-    my $name = $host;
-    $name =~ s/([^.]+)\.?/chr(length($1)) . $1/ge;
-    $name .= "\0";
-    my $s = '';
-    $s .= pack("n", $dns_id);
-    # DNS response flags, hardcoded
-    # response, opcode, authoritative, truncated, recursion desired, recursion available, reserved
-    my $flags = (1 << 15) + (0 << 11) + (1 << 10) + (0 << 9) + (1 << 8) + (1 << 7) + 0;
-    $flags = pack("n", $flags);
-    $s .= $flags;
-    $s .= pack("nnnn", 1, 1, 0, 0);
-    $s .= $name;
-    $s .= pack("nn", 1, 1); # query class A
-
-    # Set response address and pack it
-    my @addr = split /\./, $ip;
-    my $data = pack("CCCC", @addr);
-
-    # pointer reference to the first name
-    # $name = pack("n", 0b1100000000001100);
-
-    # name + type A + class IN + TTL + length + data(ip)
-    $s .= $name. pack("nnNn", 1, 1, 0, 4) . $data;
-    return $s;
-  }
-};
+require("t/dns.pl");
 
 log_level('debug');
 repeat_each(2);
@@ -81,7 +48,7 @@ GET /status/ready
 --- no_error_log
 [error]
 
-=== TEST 2: readiness probe with 0 services
+=== TEST 3: readiness probe with 0 services
 Should respond with error status and a reason.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -173,7 +140,7 @@ Could not resolve GET /foobar - nil
 --- no_error_log
 [error]
 
-=== TEST 7: boot
+=== TEST 8: boot
 exposes boot function
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
@@ -196,7 +163,7 @@ $::dns->("localhost", "127.0.0.1")
 --- no_error_log
 [error]
 
-=== TEST 7: boot called twice
+=== TEST 9: boot called twice
 keeps the same configuration
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
@@ -225,7 +192,7 @@ $::dns->("localhost", "127.0.0.1")
 [error]
 
 
-=== TEST 8: config endpoint can delete configuration
+=== TEST 10: config endpoint can delete configuration
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config
@@ -247,7 +214,7 @@ null
 --- no_error_log
 [error]
 
-=== TEST 9: all endpoints use correct Content-Type
+=== TEST 11: all endpoints use correct Content-Type
 JSON response body and content type application/json should be returned.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";

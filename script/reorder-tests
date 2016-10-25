@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+if ARGF.filename == '-'
+  ARGV.replace(Dir['t/*.t'])
+end
+
+ARGF.inplace_mode = ''
+
+tests = Hash.new(0)
+
+ARGF.each_line do |line|
+  print line.sub(/^=== TEST (\d+):/) { "=== TEST #{tests[ARGF.filename] += 1}:" }
+end

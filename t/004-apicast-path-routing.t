@@ -5,6 +5,7 @@ my $pwd = cwd();
 my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
+$ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 
@@ -20,6 +21,7 @@ Two services can exist together and are split by their hostname and mapping rule
 --- main_config
 env APICAST_PATH_ROUTING_ENABLED=1;
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration').save({

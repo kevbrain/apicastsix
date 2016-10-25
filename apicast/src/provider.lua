@@ -23,8 +23,12 @@ local concat = table.concat
 local tostring = tostring
 local format = string.format
 local gsub = string.gsub
+local unpack = unpack
 
 local split = util.string_split
+
+local resty_resolver = require 'resty.resolver'
+local dns_resolver = require 'resty.dns.resolver'
 
 local _M = {
   -- FIXME: this is really bad idea, this file is shared across all requests,
@@ -138,6 +142,10 @@ end
 
 local function find_service_strict(host)
   for _,service in ipairs(_M.services or {}) do
+    if type(host) == 'number' and service.id == host then
+      return service
+    end
+
     for _,_host in ipairs(service.hosts or {}) do
       if _host == host then
         return service
@@ -177,7 +185,9 @@ end
 local http = {
   get = function(url)
     ngx.log(ngx.INFO, '[http] requesting ' .. url)
-    local res = ngx.location.capture(assert(url), { share_all_vars = true })
+    local backend_upstream = ngx.ctx.backend_upstream
+    ngx.log(ngx.DEBUG, '[ctx] copying backend_upstream of size: ', #backend_upstream)
+    local res = ngx.location.capture(assert(url), { share_all_vars = true, ctx = { backend_upstream = backend_upstream } })
 
     ngx.log(ngx.INFO, '[http] status: ' .. tostring(res.status))
     return res
@@ -252,12 +262,12 @@ function _M.call(host)
   if not service then
     ngx.status = 404
     ngx.print('')
+    ngx.log(ngx.WARN, 'could not find service for host: ', host)
     return ngx.exit(ngx.status)
   end
 
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
-  ngx.var.backend_endpoint = service.backend.endpoint or ngx.var.backend_endpoint
   ngx.var.backend_host = service.backend.host or ngx.var.backend_host
 
   ngx.var.service_id = tostring(service.id)
@@ -265,20 +275,43 @@ function _M.call(host)
 
   ngx.var.version = _M.configuration.version
 
+  -- set backend
+  local scheme, _, _, host, port, path = unpack(configuration.url(service.backend.endpoint or ngx.var.backend_endpoint))
+
+  if not port then
+    if scheme == 'http' then
+      port = 80
+    elseif scheme == 'https' then
+      port = 443
+    end
+  end
+
+  ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
+  ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
+
+  local backend_upstream = ngx.ctx.resolver:get_servers(host, { port = port or nil })
+  ngx.log(ngx.DEBUG, '[resolver] resolved backend upstream: ', #backend_upstream)
+  ngx.ctx.backend_upstream = backend_upstream
+  ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. (path or '')
+
   if service.backend_version == 'oauth' then
     local f, params = oauth.call()
 
     if f then
       ngx.log(ngx.DEBUG, 'apicast oauth flow')
-      return f(params)
+      return function() return f(params) end
+    end
+
+  else
+    return function()
+      -- call access phase
+      return _M.access(service)
     end
   end
-
-  _M.access(service)
 end
 
 function _M.access(service)
-  local host = (configuration.url(service.api_backend) or {})[4]
+  local scheme, _, _, host, port, path = unpack(configuration.url(service.api_backend) or {})
   local backend_version = service.backend_version
   local params = {}
   local usage = {}
@@ -338,23 +371,33 @@ function _M.access(service)
 
   _M.authorize(backend_version, params, service)
 
-  ngx.var.proxy_pass = service.api_backend or error('missing api backend')
+  -- set upstream
+  ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')
   ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
+
+  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(host, { port = port })
 end
 
 
 function _M.post_action_content()
+  local service_id = tonumber(ngx.var.service_id, 10)
+
+  _M.call(service_id) -- initialize resolver and get backend upstream peers
+
   local method, path, headers = ngx.req.get_method(), ngx.var.request_uri, ngx.req.get_headers()
 
   local req = cjson.encode{method=method, path=path, headers=headers}
   local resp = cjson.encode{ body = ngx.var.resp_body, headers = cjson.decode(ngx.var.resp_headers)}
 
   local cached_key = ngx.var.cached_key
+  local service = ngx.ctx.service
 
   if cached_key and cached_key ~= "null" then
     ngx.log(ngx.INFO, '[async] reporting to backend asynchronously')
     local status_code = ngx.var.status
-    local res = http.get("/threescale_authrep?code=".. status_code .. "&req=" .. ngx.escape_uri(req) .. "&resp=" .. ngx.escape_uri(resp))
+
+    local auth_uri = service.backend_version == 'oauth' and 'threescale_oauth_authrep' or 'threescale_authrep'
+    local res = http.get("/".. auth_uri .."?code=".. status_code .. "&req=" .. ngx.escape_uri(req) .. "&resp=" .. ngx.escape_uri(resp))
 
     if res.status ~= 200 then
       local api_keys = ngx.shared.api_keys

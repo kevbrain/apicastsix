@@ -39,13 +39,14 @@ before_install:
 - find ${HOME}/openresty
 - eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
 - perl -MCarton -e'shell' 2>/dev/null || cpanm Carton
-- export PATH="${PATH}:${HOME}/openresty/bin:${HOME}/openresty/luajit/bin:${HOME}/openresty/nginx/sbin:${HOME}/bin"
+- export PATH="${PATH}:${HOME}/openresty/bin:${HOME}/openresty/luajit/bin:${HOME}/openresty/nginx/sbin:${HOME}/bin:${HOME}/.luarocks/bin"
 install:
 - make dependencies
 - carton install --cached --deployment
 before_script:
 - mkdir -p $(dirname ${TEST_NGINX_ERROR_LOG})
 script:
+- make check
 - make busted
 - make prove
 - make build

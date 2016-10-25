@@ -31,7 +31,7 @@ end
 -- This needs to be called within a minute of it being stored, as it expires and is deleted
 local function request_token(params)
   local red = ts.connect_redis()
-  local ok, err =  red:hgetall("c:".. params.code)
+  local ok, _ =  red:hgetall("c:".. params.code)
 
   if ok[1] == nil then
     return { ["status"] = 403, ["body"] = '{"error": "expired_code"}' }
@@ -92,7 +92,7 @@ end
 local function get_token(params)
   local required_params = {'client_id', 'client_secret', 'grant_type', 'code', 'redirect_uri'}
 
-  local res = {}
+  local res
 
   if ts.required_params_present(required_params, params) and params['grant_type'] == 'authorization_code'  then
     res = request_token(params)

@@ -45,17 +45,17 @@ end
 
 local function check_rule(req, rule, usage_t, matched_rules)
   local param = {}
-  local p = regexpify(rule.pattern)
-  local m = ngx.re.match(req.path, format("^%s",p), 'oj')
+  local pattern = regexpify(rule.pattern)
+  local match = ngx.re.match(req.path, format("^%s", pattern), 'oj')
 
-  if m and req.method == rule.method then
+  if match and req.method == rule.method then
     local args = req.args
 
     if rule.querystring_params(args) then -- may return an empty table
       -- when no querystringparams
       -- in the rule. it's fine
       for i,p in ipairs(rule.parameters or {}) do
-        param[p] = m[i]
+        param[p] = match[i]
       end
 
       insert(matched_rules, rule.pattern)
@@ -78,7 +78,8 @@ local function first_values(a)
 end
 
 local function get_auth_params(method)
-  local params = {}
+  local params
+
   if method == "GET" then
     params = ngx.req.get_uri_args()
   else
@@ -114,13 +115,13 @@ local function check_querystring_params(params, args)
 end
 
 function _M.parse_service(service)
-  local backend_version = service.backend_version
+  local backend_version = tostring(service.backend_version)
   local proxy = service.proxy or {}
   local backend = proxy.backend or {}
 
   return {
       id = service.id or 'default',
-      backend_version = tostring(service.backend_version),
+      backend_version = backend_version,
       hosts = proxy.hosts or { 'localhost' }, -- TODO: verify localhost is good default
       api_backend = proxy.api_backend,
       error_auth_failed = proxy.error_auth_failed,
@@ -149,30 +150,30 @@ function _M.parse_service(service)
         app_id = lower(proxy.auth_app_id or 'app_id'),
         app_key = lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
       },
-      get_credentials = function(service, params)
+      get_credentials = function(_, params)
         local credentials
-        if service.backend_version == '1' then
+        if backend_version == '1' then
           credentials = params.user_key
-        elseif service.backend_version == '2' then
+        elseif backend_version == '2' then
           credentials = (params.app_id and params.app_key)
-        elseif service.backend_version == 'oauth' then
+        elseif backend_version == 'oauth' then
           credentials = (params.access_token or params.authorization)
         else
           error("Unknown backend version: " .. tostring(backend_version))
         end
         return credentials
       end,
-      extract_usage = function (service, request, args)
+      extract_usage = function (config, request, _)
         local method, url = unpack(split(request," "))
-        local path, querystring = unpack(split(url, "?"))
+        local path, _ = unpack(split(url, "?"))
         local usage_t =  {}
         local matched_rules = {}
 
         local args = get_auth_params(method)
 
-        ngx.log(ngx.DEBUG, '[mapping] service ' .. service.id .. ' has ' .. #service.rules .. ' rules')
+        ngx.log(ngx.DEBUG, '[mapping] service ' .. config.id .. ' has ' .. #config.rules .. ' rules')
 
-        for i,r in ipairs(service.rules) do
+        for _,r in ipairs(config.rules) do
           check_rule({path=path, method=method, args=args}, r, usage_t, matched_rules)
         end
 
@@ -235,7 +236,7 @@ end
 local function to_hash(table)
   local t = {}
 
-  for v,id in ipairs(table) do
+  for _,id in ipairs(table) do
     local n = tonumber(id)
 
     if n then
@@ -340,7 +341,9 @@ function _M.wait(endpoint, timeout)
 
   while now < fin do
     local sock = ngx.socket.tcp()
-    local ok, err = sock:connect(host, port)
+    local ok
+
+    ok, err = sock:connect(host, port)
 
     if ok then
       ngx.log(ngx.DEBUG, 'connected to ' .. host .. ':' .. tostring(port))
@@ -368,7 +371,7 @@ function _M.download(endpoint)
   local scheme, user, pass, host, port, path = unpack(url)
   if port then host = concat({host, port}, ':') end
 
-  local url = concat({ scheme, '://', host, path or '/admin/api/nginx/spec.json' }, '')
+  url = concat({ scheme, '://', host, path or '/admin/api/nginx/spec.json' }, '')
 
   local http = require "resty.http"
   local httpc = http.new()
@@ -385,7 +388,8 @@ function _M.download(endpoint)
 
   ngx.log(ngx.INFO, 'configuration request sent: ' .. url)
 
-  local res, err = httpc:request_uri(url, {
+  local res
+  res, err = httpc:request_uri(url, {
     method = "GET",
     headers = headers,
     ssl_verify = false
@@ -420,7 +424,7 @@ function _M.url(endpoint)
 
   if path == '/' then path = nil end
 
-  local match = userinfo and ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$", 'oj')
+  match = userinfo and ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$", 'oj')
   local user, pass = unpack(match or {})
 
   return { scheme, user or false, pass or false, host, port or false, path or nil }
@@ -440,7 +444,7 @@ function _M.curl(endpoint)
 
   if port then host = concat({host, port}, ':') end
 
-  local url = concat({ scheme, '://', concat({user or '', pass or ''}, ':'), '@', host, path or '/admin/api/nginx/spec.json' }, '')
+  url = concat({ scheme, '://', concat({user or '', pass or ''}, ':'), '@', host, path or '/admin/api/nginx/spec.json' }, '')
 
   local config, exit, code = util.system('curl --silent --show-error --fail --max-time 3 ' .. url)
 

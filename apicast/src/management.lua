@@ -101,9 +101,9 @@ function _M.router()
 end
 
 function _M.call(method, uri, ...)
-  local router = _M.router()
+  local r = _M.router()
 
-  local ok, err = router:execute(method or ngx.req.get_method(),
+  local ok, err = r:execute(method or ngx.req.get_method(),
                                  uri or ngx.var.uri,
                                  unpack(... or {}))
 

@@ -21,13 +21,13 @@ function _M.timer(name, fun, ...)
   ngx.log(ngx.INFO, 'benchmark ' .. name .. ' took ' .. time)
   return unpack(ret)
 end
-local inspect = require 'inspect'
-function _M.system(command)
-  local tmpname = tmpname()
-  ngx.log(ngx.DEBUG, 'os execute ' .. command)
-  local success, exit, code = execute(command .. ' > ' .. tmpname .. ' 2>&1')
 
-  local handle, err = open(tmpname)
+function _M.system(command)
+  local tmp = tmpname()
+  ngx.log(ngx.DEBUG, 'os execute ' .. command)
+  local success, exit, code = execute(command .. ' > ' .. tmp .. ' 2>&1')
+
+  local handle, err = open(tmp)
   local output
 
   if handle then

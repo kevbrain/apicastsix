@@ -1,8 +1,6 @@
 local configuration = require('configuration')
 local provider = require('provider')
 
-local upstream = require 'ngx.upstream'
-
 local _M = {
   _VERSION = '0.1'
 }
@@ -28,13 +26,12 @@ function _M.rewrite()
 end
 
 function _M.content()
-  print('content phase of apicast')
   provider.post_action_content()
 end
 
 function _M.access()
-  print('access phase of apicast')
-  return provider.call()()
+  local fun = provider.call()
+  return fun()
 end
 
 function _M.body_filter()

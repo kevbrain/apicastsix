@@ -37,15 +37,34 @@ mkdir -p "${apicast_dir}/logs"
 
 daemon=off
 
-while getopts ":d" opt; do
+usage () {
+	cat <<USAGE
+Usage $0
+	-h Show this help
+	-c <file> Path to custom config file (JSON).
+	-d Daemonize
+USAGE
+}
+
+while getopts ":dc:h" opt; do
   case "${opt}" in
     d)
       daemon=on
       ;;
+    c)
+      export THREESCALE_CONFIG_FILE="$OPTARG"
+      ;;
+    h)
+      usage
+      exit 0
+      ;;
     \?)
       echo "Invalid option: -${OPTARG}" >&2
+      echo
+      usage
+      exit 1
       ;;
   esac
 done
 
-exec ${openresty_binary} -p ${apicast_dir} -c conf/nginx.conf -g "daemon ${daemon}; error_log ${log_file} ${log_level};"
+exec "${openresty_binary}" -p "${apicast_dir}" -c conf/nginx.conf -g "daemon ${daemon}; error_log ${log_file} ${log_level};"

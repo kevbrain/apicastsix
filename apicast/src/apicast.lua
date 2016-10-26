@@ -5,13 +5,27 @@ local _M = {
   _VERSION = '0.1'
 }
 
+local missing_configuration = os.getenv('APICAST_MISSING_CONFIGURATION') or 'log'
+
+local function handle_missing_configuration(err)
+  if missing_configuration == 'log' then
+    ngx.log(ngx.ERR, 'failed to load configuration, continuing: ', err)
+  elseif missing_configuration == 'exit' then
+    ngx.log(ngx.EMERG, 'failed to load configuration, exiting: ', err)
+    os.exit(1)
+  else
+    ngx.log(ngx.ERR, 'unknown value of APICAST_MISSING_CONFIGURATION: ', missing_configuration)
+    os.exit(1)
+  end
+end
+
 function _M.init()
-  local config = configuration.init()
+  local config, err = configuration.init()
 
   if config then
     provider.init(config)
   else
-    ngx.log(ngx.ERR, 'boot configuration load failed')
+    handle_missing_configuration(err)
   end
 end
 

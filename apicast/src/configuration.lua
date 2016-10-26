@@ -309,8 +309,10 @@ function _M.init()
   elseif exit then
     if code then
       ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
+      return nil, exit
     else
       ngx.log(ngx.ERR, 'boot failed read: '.. tostring(exit))
+      return nil, exit
     end
   end
 end

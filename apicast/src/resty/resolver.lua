@@ -150,7 +150,7 @@ function _M.get_servers(self, qname, opts)
 
   local answers, err = cache:get(qname)
 
-  if not answers then
+  if not answers or #answers.addresses == 0 then
     ngx.log(ngx.DEBUG, 'resolver query ', qname)
 
     if is_ip(qname) then

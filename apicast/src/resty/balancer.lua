@@ -98,7 +98,7 @@ function _M.set_peer(self, peers)
     return nil, 'peer missing address or port'
   end
 
-  ngx.log(ngx.DEBUG, 'balancer set peer ' .. tostring(address) .. ':' .. tostring(port))
+  ngx.log(ngx.INFO, 'balancer set peer ' .. tostring(address) .. ':' .. tostring(port))
 
   local ok, err = balancer.set_current_peer(address, port)
 

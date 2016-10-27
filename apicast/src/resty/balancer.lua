@@ -47,7 +47,7 @@ local function convert_servers(servers, port)
     if peer and #peer == 2 then
       insert(peers, peer)
     else
-      ngx.log(ngx.WARN, 'skipping peer because it misses address or port')
+      ngx.log(ngx.INFO, 'skipping peer because it misses address or port')
     end
   end
 

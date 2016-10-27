@@ -43,6 +43,8 @@ objects:
             value: ${RESOLVER}
           - name: APICAST_SERVICES
             value: ${APICAST_SERVICES}
+          - name: APICAST_MISSING_CONFIGURATION
+            value: ${MISSING_CONFIGURATION}
           image: ${THREESCALE_GATEWAY_IMAGE}
           imagePullPolicy: Always
           name: ${THREESCALE_GATEWAY_NAME}
@@ -112,3 +114,7 @@ parameters:
   value:
   name: APICAST_SERVICES
   required: false
+- description: What to do on missing or invalid configuration. Allowed values are: log, exit.
+  value: exit
+  required: false
+  name: MISSING_CONFIGURATION

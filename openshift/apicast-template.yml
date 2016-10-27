@@ -128,4 +128,4 @@ parameters:
 - description: "Enable path routing. Experimental feature."
   name: PATH_ROUTING
   required: false
-  value: false
+  value: "false"

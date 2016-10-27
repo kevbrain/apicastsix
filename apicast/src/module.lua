@@ -2,6 +2,7 @@ local setmetatable = setmetatable
 local pcall = pcall
 local require = require
 local pairs = pairs
+local type = type
 
 local _M = {
   _VERSION = '0.1'
@@ -69,7 +70,7 @@ function _M.load(name, phase)
   for file, method in pairs(files) do
     local ok, ret = prequire(file)
 
-    if ok and ret then
+    if ok and type(ret) == 'table' then
       ngx.log(ngx.DEBUG, 'plugin loaded: ', file)
 
       local f = ret[method]

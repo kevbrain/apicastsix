@@ -173,7 +173,7 @@ local function find_service_cascade(host)
   return find_service_strict(host)
 end
 
-if os.getenv('APICAST_PATH_ROUTING_ENABLED') then
+if util.env_enabled('APICAST_PATH_ROUTING_ENABLED') then
   ngx.log(ngx.WARN, 'apicast experimental path routing enabled')
   _M.find_service = find_service_cascade
 else

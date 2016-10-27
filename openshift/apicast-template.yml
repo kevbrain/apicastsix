@@ -45,6 +45,8 @@ objects:
             value: ${APICAST_SERVICES}
           - name: APICAST_MISSING_CONFIGURATION
             value: ${MISSING_CONFIGURATION}
+          - name: APICAST_LOG_LEVEL
+            value: ${APICAST_LOG_LEVEL}
           image: ${THREESCALE_GATEWAY_IMAGE}
           imagePullPolicy: Always
           name: ${THREESCALE_GATEWAY_NAME}
@@ -118,3 +120,6 @@ parameters:
   value: exit
   required: false
   name: MISSING_CONFIGURATION
+- description: Log level. One of the following: debug, info, notice, warn, error, crit, alert, or emerg.
+  name: APICAST_LOG_LEVEL
+  required: false

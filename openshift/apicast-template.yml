@@ -47,6 +47,8 @@ objects:
             value: ${MISSING_CONFIGURATION}
           - name: APICAST_LOG_LEVEL
             value: ${APICAST_LOG_LEVEL}
+          - name: APICAST_PATH_ROUTING_ENABLED
+            value: ${PATH_ROUTING}
           image: ${THREESCALE_GATEWAY_IMAGE}
           imagePullPolicy: Always
           name: ${THREESCALE_GATEWAY_NAME}
@@ -123,3 +125,7 @@ parameters:
 - description: "Log level. One of the following: debug, info, notice, warn, error, crit, alert, or emerg."
   name: APICAST_LOG_LEVEL
   required: false
+- description: "Enable path routing. Experimental feature."
+  name: PATH_ROUTING
+  required: false
+  value: false

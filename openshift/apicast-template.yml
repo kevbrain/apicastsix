@@ -92,34 +92,34 @@ objects:
   status:
     loadBalancer: {}
 parameters:
-- description: Name of the secret containing the THREESCALE_PORTAL_ENDPOINT with the access-token or provider key
+- description: "Name of the secret containing the THREESCALE_PORTAL_ENDPOINT with the access-token or provider key"
   value: threescale-portal-endpoint-secret
   name: THREESCALE_PORTAL_ENDPOINT_SECRET
   required: true
-- description: Path to saved JSON file with configuration for the gateway. Has to be injected to the docker image as read only volume.
+- description: "Path to saved JSON file with configuration for the gateway. Has to be injected to the docker image as read only volume."
   value:
   name: THREESCALE_CONFIG_FILE
   required: false
-- description: Name for the 3scale API Gateway
+- description: "Name for the 3scale API Gateway"
   value: threescalegw
   name: THREESCALE_GATEWAY_NAME
   required: true
-- description: Docker image to use.
+- description: "Docker image to use."
   value: 'quay.io/3scale/apicast:v2'
   name: THREESCALE_GATEWAY_IMAGE
   required: true
-- description: DNS Resolver for openresty, if empty it will be autodiscovered
+- description: "DNS Resolver for openresty, if empty it will be autodiscovered"
   value:
   name: RESOLVER
   required: false
-- description: Subset of services to run. Use comma separated list of service ids (eg. 42,1337)
+- description: "Subset of services to run. Use comma separated list of service ids (eg. 42,1337)"
   value:
   name: APICAST_SERVICES
   required: false
-- description: What to do on missing or invalid configuration. Allowed values are: log, exit.
+- description: "What to do on missing or invalid configuration. Allowed values are: log, exit."
   value: exit
   required: false
   name: MISSING_CONFIGURATION
-- description: Log level. One of the following: debug, info, notice, warn, error, crit, alert, or emerg.
+- description: "Log level. One of the following: debug, info, notice, warn, error, crit, alert, or emerg."
   name: APICAST_LOG_LEVEL
   required: false

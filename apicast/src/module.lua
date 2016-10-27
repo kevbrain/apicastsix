@@ -44,7 +44,21 @@ function _M.call(self, phase, ...)
   end
 end
 
-local prequire = function(file) return pcall(require, file) end
+local cache = {}
+local prequire = function(file)
+
+  if cache[file] then
+    return true, cache[file]
+  end
+
+  local ok, mod = pcall(require, file)
+
+  if ok then
+    cache[file] = mod
+  end
+
+  return  ok, mod
+end
 
 function _M.load(name, phase)
   local files = {
@@ -55,7 +69,7 @@ function _M.load(name, phase)
   for file, method in pairs(files) do
     local ok, ret = prequire(file)
 
-    if ok then
+    if ok and ret then
       ngx.log(ngx.DEBUG, 'plugin loaded: ', file)
 
       local f = ret[method]
@@ -65,6 +79,8 @@ function _M.load(name, phase)
       else
         ngx.log(ngx.ERR, 'plugin ', file, ' missing function ', method)
       end
+    elseif ok and not ret then
+      ngx.log(ngx.ERR, 'plugin ', file, ' wasnt loaded ', method)
     else
       ngx.log(ngx.DEBUG, 'plugin not loaded: ', file)
     end

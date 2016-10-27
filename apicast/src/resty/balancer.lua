@@ -47,7 +47,7 @@ local function convert_servers(servers, port)
     if peer and #peer == 2 then
       insert(peers, peer)
     else
-      ngx.log(ngx.WARN, 'skipping peer because it misses address or port')
+      ngx.log(ngx.INFO, 'skipping peer because it misses address or port')
     end
   end
 
@@ -98,7 +98,7 @@ function _M.set_peer(self, peers)
     return nil, 'peer missing address or port'
   end
 
-  ngx.log(ngx.DEBUG, 'balancer set peer ' .. tostring(address) .. ':' .. tostring(port))
+  ngx.log(ngx.INFO, 'balancer set peer ' .. tostring(address) .. ':' .. tostring(port))
 
   local ok, err = balancer.set_current_peer(address, port)
 

@@ -3,7 +3,7 @@
 DOCKER_COMPOSE = docker-compose
 S2I = s2i
 REGISTRY ?= quay.io/3scale
-TEST_NGINX_BINARY ?= nginx
+export TEST_NGINX_BINARY ?= openresty
 NGINX = $(shell which $(TEST_NGINX_BINARY))
 SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
@@ -76,15 +76,15 @@ test-docker: build clean ## Test build docker
 	@echo -e $(SEPARATOR)
 
 test-docker-release: export IMAGE_NAME = apicast-release-test
-test-docker-release: build clean
+test-docker-release: release clean
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'
 
 
 dependencies:
-	luarocks make --local apicast/*.rockspec
-	luarocks make --local rockspec
+	luarocks make apicast/*.rockspec
+	luarocks make rockspec
 
 clean: ## Remove all running docker containers
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans

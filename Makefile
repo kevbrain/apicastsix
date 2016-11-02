@@ -3,7 +3,7 @@
 DOCKER_COMPOSE = docker-compose
 S2I = s2i
 REGISTRY ?= quay.io/3scale
-TEST_NGINX_BINARY ?= nginx
+export TEST_NGINX_BINARY ?= openresty
 NGINX = $(shell which $(TEST_NGINX_BINARY))
 SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"

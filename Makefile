@@ -83,8 +83,8 @@ test-docker-release: build clean
 
 
 dependencies:
-	luarocks make --local apicast/*.rockspec
-	luarocks make --local rockspec
+	luarocks make apicast/*.rockspec
+	luarocks make rockspec
 
 clean: ## Remove all running docker containers
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans

@@ -76,7 +76,7 @@ test-docker: build clean ## Test build docker
 	@echo -e $(SEPARATOR)
 
 test-docker-release: export IMAGE_NAME = apicast-release-test
-test-docker-release: build clean
+test-docker-release: release clean
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'

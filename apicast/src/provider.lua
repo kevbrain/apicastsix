@@ -188,7 +188,7 @@ local http = {
   end
 }
 
-local function oauth_authrep(_, service)
+local function oauth_authrep(service)
   ngx.var.cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local access_tokens = ngx.shared.api_keys
   local is_known = access_tokens:get(ngx.var.cached_key)
@@ -210,7 +210,7 @@ local function oauth_authrep(_, service)
   end
 end
 
-local function authrep(_, service)
+local function authrep(service)
   local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local api_keys = ngx.shared.api_keys
   local is_known = api_keys and api_keys:get(cached_key)
@@ -241,11 +241,11 @@ local function authrep(_, service)
   end
 end
 
-function _M.authorize(backend_version, params, service)
+function _M.authorize(backend_version, service)
   if backend_version == 'oauth' then
-    oauth_authrep(params, service)
+    oauth_authrep(service)
   else
-    authrep(params, service)
+    authrep(service)
   end
 end
 
@@ -363,7 +363,7 @@ function _M.access(service)
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
 
-  _M.authorize(backend_version, params, service)
+  _M.authorize(backend_version, service)
 
   -- set upstream
   ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')

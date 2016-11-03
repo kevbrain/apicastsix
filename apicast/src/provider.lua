@@ -131,11 +131,7 @@ local function get_auth_params(where, method)
 end
 
 local function get_debug_value()
-  if ngx.var.http_x_3scale_debug == _M.configuration.debug_header then
-    return true
-  else
-    return false
-  end
+  return ngx.var.http_x_3scale_debug == _M.configuration.debug_header
 end
 
 local function find_service_strict(host)

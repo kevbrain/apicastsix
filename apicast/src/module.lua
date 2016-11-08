@@ -56,6 +56,15 @@ local prequire = function(file)
 
   if ok then
     cache[file] = mod
+  else
+    -- We need to cache that we tried requiring and failed so we do not try
+    -- again. If we don't, we'll call require() on each request. This greatly
+    -- affects performance.
+    -- We can't set cache[file] to nil. That's the same as saying that it is
+    -- not cached. We can't set it to an empty table either. Otherwise, the
+    -- load() method below will log errors because it'll think that the plugin
+    -- exists but it does not define the method.
+    cache[file] = 0
   end
 
   return  ok, mod

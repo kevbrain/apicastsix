@@ -1,12 +1,14 @@
 local configuration = require('configuration')
 local provider = require('provider')
 local balancer = require('balancer')
+local util = require('util')
 
 local _M = {
   _VERSION = '0.1'
 }
 
 local missing_configuration = os.getenv('APICAST_MISSING_CONFIGURATION') or 'log'
+local request_logs = util.env_enabled('APICAST_REQUEST_LOGS')
 
 local function handle_missing_configuration(err)
   if missing_configuration == 'log' then
@@ -50,6 +52,8 @@ function _M.access()
 end
 
 function _M.body_filter()
+  if not request_logs then return end
+
   ngx.ctx.buffered = (ngx.ctx.buffered or "") .. string.sub(ngx.arg[1], 1, 1000)
 
   if ngx.arg[2] then
@@ -58,6 +62,8 @@ function _M.body_filter()
 end
 
 function _M.header_filter()
+  if not request_logs then return end
+
   ngx.var.resp_headers = require('cjson').encode(ngx.resp.get_headers())
 end
 

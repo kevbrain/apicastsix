@@ -28,6 +28,9 @@ local split = util.string_split
 local resty_resolver = require 'resty.resolver'
 local dns_resolver = require 'resty.dns.resolver'
 
+local response_codes = util.env_enabled('APICAST_RESPONSE_CODES')
+local request_logs = util.env_enabled('APICAST_REQUEST_LOGS')
+
 local _M = {
   -- FIXME: this is really bad idea, this file is shared across all requests,
   -- so that means sharing something in this module would be sharing it acros all requests
@@ -373,25 +376,39 @@ function _M.access(service)
 end
 
 
+local function request_logs_encoded_data()
+  local request_log = {}
+
+  if request_logs then
+    local method, path, headers = ngx.req.get_method(), ngx.var.request_uri, ngx.req.get_headers()
+
+    local req = cjson.encode{ method=method, path=path, headers=headers }
+    local resp = cjson.encode{ body = ngx.var.resp_body, headers = cjson.decode(ngx.var.resp_headers) }
+
+    request_log["log[request]"] = req
+    request_log["log[response]"] = resp
+  end
+
+  if response_codes then
+    request_log["log[code]"] = ngx.var.status
+  end
+
+  return ngx.escape_uri(ngx.encode_args(request_log))
+end
+
 function _M.post_action()
   local service_id = tonumber(ngx.var.service_id, 10)
 
   _M.call(service_id) -- initialize resolver and get backend upstream peers
-
-  local method, path, headers = ngx.req.get_method(), ngx.var.request_uri, ngx.req.get_headers()
-
-  local req = cjson.encode{method=method, path=path, headers=headers}
-  local resp = cjson.encode{ body = ngx.var.resp_body, headers = cjson.decode(ngx.var.resp_headers)}
 
   local cached_key = ngx.var.cached_key
   local service = ngx.ctx.service
 
   if cached_key and cached_key ~= "null" then
     ngx.log(ngx.INFO, '[async] reporting to backend asynchronously')
-    local status_code = ngx.var.status
 
     local auth_uri = service.backend_version == 'oauth' and 'threescale_oauth_authrep' or 'threescale_authrep'
-    local res = http.get("/".. auth_uri .."?code=".. status_code .. "&req=" .. ngx.escape_uri(req) .. "&resp=" .. ngx.escape_uri(resp))
+    local res = http.get("/".. auth_uri .."?log=" .. request_logs_encoded_data())
 
     if res.status ~= 200 then
       local api_keys = ngx.shared.api_keys

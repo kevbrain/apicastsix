@@ -40,8 +40,8 @@ function _M.rewrite()
   end
 end
 
-function _M.content()
-  provider.post_action_content()
+function _M.post_action()
+  provider.post_action()
 end
 
 function _M.access()

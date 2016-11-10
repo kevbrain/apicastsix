@@ -19,9 +19,9 @@ describe('Provider', function()
     assert.same('function', type(provider.authorize))
   end)
 
-  it('has post_action_content function', function()
-    assert.truthy(provider.post_action_content)
-    assert.same('function', type(provider.post_action_content))
+  it('has post_action function', function()
+    assert.truthy(provider.post_action)
+    assert.same('function', type(provider.post_action))
   end)
 
   it('has services', function()

@@ -41,7 +41,7 @@ function _M.rewrite()
 end
 
 function _M.post_action()
-  provider.post_action_content()
+  provider.post_action()
 end
 
 function _M.access()

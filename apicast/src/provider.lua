@@ -373,7 +373,7 @@ function _M.access(service)
 end
 
 
-function _M.post_action_content()
+function _M.post_action()
   local service_id = tonumber(ngx.var.service_id, 10)
 
   _M.call(service_id) -- initialize resolver and get backend upstream peers

@@ -270,6 +270,16 @@ function _M.set_service(host)
   ngx.ctx.service = service
 end
 
+function _M.set_upstream()
+  local service = ngx.ctx.service
+  local scheme, _, _, host, port, path = unpack(configuration.url(service.api_backend) or {})
+  ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
+  ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
+  ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')
+  ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
+  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(host, { port = port })
+end
+
 function _M.call(host)
   host = host or ngx.var.host
   if not ngx.ctx.service then
@@ -297,8 +307,8 @@ function _M.call(host)
     end
   end
 
-  ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
-  ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
+  ngx.ctx.dns = ngx.ctx.dns or dns_resolver:new{ nameservers = resty_resolver.nameservers() }
+  ngx.ctx.resolver = ngx.ctx.resolver or resty_resolver.new(ngx.ctx.dns)
 
   local backend_upstream = ngx.ctx.resolver:get_servers(server, { port = port or nil })
   ngx.log(ngx.DEBUG, '[resolver] resolved backend upstream: ', #backend_upstream)

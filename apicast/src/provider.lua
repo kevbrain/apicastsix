@@ -82,6 +82,13 @@ local function error_no_match(service)
   ngx.print(service.error_no_match)
   ngx.exit(ngx.HTTP_OK)
 end
+
+local function error_service_not_found(host)
+  ngx.status = 404
+  ngx.print('')
+  ngx.log(ngx.WARN, 'could not find service for host: ', host)
+  ngx.exit(ngx.status)
+end
 -- End Error Codes
 
 -- Aux function to split a string
@@ -257,10 +264,7 @@ function _M.call(host)
   local service = _M.find_service(host)
 
   if not service then
-    ngx.status = 404
-    ngx.print('')
-    ngx.log(ngx.WARN, 'could not find service for host: ', host)
-    return ngx.exit(ngx.status)
+    error_service_not_found(host)
   end
 
   ngx.var.backend_authentication_type = service.backend_authentication.type

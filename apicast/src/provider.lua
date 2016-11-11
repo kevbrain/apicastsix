@@ -259,7 +259,7 @@ function _M.authorize(backend_version, service)
   end
 end
 
-function _M.call(host)
+function _M.set_service(host)
   host = host or ngx.var.host
   local service = _M.find_service(host)
 
@@ -267,12 +267,22 @@ function _M.call(host)
     error_service_not_found(host)
   end
 
+  ngx.ctx.service = service
+end
+
+function _M.call(host)
+  host = host or ngx.var.host
+  if not ngx.ctx.service then
+    _M.set_service(host)
+  end
+
+  local service = ngx.ctx.service
+
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
   ngx.var.backend_host = service.backend.host or ngx.var.backend_host
 
   ngx.var.service_id = tostring(service.id)
-  ngx.ctx.service = service
 
   ngx.var.version = _M.configuration.version
 

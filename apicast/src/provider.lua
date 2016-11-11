@@ -272,7 +272,11 @@ end
 
 function _M.set_upstream()
   local service = ngx.ctx.service
-  local scheme, _, _, host, port, path = unpack(configuration.url(service.api_backend) or {})
+
+  -- The default values are only for tests. We need to set at least the scheme.
+  local scheme, _, _, host, port, path =
+    unpack(configuration.url(service.api_backend) or { 'http' })
+
   ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
   ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
   ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')

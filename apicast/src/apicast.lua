@@ -87,6 +87,9 @@ function _M.rewrite()
     local config = configuration.boot()
     provider.init(config)
   end
+
+  provider.set_service()
+  provider.set_upstream()
 end
 
 function _M.post_action()

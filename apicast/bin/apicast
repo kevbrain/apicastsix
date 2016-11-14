@@ -54,10 +54,11 @@ usage () {
 	  -c <file> Path to custom config file (JSON).
 	  -d Daemonize
 	  -v Increase verbosity (can be repeated)
+	  -i Auto update interval in seconds.
 USAGE
 }
 
-while getopts ":dc:hvq" opt; do
+while getopts ":dc:hvqi:" opt; do
   case "${opt}" in
     d)
       daemon=on
@@ -71,6 +72,9 @@ while getopts ":dc:hvq" opt; do
     q)
 	    log_level=$((log_level == 0 ? 0 : log_level-1))
       ;;
+    i)
+      export AUTO_UPDATE_INTERVAL="${OPTARG}"
+    ;;
     h)
       usage
       exit 0

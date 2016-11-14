@@ -55,7 +55,7 @@ usage () {
 	  -d Daemonize
 	  -v Increase verbosity (can be repeated)
 	  -i Auto update interval in seconds.
-	  -r Reload configuration on every request
+	  -r Reload configuration on every request. WARNING: not for production. It has to download configuration on every request.
 USAGE
 }
 

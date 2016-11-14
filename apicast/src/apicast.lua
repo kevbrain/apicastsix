@@ -3,6 +3,7 @@ local provider = require('provider')
 local balancer = require('balancer')
 local util = require('util')
 local pcall = pcall
+local reload_config = util.env_enabled('APICAST_RELOAD_CONFIG')
 
 local _M = {
   _VERSION = '0.1'
@@ -82,7 +83,7 @@ function _M.rewrite()
   -- load configuration if not configured
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
-  if not provider.configured then
+  if not provider.configured or reload_config then
     local config = configuration.boot()
     provider.init(config)
   end

@@ -55,13 +55,17 @@ usage () {
 	  -d Daemonize
 	  -v Increase verbosity (can be repeated)
 	  -i Auto update interval in seconds.
+	  -r Reload configuration on every request
 USAGE
 }
 
-while getopts ":dc:hvqi:" opt; do
+while getopts ":dc:hvqi:r" opt; do
   case "${opt}" in
     d)
       daemon=on
+      ;;
+    r)
+      export APICAST_RELOAD_CONFIG=1
       ;;
     c)
       export THREESCALE_CONFIG_FILE="$OPTARG"

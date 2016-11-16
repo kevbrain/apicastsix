@@ -120,4 +120,6 @@ end
 
 _M.balancer = balancer.call
 
+_M.log = function() end
+
 return _M

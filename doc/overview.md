@@ -71,7 +71,7 @@ If you want to experiment further, you can test what happens if you try credenti
 
 You can also define a rate limit of 1 request per minute. After you try your second request within the same minute you will see that the request never reaches your API backend. The gateway stops the request because it violates the quota that you have just set up.
 
-## Integration options
+## Integration configuration
 
 ### Endpoints
 

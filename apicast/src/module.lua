@@ -1,6 +1,7 @@
 local setmetatable = setmetatable
 local pcall = pcall
 local require = require
+local dofile = dofile
 local pairs = pairs
 local type = type
 
@@ -52,10 +53,15 @@ local prequire = function(file)
     return true, cache[file]
   end
 
-  local ok, mod = pcall(require, file)
+  local ok, ret = pcall(require, file)
+
+  if not ok and ret then
+    -- dofile can load absolue paths, require can't
+    ok, ret = pcall(dofile, file)
+  end
 
   if ok then
-    cache[file] = mod
+    cache[file] = ret
   else
     -- We need to cache that we tried requiring and failed so we do not try
     -- again. If we don't, we'll call require() on each request. This greatly
@@ -67,7 +73,7 @@ local prequire = function(file)
     cache[file] = 0
   end
 
-  return  ok, mod
+  return  ok, ret
 end
 
 function _M.load(name, phase)

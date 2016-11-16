@@ -86,7 +86,7 @@ This option is only needed for those API backends that reject traffic unless the
 To avoid this issue you can define the host your API backend expects in the **Host Header** field, and the hosted gateway will rewrite the host.
 
 <div class="screenshot">
-  <img alt="Host Rewrite" src="/images/screenshots/deployment-options-proxy-hostname-rewrite.png" />
+  <img alt="Host Rewrite" src="images/screenshots/deployment-options-proxy-hostname-rewrite.png" />
 </div>
 
 ### Deployment History
@@ -101,7 +101,7 @@ Note that it is not possible to automatically roll back to previous configuratio
 By default we start with a very simple mapping rule,
 
 <div class="screenshot">
-  <img alt="Mapping Rules" src="/images/screenshots/deployment-options-proxy-mapping-rules-single.png" />
+  <img alt="Mapping Rules" src="images/screenshots/deployment-options-proxy-mapping-rules-single.png" />
 </div>
 
 This rule says, that any ```GET``` request that starts with ```"/"``` will increment the metric ```hits``` by 1. Most likely you will remove this rule since it is too generic.
@@ -109,7 +109,7 @@ This rule says, that any ```GET``` request that starts with ```"/"``` will incre
 The mapping rules define which metrics (and methods) you want to report depending on the requests to your API. For instance, below you can see the rules for the Sentiment API that serves us as an example:
 
 <div class="screenshot">
-  <img alt="Mapping Rules" src="/images/screenshots/deployment-options-proxy-mapping-rules-multiple.png" />
+  <img alt="Mapping Rules" src="images/screenshots/deployment-options-proxy-mapping-rules-multiple.png" />
 </div>
 
 The matching of the rules is done by prefix and can be arbitrarily complex (the notation follows Swagger and ActiveDocs specification)

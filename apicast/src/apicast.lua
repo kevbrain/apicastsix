@@ -28,10 +28,9 @@ end
 
 function _M.init()
   local config, err = configuration.init()
+  local init = config and provider.init(config)
 
-  if config then
-    provider.init(config)
-  else
+  if not init then
     handle_missing_configuration(err)
   end
 end

@@ -159,7 +159,7 @@ function _M.get_servers(self, qname, opts)
       ngx.log(ngx.DEBUG, 'host is ip address: ', qname)
       answers = { new_answer(qname) }
     else
-      answers, err = dns:query(qname)
+      answers, err = dns:query(qname, { qtype = dns.TYPE_A })
     end
 
     cache:save(answers)

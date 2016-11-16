@@ -251,7 +251,11 @@ end
 function _M.parse(contents, encoder)
   local config, err = _M.decode(contents, encoder)
 
-  return _M.new(config)
+  if config then
+    return _M.new(config)
+  else
+    return nil, err
+  end
 end
 
 function _M.read(path)
@@ -435,7 +439,8 @@ function _M.download(endpoint)
   if body and res.status == 200 then
     ngx.log(ngx.DEBUG, 'configuration response received:' .. body)
 
-    local ok, err = _M.decode(body)
+    local ok
+    ok, err = _M.decode(body)
     if ok then
       return body
     else

@@ -316,11 +316,16 @@ function _M.new(configuration)
   }, mt)
 end
 
+function _M.file(path)
+  local file = path or getenv('THREESCALE_CONFIG_FILE')
+
+  return _M.read(file)
+end
+
 function _M.boot()
   local endpoint = getenv('THREESCALE_PORTAL_ENDPOINT')
-  local file = getenv('THREESCALE_CONFIG_FILE')
 
-  return _M.load() or _M.read(file) or _M.wait(endpoint, 3) or _M.download(endpoint) or _M.curl(endpoint) or error('missing configuration')
+  return _M.load() or _M.file() or _M.wait(endpoint, 3) or _M.download(endpoint) or _M.curl(endpoint) or error('missing configuration')
 end
 
 function _M.save(config)
@@ -336,6 +341,9 @@ end
 -- For this reason a new process needs to be started to download the configuration through 3scale API
 function _M.init()
   local config, exit, code = util.system("cd '" .. ngx.config.prefix() .."' && libexec/boot")
+
+  -- Try to read the file in current working directory before changing to the prefix.
+  if not config then config = _M.file() end
 
   if config then
     if len(config) > 0 then return config end

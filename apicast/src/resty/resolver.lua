@@ -3,6 +3,7 @@ local ipairs = ipairs
 local next = next
 local open = io.open
 local gmatch = string.gmatch
+local match = string.match
 local insert = table.insert
 local getenv = os.getenv
 local concat = table.concat
@@ -18,11 +19,11 @@ local _M = {
   _nameservers = {}
 }
 
-
 local mt = { __index = _M }
 
 function _M.parse_nameservers(path)
-  local nameservers = {}
+  local search = {}
+  local nameservers = { search = search }
   local path = path or '/etc/resolv.conf'
 
   local resolver = getenv('RESOLVER')
@@ -54,6 +55,11 @@ function _M.parse_nameservers(path)
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
     local port
     insert(nameservers, { nameserver, port } )
+  end
+
+  local domains = match(output, 'search%s+([^\n]+)')
+  for domain in gmatch(domains or '', '([^%s]+)') do
+    insert(search, domain)
   end
 
   return nameservers
@@ -88,9 +94,14 @@ end
 function _M.new(dns, opts)
   local opts = opts or {}
   local cache = opts.cache or resolver_cache.new()
+  local search = opts.search or {}
+
+  ngx.log(ngx.DEBUG, 'resolver search domains: ', concat(search, ' '))
+
   return setmetatable({
     dns = dns,
-    cache = cache
+    cache = cache,
+    search = search
   }, mt)
 end
 
@@ -121,6 +132,10 @@ local function is_ip(address)
   end
 end
 
+local function has_tld(qname)
+  return match(qname, '%.')
+end
+
 local function convert_answers(answers, port)
   local servers = {}
 
@@ -138,6 +153,7 @@ function _M.get_servers(self, qname, opts)
   local dns = self.dns
   local port = opts.port
   local cache = self.cache
+  local search = self.search
 
   if not dns then
     return nil, 'resolver not initialized'
@@ -153,13 +169,23 @@ function _M.get_servers(self, qname, opts)
   local answers, err = cache:get(qname)
 
   if not answers or #answers.addresses == 0 then
-    ngx.log(ngx.DEBUG, 'resolver query ', qname)
+    ngx.log(ngx.DEBUG, 'resolver query: ', qname)
 
     if is_ip(qname) then
       ngx.log(ngx.DEBUG, 'host is ip address: ', qname)
       answers = { new_answer(qname) }
     else
       answers, err = dns:query(qname, { qtype = dns.TYPE_A })
+
+      if not has_tld(qname) and (not answers or not answers.addresses) then
+        for _, domain in ipairs(search) do
+
+          ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' search: ', domain)
+          answers, err = dns:query(qname .. '.' .. domain, { qtype = dns.TYPE_A })
+
+          if answers and next(answers.addresses or {}) then break end
+        end
+      end
     end
 
     cache:save(answers)
@@ -179,7 +205,5 @@ function _M.get_servers(self, qname, opts)
 
   return servers
 end
-
-
 
 return _M

@@ -16,7 +16,8 @@ local init = semaphore.new(1)
 
 local _M = {
   _VERSION = '0.1',
-  _nameservers = {}
+  _nameservers = {},
+  search = {}
 }
 
 local mt = { __index = _M }
@@ -25,12 +26,7 @@ function _M.parse_nameservers(path)
   local search = {}
   local nameservers = { search = search }
   local path = path or '/etc/resolv.conf'
-
   local resolver = getenv('RESOLVER')
-  if resolver then
-    insert(nameservers, { resolver })
-    return nameservers
-  end
 
   local handle, err
 
@@ -50,16 +46,25 @@ function _M.parse_nameservers(path)
     ngx.log(ngx.ERR, 'resolver could not get nameservers: ', err)
     return nil, err
   end
+  ngx.log(ngx.DEBUG, '/etc/resolv.conf:\n', output)
+
+  local domains = match(output, 'search%s+([^\n]+)')
+  ngx.log(ngx.DEBUG, 'search ', domains)
+  for domain in gmatch(domains or '', '([^%s]+)') do
+    ngx.log(ngx.DEBUG, 'search domain: ', domain)
+    insert(search, domain)
+  end
+
+  if resolver then
+    insert(nameservers, { resolver })
+  end
 
   for nameserver in gmatch(output, 'nameserver%s+([^%s]+)') do
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
     local port
-    insert(nameservers, { nameserver, port } )
-  end
-
-  local domains = match(output, 'search%s+([^\n]+)')
-  for domain in gmatch(domains or '', '([^%s]+)') do
-    insert(search, domain)
+    if nameserver ~= resolver then
+      insert(nameservers, { nameserver, port } )
+    end
   end
 
   return nameservers
@@ -67,9 +72,16 @@ end
 
 function _M.init_nameservers()
   local nameservers = _M.parse_nameservers() or {}
+  local search = nameservers.search or {}
+
   for _,nameserver in ipairs(nameservers) do
     ngx.log(ngx.INFO, 'adding ', concat(nameserver,':'), ' as default nameserver')
     insert(_M._nameservers, nameserver)
+  end
+
+  for _,domain in ipairs(search) do
+    ngx.log(ngx.INFO, 'adding ', domain, ' as search domain')
+    insert(_M.search, domain)
   end
 end
 
@@ -94,7 +106,7 @@ end
 function _M.new(dns, opts)
   local opts = opts or {}
   local cache = opts.cache or resolver_cache.new()
-  local search = opts.search or {}
+  local search = opts.search or _M.search
 
   ngx.log(ngx.DEBUG, 'resolver search domains: ', concat(search, ' '))
 
@@ -136,6 +148,10 @@ local function has_tld(qname)
   return match(qname, '%.')
 end
 
+local function have_addresses(answers)
+  return answers and next(answers.addresses or {}) and #answers > 0 and not answers.errcode
+end
+
 local function convert_answers(answers, port)
   local servers = {}
 
@@ -153,7 +169,7 @@ function _M.get_servers(self, qname, opts)
   local dns = self.dns
   local port = opts.port
   local cache = self.cache
-  local search = self.search
+  local search = self.search or {}
 
   if not dns then
     return nil, 'resolver not initialized'
@@ -177,13 +193,14 @@ function _M.get_servers(self, qname, opts)
     else
       answers, err = dns:query(qname, { qtype = dns.TYPE_A })
 
-      if not has_tld(qname) and (not answers or not answers.addresses) then
+      if not has_tld(qname) and not have_addresses(answers) then
         for _, domain in ipairs(search) do
 
-          ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' search: ', domain)
-          answers, err = dns:query(qname .. '.' .. domain, { qtype = dns.TYPE_A })
+          local query = qname .. '.' .. domain
+          ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' search: ', domain, ' query: ', query)
+          answers, err = dns:query(query, { qtype = dns.TYPE_A })
 
-          if answers and next(answers.addresses or {}) then break end
+          if answers and not answers.errcode and #answers > 0 then break end
         end
       end
     end
@@ -192,11 +209,11 @@ function _M.get_servers(self, qname, opts)
   end
 
   if err then
-    return nil, err
+    return {}, err
   end
 
   if not answers then
-    return nil, 'no answers'
+    return {}, 'no answers'
   end
 
   local servers = convert_answers(answers, port)

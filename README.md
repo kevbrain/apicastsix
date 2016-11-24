@@ -15,7 +15,7 @@ This Dockerfile creates a [3scale](http://www.3scale.net) gateway, and configure
 To run APIcast on OpenShift, just use template and create a Secret to point to your 3scale Admin Portal.
 
 ```shell
-oc secret new-basicauth threescale-portal-endpoint-secret --password=https://access-token@account-admin.3scale.net
+oc secret new-basicauth threescale-portal-endpoint-secret --password=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net
 oc new-app -f https://raw.githubusercontent.com/3scale/apicast/v2/openshift/apicast-template.yml
 ```
 
@@ -27,22 +27,22 @@ You can download a ready to use Docker image from our repository:
 docker pull quay.io/3scale/apicast:v2
 ```
 
-The 3scale gateway image requires one of the two environment variables:
+The 3scale gateway image requires one of two environment variables. The first option will pull the latest gateway configuration from the 3scale API Manager. The second points to a local configuration file which has already been downloaded from 3scale:
 
 * **THREESCALE_PORTAL_ENDPOINT**
 
-URI that includes your password and portal endpoint in following format: `schema://access-token@domain`. The password can be either the [provider key](https://support.3scale.net/docs/terminology#apikey) or an [access token](https://support.3scale.net/docs/terminology#tokens) for the 3scale Account Management API.
-Example: https://access-token@account-admin.3scale.net.
+URI that includes your password and portal endpoint in following format: `schema://access-token@domain`. The password can be either the [provider key](https://support.3scale.net/docs/terminology#apikey) or an [access token](https://support.3scale.net/docs/terminology#tokens) for the 3scale Account Management API. Note: these should not be confused with [service tokens](https://support.3scale.net/docs/terminology#tokens)
+Example: https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net (where the host name is the same as the domain for the URL when you are logged into the admin portal from a browser.
 
 When `THREESCALE_PORTAL_ENDPOINT` environment variable is provided, the gateway will download the configuration from the 3scale on initializing. The configuration includes all the settings provided on the Integration page of the API(s).
 
 ```shell
-docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://access-token@account-admin.3scale.net quay.io/3scale/gateway:v2
+docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net quay.io/3scale/gateway:v2
 ```
 
 * **THREESCALE_CONFIG_FILE**
 
-Path to saved JSON file with configuration for the gateway. The configuration can be downloaded from the 3scale admin portal using the URL https://account-admin.3scale.net/admin/api/nginx/spec.json (replace `account` with your 3scale account name). The file has to be injected to the docker image as read only volume, and the path should indicate where the volume is mounted, i.e. path local to the docker container.
+Path to saved JSON file with configuration for the gateway. The configuration can be downloaded from the 3scale admin portal using the URL https://ACCOUNT-admin.3scale.net/admin/api/nginx/spec.json (replace `ACCOUNT` with your 3scale account name). The file has to be injected to the docker image as read only volume, and the path should indicate where the volume is mounted, i.e. path local to the docker container.
 
 ```shell
 docker run --name apicast --rm -p 8080:8080 -v $(pwd)/config.json:/opt/app/config.json:ro -e THREESCALE_CONFIG_FILE=/opt/app/config.json quay.io/3scale/gateway:v2
@@ -55,7 +55,7 @@ The JSON file needs to follow the [schema](schema.json), see an [example file](e
 In some 3scale plans it is possible to create multiple API services (see an [example of the configuration file](examples/configuration/multiservice.json)). The _optional_ **APICAST_SERVICES** environment variable allows filtering the list of services, so that the gateway only includes the services explicitly specified, the value of the variable should be a comma-separated list of service IDs. This setting is useful when you have many services configured on 3scale, but you want to expose just a subset of them in the gateway.
 
 ```shell
-docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://access-token@account-admin.3scale.net -e APICAST_SERVICES=1234567890987 quay.io/3scale/gateway:v2
+docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net -e APICAST_SERVICES=1234567890987 quay.io/3scale/gateway:v2
 ```
 
 ### Docker options
@@ -122,7 +122,7 @@ For developing and testing APIcast the following tools are needed:
 - [redis](http://redis.io/) in-memory data store is used for caching. The tests for the OAuth flow require a redis instance running on `localhost`.
 
 - Docker and `s2i`
- 
+
  There are tests that run in Docker container, to execute these Docker needs to be installed, and to build the images [Source-To-Image](https://github.com/openshift/source-to-image) is used. To install it, download it from the [releases page](https://github.com/openshift/source-to-image/releases), and put the extracted `s2i` executable on your PATH.
 
 ## Running the tests

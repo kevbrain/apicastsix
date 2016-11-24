@@ -26,7 +26,7 @@ local unpack = unpack
 local split = util.string_split
 
 local resty_resolver = require 'resty.resolver'
-local dns_resolver = require 'resty.dns.resolver'
+local dns_resolver = require 'resty.resolver.dns'
 
 local response_codes = util.env_enabled('APICAST_RESPONSE_CODES')
 local request_logs = util.env_enabled('APICAST_REQUEST_LOGS')
@@ -202,10 +202,20 @@ local http = {
   get = function(url)
     ngx.log(ngx.INFO, '[http] requesting ' .. url)
     local backend_upstream = ngx.ctx.backend_upstream
+    local previous_real_url = ngx.var.real_url
     ngx.log(ngx.DEBUG, '[ctx] copying backend_upstream of size: ', #backend_upstream)
     local res = ngx.location.capture(assert(url), { share_all_vars = true, ctx = { backend_upstream = backend_upstream } })
 
-    ngx.log(ngx.INFO, '[http] status: ' .. tostring(res.status))
+    local real_url = ngx.var.real_url
+
+    if real_url ~= previous_real_url then
+      ngx.log(ngx.INFO, '[http] ', real_url, ' (',tostring(res.status), ')')
+    else
+      ngx.log(ngx.INFO, '[http] status: ', tostring(res.status))
+    end
+
+    ngx.var.real_url = ''
+
     return res
   end
 }

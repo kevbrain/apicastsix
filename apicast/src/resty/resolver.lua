@@ -3,6 +3,7 @@ local ipairs = ipairs
 local next = next
 local open = io.open
 local gmatch = string.gmatch
+local match = string.match
 local insert = table.insert
 local getenv = os.getenv
 local concat = table.concat
@@ -15,21 +16,17 @@ local init = semaphore.new(1)
 
 local _M = {
   _VERSION = '0.1',
-  _nameservers = {}
+  _nameservers = {},
+  search = {}
 }
-
 
 local mt = { __index = _M }
 
 function _M.parse_nameservers(path)
-  local nameservers = {}
+  local search = {}
+  local nameservers = { search = search }
   local path = path or '/etc/resolv.conf'
-
   local resolver = getenv('RESOLVER')
-  if resolver then
-    insert(nameservers, { resolver })
-    return nameservers
-  end
 
   local handle, err
 
@@ -49,11 +46,25 @@ function _M.parse_nameservers(path)
     ngx.log(ngx.ERR, 'resolver could not get nameservers: ', err)
     return nil, err
   end
+  ngx.log(ngx.DEBUG, '/etc/resolv.conf:\n', output)
+
+  local domains = match(output, 'search%s+([^\n]+)')
+  ngx.log(ngx.DEBUG, 'search ', domains)
+  for domain in gmatch(domains or '', '([^%s]+)') do
+    ngx.log(ngx.DEBUG, 'search domain: ', domain)
+    insert(search, domain)
+  end
+
+  if resolver then
+    insert(nameservers, { resolver })
+  end
 
   for nameserver in gmatch(output, 'nameserver%s+([^%s]+)') do
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
     local port
-    insert(nameservers, { nameserver, port } )
+    if nameserver ~= resolver then
+      insert(nameservers, { nameserver, port } )
+    end
   end
 
   return nameservers
@@ -61,9 +72,16 @@ end
 
 function _M.init_nameservers()
   local nameservers = _M.parse_nameservers() or {}
+  local search = nameservers.search or {}
+
   for _,nameserver in ipairs(nameservers) do
     ngx.log(ngx.INFO, 'adding ', concat(nameserver,':'), ' as default nameserver')
     insert(_M._nameservers, nameserver)
+  end
+
+  for _,domain in ipairs(search) do
+    ngx.log(ngx.INFO, 'adding ', domain, ' as search domain')
+    insert(_M.search, domain)
   end
 end
 
@@ -88,9 +106,14 @@ end
 function _M.new(dns, opts)
   local opts = opts or {}
   local cache = opts.cache or resolver_cache.new()
+  local search = opts.search or _M.search
+
+  ngx.log(ngx.DEBUG, 'resolver search domains: ', concat(search, ' '))
+
   return setmetatable({
     dns = dns,
-    cache = cache
+    cache = cache,
+    search = search
   }, mt)
 end
 
@@ -121,6 +144,14 @@ local function is_ip(address)
   end
 end
 
+local function has_tld(qname)
+  return match(qname, '%.')
+end
+
+local function have_addresses(answers)
+  return answers and next(answers.addresses or {}) and #answers > 0 and not answers.errcode
+end
+
 local function convert_answers(answers, port)
   local servers = {}
 
@@ -138,6 +169,7 @@ function _M.get_servers(self, qname, opts)
   local dns = self.dns
   local port = opts.port
   local cache = self.cache
+  local search = self.search or {}
 
   if not dns then
     return nil, 'resolver not initialized'
@@ -153,24 +185,35 @@ function _M.get_servers(self, qname, opts)
   local answers, err = cache:get(qname)
 
   if not answers or #answers.addresses == 0 then
-    ngx.log(ngx.DEBUG, 'resolver query ', qname)
+    ngx.log(ngx.DEBUG, 'resolver query: ', qname)
 
     if is_ip(qname) then
       ngx.log(ngx.DEBUG, 'host is ip address: ', qname)
       answers = { new_answer(qname) }
     else
       answers, err = dns:query(qname, { qtype = dns.TYPE_A })
+
+      if not has_tld(qname) and not have_addresses(answers) then
+        for _, domain in ipairs(search) do
+
+          local query = qname .. '.' .. domain
+          ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' search: ', domain, ' query: ', query)
+          answers, err = dns:query(query, { qtype = dns.TYPE_A })
+
+          if answers and not answers.errcode and #answers > 0 then break end
+        end
+      end
     end
 
     cache:save(answers)
   end
 
   if err then
-    return nil, err
+    return {}, err
   end
 
   if not answers then
-    return nil, 'no answers'
+    return {}, 'no answers'
   end
 
   local servers = convert_answers(answers, port)
@@ -179,7 +222,5 @@ function _M.get_servers(self, qname, opts)
 
   return servers
 end
-
-
 
 return _M

@@ -53,6 +53,8 @@ objects:
             value: ${RESPONSE_CODES}
           - name: APICAST_REQUEST_LOGS
             value: ${REQUEST_LOGS}
+          - name: APICAST_RELOAD_CONFIG
+            value: ${APICAST_RELOAD_CONFIG}
           image: ${THREESCALE_GATEWAY_IMAGE}
           imagePullPolicy: Always
           name: ${THREESCALE_GATEWAY_NAME}
@@ -140,4 +142,8 @@ parameters:
 - description: "Enable logging response codes to 3scale."
   value: "false"
   name: RESPONSE_CODES
+  required: false
+- description: "Reload config on every request"
+  value: "false"
+  name: APICAST_RELOAD_CONFIG
   required: false

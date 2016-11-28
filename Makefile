@@ -10,6 +10,7 @@ SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7
+RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
 lua_files = $(wildcard apicast/src/*.lua)
 spec_files = $(wildcard apicast/spec/*.lua)
@@ -41,8 +42,9 @@ prove-docker: ## Test nginx inside docker
 build: ## Build image for development
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --copy --incremental
 
+release: PULL_POLICY ?= always
 release: ## Build image for release
-	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --runtime-image=$(BUILDER_IMAGE)-runtime --pull-policy=always
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY)
 
 push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)

@@ -7,11 +7,11 @@ Here you’ll learn more about deployment options, environments provided, and ho
 ## Deployment options
 
 You can use APIcast hosted or self-managed, in both cases, it needs connection to the rest of the 3scale API management platform:
-- **<a href="hosted">APIcast hosted</a>**: 3scale hosts the gateway in the cloud. The API gateway is already deployed for you and it's limited to 50,000 calls per day.
+- **<a href="https://support.3scale.net/docs/deployment-options/apicast-cloud-gateway">APIcast hosted</a>**: 3scale hosts the gateway in the cloud. The API gateway is already deployed for you and it's limited to 50,000 calls per day.
 - **APIcast self-managed**: You can deploy APIcast wherever you want. To do so, download the json configuration file from API > Integration > Production or fetch it using the Account management API. The self-managed mode is the intended mode of operation for production environments. Here are a few recommended options to deploy your API gateway:
-  - <a href="self-managed">Direct deploy</a>: Where the customer needs to deploy a supported version of Nginx/ OpenResty and use the 'GA' tagged release from the [APIcast repository](https://github.com/3scale/apicast/releases).
-  - <a href="openshift-guide">OpenShift</a>: Where the customer deploys on a supported version of OpenShift a released and unmodified OpenShift template for APIcast, which will run the official Docker images.
-  - <a href="docker">Docker</a>: Where the customer runs a dockerized image downloaded from the Red Hat Docker Registry, using a supported version of Docker.
+  - <a href="https://support.3scale.net/docs/deployment-options/advanced-nginx">Local deploy</a>: Where the customer needs to deploy a supported version of Nginx/ OpenResty and use the 'GA' tagged release from the [APIcast repository](https://github.com/3scale/apicast/releases).
+  - <a href="https://support.3scale.net/guides/infrastructure/docker-openshift">OpenShift</a>: Where the customer deploys on a supported version of OpenShift a released and unmodified OpenShift template for APIcast, which will run the official Docker images.
+  - Docker: Where the customer runs a dockerized image downloaded from the Red Hat Docker Registry, using a supported version of Docker.
 
 ## Environments
 
@@ -139,4 +139,4 @@ The intended workflow to define mapping rules is as follows:
 * To delete a rule click on the trash icon.
 * Modifications and deletions will be saved when you hit the **Update & Test Staging Configuration** button.
 
-For more advanced configuration options, you can check the ['APIcast advanced configuration'](advanced-apicast-config) tutorial.
+For more advanced configuration options, you can check the ['APIcast advanced configuration'](https://support.3scale.net/docs/deployment-options/advanced-nginx) tutorial.

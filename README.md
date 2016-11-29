@@ -144,3 +144,6 @@ To run just the integration tests:
 ```shell
 make prove
 ```
+
+# Contributing
+For details on how to contribute to this repo see [CONTRIBUTING](.github/CONTRIBUTING.md)

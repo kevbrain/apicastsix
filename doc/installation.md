@@ -46,7 +46,7 @@ To use the upstream project, you can check out the [APIcast GitHub repository](h
 
 ```shell
 sudo yum install git
-git checkout https://github.com/3scale/apicast.git
+git clone https://github.com/3scale/apicast.git
 cd apicast
 ```
 

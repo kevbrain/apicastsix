@@ -385,7 +385,6 @@ function _M.access(service)
     ngx.var.cached_key = concat({service.id, params.app_id, params.app_key}, ':')
 
   elseif backend_version == 'oauth' then
-    ngx.var.access_token = parameters.access_token
     params.access_token = parameters.access_token
     ngx.var.cached_key = concat({service.id, params.access_token}, ':')
   else

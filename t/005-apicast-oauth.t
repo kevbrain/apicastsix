@@ -325,7 +325,7 @@ GET /t
 --- error_code: 200
 
 
-=== TEST 11: calling with correct access_token proxies to the api upstream
+=== TEST 11: calling with correct access_token in query proxies to the api upstream
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -336,7 +336,8 @@ GET /t
         {
           backend_version = 'oauth',
           proxy = {
-          api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            credentials_location = "query",
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
               { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
             }
@@ -395,3 +396,106 @@ GET /fake-authorize?client_id=id&redirect_uri=http://example.com/redirect&respon
 ^<html>
 --- response_headers_like 
 Location: http://example.com/redirect\?code=\w+&state=12345
+
+=== TEST 13: calling with correct access_token in Authorization header proxies to the api upstream
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+
+  init_by_lua_block {
+    require('configuration_loader').save({
+      services = {
+        {
+          backend_version = 'oauth',
+          proxy = {
+            credentials_location = "headers",
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+
+    ngx.shared.api_keys:set('default:foobar:usage[hits]=0', 200)
+  }
+  lua_shared_dict api_keys 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  include $TEST_NGINX_BACKEND_CONFIG;
+
+  location /api-backend/ {
+    echo "yay, upstream";
+  }
+--- request
+GET /
+--- more_headers
+Authorization: Bearer foobar
+--- error_code: 200
+--- response_body
+yay, upstream
+
+=== TEST 14: calling with access_token in query when credentials location is 'headers' fails with 'auth missing'
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require('configuration_loader').save({
+      services = {
+        {
+          backend_version = 'oauth',
+          proxy = {
+            credentials_location = 'headers',
+            error_auth_missing = 'credentials missing!',
+            error_status_auth_missing = 401,
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict api_keys 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  include $TEST_NGINX_BACKEND_CONFIG;
+--- request
+GET /?access_token=foobar
+--- error_code: 401
+--- response_body chomp
+credentials missing!
+
+=== TEST 15: calling with access_token in header when the type is not 'Bearer' (case-sensitive) fails with 'auth missing'
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require('configuration_loader').save({
+      services = {
+        {
+          backend_version = 'oauth',
+          proxy = {
+            credentials_location = 'headers',
+            error_auth_missing = 'credentials missing!',
+            error_status_auth_missing = 401,
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict api_keys 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  include $TEST_NGINX_BACKEND_CONFIG;
+--- request
+GET /
+--- more_headers
+Authorization: bearer foobar
+--- error_code: 401
+--- response_body chomp
+credentials missing!

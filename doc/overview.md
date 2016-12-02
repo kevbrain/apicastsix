@@ -9,9 +9,9 @@ Here you’ll learn more about deployment options, environments provided, and ho
 You can use APIcast hosted or self-managed, in both cases, it needs connection to the rest of the 3scale API management platform:
 - **<a href="hosted">APIcast hosted</a>**: 3scale hosts the gateway in the cloud. The API gateway is already deployed for you and it's limited to 50,000 calls per day.
 - **APIcast self-managed**: You can deploy APIcast wherever you want. To do so, download the json configuration file from API > Integration > Production or fetch it using the Account management API. The self-managed mode is the intended mode of operation for production environments. Here are a few recommended options to deploy your API gateway:
-  - <a href="self-managed">Direct deploy</a>: Where the customer needs to deploy a supported version of Nginx/ OpenResty and use the 'GA' tagged release from the [APIcast repository](https://github.com/3scale/apicast/releases).
-  - <a href="openshift-guide">OpenShift</a>: Where the customer deploys on a supported version of OpenShift a released and unmodified OpenShift template for APIcast, which will run the official Docker images.
-  - <a href="docker">Docker</a>: Where the customer runs a dockerized image downloaded from the Red Hat Docker Registry, using a supported version of Docker.
+  - <a href="self-managed">'Local' deploy</a>: Install dependencies (check out the [Tools and dependencies info](https://github.com/3scale/apicast#tools-and-dependencies) and get the 'v2.0.0-rc1' tagged version of APIcast (or latest release published).
+  - <a href="docker">Docker</a>: To avoid having to install APIcast dependencies, you can [download a ready to use dockerized image](https://github.com/3scale/apicast#docker) form our repository.
+  - <a href="openshift-guide">OpenShift</a>: APIcast v2.0.0-rc1 runs on top of OpenShift 3.3.
 
 ## Environments
 
@@ -22,11 +22,18 @@ By default, when you create a 3scale account, you get APIcast **hosted** in two 
 
 ## Getting API traffic in 1 minute
 
+### Pre-requisites
+- [Create a 3scale account](https://www.3scale.net/) (APIcast is not a standalone API gateway, it needs connection to 3scale's API manager)
+- Activate your 3scale account
+- Log in to your 3scale Admin portal
+
 Follow the next steps to configure your API gateway in no time:
 
 ### 1. Declare your private base URL
 
-The **private base URL** is the endpoint host of your API backend. For instance, if you were Twitter the Private Base URL would be ```https://api.twitter.com/```, or if you are the owner of the Sentiment API it would be ```http://api-sentiment.3scale.net/```.
+Go to the **API** tab and select the default API, then click on **Integration**.
+
+Add the **private base URL**, which is the endpoint host of your API backend. For instance, if you were Twitter the Private Base URL would be ```https://api.twitter.com/```, or if you are the owner of the Sentiment API it would be ```http://api-sentiment.3scale.net/```.
 
 The gateway will redirect all traffic to your API backend after all authentication, authorization, rate limits and statistics have been processed.
 
@@ -36,7 +43,7 @@ To update the **hosted gateway** you just have to **save** the settings (API bac
 
 ### Step 3: Get a set of sample credentials
 
-Go to the **Applications**, click on any application using the service you're configuring, and get the **API credentials**. If you do not have applications/ users yet, you can create an application yourself (from the details page of any individual developer account), the credentials will be generated automatically.
+Go to the **Applications** tab, click on any application using the service you're configuring, and get the **API credentials**. If you do not have applications/ users yet, you can create an application yourself (from the details page of any individual developer account), the credentials will be generated automatically.
 
 Typically the credentials will be a ```user_key``` or the pair ```app_id/app_key``` depending on the authentication mode you are using (note that the 3scale hosted gateway does not currently support OAuth, however you can configure it if you are using the self-managed gateway integration.
 
@@ -86,7 +93,7 @@ This option is only needed for those API backends that reject traffic unless the
 To avoid this issue you can define the host your API backend expects in the **Host Header** field, and the hosted gateway will rewrite the host.
 
 <div class="screenshot">
-  <img alt="Host Rewrite" src="images/screenshots/deployment-options-proxy-hostname-rewrite.png" />
+  <img alt="Host Rewrite" src="https://support.3scale.net/images/screenshots/deployment-options-proxy-hostname-rewrite.png" />
 </div>
 
 ### Deployment History
@@ -101,7 +108,7 @@ Note that it is not possible to automatically roll back to previous configuratio
 By default we start with a very simple mapping rule,
 
 <div class="screenshot">
-  <img alt="Mapping Rules" src="images/screenshots/deployment-options-proxy-mapping-rules-single.png" />
+  <img alt="Mapping Rules" src="https://support.3scale.net/images/screenshots/deployment-options-proxy-mapping-rules-single.png" />
 </div>
 
 This rule says, that any ```GET``` request that starts with ```"/"``` will increment the metric ```hits``` by 1. Most likely you will remove this rule since it is too generic.
@@ -109,7 +116,7 @@ This rule says, that any ```GET``` request that starts with ```"/"``` will incre
 The mapping rules define which metrics (and methods) you want to report depending on the requests to your API. For instance, below you can see the rules for the Sentiment API that serves us as an example:
 
 <div class="screenshot">
-  <img alt="Mapping Rules" src="images/screenshots/deployment-options-proxy-mapping-rules-multiple.png" />
+  <img alt="Mapping Rules" src="https://support.3scale.net/images/screenshots/deployment-options-proxy-mapping-rules-multiple.png" />
 </div>
 
 The matching of the rules is done by prefix and can be arbitrarily complex (the notation follows Swagger and ActiveDocs specification)

@@ -45,7 +45,7 @@ docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https:
 Path to saved JSON file with configuration for the gateway. The configuration can be downloaded from the 3scale admin portal using the URL https://ACCOUNT-admin.3scale.net/admin/api/nginx/spec.json (replace `ACCOUNT` with your 3scale account name). The file has to be injected to the docker image as read only volume, and the path should indicate where the volume is mounted, i.e. path local to the docker container.
 
 ```shell
-docker run --name apicast --rm -p 8080:8080 -v $(pwd)/config.json:/opt/app/config.json:ro -e THREESCALE_CONFIG_FILE=/opt/app/config.json quay.io/3scale/gateway:v2
+docker run --name apicast --rm -p 8080:8080 -v $(pwd)/config.json:/opt/app/config.json:ro -e THREESCALE_CONFIG_FILE=/opt/app/config.json quay.io/3scale/apicast:v2
 ```
 
 In this example `config.json` is located in the same directory where the `docker` command is executed, and it is mounted as a volume at `/opt/app/config.json`. `:ro` indicates that the volume will be read-only.

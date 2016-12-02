@@ -3,7 +3,7 @@
 
 APIcast is an NGINX based API gateway used to integrate your internal and external API services with 3scale’s API Management Platform.
 
-To learn more about deployment options, environments provided, and how to get started, go to the [APIcast overview](docs/overview).
+To learn more about deployment options, environments provided, and how to get started, go to the [APIcast overview](doc/overview.md).
 
 # APIcast
 

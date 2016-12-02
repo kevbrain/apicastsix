@@ -47,7 +47,7 @@ end
 
 local function check_rule(req, rule, usage_t, matched_rules)
   local param = {}
-  local pattern = regexpify(rule.pattern)
+  local pattern = rule.regexpified_pattern
   local match = ngx.re.match(req.path, format("^%s", pattern), 'oj')
 
   if match and req.method == rule.method then
@@ -208,6 +208,7 @@ function _M.parse_service(service)
         return {
           method = proxy_rule.http_method,
           pattern = proxy_rule.pattern,
+          regexpified_pattern = regexpify(proxy_rule.pattern),
           parameters = proxy_rule.parameters,
           querystring_params = function(args)
             return check_querystring_params(proxy_rule.querystring_parameters or {}, args)

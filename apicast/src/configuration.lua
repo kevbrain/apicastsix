@@ -484,13 +484,14 @@ function _M.curl(endpoint)
     return nil, err
   end
 
+  local timeout = getenv('CURL_TIMEOUT') or 3
   local scheme, user, pass, host, port, path = unpack(url)
 
   if port then host = concat({host, port}, ':') end
 
   url = concat({ scheme, '://', concat({user or '', pass or ''}, ':'), '@', host, path or '/admin/api/nginx/spec.json' }, '')
 
-  local config, exit, code = util.system('curl --silent --show-error --fail --max-time 3 --location ' .. url)
+  local config, exit, code = util.system('curl --silent --show-error --fail --max-time ' .. timeout .. ' --location ' .. url)
 
   ngx.log(ngx.INFO, 'configuration request sent: ' .. url)
 

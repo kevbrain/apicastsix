@@ -145,5 +145,10 @@ To run just the integration tests:
 make prove
 ```
 
+To see additional test targets (such as testing produced Docker images) use:
+```shell
+make help
+```
+
 # Contributing
 For details on how to contribute to this repo see [CONTRIBUTING](.github/CONTRIBUTING.md)

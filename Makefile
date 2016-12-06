@@ -16,7 +16,7 @@ lua_files = $(wildcard apicast/src/*.lua)
 spec_files = $(wildcard apicast/spec/*.lua)
 
 test: ## Run all tests
-	$(MAKE) --keep-going busted prove test-docker prove-docker test-docker-release
+	$(MAKE) --keep-going busted prove test-builder-image prove-docker test-runtime-image
 
 busted: dependencies ## Test Lua.
 	@bin/busted
@@ -39,11 +39,11 @@ prove-docker: export IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm prove
 
-build: ## Build image for development
+builder-image: ## Build builder image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --copy --incremental
 
-release: PULL_POLICY ?= always
-release: ## Build image for release
+runtime-image: PULL_POLICY ?= always
+runtime-image: ## Build runtime image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY)
 
 push: ## Push image to the registry
@@ -52,11 +52,11 @@ push: ## Push image to the registry
 
 bash: export IMAGE_NAME = apicast-test
 bash: export SERVICE = gateway
-bash: ## Run bash inside the build image
+bash: ## Run bash inside the builder image
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash $(SERVICE) -i
 
-test-docker: export IMAGE_NAME = apicast-test
-test-docker: build clean ## Test build docker
+test-builder-image: export IMAGE_NAME = apicast-test
+test-builder-image: builder-image clean ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
 	@echo -e $(SEPARATOR)
@@ -77,8 +77,8 @@ test-docker: build clean ## Test build docker
 	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep lua-resty-http
 	@echo -e $(SEPARATOR)
 
-test-docker-release: export IMAGE_NAME = apicast-release-test
-test-docker-release: release clean
+test-runtime-image: export IMAGE_NAME = apicast-release-test
+test-runtime-image: runtime-image clean ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'

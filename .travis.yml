@@ -49,13 +49,13 @@ script:
 - make check
 - make busted
 - make prove
-- make build
-- make test-docker
+- make builder-image
+- make test-builder-image
 - make prove-docker
-- make test-docker-release
+- make test-runtime-image
 after_success:
 - if [ "${TRAVIS_BRANCH}" = "v2" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
   docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" quay.io;
-  make release;
+  make runtime-image;
   make push;
   fi

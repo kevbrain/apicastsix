@@ -70,14 +70,14 @@ There are many ways you can install Openshift.
 
 ## Installation
 The openshift cluster was installed and tested on 
-<pre><code>
+```
 CentOS version - CentOS Linux release 7.2.1511 (Core)
 Docker - 1.10.3
 Openshift Origin command line interface (CLI) - v1.3.1
-</code></pre>
+```
 
 1. Install Docker on CentOS
-<pre><code>yum -y install docker docker-registry</code></pre>
+```yum -y install docker docker-registry```
 
 2. Configure the Docker daemon with an insecure registry parameter of `172.30.0.0/16`
    - Edit the `/etc/sysconfig/docker` file and add or uncomment the following line:
@@ -89,7 +89,7 @@ Openshift Origin command line interface (CLI) - v1.3.1
      ```
      $ sudo systemctl restart docker
      ```
-3. Download the Linux `oc` binary from
+3. Download the client tools release
    [openshift-origin-client-tools-VERSION-linux-64bit.tar.gz](https://github.com/openshift/origin/releases)
    and place it in your path.
 
@@ -97,7 +97,7 @@ Openshift Origin command line interface (CLI) - v1.3.1
 
 
 4. Open a terminal with a user that has permission to run Docker commands and run:
-<pre><code>
+```
 $oc cluster up
 -- Checking OpenShift client ... OK
 -- Checking Docker client ... OK
@@ -136,7 +136,7 @@ $oc cluster up
 
    To login as administrator:
        oc login -u system:admin
-</code></pre>
+```
 
 ## Tutorial Steps
 

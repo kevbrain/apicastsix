@@ -2,7 +2,7 @@
 
 This tutorial describes how to use the dockerized 3scale API Gateway v2 (APIcast) that is packaged for easy installation and operation on Red Hat OpenShift V3.
 
-In this tutorial we use the OpenShift Origin VM &ndash; a Virtual Machine image you can download and run locally, so that you can follow this tutorial without running a full OpenShift deployment.
+In this tutorial we will use OpenShift cluster which runs as an all-in-one container on a Docker host. The Docker host may be a local VM (ie. using docker-machine on OS X and Windows clients), remote machine, or the local Unix host. It will allow you to deploy an OpenShift platform in a single command.
 
 ## Tutorial Prerequisites
 
@@ -64,43 +64,79 @@ You should now see a section **Production: Self-managed Gateway** at the bottom 
 
 ### Setup OpenShift
 
-1. Download required tools and files
-  - Go to <a href="https://www.openshift.org/vm/">https://www.openshift.org/vm/ _DOWNLOADS_ section.
-  - Download and install the required tools <a href="https://www.vagrantup.com/downloads.html" target="_blank">Vagrant</a> and <a href="https://www.virtualbox.org/wiki/Downloads" target="_blank">VirtualBox</a>.
-  - Download and install the <a href="https://developers.openshift.com/managing-your-applications/client-tools.html" target="_blank">OpenShift Client tools</a> that match the release for your operating system and check they can be executed by typing `oc version` at a terminal prompt.
+There are many ways you can install Openshift.
+- [Running Openshift using Vagrant] (https://support.3scale.net/guides/infrastructure/docker-openshift)
+- [Running Openshift as all-in-one container] (https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md) (current tutorial)
 
-2. Start the OpenShift Origin VM
-  - Start a command prompt, create a new directory and change into it.
-  - At the terminal prompt run:
-    <pre><code>vagrant init openshift/origin-all-in-one</code></pre>
-   That will create a file called _Vagrantfile_ in the current directory.
-  - Edit the generated Vagrantfile. You will need to expose port `8080` of the gateway on your virtual machine, in order to do this you need to add the following line in the configuration:
-   <pre><code>config.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true</code></pre>
-  You can also change settings in Vagrantfile to give your virtual machine more or less resources (for example, you can adjust the the memory of the virtual machine with `vb.memory`)
-  - At the terminal prompt start the VM by typing:
-   <pre><code>vagrant up --provider=virtualbox</code></pre>
-  **Note**: Downloading the image and starting the VM may take several minutes (it may take a bit longer if you're running Windows).
-  <img src="https://support.3scale.net/images/screenshots/guides-openshift-vagrant-up-output.png" alt="Vagrant Output" >
+## Installation
+The openshift cluster was installed and tested on 
+<pre><code>
+CentOS version - CentOS Linux release 7.2.1511 (Core)
+Docker - 1.10.3
+Openshift Origin command line interface (CLI) - v1.3.1
+</code></pre>
 
- Upon starting the VM, you'll see  output which includes instructions for logging in to your OpenShift Origin VM, such as (don't log in yet):
+1. Install Docker on CentOS
+<pre><code>yum -y install docker docker-registry</code></pre>
 
- <pre><code>oc login https://10.2.2.2:8443</code></pre>
+2. Configure the Docker daemon with an insecure registry parameter of `172.30.0.0/16`
+   - Edit the `/etc/sysconfig/docker` file and add or uncomment the following line:
+     ```
+     INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'
+     ```
 
- Where _10.2.2.2_ is your _YOUR-OPENSHIFT-VM-IP_
+   - After editing the config, restart the Docker daemon.
+     ```
+     $ sudo systemctl restart docker
+     ```
+3. Download the Linux `oc` binary from
+   [openshift-origin-client-tools-VERSION-linux-64bit.tar.gz](https://github.com/openshift/origin/releases)
+   and place it in your path.
 
- **Note**: Note down your _YOUR-OPENSHIFT-VM-IP_ as you'll need to use it repeatedly in this tutorial.
+   > Please be aware that the 'oc cluster' set of commands are only available in the 1.3+ or newer releases.
 
-3. Configure a host for the OpenShift Origin VM on your local machine. This will later allow you to expose the managed API using a hostname. This tutorial uses the hostname _gateway.openshift.demo_
- You'll need to add an entry for the Origin VM to your local hosts file.If your host PC is linux-based, this file is `/etc/hosts`
- If you are running Windows PC, this hosts file would typically be: `C:\Windows\System32\drivers\etc\hosts`
- If you are running Mac, you can type `$ nano /etc/hosts` in your terminal.
- Add a new line like this:
- 
- <pre><code>YOUR-OPENSHIFT-VM-IP gateway.openshift.demo</code></pre>
 
- Example:
- 
- <pre><code>10.2.2.2 gateway.openshift.demo</code></pre>
+4. Open a terminal with a user that has permission to run Docker commands and run:
+<pre><code>
+$oc cluster up
+-- Checking OpenShift client ... OK
+-- Checking Docker client ... OK
+-- Checking Docker version ... OK
+-- Checking for existing OpenShift container ... OK
+-- Checking for openshift/origin:v1.3.1 image ... OK
+-- Checking Docker daemon configuration ... OK
+-- Checking for available ports ... OK
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+-- Checking type of volume mount ...
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+   Using nsenter mounter for OpenShift volumes
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+-- Creating host directories ... OK
+-- Finding server IP ...
+   Using 10.0.1.163 as the server IP
+-- Starting OpenShift container ...
+   Creating initial OpenShift configuration
+   Starting OpenShift using container 'origin'
+   Waiting for API server to start listening
+   OpenShift server started
+-- Installing registry ... OK
+-- Installing router ... OK
+-- Importing image streams ... OK
+-- Importing templates ... OK
+-- Login to server ... OK
+-- Creating initial project "myproject" ... OK
+-- Server Information ...
+   OpenShift server started.
+   The server is accessible via web console at:
+       https://10.0.1.163:8443
+
+   You are logged in as:
+       User:     developer
+       Password: developer
+
+   To login as administrator:
+       oc login -u system:admin
+</code></pre>
 
 ## Tutorial Steps
 
@@ -120,7 +156,7 @@ You should now see a section **Production: Self-managed Gateway** at the bottom 
 
  The response should look like this:
 
- ```Now using project "3scalegateway" on server "https://10.2.2.2:8443"```
+ ```Now using project "3scalegateway" on server ""https://10.0.1.163:8443""```
 
  Ignore the suggested next steps in the text output at the command prompt and proceed to the next step below.
 

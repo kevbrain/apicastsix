@@ -190,7 +190,7 @@ $oc cluster up
 
  You will see a list of projects, including the _"gateway"_ project you created from the command line above.
 
- <img src="https://support.3scale.net/images/screenshots/guides-openshift-project-list-after.png" alt="Openshift Projects" >
+ <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-project-list-after.png" alt="Openshift Projects" >
 
 3. Click on _"gateway"_ and you will be shown the _Overview_ tab.
 
@@ -198,17 +198,19 @@ $oc cluster up
 
  When the build completes, the UI will refresh and show two instances of the API Gateway ( _2 pods_ ) that have been started by OpenShift, as defined in the template.
 
-  <img src="https://support.3scale.net/images/screenshots/guides-openshift-building-threescale-gateway.png" alt="Building the Gateway" >
+  <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-building-threescale-gateway.png" alt="Building the Gateway" >
 
  Each instance of the 3scale API Gateway, upon starting, downloads the required configuration from 3scale using the settings you provided on the **Integration** page of your 3scale Admin Portal.
 
  OpenShift will maintain two API Gateway instances and monitor the health of both; any unhealthy API Gateway will automatically be replaced with a new one.
 
 4. In order to allow your API gateways to receive traffic, you'll need to create a route. Start by clicking on **Create Route**.
+
+ <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-create-route.png" alt="Create Route" >
  
  Enter the same host you set in 3scale above in the section **Public Base URL** (without the _http://_ and without the port) , e.g. `gateway.openshift.demo`, then click the **Create** button.
 
- <img src="https://support.3scale.net/images/screenshots/guides-openshift-create-route-config.png" alt="Create Route" >
+ <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-create-route-config.png" alt="Configure Route" >
 
  Create a new route for every 3scale Service you define.
 

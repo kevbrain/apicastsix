@@ -63,24 +63,31 @@ You should now see a section **Production: Self-managed Gateway** at the bottom 
 ### Setup OpenShift
 
 There are many ways you can install OpenShift.
-- All-In-One Virtual Machine using Vagrant &ndash; https://www.openshift.org/vm
 - Using `oc cluster up` command &ndash; https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md (used in this tutorial)
+- All-In-One Virtual Machine using Vagrant &ndash; https://www.openshift.org/vm
 - Using Ansible Playbooks (advanced installation):
   - OpenShift Container Platform 3.3 Installation and Configuration documentation &ndash; https://docs.openshift.com/container-platform/3.3/install_config/index.html
   - For reference architecture guides for OpenShift 3.3 please refer to the following articles: [AWS](https://access.redhat.com/articles/2623521), [Google Cloud Engine](https://access.redhat.com/articles/2751521), [VMware vCenter 6](https://access.redhat.com/articles/2745171)
 
-In this tutorial the OpenShift cluster will be installed using: 
+In this tutorial the OpenShift cluster will be installed using:
+
 - CentOS 7
 - Docker v1.10.3
 - Openshift Origin command line interface (CLI) - v1.3.1
 
+1. Install Docker
 
-1. Install Docker on CentOS
+  For CentOS you can use the following commands to install Docker:
 
-```bash
-yum -y update
-yum -y install docker docker-registry
-```
+  ```bash
+  yum -y update
+  yum -y install docker docker-registry
+  ```
+
+  For other operating systems please refer to the Docker documentation on:
+    - [Installing Docker on Linux distributions](https://docs.docker.com/engine/installation/linux/)
+    - [Docker for Mac](https://docs.docker.com/docker-for-mac/)
+    - [Docker for Windows](https://docs.docker.com/docker-for-windows/)
 
 2. Configure the Docker daemon with an insecure registry parameter of `172.30.0.0/16`
    - Edit the `/etc/sysconfig/docker` file and add or uncomment the following line:

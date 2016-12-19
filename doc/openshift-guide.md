@@ -173,7 +173,7 @@ $oc cluster up
 
 4. Create an application for your 3scale API Gateway from the template:
 
- <pre><code>oc new-app -f https://raw.githubusercontent.com/3scale/apicast/v2/openshift/apicast-template.yml</code></pre>
+ <pre><code>oc new-app -f https://github.com/3scale/apicast/releases/download/v2.0.0-rc1/openshift-template.yml</code></pre>
 
  You should see a message indicating _deploymentconfig_ and _service_ have been successfully created.
 

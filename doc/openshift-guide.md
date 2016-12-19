@@ -99,54 +99,49 @@ In this tutorial the OpenShift cluster will be installed using:
      ```
      $ sudo systemctl restart docker
      ```
+
 3. Download the client tools release
    [openshift-origin-client-tools-VERSION-linux-64bit.tar.gz](https://github.com/openshift/origin/releases)
    and place it in your path.
 
-   > Please be aware that the 'oc cluster' set of commands are only available in the 1.3+ or newer releases.
-
+    **Note**: Please be aware that the 'oc cluster' set of commands are only available in the 1.3+ or newer releases.
 
 4. Open a terminal with a user that has permission to run Docker commands and run:
-```
-$oc cluster up
--- Checking OpenShift client ... OK
--- Checking Docker client ... OK
--- Checking Docker version ... OK
--- Checking for existing OpenShift container ... OK
--- Checking for openshift/origin:v1.3.1 image ... OK
--- Checking Docker daemon configuration ... OK
--- Checking for available ports ... OK
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
--- Checking type of volume mount ...
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
-   Using nsenter mounter for OpenShift volumes
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
--- Creating host directories ... OK
--- Finding server IP ...
-   Using 10.0.1.163 as the server IP
--- Starting OpenShift container ...
-   Creating initial OpenShift configuration
-   Starting OpenShift using container 'origin'
-   Waiting for API server to start listening
-   OpenShift server started
--- Installing registry ... OK
--- Installing router ... OK
--- Importing image streams ... OK
--- Importing templates ... OK
--- Login to server ... OK
--- Creating initial project "myproject" ... OK
--- Server Information ...
-   OpenShift server started.
-   The server is accessible via web console at:
-       https://10.0.1.163:8443
+  ```
+  oc cluster up
+  ```
 
-   You are logged in as:
-       User:     developer
-       Password: developer
+  At the bottom of the output you will find information about the deployed cluster:
+  ```
+  -- Server Information ... 
+     OpenShift server started.
+     The server is accessible via web console at:
+         https://172.30.0.112:8443
+  
+     You are logged in as:
+         User:     developer
+         Password: developer
+  
+     To login as administrator:
+         oc login -u system:admin
+  ```
 
-   To login as administrator:
-       oc login -u system:admin
+ Note the IP address that is assigned to your OpenShift server, we will refer to it in the tutorial as `OPENSHIFT-SERVER-IP`.
+ You should be able to access the OpenShift web console by going to https://OPENSHIFT-SERVER-IP:8443/console/ in your web browser.
+
+ **Warning**: You may receive a warning about an untrusted web-site. This is expected, as we are trying to access to the web console through secure protocol, without having configured a valid certificate. While you should avoid this in production environment, for this test setup you can go ahead and create an exception for this address.
+
+#### Setting up OpenShift cluster on a remote server
+
+In case you are deploying the OpenShift cluster on a remote server, you will need to explicitly specify a public hostname and a routing suffix on starting the cluster, in order to be able to access to the OpenShift web console remotely.
+
+For example, if you are deploying on an AWS EC2 instance, you should specify the following options:
+
+```bash
+oc cluster up --public-hostname=ec2-54-321-67-89.compute-1.amazonaws.com --routing-suffix=54.321.67.89.xip.io
 ```
+
+where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.321.67.89` is the IP of the instance. You will then be able to access the OpenShift web console at https://ec2-54-321-67-89.compute-1.amazonaws.com:8443.
 
 ## Tutorial Steps
 
@@ -154,7 +149,7 @@ $oc cluster up
 
 1. Login into OpenShift using the `oc` command from the OpenShift Client tools you downloaded and installed in previous step. The default login credentials are _username = "admin"_ and _password = "admin"_
 
- <pre><code>oc login https://OPENSHIFT-VM-IP:8443</code></pre>
+ <pre><code>oc login https://OPENSHIFT-SERVER-IP:8443</code></pre>
 
  **Warning**: You may get a security warning and asked whether you wish to continue with an insecure selection. Enter "yes" to proceed.
 
@@ -166,7 +161,9 @@ $oc cluster up
 
  The response should look like this:
 
- ```Now using project "3scalegateway" on server ""https://10.0.1.163:8443""```
+ ```
+ Now using project "3scalegateway" on server "https://172.30.0.112:8443".
+ ```
 
  Ignore the suggested next steps in the text output at the command prompt and proceed to the next step below.
 
@@ -186,9 +183,7 @@ $oc cluster up
 
 ### Deploying 3scale API Gateway
 
-1. Open the web console for your OpenShift Origin VM in your browser: https://OPENSHIFT-VM-IP:8443/console/
-
- **Warning**: You may receive a warning about an untrusted web-site. As this is the Origin VM running on your local machine there are no real risks. Select "Accept the Risks" in the browser and proceed to view the Web console.
+1. Open the web console for your OpenShift Origin VM in your browser: https://OPENSHIFT-SERVER-IP:8443/console/
 
  You should see the login screen:
  <img src="https://support.3scale.net/images/screenshots/guides-openshift-login-screen.png" alt="OpenShift Login Screen">

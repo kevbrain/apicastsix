@@ -1,8 +1,6 @@
 # Using 3scale API Gateway on Red Hat OpenShift
 
-This tutorial describes how to use the dockerized 3scale API Gateway v2 (APIcast) that is packaged for easy installation and operation on Red Hat OpenShift V3.
-
-In this tutorial we will use OpenShift cluster which runs as an all-in-one container on a Docker host. The Docker host may be a local VM (ie. using docker-machine on OS X and Windows clients), remote machine, or the local Unix host. It will allow you to deploy an OpenShift platform in a single command.
+This tutorial describes how to use APIcast v2 &ndash; the dockerized 3scale API Gateway that is packaged for easy installation and operation on Red Hat OpenShift V3.
 
 ## Tutorial Prerequisites
 
@@ -22,15 +20,15 @@ Navigate to the **Account** tab (top-right). From the **Overview** sub-tab note 
 
 **Warning**: Keep your _3scale Provider Key_ private. Do not share it with anyone and do not put into code repositories or into any document that may reveal it to others.
 
-In the 3scale Admin Portal you should either have an API of your own running and configured or use the Echo API that was setup by the onboarding wizard. This tutorial will use the Echo API as an example throughout.
+In the 3scale Admin Portal you should either have an API of your own running and configured or use the Echo API that was setup by the onboarding wizard. This tutorial will use the Echo API as an example.
 
 Navigate to the **Dashboard > API** tab, if you have more than one API in your account, select the API you want to manage with the API Gateway. Select the **Integration** link at top-left.
 
-If you're setting this up for the first time, you'll need to test to confirm that your private (unmanaged) API is working before proceeding. If you've already configured your API and sent test traffic, feel free to skip this step.
+If you're setting this up for the first time, you'll need to test the integration to confirm that your private (unmanaged) API is working before proceeding. If you've already configured your API and sent test traffic, feel free to skip this step.
 
 <img src="https://support.3scale.net/images/screenshots/guides-openshift-private-base-url.png" alt="Private base URL">
 
-In the screenshot above, this API is configured to use the 3scale provided Echo API to help you get started. You can use this or configure the API to refer to your real API's _Private Base URL_.
+In the screenshot above, this API is configured to use the 3scale provided Echo API to help you get started. You can use this or configure the _Private Base URL_ to refer to your real API.
 
 Test your private (unmanaged) API is working using this _curl_ command:
     
@@ -68,16 +66,18 @@ There are many ways you can install Openshift.
 - [Running Openshift using Vagrant] (https://support.3scale.net/guides/infrastructure/docker-openshift)
 - [Running Openshift as all-in-one container] (https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md) (current tutorial)
 
-## Installation
-The openshift cluster was installed and tested on 
-```
-CentOS version - CentOS Linux release 7.2.1511 (Core)
-Docker - 1.10.3
-Openshift Origin command line interface (CLI) - v1.3.1
-```
+In this tutorial the OpenShift cluster will be installed using: 
+- CentOS 7
+- Docker v1.10.3
+- Openshift Origin command line interface (CLI) - v1.3.1
+
 
 1. Install Docker on CentOS
-```yum -y install docker docker-registry```
+
+```bash
+yum -y update
+yum -y install docker docker-registry
+```
 
 2. Configure the Docker daemon with an insecure registry parameter of `172.30.0.0/16`
    - Edit the `/etc/sysconfig/docker` file and add or uncomment the following line:
@@ -185,24 +185,21 @@ $oc cluster up
 
 2. Login using your credentials created or obtained in the _Setup OpenShift_ section above.
 
- You will see a list of projects, including the _"gateway"_ project you created from the command line above
+ You will see a list of projects, including the _"gateway"_ project you created from the command line above.
 
  <img src="https://support.3scale.net/images/screenshots/guides-openshift-project-list-after.png" alt="Openshift Projects" >
 
-3. Click on _"gateway"_ (top left in the breadcrumbs) and you will be shown the _Overview_ tab.
+3. Click on _"gateway"_ and you will be shown the _Overview_ tab.
 
- OpenShift has now downloaded the code for the API Gateway and has started a build to construct it:
-
- <img src="https://support.3scale.net/images/screenshots/guides-openshift-building-threescale-gateway.png" alt="Building the Gateway" >
- **Warning**: If you experience some unexpected behavior or the outcome of these steps is not as shown here, this can be caused by a variety of reasons and restarting the VM might help.
+ OpenShift downloads the code for the API Gateway and starts the deployment. You may see the message _Deployment #1 running_ when the deployment is in progress.
 
  When the build completes, the UI will refresh and show two instances of the API Gateway ( _2 pods_ ) that have been started by OpenShift, as defined in the template.
 
- Each instance of the 3scale API Gateway, upon starting, downloads the required configuration files and code from 3scale using the configuration settings you provided on the **Integration** tab of your 3scale Admin Portal.
+  <img src="https://support.3scale.net/images/screenshots/guides-openshift-building-threescale-gateway.png" alt="Building the Gateway" >
+
+ Each instance of the 3scale API Gateway, upon starting, downloads the required configuration from 3scale using the settings you provided on the **Integration** page of your 3scale Admin Portal.
 
  OpenShift will maintain two API Gateway instances and monitor the health of both; any unhealthy API Gateway will automatically be replaced with a new one.
-
- <img src="https://support.3scale.net/images/screenshots/guides-openshift-create-route.png" alt="Create Route" >
 
 4. In order to allow your API gateways to receive traffic, you'll need to create a route. Start by clicking on **Create Route**.
  

@@ -62,7 +62,7 @@ Now, scroll down to the section **Production: Self-managed Gateway** at the bott
 
 ### Setup OpenShift
 
-There are many ways you can install OpenShift.
+There are many ways you can install OpenShift:
 - Using `oc cluster up` command &ndash; https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md (used in this tutorial)
 - All-In-One Virtual Machine using Vagrant &ndash; https://www.openshift.org/vm
 - Using Ansible Playbooks (advanced installation):
@@ -224,11 +224,26 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  <pre><code>curl "http://gateway.openshift.demo/?user_key=YOUR_USER_KEY"</code></pre>
 
- If you wish to see the logs of the API Gateways you can do so by clicking **Applications > Pods** and then select one of the pods and then selecting **Logs**.
+ In case you are running the OpenShift cluster running locally, you will need to add the hostname `gateway.openshift.demo` for your `OPENSHIFT-SERVER-IP` to the _/etc/hosts_ file, for example:
+ ```
+ 172.30.0.112 gateway.openshift.demo
+ ```
 
-6. Test it does not authorize an invalid call to your API.
+ Alternatively, you can specify the hostname of the gateway in the `Host` header when making the request:
+
+ ```
+ curl "http://OPENSHIFT-SERVER-IP/?user_key=YOUR_USER_KEY" -H "Host: gateway.openshift.demo"
+ ```
+
+ This last option will also work in case your OpenShift cluster is deployed on a remote server. Just use the public IP of the machine where OpenShift is deployed, and specify the hostname from the _Public Base URL_ in the `Host` header.
+
+ This way OpenShift and the API gateway will route the request correctly.
+
+6. Test that the API gateway does not authorize an invalid call to your API.
 
  <pre><code>curl "http://gateway.openshift.demo/?user_key=INVALID_KEY"</code></pre>
+
+7. If you wish to see the logs of the API Gateways you can do so by clicking **Applications > Pods** and then select one of the pods and then selecting **Logs**.
 
 ### Applying changes to the API gateway
 
@@ -250,20 +265,20 @@ If you have multiple services (APIs) in 3scale, you will need to configure the r
 
 3. You will need to redeploy the gateway to apply the changes you've made in the 3scale admin portal. Go to **Applications > Deployments > threescalegw** and click on **Deploy**.
 
-4. In case you are running the OpenShift cluster running locally, add the hostnames for your `OPENSHIFT-SERVER-IP` to the _/etc/hosts_ file:
- ```
- 172.30.0.112 search-api.openshift.demo
- 172.30.0.112 video-api.openshift.demo
- ```
-
-5. Now you can make calls to both APIs, and they will be routed to either Search API or Video API depending on the hostname. For example:
+4. Now you can make calls to both APIs, and they will be routed to either Search API or Video API depending on the hostname. For example:
 
  ```
  curl "http://search-api.openshift.demo/find?query=openshift&user_key=YOUR_USER_KEY"
  curl "http://video-api.openshift.demo/categories?user_key=YOUR_USER_KEY"
  ```
 
- In case your OpenShift cluster is hosted remotely and you don't yet have the custom domain name set up for you APIs, you can specify the host configured in _Public Base URL_ in the `Host` header in order to get it routed corectly by OpenShift and the API gateway:
+ In case you are running the OpenShift cluster running locally, in order for the above calls to work properly you will need to add the hostnames for your `OPENSHIFT-SERVER-IP` to the _/etc/hosts_ file:
+ ```
+ 172.30.0.112 search-api.openshift.demo
+ 172.30.0.112 video-api.openshift.demo
+ ```
+
+ In case your OpenShift cluster is hosted remotely, you can specify the host configured in _Public Base URL_ in the `Host` header in order to get it routed corectly by OpenShift and the API gateway:
 
  ```
  curl "http://YOUR-PUBLIC-IP/find?query=openshift&user_key=YOUR_USER_KEY" -H "Host: search-api.openshift.demo"
@@ -272,14 +287,13 @@ If you have multiple services (APIs) in 3scale, you will need to configure the r
 
 ## Success!
 
-Your API is now protected by two instances of the 3scale API Gateway running on Red Hat OpenShift, following all the configuration that you set-up in the 3scale Admin Portal.
-
-You may wish to now shutdown the OpenShift Origin VM to save resources. 
+Your API is now protected by two instances of the 3scale API Gateway running on Red Hat OpenShift, following all the configuration that you set up in the 3scale Admin Portal.
 
 ## Next Steps
 
 Now that you have an API Gateway up and running on your local machine you can:
 
-1. Explore how to configure access policies for your API, and engage developers with a Developer Portal by following the <a href="https://support.3scale.net/guides/quickstart">Quickstart</a>.
-2. Whenever you make changes to your API definition in the 3scale Admin Portal &ndash; in particular the 3scale metrics/methods and mapping rules &ndash; you should create a new deployment in OpenShift. This will start new instances that will download and run your new API definition. Then OpenShift will shut down gracefully the previous instances.
-3. Run OpenShift V3 on your dedicated datacenter or on your favorite cloud platform and then follow the same instructions to open up your API to the world.
+1. Explore how to configure access policies for your API, and engage developers with a Developer Portal by following the <a href="https://support.3scale.net/guides/quickstart">Quickstart</a> guide.
+2. Run OpenShift V3 on your dedicated datacenter or on your favorite cloud platform using the advanced installation documentation [listed above](#setup-openshift).
+3. Register a custom domain name for your API services, and configure your API integration in 3scale Admin Portal, and in OpenShift by adding new routes.
+4. Learn more about OpenShift from the [OpenShift documentation](https://docs.openshift.com/container-platform/3.3/welcome/index.html)

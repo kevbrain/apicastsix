@@ -8,23 +8,32 @@ To follow the tutorial steps below, you'll first need to address the following p
 
 ### 3scale account configuration
 
-These steps will guide you to finding information you will need later to complete the tutorial steps: your _3scale Admin URL_, your _Provider Key_, and the _Private Base URL_ of your API.
+These steps will guide you to finding information you will need later to complete the tutorial steps: your _3scale Admin URL_, the _Access Token_, and the _Private Base URL_ of your API.
 
 You should have a 3scale API provider account (you can sign up for a free trial <a href="https://www.3scale.net/signup/">here</a>) and have an API configured in the 3scale Admin Portal. If you do not have an API running and configured in your 3scale account, please follow the instructions in our <a href="https://support.3scale.net/guides/quickstart">Quickstart</a> to do so.
 
 Log in to your 3scale Admin Portal with the URL provided to you. It will look something like this: `https://MYDOMAIN-admin.3scale.net`
 
-Navigate to the **Account** tab (top-right). From the **Overview** sub-tab note down your _3scale Provider Key_, referred to in the UI as _API Key_. Later in this tutorial we refer to this as your *THREESCALE_PROVIDER_KEY*.
+#### Create an access token
 
-<img src="https://support.3scale.net/images/screenshots/guides-openshift-provider-key.png" alt="Provider Key">
+You will need to create an _Access Token_ that the API gateway will use to download the configuration from your Admin Portal.
+Navigate to the **Personal Settings** (top-right), select the **Tokens** tab and click on **Add Access Token**.
 
-**Warning**: Keep your _3scale Provider Key_ private. Do not share it with anyone and do not put into code repositories or into any document that may reveal it to others.
+<img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-tokens.png" alt="Tokens">
+
+Specify a name for the token, select _Account Management API_ as Scope, select the Permission (_Read Only_ will be enough) and click on **Create Access token**.
+
+When the token is generated, make sure you copy it somewhere, as you won't be able to see it again. Later in this tutorial we refer to this token as *ACCESS_TOKEN*.
+
+**Warning**: Keep your _Access Token_ private. Do not share it with anyone and do not put into code repositories or into any document that may reveal it to others. However, in case you suspect unauthorized use of the token, you can always revoke access by deleting the token.
 
 In the 3scale Admin Portal you should either have an API of your own running and configured or use the Echo API that was setup by the onboarding wizard. This tutorial will use the Echo API as an example.
 
+#### Configure your API integration
+
 Navigate to the **Dashboard > API** tab, if you have more than one API in your account, select the API you want to manage with the API Gateway. Select the **Integration** link at top-left.
 
-You need to make sure that the _Deployment Option_ is set to _Self-managed Gateway_. If it's not the case, click on **edit integration settings** on the top right corner of the integration page and select _Self-managed Gateway_ as production deployment option. For authentication this tutorial uses _API Key (user\_key)_ mode, so it is recommended that you select this mode as well.
+You need to make sure that the _Deployment Option_ is set to _Self-managed Gateway_. If it's not the case, click on **edit integration settings** on the top right corner of the integration page and select _Self-managed Gateway_ as production deployment option. For authentication this tutorial uses _API Key (user\_key)_ mode, specified in query parameters, so it is recommended that you select this mode as well.
 
 If you're setting this up for the first time, you'll need to test the integration to confirm that your private (unmanaged) API is working before proceeding. If you've already configured your API and sent test traffic, feel free to skip this step.
 
@@ -167,9 +176,9 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  Ignore the suggested next steps in the text output at the command prompt and proceed to the next step below.
 
-3. Create a new Secret to reference your project by replacing *THREESCALE_PROVIDER_KEY* and MYDOMAIN with yours.
+3. Create a new Secret to reference your project by replacing *ACCESS_TOKEN* and MYDOMAIN with yours.
   
- <pre><code>oc secret new-basicauth threescale-portal-endpoint-secret --password=https://THREESCALE_PROVIDER_KEY@MYDOMAIN-admin.3scale.net</code></pre>
+ <pre><code>oc secret new-basicauth threescale-portal-endpoint-secret --password=https://ACCESS_TOKEN@MYDOMAIN-admin.3scale.net</code></pre>
 
  The response should look like this:
 

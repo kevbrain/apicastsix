@@ -294,6 +294,20 @@ If you have multiple services (APIs) in 3scale, you will need to configure the r
  curl "http://YOUR-PUBLIC-IP/categories?user_key=YOUR_USER_KEY" -H "Host: video-api.openshift.demo"
  ```
 
+### Changing APIcast parameters
+
+APIcast v2 gateway has a number of parameters that can enable/disable different features or change the behavior. This parameters are defined in the OpenShift template, you can find the complete list in the template YAML file. The template parameters are mapped to environment variables that will be set for each running pod.
+
+You can specify the values for the parameters when creating a new application with `oc new-app` command using the `-p | -- param` argument, for example:
+
+<pre><code>oc new-app -f https://github.com/3scale/apicast/releases/download/v2.0.0-rc1/openshift-template.yml -p APICAST_LOG_LEVEL=debug</code></pre>
+
+In order to change the parameters for an existing application, you can modify the environment variables values. Go to **Applications > Deployments > threescalegw** and select the _Environment_ tab.
+
+<img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-environment.png" alt="OpenShift environment">
+
+After modifying the values, click on **Save** button at the bottom, and then **Deploy** to apply the changes in the running API Gateway.
+
 ## Success!
 
 Your API is now protected by two instances of the 3scale API Gateway running on Red Hat OpenShift, following all the configuration that you set up in the 3scale Admin Portal.

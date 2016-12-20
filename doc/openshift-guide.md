@@ -183,7 +183,7 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 ### Deploying 3scale API Gateway
 
-1. Open the web console for your OpenShift Origin VM in your browser: https://OPENSHIFT-SERVER-IP:8443/console/
+1. Open the web console for your OpenShift cluster in your browser: https://OPENSHIFT-SERVER-IP:8443/console/
 
  You should see the login screen:
  <img src="https://support.3scale.net/images/screenshots/guides-openshift-login-screen.png" alt="OpenShift Login Screen">
@@ -230,6 +230,14 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  <pre><code>curl "http://gateway.openshift.demo/?user_key=INVALID_KEY"</code></pre>
 
+### Applying changes to the API gateway
+
+Of course, your API configuration is not static. In future you may wish to apply changes to it, for example, choose another authentication method, add new methods and metrics, update the mapping rules, or make any other change on the **Integration** page for your API. In this case you will need to redeploy the API gateway to make the changes effective. In order to do this, go to **Applications > Deployments > threescalegw** and click on **Deploy**.
+
+<img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-deploy.png" alt="Deploy OpenShift API Gateway" >
+
+New pods will be created using the updated configuration, and the old ones will be retired. OpenShift supports different deployment strategies, you can learn more about them in the [OpenShift documentation](https://docs.openshift.com/container-platform/3.3/dev_guide/deployments/deployment_strategies.html)
+
 ### Multiple services
 
 If you have multiple services (APIs) in 3scale, you will need to configure the routing properly:
@@ -238,7 +246,7 @@ If you have multiple services (APIs) in 3scale, you will need to configure the r
 
 2. In OpenShift create routes for the gateway service ("threescalegw"): `http://search-api.openshift.demo` and `http://video-api.openshift.demo`. From **Applications > Routes** you can create a new route or modify and existing one. Note that you can't change the hostname for already created routes, but you can delete an existing route and add a new one.
 
- <div class="screenshot"><img data-normal="/images/screenshots/guides-openshift-create-more-routes.png" alt="Create routes for multiple services" ></div>
+ <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-create-more-routes.png" alt="Create routes for multiple services" >
 
 3. You will need to redeploy the gateway to apply the changes you've made in the 3scale admin portal. Go to **Applications > Deployments > threescalegw** and click on **Deploy**.
 

@@ -24,6 +24,8 @@ In the 3scale Admin Portal you should either have an API of your own running and
 
 Navigate to the **Dashboard > API** tab, if you have more than one API in your account, select the API you want to manage with the API Gateway. Select the **Integration** link at top-left.
 
+You need to make sure that the _Deployment Option_ is set to _Self-managed Gateway_. If it's not the case, click on **edit integration settings** on the top right corner of the integration page and select _Self-managed Gateway_ as production deployment option. For authentication this tutorial uses _API Key (user\_key)_ mode, so it is recommended that you select this mode as well.
+
 If you're setting this up for the first time, you'll need to test the integration to confirm that your private (unmanaged) API is working before proceeding. If you've already configured your API and sent test traffic, feel free to skip this step.
 
 <img src="https://support.3scale.net/images/screenshots/guides-openshift-private-base-url.png" alt="Private base URL">
@@ -56,9 +58,7 @@ Once you've confirmed that your API is working, scroll down to the bottom of the
 
 **Note**: Note down *YOUR_USER_KEY* to use later to authenticate to your managed API.
 
-Next you need to set your API to be a Self-managed Gateway, required to run the gateway on OpenShift. Select the **edit integration settings** link at top-right on the Integration page you are on. Choose **NGINX Self-managed Gateway** and save it by clicking **Update Service**.
-
-You should now see a section **Production: Self-managed Gateway** at the bottom of the Integration page. You need to add a _Public Base URL_ appropriate for this API or Service, that will be the URL of your API gateway. In case you have multiple API services, you will need to set this _Public Base URL_ appropriately for each service. In this example we will use `http://gateway.openshift.demo:80` as _Public Base URL_, but typically it will be something like `https://api.yourdomain.com:443`, on the domain that you manage (`yourdomain.com`).
+Now, scroll down to the section **Production: Self-managed Gateway** at the bottom of the Integration page. You need to add a _Public Base URL_ appropriate for this API or Service, that will be the URL of your API gateway. In case you have multiple API services, you will need to set this _Public Base URL_ appropriately for each service. In this example we will use `http://gateway.openshift.demo:80` as _Public Base URL_, but typically it will be something like `https://api.yourdomain.com:443`, on the domain that you manage (`yourdomain.com`).
 
 ### Setup OpenShift
 
@@ -194,13 +194,13 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-project-list-after.png" alt="Openshift Projects" >
 
-3. Click on _"gateway"_ and you will be shown the _Overview_ tab.
+3. Click on _"gateway"_ and you will see the _Overview_ tab.
 
  OpenShift downloads the code for the API Gateway and starts the deployment. You may see the message _Deployment #1 running_ when the deployment is in progress.
 
  When the build completes, the UI will refresh and show two instances of the API Gateway ( _2 pods_ ) that have been started by OpenShift, as defined in the template.
 
-  <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-building-threescale-gateway.png" alt="Building the Gateway" >
+ <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-building-threescale-gateway.png" alt="Building the Gateway" >
 
  Each instance of the 3scale API Gateway, upon starting, downloads the required configuration from 3scale using the settings you provided on the **Integration** page of your 3scale Admin Portal.
 
@@ -229,6 +229,38 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 6. Test it does not authorize an invalid call to your API.
 
  <pre><code>curl "http://gateway.openshift.demo/?user_key=INVALID_KEY"</code></pre>
+
+### Multiple services
+
+If you have multiple services (APIs) in 3scale, you will need to configure the routing properly:
+ 
+1. For each API, go to the **Integration** tab, and in _Production_ section enter the _Public Base URL_ and click on **Update Production Configuration** to save the changes. Make sure you use a different _Public Base URL_ for each API, for example, `http://search-api.openshift.demo` for the service called Search API and `http://video-api.openshift.demo` for Video API.
+
+2. In OpenShift create routes for the gateway service ("threescalegw"): `http://search-api.openshift.demo` and `http://video-api.openshift.demo`. From **Applications > Routes** you can create a new route or modify and existing one. Note that you can't change the hostname for already created routes, but you can delete an existing route and add a new one.
+
+ <div class="screenshot"><img data-normal="/images/screenshots/guides-openshift-create-more-routes.png" alt="Create routes for multiple services" ></div>
+
+3. You will need to redeploy the gateway to apply the changes you've made in the 3scale admin portal. Go to **Applications > Deployments > threescalegw** and click on **Deploy**.
+
+4. In case you are running the OpenShift cluster running locally, add the hostnames for your `OPENSHIFT-SERVER-IP` to the _/etc/hosts_ file:
+ ```
+ 172.30.0.112 search-api.openshift.demo
+ 172.30.0.112 video-api.openshift.demo
+ ```
+
+5. Now you can make calls to both APIs, and they will be routed to either Search API or Video API depending on the hostname. For example:
+
+ ```
+ curl "http://search-api.openshift.demo/find?query=openshift&user_key=YOUR_USER_KEY"
+ curl "http://video-api.openshift.demo/categories?user_key=YOUR_USER_KEY"
+ ```
+
+ In case your OpenShift cluster is hosted remotely and you don't yet have the custom domain name set up for you APIs, you can specify the host configured in _Public Base URL_ in the `Host` header in order to get it routed corectly by OpenShift and the API gateway:
+
+ ```
+ curl "http://YOUR-PUBLIC-IP/find?query=openshift&user_key=YOUR_USER_KEY" -H "Host: search-api.openshift.demo"
+ curl "http://YOUR-PUBLIC-IP/categories?user_key=YOUR_USER_KEY" -H "Host: video-api.openshift.demo"
+ ```
 
 ## Success!
 

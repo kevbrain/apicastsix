@@ -3,8 +3,8 @@ services:
   gateway:
     image: quay.io/3scale/apicast:v2
     depends_on:
-    - redis
-    - oauth
+      - redis
+      - oauth
     ports:
       - "8080:8080"
       - "8090:8090"
@@ -17,4 +17,14 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./auth-server:/auth-server
+      - ./auth-server:/opt/app/auth-server
+  client:
+    build: ./client
+    image: client
+    links:
+      - gateway
+      - oauth
+    ports:
+      - "3001:3001"
+    volumes: 
+      - ./client:/opt/app/client

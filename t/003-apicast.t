@@ -417,3 +417,73 @@ api response
 --- response_headers
 X-3scale-matched-rules: /foo?bar={baz}
 X-3scale-usage: usage[bar]=3
+
+
+=== TEST 10: https api backend works
+
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration').save({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          proxy = {
+            api_backend = 'https://127.0.0.1:1953/api/',
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict api_keys 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  listen 1953 ssl;
+
+  ssl_certificate ../html/server.crt;
+  ssl_certificate_key ../html/server.key;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /api/ {
+    echo "api response";
+  }
+
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+--- user_files
+>>> server.crt
+-----BEGIN CERTIFICATE-----
+MIIB0DCCAXegAwIBAgIJAISY+WDXX2w5MAoGCCqGSM49BAMCMEUxCzAJBgNVBAYT
+AkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRn
+aXRzIFB0eSBMdGQwHhcNMTYxMjIzMDg1MDExWhcNMjYxMjIxMDg1MDExWjBFMQsw
+CQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJu
+ZXQgV2lkZ2l0cyBQdHkgTHRkMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEhkmo
+6Xp/9W9cGaoGFU7TaBFXOUkZxYbGXQfxyZZucIQPt89+4r1cbx0wVEzbYK5wRb7U
+iWhvvvYDltIzsD75vqNQME4wHQYDVR0OBBYEFOBBS7ZF8Km2wGuLNoXFAcj0Tz1D
+MB8GA1UdIwQYMBaAFOBBS7ZF8Km2wGuLNoXFAcj0Tz1DMAwGA1UdEwQFMAMBAf8w
+CgYIKoZIzj0EAwIDRwAwRAIgZ54vooA5Eb91XmhsIBbp12u7cg1qYXNuSh8zih2g
+QWUCIGTHhoBXUzsEbVh302fg7bfRKPCi/mcPfpFICwrmoooh
+-----END CERTIFICATE-----
+>>> server.key
+-----BEGIN EC PARAMETERS-----
+BggqhkjOPQMBBw==
+-----END EC PARAMETERS-----
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIFCV3VwLEFKz9+yTR5vzonmLPYO/fUvZiMVU1Hb11nN8oAoGCCqGSM49
+AwEHoUQDQgAEhkmo6Xp/9W9cGaoGFU7TaBFXOUkZxYbGXQfxyZZucIQPt89+4r1c
+bx0wVEzbYK5wRb7UiWhvvvYDltIzsD75vg==
+-----END EC PRIVATE KEY-----
+--- request
+GET /test?user_key=foo
+--- no_error_log
+[error]
+--- response_body
+api response
+--- error_code: 200

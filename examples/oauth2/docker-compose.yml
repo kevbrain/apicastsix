@@ -1,7 +1,7 @@
 version: '2'
 services:
   gateway:
-    image: apicast-test:latest
+    image: quay.io/3scale/apicast:v2
     depends_on:
     - redis
     - oauth

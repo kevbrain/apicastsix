@@ -1,7 +1,9 @@
 require 'sinatra'
 
 set :bind, '0.0.0.0'
-nginx_redirect_uri =  "http://localhost:8080/callback?"  #nginx callback
+
+GATEWAY = ENV['GATEWAY'] || "localhost:8080"
+nginx_redirect_uri =  "http://#{GATEWAY}/callback?"  #nginx callback
 enable :sessions
 set :session_secret, '*&(^B234'
 

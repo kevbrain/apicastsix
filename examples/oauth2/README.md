@@ -15,34 +15,22 @@ from the directory containing the `docker-compose.yml` file (in this case `/apic
 
 The `-d` flag starts the containers up in detached mode, if you want to see the output when starting the containers, you should omit this. 
 
-In order for the command to run successfully, you will also need a `.env` file with the following content:
+In order for the command to run successfully, you will also need a `.env` file with the following content (substituting the THREESCALE_PORTAL_ENDPOINT value with your own:)
 
 ```
 # URI to fetch gateway configuration from. Expected format is: https?://[password@]hostname
 THREESCALE_PORTAL_ENDPOINT=https://access_token@example-admin.3scale.net
 
-# Path to a file mounted into docker container that contains the gateway configuration.
-# That can be for example cached response from the API.
-# THREESCALE_CONFIG_FILE
-
 # Redis host. Used to store access tokens.
 REDIS_HOST=redis
-# REDIS_PORT=6379
-
-# Limit to subset of services. Comma-separated list of service IDs.
-# APICAST_SERVICES=265,31,42
-
-# What to do when APIcast does not have configuration. Allowed values are: log, exit
-# APICAST_MISSING_CONFIGURATION=log
-
-IMAGE_NAME=apicast-test
 ```
 
-The docker compose file spins up 3 services:
+The docker compose file spins up 4 services:
 
 1. APIcast
 2. Redis 
 3. A very simple Authorization Server (auth-server) written in Ruby
+4. A sample Client to request an Authorization code and exchange that for an Access Token
 
 3scale setup
 ------------
@@ -50,34 +38,45 @@ The docker compose file spins up 3 services:
 To get this working with a 3scale instance the following conditions should be met:
 
 1. Self-managed deployment type and OAuth authentication method should be selected
-2. Login URL/Authorization endpoint on the Integration page needs to be configured, e.g. if you're running the auth-server app on localhost this would be http://localhost:3000/auth/login
+2. "Login URL"/"Authorization endpoint" on the Integration page needs to be configured, e.g. if you're running the auth-server app on localhost this would be `http://localhost:3000/auth/login`
+3. Set the "Public Base URL" to the gateway host e.g `http://localhost:8080`
+4. An application created in 3scale configured with its redirect url to point to the client.rb instance, e.g `http://localhost:3001/callback` 
 
-Requesting an access token
---------------------------
+Once you have APIcast configured to point to your local OAuth testing instance (Gateway + Auth Server), and you have run `docker-compose up` to start all of the required components, you can navigate to your client instance (in this case `client.rb` running on `localhost:3001`) to request an access token. 
 
-Once you have APIcast configured to point to your local OAuth testing instance, you can use a tool such as [Postman](https://www.getpostman.com) to request an access token. 
+client.rb
+---------
 
-You will need to have an application set up in 3scale and set the Redirect URL e.g. to `https://www.getpostman.com/oauth2/callback` 
+A very simple Sinatra app acting as a Client, running on `http://localhost:3001`.
 
-The Auth URL will be the `/authorize` endpoint on your API Gateway instance.
-The Access Token URL will be the `/oauth/token` endpoint on your API Gateway instance. 
+The app will display a page where you can enter a client_id, redirect_uri and scope to request an authorization code. 
 
-You can then click <strong>Request Token</strong> to initiate the access token request process. 
+The Authorization URL targeted will be the `/authorize` endpoint on your API Gateway instance, e.g `localhost:8080/authorize` 
+The Access Token URL targeted will be the `/oauth/token` endpoint on your API Gateway instance. e.g `localhost:8080/oauth/token`
+
+Both these values are built in to the client, however, the Gateway host can be overwritten by adding a `.env` file under the client directory, otherwise this will default to `localhost:8080`
+
+Once an authorization code is returned back to the app, you can exchange that for an access token by additionally providing a client secret.
+
+### Requesting an authorization code
+
+You can then click <strong>Authorize</strong> under "Step 1: Request Authorization Code" to initiate the access token request process. 
+
+### Exchanging authorization code for an access token
+
+When the authorization code is returned, you can enter in your client_id and client_secret and click <strong>Get Token</strong> to request an access token. 
 
 auth-server.rb
 --------------
 
-A very simple Sinatra app acting as an Authorization Server. 
+A very simple Sinatra app acting as an Authorization Server, running on `http://localhost:3000`. 
 
 The app will display a log in page (`/auth/login`) which will accept any values for username and password.
 Once logged in, a consent page will be displayed to accept or deny the request. 
 
-The authorization server will callback APIcast to issue an authorization code on request acceptance and the `redirect_uri` directly on denial. 
+The authorization server will callback APIcast (running on `http://localhost:8080`) to issue an authorization code on request acceptance and the `redirect_uri` directly on denial. 
 
-Once the Authorization Code is sent to the redirect URL (Postman callback endpoint in this case) the exchange of authorization code for an access token is done transparently by Postman behind the scenes. 
+Once the Authorization Code is sent to the redirect URL (client callback endpoint in this case) we exchange this for an access token as per the instructions above under "Exchanging authorization code for an access token."
 
 
-Redis
------
-
-In order to run this example you will need to have redis installed and be running a redis server e.g. by running `redis-server` from the command line.
+The auth-server.rb code for running this example using `docker-compose` locally assumes that the Gateway host is running on `localhost:8080`. You can always override this by adding a .env file in the auth-server directory and referencing this within your docker-compose file, same as for client.rb.

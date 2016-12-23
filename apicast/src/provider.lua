@@ -23,6 +23,7 @@ local tostring = tostring
 local format = string.format
 local gsub = string.gsub
 local unpack = unpack
+local tonumber = tonumber
 
 local split = util.string_split
 
@@ -293,18 +294,34 @@ function _M.set_service(host)
   ngx.ctx.service = service
 end
 
-function _M.set_upstream()
-  local service = ngx.ctx.service
+function _M.get_upstream(service)
+  service = service or ngx.ctx.service
 
   -- The default values are only for tests. We need to set at least the scheme.
   local scheme, _, _, host, port, path =
     unpack(resty_url.split(service.api_backend) or { 'http' })
 
+  if not port then
+    port = resty_url.default_port(scheme)
+  end
+
+  return {
+    server = host,
+    host = service.hostname_rewrite or host,
+    uri  = scheme .. '://upstream' .. (path or ''),
+    port = tonumber(port)
+  }
+end
+
+function _M.set_upstream()
+  local upstream = _M.get_upstream()
+
   ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
   ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
-  ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')
-  ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
-  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(host, { port = port })
+  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(upstream.server, { port = upstream.port })
+
+  ngx.var.proxy_pass = upstream.uri
+  ngx.req.set_header('Host', upstream.host or ngx.var.host)
 end
 
 function _M.call(host)

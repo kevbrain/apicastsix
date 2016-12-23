@@ -10,6 +10,7 @@ local configuration = require 'configuration'
 local inspect = require 'inspect'
 local oauth = require 'oauth'
 local util = require 'util'
+local resty_url = require 'resty.url'
 
 local type = type
 local pairs = pairs
@@ -297,7 +298,7 @@ function _M.set_upstream()
 
   -- The default values are only for tests. We need to set at least the scheme.
   local scheme, _, _, host, port, path =
-    unpack(configuration.url(service.api_backend) or { 'http' })
+    unpack(resty_url.split(service.api_backend) or { 'http' })
 
   ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
   ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
@@ -323,14 +324,10 @@ function _M.call(host)
   ngx.var.version = _M.configuration.version
 
   -- set backend
-  local scheme, _, _, server, port, path = unpack(configuration.url(service.backend.endpoint or ngx.var.backend_endpoint))
+  local scheme, _, _, server, port, path = unpack(resty_url.split(service.backend.endpoint or ngx.var.backend_endpoint))
 
   if not port then
-    if scheme == 'http' then
-      port = 80
-    elseif scheme == 'https' then
-      port = 443
-    end
+    port = resty_url.default_port(scheme)
   end
 
   ngx.ctx.dns = ngx.ctx.dns or dns_resolver:new{ nameservers = resty_resolver.nameservers() }
@@ -357,7 +354,7 @@ function _M.call(host)
 end
 
 function _M.access(service)
-  local scheme, _, _, host, port, path = unpack(configuration.url(service.api_backend) or {})
+  local scheme, _, _, host, port, path = unpack(resty_url.split(service.api_backend) or {})
   local backend_version = service.backend_version
   local params = {}
   local usage

@@ -26,6 +26,7 @@ local split = util.string_split
 
 local inspect = require 'inspect'
 local cjson = require 'cjson'
+local resty_url = require 'resty.url'
 
 local mt = { __index = _M }
 
@@ -363,7 +364,7 @@ end
 function _M.wait(endpoint, timeout)
   local now = ngx.now()
   local fin = now + timeout
-  local url, err = _M.url(endpoint)
+  local url, err = resty_url.split(endpoint)
 
   ngx.log(ngx.DEBUG, 'going to wait for ' .. tostring(timeout))
 
@@ -406,7 +407,7 @@ function _M.wait(endpoint, timeout)
 end
 
 function _M.download(endpoint)
-  local url, err = _M.url(endpoint)
+  local url, err = resty_url.split(endpoint)
 
   if not url and err then
     return nil, err
@@ -461,32 +462,10 @@ function _M.download(endpoint)
   end
 end
 
-function _M.url(endpoint)
-  if not endpoint then
-    return nil, 'missing endpoint'
-  end
-
-  local match = ngx.re.match(endpoint, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+?)(?::(\\d+))?(\\/.+)?$", 'oj')
-
-  if not match then
-    return nil, 'invalid endpoint' -- TODO: maybe improve the error message?
-  end
-
-  local scheme, userinfo, host, port, path = unpack(match)
-
-  if path == '/' then path = nil end
-
-  match = userinfo and ngx.re.match(tostring(userinfo), "^([^:\\s]+)?(?::(.*))?$", 'oj')
-  local user, pass = unpack(match or {})
-
-  return { scheme, user or false, pass or false, host, port or false, path or nil }
-end
-
-
 -- curl is used because resty command that runs libexec/boot does not have correct DNS resolvers set up
 -- resty is using google's public DNS servers and there is no way to change that
 function _M.curl(endpoint)
-  local url, err = _M.url(endpoint)
+  local url, err = resty_url.split(endpoint)
 
   if not url and err then
     return nil, err

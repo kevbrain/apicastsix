@@ -74,9 +74,6 @@ Now, scroll down to the section **Production: Self-managed Gateway** at the bott
 For production deployments you can follow the [instructions for OpenShift installation](https://docs.openshift.com/container-platform/3.3/install_config/install/quick_install.html). In order to get started quickly in development environments, there are many ways you can install OpenShift:
 - Using `oc cluster up` command &ndash; https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md (used in this tutorial, with detailed instructions for Mac and Windows in addition to Linux which we cover here)
 - All-In-One Virtual Machine using Vagrant &ndash; https://www.openshift.org/vm
-- Using Ansible Playbooks (advanced installation):
-  - OpenShift Container Platform 3.3 Installation and Configuration documentation &ndash; https://docs.openshift.com/container-platform/3.3/install_config/index.html
-  - For reference architecture guides for OpenShift 3.3 please refer to the following articles: [AWS](https://access.redhat.com/articles/2623521), [Google Cloud Engine](https://access.redhat.com/articles/2751521), [VMware vCenter 6](https://access.redhat.com/articles/2745171)
 
 In this tutorial the OpenShift cluster will be installed using:
 
@@ -156,7 +153,9 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 ### Create your APIcast Gateway using a template
 
-1. Login into OpenShift using the `oc` command from the OpenShift Client tools you downloaded and installed in previous step. The default login credentials are _username = "admin"_ and _password = "admin"_
+1. By default you are logged in as _developer_ and can proceed to the next step.
+
+ Otherwise login into OpenShift using the `oc` command from the OpenShift Client tools you downloaded and installed in the previous step. The default login credentials are _username = "developer"_ and _password = "developer"_:
 
  <pre><code>oc login https://OPENSHIFT-SERVER-IP:8443</code></pre>
 
@@ -203,11 +202,7 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-project-list-after.png" alt="Openshift Projects" >
 
- If you do not see your gateyway project, assign it to to this user:
-
- ```
- oc policy add-role-to-user admin developer -n 3scalegateway
- ```
+ If you do not see your gateway project, you probably created it with a different user and need to assign the policy role to to this user.
 
 3. Click on _"gateway"_ and you will see the _Overview_ tab.
 

@@ -42,21 +42,15 @@ If you are using OAuth authentication method, you will also need to install Redi
 
 ### Install and run APIcast v2
 
-To use the upstream project, you can check out the [APIcast GitHub repository](https://github.com/3scale/apicast).
+To use the latest APIcast version, you can check out the `v2` branch of the [APIcast GitHub repository](https://github.com/3scale/apicast).
+
+If you want to use a specific version of APIcast, check the APIcast [releases page](https://github.com/3scale/apicast/releases). You can either download the source code from there, or checkout a specific tag with `git`, for example:
 
 ```shell
-sudo yum install git
-git clone https://github.com/3scale/apicast.git
-cd apicast
+git checkout tags/v2.0.0-rc1
 ```
 
-You can see all the APIcast releases on the [releases page](https://github.com/3scale/apicast/releases). Use the tags to checkout the vesrion you want to use, for example:
-
-```shell
-git checkout tags/v2.0.0-beta1
-```
-
-Alternatively, you can stay on the latest development branch (`v2`).
+Go to the APIcast directory, that you checked out with git or extracted from the downloaded archive.
 
 Install all the dependencies:
 

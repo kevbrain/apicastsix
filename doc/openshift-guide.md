@@ -137,9 +137,6 @@ In this tutorial the OpenShift cluster will be installed using:
   ```
 
  Note the IP address that is assigned to your OpenShift server, we will refer to it in the tutorial as `OPENSHIFT-SERVER-IP`.
- You should be able to access the OpenShift web console by going to https://OPENSHIFT-SERVER-IP:8443/console/ in your web browser.
-
- **Warning**: You may receive a warning about an untrusted web-site. This is expected, as we are trying to access to the web console through secure protocol, without having configured a valid certificate. While you should avoid this in production environment, for this test setup you can go ahead and create an exception for this address.
 
 #### Setting up OpenShift cluster on a remote server
 
@@ -199,6 +196,8 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  You should see the login screen:
  <img src="https://support.3scale.net/images/screenshots/guides-openshift-login-screen.png" alt="OpenShift Login Screen">
+
+ **Warning**: You may receive a warning about an untrusted web-site. This is expected, as we are trying to access to the web console through secure protocol, without having configured a valid certificate. While you should avoid this in production environment, for this test setup you can go ahead and create an exception for this address.
 
 2. Login using your _developer_ credentials created or obtained in the _Setup OpenShift_ section above.
 

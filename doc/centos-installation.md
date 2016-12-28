@@ -1,10 +1,8 @@
-# APIcast v2 installation
+# APIcast v2 installation on CentOS
 
-This document explains how to install and run APIcast v2 on a clean operating system.
+This document explains how to install and run APIcast v2 on a clean CentOS.
 
-## Installation on CentOS
-
-### Install OpenResty and dependencies
+## Install OpenResty and dependencies
 
 OpenResty provides official pre-built packages for CentOS, the latest installation instructions are provided in [OpenResty documentation](https://openresty.org/en/linux-packages.html).
 
@@ -40,7 +38,7 @@ sudo yum install luarocks
 
 If you are using OAuth authentication method, you will also need to install Redis. This can be done with `sudo yum install redis` command (note that you will need the [EPEL](https://fedoraproject.org/wiki/EPEL) for this).
 
-### Install and run APIcast v2
+## Install and run APIcast v2
 
 To use the latest APIcast version, you can check out the `v2` branch of the [APIcast GitHub repository](https://github.com/3scale/apicast).
 

@@ -176,7 +176,7 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  Ignore the suggested next steps in the text output at the command prompt and proceed to the next step below.
 
-3. Create a new Secret to reference your project by replacing *ACCESS_TOKEN* and MYDOMAIN with yours.
+3. Create a new Secret to reference your project by replacing *ACCESS_TOKEN* and *MYDOMAIN* with yours.
 
  <pre><code>oc secret new-basicauth threescale-portal-endpoint-secret --password=https://ACCESS_TOKEN@MYDOMAIN-admin.3scale.net</code></pre>
 

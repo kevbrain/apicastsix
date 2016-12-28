@@ -95,7 +95,9 @@ In this tutorial the OpenShift cluster will be installed using:
     - [Docker for Mac](https://docs.docker.com/docker-for-mac/)
     - [Docker for Windows](https://docs.docker.com/docker-for-windows/)
 
-2. Configure the Docker daemon with an insecure registry parameter of `172.30.0.0/16`
+2. Add an insecure registry of `172.30.0.0/16`
+
+  In CentOS configure the Docker daemon with these steps:
    - Edit the `/etc/sysconfig/docker` file and add or uncomment the following line:
      ```
      INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'
@@ -105,6 +107,8 @@ In this tutorial the OpenShift cluster will be installed using:
      ```
      $ sudo systemctl restart docker
      ```
+
+  If you are using another operating system, follow the instructions for [Docker for Mac](https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#macos-with-docker-for-mac), [Docker for Windows](https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#windows-with-docker-for-windows), or check out [Docker documentation](https://docs.docker.com/registry/insecure/) for how to add an insecure registry.
 
 3. Download the client tools release
    [openshift-origin-client-tools-VERSION-linux-64bit.tar.gz](https://github.com/openshift/origin/releases)

@@ -86,8 +86,8 @@ In this tutorial the OpenShift cluster will be installed using:
   For CentOS you can use the following commands to install Docker:
 
   ```bash
-  yum -y update
-  yum -y install docker docker-registry
+  sudo yum -y update
+  sudo yum -y install docker docker-registry
   ```
 
   For other operating systems please refer to the Docker documentation on:

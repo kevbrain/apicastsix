@@ -86,8 +86,8 @@ In this tutorial the OpenShift cluster will be installed using:
   For CentOS you can use the following commands to install Docker:
 
   ```bash
-  yum -y update
-  yum -y install docker docker-registry
+  sudo yum -y update
+  sudo yum -y install docker docker-registry
   ```
 
   For other operating systems please refer to the Docker documentation on:
@@ -95,7 +95,9 @@ In this tutorial the OpenShift cluster will be installed using:
     - [Docker for Mac](https://docs.docker.com/docker-for-mac/)
     - [Docker for Windows](https://docs.docker.com/docker-for-windows/)
 
-2. Configure the Docker daemon with an insecure registry parameter of `172.30.0.0/16`
+2. Add an insecure registry of `172.30.0.0/16`
+
+  In CentOS configure the Docker daemon with these steps:
    - Edit the `/etc/sysconfig/docker` file and add or uncomment the following line:
      ```
      INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'
@@ -105,6 +107,8 @@ In this tutorial the OpenShift cluster will be installed using:
      ```
      $ sudo systemctl restart docker
      ```
+
+  If you are using another operating system, follow the instructions for [Docker for Mac](https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#macos-with-docker-for-mac), [Docker for Windows](https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#windows-with-docker-for-windows), or check out [Docker documentation](https://docs.docker.com/registry/insecure/) for how to add an insecure registry.
 
 3. Download the client tools release
    [openshift-origin-client-tools-VERSION-linux-64bit.tar.gz](https://github.com/openshift/origin/releases)
@@ -133,9 +137,6 @@ In this tutorial the OpenShift cluster will be installed using:
   ```
 
  Note the IP address that is assigned to your OpenShift server, we will refer to it in the tutorial as `OPENSHIFT-SERVER-IP`.
- You should be able to access the OpenShift web console by going to https://OPENSHIFT-SERVER-IP:8443/console/ in your web browser.
-
- **Warning**: You may receive a warning about an untrusted web-site. This is expected, as we are trying to access to the web console through secure protocol, without having configured a valid certificate. While you should avoid this in production environment, for this test setup you can go ahead and create an exception for this address.
 
 #### Setting up OpenShift cluster on a remote server
 
@@ -175,7 +176,7 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  Ignore the suggested next steps in the text output at the command prompt and proceed to the next step below.
 
-3. Create a new Secret to reference your project by replacing *ACCESS_TOKEN* and MYDOMAIN with yours.
+3. Create a new Secret to reference your project by replacing *ACCESS_TOKEN* and *MYDOMAIN* with yours.
 
  <pre><code>oc secret new-basicauth threescale-portal-endpoint-secret --password=https://ACCESS_TOKEN@MYDOMAIN-admin.3scale.net</code></pre>
 
@@ -195,6 +196,8 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  You should see the login screen:
  <img src="https://support.3scale.net/images/screenshots/guides-openshift-login-screen.png" alt="OpenShift Login Screen">
+
+ **Warning**: You may receive a warning about an untrusted web-site. This is expected, as we are trying to access to the web console through secure protocol, without having configured a valid certificate. While you should avoid this in production environment, for this test setup you can go ahead and create an exception for this address.
 
 2. Login using your _developer_ credentials created or obtained in the _Setup OpenShift_ section above.
 

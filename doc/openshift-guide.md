@@ -1,10 +1,10 @@
 # Using 3scale API Gateway on Red Hat OpenShift
 
-This tutorial describes how to use APIcast v2 &ndash; the dockerized 3scale API Gateway that is packaged for easy installation and operation on Red Hat OpenShift V3.
+This tutorial describes how to use APIcast v2 &ndash; the dockerized 3scale API Gateway that is packaged for easy installation and operation on Red Hat OpenShift v3.
 
 ## Tutorial Prerequisites
 
-To follow the tutorial steps below, you'll first need to address the following prerequisites:
+To follow the tutorial steps below, you'll first need to address the following prerequisites to setup your 3scale account and configure OpenShift:
 
 ### 3scale account configuration
 
@@ -42,7 +42,7 @@ If you're setting this up for the first time, you'll need to test the integratio
 In the screenshot above, this API is configured to use the 3scale provided Echo API to help you get started. You can use this or configure the _Private Base URL_ to refer to your real API.
 
 Test your private (unmanaged) API is working using this _curl_ command:
-    
+
     curl https://echo-api.3scale.net:443/
 
 You should get a response similar to this:
@@ -71,12 +71,9 @@ Now, scroll down to the section **Production: Self-managed Gateway** at the bott
 
 ### Setup OpenShift
 
-There are many ways you can install OpenShift:
-- Using `oc cluster up` command &ndash; https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md (used in this tutorial)
+For production deployments you can follow the [instructions for OpenShift installation](https://docs.openshift.com/container-platform/3.3/install_config/install/quick_install.html). In order to get started quickly in development environments, there are many ways you can install OpenShift:
+- Using `oc cluster up` command &ndash; https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md (used in this tutorial, with detailed instructions for Mac and Windows in addition to Linux which we cover here)
 - All-In-One Virtual Machine using Vagrant &ndash; https://www.openshift.org/vm
-- Using Ansible Playbooks (advanced installation):
-  - OpenShift Container Platform 3.3 Installation and Configuration documentation &ndash; https://docs.openshift.com/container-platform/3.3/install_config/index.html
-  - For reference architecture guides for OpenShift 3.3 please refer to the following articles: [AWS](https://access.redhat.com/articles/2623521), [Google Cloud Engine](https://access.redhat.com/articles/2751521), [VMware vCenter 6](https://access.redhat.com/articles/2745171)
 
 In this tutorial the OpenShift cluster will be installed using:
 
@@ -122,15 +119,15 @@ In this tutorial the OpenShift cluster will be installed using:
 
   At the bottom of the output you will find information about the deployed cluster:
   ```
-  -- Server Information ... 
+  -- Server Information ...
      OpenShift server started.
      The server is accessible via web console at:
          https://172.30.0.112:8443
-  
+
      You are logged in as:
          User:     developer
          Password: developer
-  
+
      To login as administrator:
          oc login -u system:admin
   ```
@@ -154,9 +151,11 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 ## Tutorial Steps
 
-### Create your 3scale API Gateway using a template
+### Create your APIcast Gateway using a template
 
-1. Login into OpenShift using the `oc` command from the OpenShift Client tools you downloaded and installed in previous step. The default login credentials are _username = "admin"_ and _password = "admin"_
+1. By default you are logged in as _developer_ and can proceed to the next step.
+
+ Otherwise login into OpenShift using the `oc` command from the OpenShift Client tools you downloaded and installed in the previous step. The default login credentials are _username = "developer"_ and _password = "developer"_:
 
  <pre><code>oc login https://OPENSHIFT-SERVER-IP:8443</code></pre>
 
@@ -165,7 +164,7 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
  You should see `Login successful.` in the output.
 
 2. Create your project. This example sets the display name as _gateway_
-  
+
  <pre><code>oc new-project "3scalegateway" --display-name="gateway" --description="3scale gateway demo"</code></pre>
 
  The response should look like this:
@@ -177,48 +176,50 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
  Ignore the suggested next steps in the text output at the command prompt and proceed to the next step below.
 
 3. Create a new Secret to reference your project by replacing *ACCESS_TOKEN* and MYDOMAIN with yours.
-  
+
  <pre><code>oc secret new-basicauth threescale-portal-endpoint-secret --password=https://ACCESS_TOKEN@MYDOMAIN-admin.3scale.net</code></pre>
 
  The response should look like this:
 
  <pre><code>secret/threescale-portal-endpoint-secret</code></pre>
 
-4. Create an application for your 3scale API Gateway from the template:
+4. Create an application for your APIcast Gateway from the template, and start the deployment:
 
  <pre><code>oc new-app -f https://raw.githubusercontent.com/3scale/apicast/v2/openshift/apicast-template.yml</code></pre>
 
  You should see a message indicating _deploymentconfig_ and _service_ have been successfully created.
 
-### Deploying 3scale API Gateway
+### Deploying APIcast Gateway
 
 1. Open the web console for your OpenShift cluster in your browser: https://OPENSHIFT-SERVER-IP:8443/console/
 
  You should see the login screen:
  <img src="https://support.3scale.net/images/screenshots/guides-openshift-login-screen.png" alt="OpenShift Login Screen">
 
-2. Login using your credentials created or obtained in the _Setup OpenShift_ section above.
+2. Login using your _developer_ credentials created or obtained in the _Setup OpenShift_ section above.
 
  You will see a list of projects, including the _"gateway"_ project you created from the command line above.
 
  <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-project-list-after.png" alt="Openshift Projects" >
 
+ If you do not see your gateway project, you probably created it with a different user and need to assign the policy role to to this user.
+
 3. Click on _"gateway"_ and you will see the _Overview_ tab.
 
- OpenShift downloads the code for the API Gateway and starts the deployment. You may see the message _Deployment #1 running_ when the deployment is in progress.
+ OpenShift downloaded the code for the APIcast and started the deployment. You may see the message _Deployment #1 running_ when the deployment is in progress.
 
- When the build completes, the UI will refresh and show two instances of the API Gateway ( _2 pods_ ) that have been started by OpenShift, as defined in the template.
+ When the build completes, the UI will refresh and show two instances of APIcast ( _2 pods_ ) that have been started by OpenShift, as defined in the template.
 
  <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-building-threescale-gateway.png" alt="Building the Gateway" >
 
- Each instance of the 3scale API Gateway, upon starting, downloads the required configuration from 3scale using the settings you provided on the **Integration** page of your 3scale Admin Portal.
+ Each instance of the APIcast Gateway, upon starting, downloads the required configuration from 3scale using the settings you provided on the **Integration** page of your 3scale Admin Portal.
 
  OpenShift will maintain two API Gateway instances and monitor the health of both; any unhealthy API Gateway will automatically be replaced with a new one.
 
 4. In order to allow your API gateways to receive traffic, you'll need to create a route. Start by clicking on **Create Route**.
 
  <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-create-route.png" alt="Create Route" >
- 
+
  Enter the same host you set in 3scale above in the section **Public Base URL** (without the _http://_ and without the port) , e.g. `gateway.openshift.demo`, then click the **Create** button.
 
  <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-create-route-config.png" alt="Configure Route" >
@@ -254,9 +255,9 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 7. If you wish to see the logs of the API Gateways you can do so by clicking **Applications > Pods** and then select one of the pods and then selecting **Logs**.
 
-### Applying changes to the API gateway
+### Applying changes to the APIcast gateway
 
-Of course, your API configuration is not static. In future you may wish to apply changes to it, for example, choose another authentication method, add new methods and metrics, update the mapping rules, or make any other change on the **Integration** page for your API. In this case you will need to redeploy the API gateway to make the changes effective. In order to do this, go to **Applications > Deployments > threescalegw** and click on **Deploy**.
+Of course, your API configuration is not static. In future you may wish to apply changes to it, for example, choose another authentication method, add new methods and metrics, update the mapping rules, or make any other change on the **Integration** page for your API. In this case you will need to redeploy the APIcast gateway to make the changes effective. In order to do this, go to **Applications > Deployments > threescalegw** and click on **Deploy**.
 
 <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-deploy.png" alt="Deploy OpenShift API Gateway" >
 
@@ -265,7 +266,7 @@ New pods will be created using the updated configuration, and the old ones will 
 ### Multiple services
 
 If you have multiple services (APIs) in 3scale, you will need to configure the routing properly:
- 
+
 1. For each API, go to the **Integration** tab, and in _Production_ section enter the _Public Base URL_ and click on **Update Production Configuration** to save the changes. Make sure you use a different _Public Base URL_ for each API, for example, `http://search-api.openshift.demo` for the service called Search API and `http://video-api.openshift.demo` for Video API.
 
 2. In OpenShift create routes for the gateway service ("threescalegw"): `http://search-api.openshift.demo` and `http://video-api.openshift.demo`. From **Applications > Routes** you can create a new route or modify and existing one. Note that you can't change the hostname for already created routes, but you can delete an existing route and add a new one.
@@ -296,7 +297,7 @@ If you have multiple services (APIs) in 3scale, you will need to configure the r
 
 ### Changing APIcast parameters
 
-APIcast v2 gateway has a number of parameters that can enable/disable different features or change the behavior. This parameters are defined in the OpenShift template, you can find the complete list in the template YAML file. The template parameters are mapped to environment variables that will be set for each running pod.
+APIcast v2 gateway has a number of parameters that can enable/disable different features or change the behavior. These parameters are defined in the OpenShift template. You can find the complete list in the template YAML file. The template parameters are mapped to environment variables that will be set for each running pod.
 
 You can specify the values for the parameters when creating a new application with `oc new-app` command using the `-p | --param` argument, for example:
 
@@ -310,7 +311,7 @@ After modifying the values, click on **Save** button at the bottom, and then **D
 
 ## Success!
 
-Your API is now protected by two instances of the 3scale API Gateway running on Red Hat OpenShift, following all the configuration that you set up in the 3scale Admin Portal.
+Your API is now protected by two instances of the Red Hat 3scale API Gateway running on Red Hat OpenShift, following all the configuration that you set up in the 3scale Admin Portal.
 
 ## Next Steps
 

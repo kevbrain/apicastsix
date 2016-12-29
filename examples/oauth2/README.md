@@ -15,7 +15,7 @@ from the directory containing the `docker-compose.yml` file (in this case `/apic
 
 The `-d` flag starts the containers up in detached mode, if you want to see the output when starting the containers, you should omit this. 
 
-In order for the command to run successfully, you will also need a `.env` file with the following content (substituting the THREESCALE_PORTAL_ENDPOINT value with your own:)
+In order for the command to run successfully, you will also need a `.env` file with the following content (substituting the THREESCALE_PORTAL_ENDPOINT value with your own):
 
 ```
 # URI to fetch gateway configuration from. Expected format is: https?://[password@]hostname
@@ -38,9 +38,9 @@ The docker compose file spins up 4 services:
 To get this working with a 3scale instance the following conditions should be met:
 
 1. Self-managed deployment type and OAuth authentication method should be selected
-2. "Login URL"/"Authorization endpoint" on the Integration page needs to be configured, e.g. if you're running the auth-server app on localhost this would be `http://localhost:3000/auth/login`
-3. Set the "Public Base URL" to the gateway host e.g `http://localhost:8080`
-4. An application created in 3scale configured with its redirect url to point to the client.rb instance, e.g `http://localhost:3001/callback` 
+2. *OAuth Authorization Endpoint* on the Integration page needs to be configured, e.g. if you're running the auth-server app on localhost this would be `http://localhost:3000/auth/login`
+3. Set the *Public Base URL* in the Production section of the Integration page to the gateway host e.g `http://localhost:8080`
+4. An application created in 3scale configured with its **Redirect URL** to point to the `client.rb` instance, e.g `http://localhost:3001/callback` 
 
 Once you have APIcast configured to point to your local OAuth testing instance (Gateway + Auth Server), and you have run `docker-compose up` to start all of the required components, you can navigate to your client instance (in this case `client.rb` running on `localhost:3001`) to request an access token. 
 
@@ -49,22 +49,22 @@ client.rb
 
 A very simple Sinatra app acting as a Client, running on `http://localhost:3001`.
 
-The app will display a page where you can enter a client_id, redirect_uri and scope to request an authorization code. 
+The app will display a page where you can enter a `client_id`, `redirect_uri` and `scope` to request an authorization code. 
 
 The Authorization URL targeted will be the `/authorize` endpoint on your API Gateway instance, e.g `localhost:8080/authorize` 
 The Access Token URL targeted will be the `/oauth/token` endpoint on your API Gateway instance. e.g `localhost:8080/oauth/token`
 
-Both these values are built in to the client, however, the Gateway host can be overwritten by adding a `.env` file under the client directory, otherwise this will default to `localhost:8080`
+Both these values are built in to the client, however, the Gateway host can be overwritten by adding a `.env` file under the `client` directory and specifying the gateway host in the `GATEWAY` environment variable (in format `<host>:<port>`), otherwise this will default to `localhost:8080`
 
 Once an authorization code is returned back to the app, you can exchange that for an access token by additionally providing a client secret.
 
 ### Requesting an authorization code
 
-You can then click <strong>Authorize</strong> under "Step 1: Request Authorization Code" to initiate the access token request process. 
+You can then click **Authorize** under "Step 1: Request Authorization Code" to initiate the access token request process. 
 
 ### Exchanging authorization code for an access token
 
-When the authorization code is returned, you can enter in your client_id and client_secret and click <strong>Get Token</strong> to request an access token. 
+When the authorization code is returned, you can enter in your `client_id` and `client_secret` under "Step 2: Exchange Authorization Code for Access Token" and click **Get Token** to request an access token. 
 
 auth-server.rb
 --------------
@@ -78,5 +78,4 @@ The authorization server will callback APIcast (running on `http://localhost:808
 
 Once the Authorization Code is sent to the redirect URL (client callback endpoint in this case) we exchange this for an access token as per the instructions above under "Exchanging authorization code for an access token."
 
-
-The auth-server.rb code for running this example using `docker-compose` locally assumes that the Gateway host is running on `localhost:8080`. You can always override this by adding a .env file in the auth-server directory and referencing this within your docker-compose file, same as for client.rb.
+The `auth-server.rb` code for running this example using `docker-compose` locally assumes that the Gateway host is running on `localhost:8080`. You can always override this by adding a `.env` file in the `auth-server` directory and referencing this within your `docker-compose.yml` file, same as for `client.rb`.

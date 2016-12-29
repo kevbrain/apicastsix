@@ -59,9 +59,21 @@ sudo luarocks make apicast/*.rockspec --tree /usr/local/openresty/luajit
 Run APIcast v2 on OpenResty:
 
 ```shell
-sudo THREESCALE_PORTAL_ENDPOINT=https://<access-token>@<admin-domain>.3scale.net bin/apicast
+THREESCALE_PORTAL_ENDPOINT=https://<access-token>@<admin-domain>.3scale.net bin/apicast
 ```
 
 This command will start APIcast v2 and download the latest API gateway configuration from the 3scale admin portal.
-For other configuration options refer to the [README](README.md).
 
+`bin/apicast` executable accepts a number of options, you can check them out by running:
+
+```shell
+bin/apicast -h
+```
+
+Additional parameters can be specified using environment variables.
+
+Example:
+```shell
+APICAST_LOG_FILE=logs/error.log bin/apicast -c config.json -d -v -v -v
+```
+The above command will load the APIcast using the configuration file `config.json`, will run as daemon (`-d` option), and the error log will be at `debug` level (`-v -v -v`) and will be written to the file `logs/error.log` inside the directory `apicast` (the *prefix* directory).

@@ -40,7 +40,7 @@ Example: https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net (where the host name is t
 When `THREESCALE_PORTAL_ENDPOINT` environment variable is provided, the gateway will download the configuration from the 3scale on initializing. The configuration includes all the settings provided on the Integration page of the API(s).
 
 ```shell
-docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net quay.io/3scale/gateway:v2
+docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net quay.io/3scale/apicast:v2
 ```
 
 * **THREESCALE_CONFIG_FILE**
@@ -58,7 +58,7 @@ The JSON file needs to follow the [schema](schema.json), see an [example file](e
 In some 3scale plans it is possible to create multiple API services (see an [example of the configuration file](examples/configuration/multiservice.json)). The _optional_ **APICAST_SERVICES** environment variable allows filtering the list of services, so that the gateway only includes the services explicitly specified, the value of the variable should be a comma-separated list of service IDs. This setting is useful when you have many services configured on 3scale, but you want to expose just a subset of them in the gateway.
 
 ```shell
-docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net -e APICAST_SERVICES=1234567890987 quay.io/3scale/gateway:v2
+docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net -e APICAST_SERVICES=1234567890987 quay.io/3scale/apicast:v2
 ```
 
 ### Docker options

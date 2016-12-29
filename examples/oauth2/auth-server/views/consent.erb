@@ -3,7 +3,7 @@
 <p>Application with id <%= @client_id %> wants <%= @scope %> access to your data. Do you accept?</p>
 
 <form name="input" action="/authorized" method="get">
-<br />
+  <br />
   <div class="btn-group">
     <button type="submit" class="btn">Accept</button>
     <button type="submit" formaction="/denied" class="btn">Deny</button>

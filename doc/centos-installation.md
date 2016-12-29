@@ -24,6 +24,7 @@ Install OpenResty and the `resty` command-line utility, which is required for AP
 ```shell
 sudo yum install openresty openresty-resty
 ```
+You can learn more about these and other OpenResty packages in [OpenResty documentation](https://openresty.org/en/rpm-packages.html).
 
 APIcast v2 uses LuaRocks for managing Lua dependencies. As it is not in the standard Yum repositories, you must first enable the [EPEL](https://fedoraproject.org/wiki/EPEL) (Extra Packages for Enterprise Linux) package repository with the following command:
 

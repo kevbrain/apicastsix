@@ -11,7 +11,7 @@ The command to do so is:
 docker-compose up -d
 ```
 
-from the directory containing the `docker-compose.yml` file (in this case `/apicast/examples/oauth2`).
+from the directory containing the `docker-compose.yml` file (in this case `/examples/oauth2`).
 
 The `-d` flag starts the containers up in detached mode, if you want to see the output when starting the containers, you should omit this. 
 

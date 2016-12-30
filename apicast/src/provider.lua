@@ -371,7 +371,6 @@ function _M.call(host)
 end
 
 function _M.access(service)
-  local scheme, _, _, host, port, path = unpack(resty_url.split(service.api_backend) or {})
   local backend_version = service.backend_version
   local params = {}
   local usage
@@ -429,12 +428,6 @@ function _M.access(service)
   end
 
   _M.authorize(backend_version, service)
-
-  -- set upstream
-  ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')
-  ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
-
-  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(host, { port = port })
 end
 
 

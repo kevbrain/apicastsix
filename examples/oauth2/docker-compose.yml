@@ -13,18 +13,12 @@ services:
     image: redis
   oauth:
     build: ./auth-server
-    image: auth-server
     ports:
       - "3000:3000"
-    volumes:
-      - ./auth-server:/opt/app/auth-server
   client:
     build: ./client
-    image: client
     links:
       - gateway
       - oauth
     ports:
-      - "3001:3001"
-    volumes: 
-      - ./client:/opt/app/client
+      - "3001:3000"

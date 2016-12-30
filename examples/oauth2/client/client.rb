@@ -1,4 +1,5 @@
 require 'sinatra'
+require 'securerandom'
 
 set :bind, '0.0.0.0'
 enable :sessions

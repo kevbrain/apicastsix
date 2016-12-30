@@ -12,11 +12,12 @@ get("/") do
 end
 
 get("/auth/login") do
-  session[:client_id]=params[:client_id]
-  session[:redirect_uri]=params[:redirect_uri]
-  session[:scope]=params[:scope]
+  session[:client_id] = params[:client_id]
+  session[:redirect_uri] = params[:redirect_uri]
+  session[:scope] = params[:scope]
   session[:state] = params[:state]
   session[:pre_token] = params[:tok]
+
   erb :login
 end
 
@@ -27,6 +28,7 @@ end
 get("/consent") do
   @client_id = session[:client_id]
   @scope = session[:scope]
+
   erb :consent
 end
 

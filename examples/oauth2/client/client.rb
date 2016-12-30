@@ -1,6 +1,4 @@
 require 'sinatra'
-require 'rest-client'
-require "uuid"
 
 set :bind, '0.0.0.0'
 enable :sessions
@@ -14,16 +12,12 @@ REDIRECT_URI = ENV['REDIRECT_URI'] || "http://localhost:3001/callback"
 AUTHORIZE_ENDPOINT = "http://#{GATEWAY}/authorize"
 TOKEN_ENDPOINT = "http://#{GATEWAY}/oauth/token"
 
-get("/") do	
-	if params[:action] == "get_token"
-		get_token(params[:code])
-	end
+get("/") do
 	erb :root
 end
 
 get("/callback") do
-	session[:code] = params[:state] == session[:state] ? params[:code] : "error: state does not match"
+	@code = session[:code] = params[:state] == session[:state] ? params[:code] : "error: state does not match"
 
-	@code = session[:code]
 	erb :root
 end

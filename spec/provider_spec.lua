@@ -42,4 +42,15 @@ describe('Provider', function()
     assert.same(example, provider.find_service('example.com'))
     assert.falsy(provider.find_service('unknown'))
   end)
+
+  describe('.get_upstream', function()
+    local get_upstream = provider.get_upstream
+
+    it('sets correct upstream port', function()
+      assert.same(443, get_upstream({ api_backend = 'https://example.com' }).port)
+      assert.same(80, get_upstream({ api_backend = 'http://example.com' }).port)
+      assert.same(8080, get_upstream({ api_backend = 'http://example.com:8080' }).port)
+    end)
+  end)
+
 end)

@@ -10,6 +10,7 @@ local configuration = require 'configuration'
 local inspect = require 'inspect'
 local oauth = require 'oauth'
 local util = require 'util'
+local resty_url = require 'resty.url'
 
 local type = type
 local pairs = pairs
@@ -22,6 +23,7 @@ local tostring = tostring
 local format = string.format
 local gsub = string.gsub
 local unpack = unpack
+local tonumber = tonumber
 
 local split = util.string_split
 
@@ -292,18 +294,34 @@ function _M.set_service(host)
   ngx.ctx.service = service
 end
 
-function _M.set_upstream()
-  local service = ngx.ctx.service
+function _M.get_upstream(service)
+  service = service or ngx.ctx.service
 
   -- The default values are only for tests. We need to set at least the scheme.
   local scheme, _, _, host, port, path =
-    unpack(configuration.url(service.api_backend) or { 'http' })
+    unpack(resty_url.split(service.api_backend) or { 'http' })
+
+  if not port then
+    port = resty_url.default_port(scheme)
+  end
+
+  return {
+    server = host,
+    host = service.hostname_rewrite or host,
+    uri  = scheme .. '://upstream' .. (path or ''),
+    port = tonumber(port)
+  }
+end
+
+function _M.set_upstream()
+  local upstream = _M.get_upstream()
 
   ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
   ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
-  ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')
-  ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
-  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(host, { port = port })
+  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(upstream.server, { port = upstream.port })
+
+  ngx.var.proxy_pass = upstream.uri
+  ngx.req.set_header('Host', upstream.host or ngx.var.host)
 end
 
 function _M.call(host)
@@ -323,14 +341,10 @@ function _M.call(host)
   ngx.var.version = _M.configuration.version
 
   -- set backend
-  local scheme, _, _, server, port, path = unpack(configuration.url(service.backend.endpoint or ngx.var.backend_endpoint))
+  local scheme, _, _, server, port, path = unpack(resty_url.split(service.backend.endpoint or ngx.var.backend_endpoint))
 
   if not port then
-    if scheme == 'http' then
-      port = 80
-    elseif scheme == 'https' then
-      port = 443
-    end
+    port = resty_url.default_port(scheme)
   end
 
   ngx.ctx.dns = ngx.ctx.dns or dns_resolver:new{ nameservers = resty_resolver.nameservers() }
@@ -357,7 +371,6 @@ function _M.call(host)
 end
 
 function _M.access(service)
-  local scheme, _, _, host, port, path = unpack(configuration.url(service.api_backend) or {})
   local backend_version = service.backend_version
   local params = {}
   local usage
@@ -415,12 +428,6 @@ function _M.access(service)
   end
 
   _M.authorize(backend_version, service)
-
-  -- set upstream
-  ngx.var.proxy_pass = scheme .. '://upstream' .. (path or '')
-  ngx.req.set_header('Host', service.hostname_rewrite or host or ngx.var.host)
-
-  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(host, { port = port })
 end
 
 

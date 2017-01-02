@@ -1,7 +1,6 @@
 local cjson = require 'cjson'
 local ts = require 'threescale_utils'
-local util = require 'util'
-local split = util.string_split
+local re = require 'ngx.re'
 
 -- As per RFC for Authorization Code flow: extract params from Authorization header and body
 -- If implementation deviates from RFC, this function should be over-ridden
@@ -12,7 +11,7 @@ local function extract_params()
   params.authorization = {}
 
   if header_params['Authorization'] then
-    params.authorization = split(ngx.decode_base64(split(header_params['Authorization']," ")[2]),":")
+    params.authorization = re.split(ngx.decode_base64(re.split(header_params['Authorization']," ", 'oj')[2]),":", 'oj')
   end
 
   -- TODO: exit with 400 if the request is GET

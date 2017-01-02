@@ -1,10 +1,8 @@
 require 'sinatra'
 require 'securerandom'
 
-set :bind, '0.0.0.0'
 enable :sessions
 set :session_secret, '*&(^B234'
-set :port, 3001
 
 GATEWAY = ENV['GATEWAY'] || "localhost:8080"
 CLIENT_ID = ENV['CLIENT_ID']

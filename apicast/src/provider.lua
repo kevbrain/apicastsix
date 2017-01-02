@@ -56,10 +56,6 @@ function _M.configure(contents)
 end
 
 function _M.init(config)
-  math.randomseed(ngx.now())
-  -- First calls to math.random after a randomseed tend to be similar; discard them
-  for _=1,3 do math.random() end
-
   return _M.configure(config)
 end
 

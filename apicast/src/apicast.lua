@@ -4,6 +4,7 @@ local balancer = require('balancer')
 local util = require('util')
 local pcall = pcall
 local tonumber = tonumber
+local math = math
 local getenv = os.getenv
 local reload_config = util.env_enabled('APICAST_RELOAD_CONFIG')
 
@@ -27,6 +28,10 @@ local function handle_missing_configuration(err)
 end
 
 function _M.init()
+  math.randomseed(ngx.now())
+  -- First calls to math.random after a randomseed tend to be similar; discard them
+  for _=1,3 do math.random() end
+
   local config, err = configuration.init()
   local init = config and provider.init(config)
 

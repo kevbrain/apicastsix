@@ -1,6 +1,6 @@
-local configuration = require('configuration')
 local provider = require('provider')
 local balancer = require('balancer')
+local configuration_loader = require('configuration_loader')
 local util = require('util')
 local pcall = pcall
 local tonumber = tonumber
@@ -32,7 +32,7 @@ function _M.init()
   -- First calls to math.random after a randomseed tend to be similar; discard them
   for _=1,3 do math.random() end
 
-  local config, err = configuration.init()
+  local config, err = configuration_loader.init()
   local init = config and provider.init(config)
 
   if not init then
@@ -41,7 +41,7 @@ function _M.init()
 end
 
 local function refresh_config()
-  local config, err = configuration.boot()
+  local config, err = configuration_loader.boot()
 
   if config then
     provider.init(config)
@@ -91,7 +91,7 @@ function _M.rewrite()
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
   if not provider.configured(host) or reload_config then
-    local config = configuration.boot(host)
+    local config = configuration_loader.boot(host)
     provider.configure(config)
   end
 

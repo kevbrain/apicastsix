@@ -4,6 +4,7 @@ local cjson = require('cjson')
 local provider = require('provider')
 local router = require('router')
 local configuration = require('configuration')
+local configuration_loader = require('configuration_loader')
 local inspect = require('inspect')
 
 local live = cjson.encode({status = 'live', success = true})
@@ -76,7 +77,7 @@ end
 local util = require 'util'
 
 function _M.boot()
-  local data = util.timer('configuration.boot', configuration.boot)
+  local data = util.timer('configuration.boot', configuration_loader.boot)
   local config = configuration.decode(data)
   local response = cjson.encode({ status = 'ok', config = config or cjson.null })
 

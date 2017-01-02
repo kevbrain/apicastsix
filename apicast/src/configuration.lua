@@ -217,7 +217,11 @@ function _M.parse_service(service)
           system_name = proxy_rule.metric_system_name or error('missing metric name of rule ' .. inspect(proxy_rule)),
           delta = proxy_rule.delta
         }
-      end, proxy.proxy_rules or {})
+      end, proxy.proxy_rules or {}),
+
+      -- I'm not happy about this, but we need a way how to serialize back the object for the management API.
+      -- And returning the original back is the easiest option for now.
+      serializable = service
     }
 end
 

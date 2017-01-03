@@ -1,32 +1,25 @@
-local configuration = require 'configuration_loader'
+insulate('Configuration object', function()
 
-describe('Configuration object', function()
+  insulate('.save', function()
+    local configuration = require 'configuration_loader'
+    local mock_loader = require 'configuration_loader.mock'
 
-  describe('.download', function()
-    it('returns error on missing endpoint', function()
-      assert.same({nil, 'missing endpoint'}, { configuration.download() })
-    end)
+    it('saves mock configuration', function()
+      local config = { 'foo' }
+      configuration.save(config)
 
-    it('returns error on invalid URI', function()
-      assert.same({nil, 'invalid endpoint'}, { configuration.download('foobar') })
-    end)
-
-    it('returns error on invalid URI', function()
-      assert.same({nil, 'connection refused'}, { configuration.download('http://127.0.0.1:1234/config/') })
-    end)
-
-
-    it('.download', function()
-      configuration.download('http://user:pass@localhost:3000')
-      configuration.download('https://user@localhost')
-      configuration.download('http://:pass@lvh.me:3000')
+      assert.equal(config, mock_loader.config)
     end)
   end)
 
-  describe('.read', function()
-    it('ignores empty path', function()
-      assert.same({nil, 'missing path'}, { configuration.read() })
-      assert.same({nil, 'missing path'}, { configuration.read('') })
+  describe('.init', function()
+    local configuration = require 'configuration_loader'
+
+    it('runs', function()
+      local config, err = configuration.init('apicast')
+
+      assert.falsy(config)
+      assert.match('missing configuration', err)
     end)
   end)
 end)

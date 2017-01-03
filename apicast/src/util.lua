@@ -7,6 +7,7 @@ local ngx_now = ngx.now
 local sub = string.sub
 local find = string.find
 local insert = table.insert
+local len = string.len
 
 local open = io.open
 local execute = os.execute
@@ -37,12 +38,8 @@ function _M.env_enabled(name)
   return mapping[val]
 end
 
-function _M.system(command)
-  local tmp = tmpname()
-  ngx.log(ngx.DEBUG, 'os execute ' .. command)
-  local success, exit, code = execute(command .. ' > ' .. tmp .. ' 2>&1')
-
-  local handle, err = open(tmp)
+local function read(file)
+  local handle, err = open(file)
   local output
 
   if handle then
@@ -52,12 +49,39 @@ function _M.system(command)
     return nil, err
   end
 
+  return output
+end
+
+function _M.system(command)
+  local tmpout = tmpname()
+  local tmperr = tmpname()
+  ngx.log(ngx.DEBUG, 'os execute ' .. command)
+
+  local success, exit, code = execute('(' .. command .. ')' .. ' > ' .. tmpout .. ' 2> ' .. tmperr)
+  local err
+
+  tmpout, err = read(tmpout)
+
+  if err then
+    return nil, err
+  end
+
+  tmperr, err = read(tmperr)
+
+  if err then
+    return nil, err
+  end
+
   -- os.execute returns exit code as first return value on OSX
   -- even though the documentation says otherwise (true/false)
   if success == 0 or success == true then
-    return output
+    if len(tmperr) then
+      ngx.log(ngx.WARN, 'os execute stderr: \n', tmperr)
+    end
+
+    return tmpout
   else
-    return nil, output, code or exit or success
+    return tmpout, tmperr, code or exit or success
   end
 end
 

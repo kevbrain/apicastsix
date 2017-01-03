@@ -342,20 +342,20 @@ end
 -- Cosocket API is not available in the init_by_lua* context (see more here: https://github.com/openresty/lua-nginx-module#cosockets-not-available-everywhere)
 -- For this reason a new process needs to be started to download the configuration through 3scale API
 function _M.init()
-  local config, exit, code = util.system("cd '" .. ngx.config.prefix() .."' && libexec/boot")
+  local config, err, code = util.system("cd '" .. ngx.config.prefix() .."' && libexec/boot")
 
   -- Try to read the file in current working directory before changing to the prefix.
-  if not config then config = _M.file() end
+  if err then config = _M.file() end
 
-  if config then
-    if len(config) > 0 then return config end
-  elseif exit then
+  if config and len(config) > 0 then
+    return config
+  elseif err then
     if code then
-      ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(exit) .. ': '.. tostring(code))
-      return nil, exit
+      ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(err) .. ': '.. tostring(code))
+      return nil, err
     else
-      ngx.log(ngx.ERR, 'boot failed read: '.. tostring(exit))
-      return nil, exit
+      ngx.log(ngx.ERR, 'boot failed read: '.. tostring(err))
+      return nil, err
     end
   end
 end
@@ -478,20 +478,20 @@ function _M.curl(endpoint)
 
   url = concat({ scheme, '://', concat({user or '', pass or ''}, ':'), '@', host, path or '/admin/api/nginx/spec.json' }, '')
 
-  local config, exit, code = util.system('curl --silent --show-error --fail --max-time ' .. timeout .. ' --location ' .. url)
+  local config, stderr, code = util.system('curl --silent --show-error --fail --max-time ' .. timeout .. ' --location ' .. url)
 
-  ngx.log(ngx.INFO, 'configuration request sent: ' .. url)
+  ngx.log(ngx.INFO, 'configuration request sent: ', url)
 
-  if config then
-    ngx.log(ngx.DEBUG, 'configuration response received:' .. config)
+  if config and len(config) > 0 then
+    ngx.log(ngx.DEBUG, 'configuration response received:', config)
     return config
   else
     if code then
-      ngx.log(ngx.ERR, 'configuration download error ' .. exit .. ' ' .. code)
-      return nil, 'curl fished with ' .. exit .. ' ' .. code
+      ngx.log(ngx.ERR, 'configuration download error ', stderr, ' ', code)
+      return nil, 'curl fished with ' .. stderr .. ' ' .. code
     else
-      ngx.log(ngx.WARN, 'configuration download error: ' .. exit)
-      return nil, exit
+      ngx.log(ngx.WARN, 'configuration download error: ',  stderr)
+      return nil, stderr
     end
   end
 end

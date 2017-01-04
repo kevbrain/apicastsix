@@ -113,12 +113,14 @@ local function check_querystring_params(params, args)
   return true
 end
 
+local Service = require 'configuration.service'
+
 function _M.parse_service(service)
   local backend_version = tostring(service.backend_version)
   local proxy = service.proxy or {}
   local backend = proxy.backend or {}
 
-  return {
+  return Service.new({
       id = service.id or 'default',
       backend_version = backend_version,
       hosts = proxy.hosts or { 'localhost' }, -- TODO: verify localhost is good default
@@ -149,19 +151,6 @@ function _M.parse_service(service)
         app_id = lower(proxy.auth_app_id or 'app_id'),
         app_key = lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
       },
-      get_credentials = function(_, params)
-        local credentials
-        if backend_version == '1' then
-          credentials = params.user_key
-        elseif backend_version == '2' then
-          credentials = (params.app_id and params.app_key)
-        elseif backend_version == 'oauth' then
-          credentials = (params.access_token or params.authorization)
-        else
-          error("Unknown backend version: " .. tostring(backend_version))
-        end
-        return credentials
-      end,
       extract_usage = function (config, request, _)
         local method, url = unpack(split(request," "))
         local path, _ = unpack(split(url, "?"))
@@ -178,28 +167,6 @@ function _M.parse_service(service)
 
         -- if there was no match, usage is set to nil and it will respond a 404, this behavior can be changed
         return usage_t, concat(matched_rules, ", ")
-      end,
-      -- Given a request, extracts from its params the credentials of the
-      -- service according to its backend version.
-      -- This method returns a table that contains:
-      --     user_key when backend version == 1
-      --     app_id and app_key when backend version == 2
-      --     access_token when backen version == oauth
-      --     empty when backend version is unknown
-      extract_credentials = function(_, request)
-        local auth_params = get_auth_params(split(request, " ")[1])
-
-        local result = {}
-        if backend_version == '1' then
-          result.user_key = auth_params.user_key
-        elseif backend_version == '2' then
-          result.app_id = auth_params.app_id
-          result.app_key = auth_params.app_key
-        elseif backend_version == 'oauth' then
-          result.access_token = auth_params.access_token
-        end
-
-        return result
       end,
       rules = map(function(proxy_rule)
         return {
@@ -218,7 +185,7 @@ function _M.parse_service(service)
       -- I'm not happy about this, but we need a way how to serialize back the object for the management API.
       -- And returning the original back is the easiest option for now.
       serializable = service
-    }
+    })
 end
 
 function _M.decode(contents, encoder)

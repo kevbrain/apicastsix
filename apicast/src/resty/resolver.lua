@@ -14,6 +14,8 @@ local resolver_cache = require 'resty.resolver.cache'
 
 local init = semaphore.new(1)
 
+local default_resolver_port = 53
+
 local _M = {
   _VERSION = '0.1',
   _nameservers = {},
@@ -25,8 +27,9 @@ local mt = { __index = _M }
 function _M.parse_nameservers(path)
   local search = {}
   local nameservers = { search = search }
-  local path = path or '/etc/resolv.conf'
   local resolver = getenv('RESOLVER')
+
+  path = path or '/etc/resolv.conf'
 
   local handle, err
 
@@ -61,7 +64,7 @@ function _M.parse_nameservers(path)
 
   for nameserver in gmatch(output, 'nameserver%s+([^%s]+)') do
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
-    local port
+    local port = default_resolver_port
     if nameserver ~= resolver then
       insert(nameservers, { nameserver, port } )
     end
@@ -104,7 +107,7 @@ function _M.init()
 end
 
 function _M.new(dns, opts)
-  local opts = opts or {}
+  opts = opts or {}
   local cache = opts.cache or resolver_cache.new()
   local search = opts.search or _M.search
 
@@ -165,7 +168,7 @@ local function convert_answers(answers, port)
 end
 
 function _M.get_servers(self, qname, opts)
-  local opts = opts or {}
+  opts = opts or {}
   local dns = self.dns
   local port = opts.port
   local cache = self.cache

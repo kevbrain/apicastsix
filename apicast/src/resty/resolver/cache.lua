@@ -80,9 +80,9 @@ end
 
 
 function _M.save(self, answers)
-  local answers = compact_answers(answers or {})
+  local ans = compact_answers(answers or {})
 
-  for _, answer in pairs(answers) do
+  for _, answer in pairs(ans) do
     local _, err = self:store(answer)
 
     if err then
@@ -90,26 +90,26 @@ function _M.save(self, answers)
     end
   end
 
-  return answers
+  return ans
 end
 
 
 local function fetch(cache, name, stale)
   local circular_reference = {}
 
-  local function fetch_answers(name, stale)
-    if not name then
+  local function fetch_answers(hostname)
+    if not hostname then
       return {}, 'missing name'
     end
 
-    if circular_reference[name] then
-      error('circular reference detected when querying '.. name)
+    if circular_reference[hostname] then
+      error('circular reference detected when querying '.. hostname)
       return
     else
-      circular_reference[name] = true
+      circular_reference[hostname] = true
     end
 
-    local answers, stale_answers = cache:get(name)
+    local answers, stale_answers = cache:get(hostname)
 
     if not answers then
       if stale and stale_answers then
@@ -119,13 +119,13 @@ local function fetch(cache, name, stale)
       end
     end
 
-    ngx.log(ngx.DEBUG, 'resolver cache read ', name, ' ', #answers, ' entries')
+    ngx.log(ngx.DEBUG, 'resolver cache read ', hostname, ' ', #answers, ' entries')
 
     return answers
   end
 
-  local function yieldfetch(name, stale)
-    local answers = fetch_answers(name, stale)
+  local function yieldfetch(hostname)
+    local answers = fetch_answers(hostname)
 
     for _,answer in ipairs(answers) do
       yieldfetch(answer.cname)
@@ -133,7 +133,7 @@ local function fetch(cache, name, stale)
     end
   end
 
-  local co = co_create(function () yieldfetch(name, stale) end)
+  local co = co_create(function () yieldfetch(name) end)
 
   return function ()
     local code, res = co_resume(co)

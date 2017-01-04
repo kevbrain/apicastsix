@@ -11,6 +11,7 @@ local resty_url = require 'resty.url'
 local type = type
 local pairs = pairs
 local ipairs = ipairs
+local next = next
 local insert = table.insert
 local lower = string.lower
 
@@ -53,7 +54,8 @@ end
 
 function _M.configured(host)
   local hosts = _M.configuration:find(host)
-  return #hosts > 0
+
+  return next(hosts) and true
 end
 
 function _M.init(config)

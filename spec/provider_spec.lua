@@ -2,11 +2,7 @@ local provider = require 'provider'
 
 describe('Provider', function()
   before_each(function()
-    ngx.ctx.configuration = {}
-  end)
-
-  teardown(function()
-    ngx.ctx.configuration = nil
+    provider.configuration:reset()
   end)
 
   it('has access function', function()
@@ -40,6 +36,18 @@ describe('Provider', function()
       assert.same(443, get_upstream({ api_backend = 'https://example.com' }).port)
       assert.same(80, get_upstream({ api_backend = 'http://example.com' }).port)
       assert.same(8080, get_upstream({ api_backend = 'http://example.com:8080' }).port)
+    end)
+  end)
+
+  describe('.configured', function()
+    it('returns false when not configured', function()
+      assert.falsy(provider.configured())
+    end)
+
+    it('returns true when configured', function()
+      provider.configuration:add({ id = 42, hosts = { 'example.com' } })
+
+      assert.truthy(provider.configured('example.com'))
     end)
   end)
 

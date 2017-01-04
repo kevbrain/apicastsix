@@ -55,6 +55,8 @@ function _M.store(self, config)
   for _,service in ipairs(config.services) do
     _M.add(self, service)
   end
+
+  return config
 end
 
 function _M.reset(self)

@@ -12,8 +12,8 @@ IMAGE_NAME ?= apicast-test
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
-lua_files = $(wildcard apicast/src/*.lua)
-spec_files = $(wildcard apicast/spec/*.lua)
+lua_files = $(shell find apicast/src -type f -name '*.lua')
+spec_files = $(shell find apicast/spec -type f -name '*.lua')
 
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove test-builder-image prove-docker test-runtime-image

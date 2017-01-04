@@ -4,6 +4,7 @@ local cjson = require('cjson')
 local provider = require('provider')
 local router = require('router')
 local configuration = require('configuration')
+local configuration_loader = require('configuration_loader')
 local inspect = require('inspect')
 
 local live = cjson.encode({status = 'live', success = true})
@@ -23,8 +24,8 @@ end
 
 function _M.status()
   -- TODO: this should be fixed for multi-tenant deployment
-  local has_configuration = provider.configured
-  local has_services = #(provider.services or {}) > 0
+  local has_configuration = provider.configuration.configured
+  local has_services = #(provider.configuration:all()) > 0
 
   if not has_configuration then
     return { status = 'error', error = 'not configured',  success = false }
@@ -36,9 +37,12 @@ function _M.status()
 end
 
 function _M.config()
+  local config = provider.configuration
+  local contents = cjson.encode(config.configured and { services = config:all() } or nil)
+
   ngx.header.content_type = 'application/json; charset=utf-8'
   ngx.status = 200
-  ngx.say(provider.contents)
+  ngx.say(contents)
 end
 
 function _M.update_config()
@@ -63,7 +67,7 @@ end
 function _M.delete_config()
   ngx.log(ngx.DEBUG, 'management config delete')
 
-  provider.configure(nil)
+  provider.configuration:reset()
   -- TODO: respond with proper 304 Not Modified when config is the same
   local response = cjson.encode({ status = 'ok', config = cjson.null })
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -73,7 +77,7 @@ end
 local util = require 'util'
 
 function _M.boot()
-  local data = util.timer('configuration.boot', configuration.boot)
+  local data = util.timer('configuration.boot', configuration_loader.boot)
   local config = configuration.decode(data)
   local response = cjson.encode({ status = 'ok', config = config or cjson.null })
 

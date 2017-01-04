@@ -1,6 +1,8 @@
 local cjson = require 'cjson'
 local custom_config = os.getenv('APICAST_CUSTOM_CONFIG')
 local configuration = require 'configuration'
+local configuration_store = require 'configuration_store'
+
 local inspect = require 'inspect'
 local oauth = require 'oauth'
 local util = require 'util'
@@ -31,7 +33,7 @@ local _M = {
   -- FIXME: this is really bad idea, this file is shared across all requests,
   -- so that means sharing something in this module would be sharing it acros all requests
   -- and in multi-tenant environment that would mean leaking information
-  configuration = {}
+  configuration = configuration_store.new()
 }
 
 function _M.configure(contents)
@@ -39,27 +41,22 @@ function _M.configure(contents)
 
   if err then
     ngx.log(ngx.WARN, 'not configured: ', err)
+    ngx.log(ngx.DEBUG, 'config: ', contents)
+
     return nil, err
   end
 
-  _M.contents = configuration.encode(contents)
-
   if config then
-    _M.configured = true
-    _M.configuration = config
-    _M.services = config.services or {} -- for compatibility reasons
-    return config
-  else
-    _M.configured = false
-    _M.services = false
+    return _M.configuration:store(config)
   end
 end
 
-function _M.init(config)
-  math.randomseed(ngx.now())
-  -- First calls to math.random after a randomseed tend to be similar; discard them
-  for _=1,3 do math.random() end
+function _M.configured(host)
+  local hosts = _M.configuration:find(host)
+  return #hosts > 0
+end
 
+function _M.init(config)
   return _M.configure(config)
 end
 
@@ -146,7 +143,7 @@ local function get_debug_value()
 end
 
 local function find_service_strict(host)
-  for _,service in ipairs(_M.services or {}) do
+  for _,service in pairs(_M.configuration:find(host)) do
     if type(host) == 'number' and service.id == host then
       return service
     end
@@ -162,7 +159,7 @@ end
 
 local function find_service_cascade(host)
   local request = ngx.var.request
-  for _,service in ipairs(_M.services or {}) do
+  for _,service in pairs(_M.configuration:find(host)) do
     for _,_host in ipairs(service.hosts or {}) do
       if _host == host then
         local name = service.system_name or service.id

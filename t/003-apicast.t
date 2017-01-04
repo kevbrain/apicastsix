@@ -21,7 +21,7 @@ The message is configurable as well as the status.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           backend_version = 1,
@@ -48,7 +48,7 @@ The message is configurable and status also.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           backend_version = 1,
@@ -75,7 +75,7 @@ The message is configurable and default status is 403.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           backend_version = 1,
@@ -116,7 +116,7 @@ It asks backend and then forwards the request to the api.
 
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           id = 42,
@@ -166,7 +166,7 @@ First call is done synchronously and the second out of band.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           id = 42,
@@ -224,7 +224,7 @@ Two services can exist together and are split by their hostname.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           id = 42,
@@ -297,7 +297,7 @@ When mapping rule has a parameter with fixed value it has to be matched.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           id = 42,
@@ -335,7 +335,7 @@ When mapping rule has a parameter with fixed value it has to be matched.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           id = 42,
@@ -380,7 +380,7 @@ When mapping rule has a parameter with variable value it has to exist.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           id = 42,
@@ -425,7 +425,7 @@ X-3scale-usage: usage[bar]=3
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration').save({
+    require('configuration_loader').save({
       services = {
         {
           id = 42,

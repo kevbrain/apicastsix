@@ -24,21 +24,11 @@ describe('Provider', function()
     assert.same('function', type(provider.post_action))
   end)
 
-  it('has no services with empty config', function()
-    assert.falsy(provider.services)
-    provider.init()
-    assert.falsy(provider.services)
-  end)
-
-  it('has services', function()
-    provider.init({})
-    assert.truthy(provider.services)
-    assert.same('table', type(provider.services))
-  end)
-
   it('finds service by host', function()
-    local example = { hosts = { 'example.com'} }
-    provider.services = { example }
+    local example = { id = 42, hosts = { 'example.com'} }
+
+    provider.configuration:add(example)
+
     assert.same(example, provider.find_service('example.com'))
     assert.falsy(provider.find_service('unknown'))
   end)

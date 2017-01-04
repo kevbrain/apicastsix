@@ -1,7 +1,5 @@
 local resolver_cache = require 'resty.resolver.cache'
 
-inspect = require 'inspect'
-
 describe('resty.resolver.cache', function()
 
   local answers = { {
@@ -66,7 +64,7 @@ describe('resty.resolver.cache', function()
     it('writes to the cache', function()
       local record = { 'someting' }
       local answer = { record, ttl = 60, name = 'foo.example.com' }
-      c.cache.set = spy.new(function(self, key, value, ttl)
+      c.cache.set = spy.new(function(_, key, value, ttl)
         assert.same('foo.example.com', key)
         assert.same(answer, value)
         assert.same(60, ttl)
@@ -80,7 +78,7 @@ describe('resty.resolver.cache', function()
     it('works with -1 ttl', function()
       local answer = { { 'something' }, ttl = -1, name = 'foo.example.com' }
 
-      c.cache.set = spy.new(function(self, key, value, ttl)
+      c.cache.set = spy.new(function(_, key, value, ttl)
         assert.same('foo.example.com', key)
         assert.same(answer, value)
         assert.same(nil, ttl)
@@ -98,9 +96,9 @@ describe('resty.resolver.cache', function()
     it('returns answers', function()
       c:save(answers)
 
-      local answers = c:get('www.example.com')
+      local ans = c:get('www.example.com')
 
-      assert.same({ "54.221.208.116", "54.221.221.16" }, answers.addresses)
+      assert.same({ "54.221.208.116", "54.221.221.16" }, ans.addresses)
     end)
   end)
 

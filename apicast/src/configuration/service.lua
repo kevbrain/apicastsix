@@ -67,85 +67,85 @@ local credentials_mt = {
   end
 }
 
-local backend_version_credentials = {
-  ['1'] = function(credentials)
-    local name = (credentials.user_key or 'user_key')
-    local user_key
+local backend_version_credentials = { }
 
-    if credentials.location == 'query' then
-      user_key = ngx.var['arg_' .. name] or read_body_args(name)[1]
+function backend_version_credentials.version_1(config)
+  local name = (config.user_key or 'user_key')
+  local user_key
 
-    elseif credentials.location == 'headers' then
-      user_key = read_http_header(name)
+  if config.location == 'query' then
+    user_key = ngx.var['arg_' .. name] or read_body_args(name)[1]
 
-    elseif credentials.location == 'authorization' then
-      local auth = http_authorization.new(ngx.var.http_authorization)
+  elseif config.location == 'headers' then
+    user_key = read_http_header(name)
 
-      user_key = auth.userid or auth.password or auth.token
-    else
-      return nil, 'invalid credentials location'
-    end
+  elseif config.location == 'authorization' then
+    local auth = http_authorization.new(ngx.var.http_authorization)
 
-    return { user_key = user_key }
-  end,
-
-  ['2'] = function(credentials)
-    local app_id_name = (credentials.app_id or 'app_id')
-    local app_key_name = (credentials.app_key or 'app_key')
-
-    local app_id, app_key
-
-    if credentials.location == 'query' then
-      app_id = ngx.var['arg_' .. app_id_name]
-      app_key = ngx.var['arg_' .. app_key_name]
-
-      if not app_id or not app_key then
-        local body = read_body_args(app_id_name, app_key_name)
-
-        app_id = app_id or body[1]
-        app_key = app_key or body[2]
-      end
-    elseif credentials.location == 'headers' then
-      app_id = read_http_header(app_id_name)
-      app_key = read_http_header(app_key_name)
-
-    elseif credentials.location == 'authorization' then
-      local auth = http_authorization.new(ngx.var.http_authorization)
-
-      app_id = auth.userid or auth.token
-      app_key = auth.password
-    else
-      return nil, 'invalid credentials location'
-    end
-
-    return { app_id = app_id, app_key = app_key }
-  end,
-
-  ['oauth'] = function(credentials)
-    local name = (credentials.access_token or 'access_token')
-    local authorization = http_authorization.new(ngx.var.http_authorization)
-    local access_token
-
-    if credentials.location == 'query' then
-      access_token = ngx.var['arg_' .. name] or read_body_args(name)[1]
-
-    elseif credentials.location == 'headers' then
-      access_token = read_http_header(name)
-
-    elseif credentials.location == 'authorization' then
-      access_token = authorization.token
-
-    else
-      return nil, 'invalid credentials location'
-    end
-
-    -- https://tools.ietf.org/html/rfc6750#section-2.1 says:
-    -- Resource servers MUST support this method. [Bearer]
-    access_token = access_token or authorization.token
-
-    return { access_token = access_token }
+    user_key = auth.userid or auth.password or auth.token
+  else
+    return nil, 'invalid credentials location'
   end
-}
+
+  return { user_key = user_key }
+end
+
+function backend_version_credentials.version_2(config)
+  local app_id_name = (config.app_id or 'app_id')
+  local app_key_name = (config.app_key or 'app_key')
+
+  local app_id, app_key
+
+  if config.location == 'query' then
+    app_id = ngx.var['arg_' .. app_id_name]
+    app_key = ngx.var['arg_' .. app_key_name]
+
+    if not app_id or not app_key then
+      local body = read_body_args(app_id_name, app_key_name)
+
+      app_id = app_id or body[1]
+      app_key = app_key or body[2]
+    end
+  elseif config.location == 'headers' then
+    app_id = read_http_header(app_id_name)
+    app_key = read_http_header(app_key_name)
+
+  elseif config.location == 'authorization' then
+    local auth = http_authorization.new(ngx.var.http_authorization)
+
+    app_id = auth.userid or auth.token
+    app_key = auth.password
+  else
+    return nil, 'invalid credentials location'
+  end
+
+  return { app_id = app_id, app_key = app_key }
+end
+
+function backend_version_credentials.version_oauth(config)
+  local name = (config.access_token or 'access_token')
+  local authorization = http_authorization.new(ngx.var.http_authorization)
+  local access_token
+
+  if config.location == 'query' then
+    access_token = ngx.var['arg_' .. name] or read_body_args(name)[1]
+
+  elseif config.location == 'headers' then
+    access_token = read_http_header(name)
+
+  elseif config.location == 'authorization' then
+    access_token = authorization.token
+
+  else
+    return nil, 'invalid credentials location'
+  end
+
+  -- https://tools.ietf.org/html/rfc6750#section-2.1 says:
+  -- Resource servers MUST support this method. [Bearer]
+  access_token = access_token or authorization.token
+
+  return { access_token = access_token }
+end
 
 -- This table can be used with `table.concat` to serialize
 -- just the numeric keys, but also with `pairs` to iterate
@@ -172,10 +172,10 @@ function _M.extract_credentials(self)
     return nil, 'missing credentials'
   end
 
-  local extractor = backend_version_credentials[backend_version]
+  local extractor = backend_version_credentials['version_' .. backend_version]
 
   if not extractor then
-   return nil, 'invalid backend version: ' .. tostring(backend_version)
+   return nil, 'invalid backend version: ' .. backend_version
   end
 
   local result, err = extractor(credentials)

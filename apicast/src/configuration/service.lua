@@ -1,3 +1,7 @@
+-----------------
+--- Service configuration object.
+-- @classmod Service
+
 local setmetatable = setmetatable
 local tostring = tostring
 local rawget = rawget
@@ -12,13 +16,9 @@ local type = type
 
 local http_authorization = require 'resty.http_authorization'
 
-local _M = {
 
-}
-
-local mt = {
-  __index = _M
-}
+local _M = { }
+local mt = { __index = _M  }
 
 function _M.new(attributes)
   return setmetatable(attributes or {}, mt)
@@ -86,7 +86,11 @@ function backend_version_credentials.version_1(config)
   else
     return nil, 'invalid credentials location'
   end
-
+  ------
+  -- user_key credentials.
+  -- @field 1 User Key
+  -- @field user_key User Key
+  -- @table credentials_v1
   return { user_key = user_key }
 end
 
@@ -119,6 +123,13 @@ function backend_version_credentials.version_2(config)
     return nil, 'invalid credentials location'
   end
 
+  ------
+  -- app\_id/app\_key credentials.
+  -- @field 1 app id or app key
+  -- @field[opt] 2
+  -- @field app_id App ID
+  -- @field app_key App Key
+  -- @table credentials_v2
   return { app_id = app_id, app_key = app_key }
 end
 
@@ -144,6 +155,11 @@ function backend_version_credentials.version_oauth(config)
   -- Resource servers MUST support this method. [Bearer]
   access_token = access_token or authorization.token
 
+  ------
+  -- oauth credentials.
+  -- @field 1 Access Token
+  -- @field access_token Access Token
+  -- @table credentials_oauth
   return { access_token = access_token }
 end
 
@@ -164,7 +180,10 @@ local function to_hybrid_array_table(table)
   return setmetatable(hybrid, credentials_mt)
 end
 
-function _M.extract_credentials(self)
+--- extracts credentials from the current request
+-- @return @{credentials_v1}, @{credentials_v2}, or @{credentials_oauth}
+-- @return[opt] error message why credentials could not be extracted
+function _M:extract_credentials()
   local backend_version = tostring(self.backend_version)
   local credentials = rawget(self, 'credentials')
 

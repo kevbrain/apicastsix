@@ -4,6 +4,9 @@ local rawget = rawget
 local next = next
 local lower = string.lower
 local gsub = string.gsub
+local insert = table.insert
+local sort = table.sort
+local pairs = pairs
 local select = select
 local type = type
 
@@ -83,7 +86,7 @@ local backend_version_credentials = {
       return nil, 'invalid credentials location'
     end
 
-    return { user_key, user_key = user_key }
+    return { user_key = user_key }
   end,
 
   ['2'] = function(credentials)
@@ -115,7 +118,7 @@ local backend_version_credentials = {
       return nil, 'invalid credentials location'
     end
 
-    return { app_id, app_key, app_id = app_id, app_key = app_key }
+    return { app_id = app_id, app_key = app_key }
   end,
 
   ['oauth'] = function(credentials)
@@ -140,9 +143,26 @@ local backend_version_credentials = {
     -- Resource servers MUST support this method. [Bearer]
     access_token = access_token or authorization.token
 
-    return { access_token, access_token = access_token }
+    return { access_token = access_token }
   end
 }
+
+-- This table can be used with `table.concat` to serialize
+-- just the numeric keys, but also with `pairs` to iterate
+-- over just the non numeric keys (for query building).
+
+local function to_hybrid_array_table(table)
+  local hybrid = {}
+
+  for k,v in pairs(table) do
+    hybrid[k] = v
+    insert(hybrid, v)
+  end
+
+  sort(hybrid)
+
+  return setmetatable(hybrid, credentials_mt)
+end
 
 function _M.extract_credentials(self)
   local backend_version = tostring(self.backend_version)
@@ -158,10 +178,13 @@ function _M.extract_credentials(self)
    return nil, 'invalid backend version: ' .. tostring(backend_version)
   end
 
-  local result = extractor(credentials)
+  local result, err = extractor(credentials)
 
-
-  return setmetatable(result, credentials_mt)
+  if result then
+    return to_hybrid_array_table(result)
+  else
+    return nil, err
+  end
 end
 
 return _M

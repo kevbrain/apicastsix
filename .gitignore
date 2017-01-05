@@ -1,3 +1,4 @@
 luacov.*.out
 local/
 t/servroot/
+doc/api/

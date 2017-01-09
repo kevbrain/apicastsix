@@ -107,7 +107,7 @@ describe('Service object', function()
           assert(service:extract_credentials()))
       end)
     end)
-  
+
     describe('backend_version=oauth', function()
       it('returns only GET parameters', function()
         local service = Service.new({

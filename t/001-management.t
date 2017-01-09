@@ -148,7 +148,7 @@ env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   resolver 127.0.0.1:1953 ipv6=off;
   init_by_lua_block {
-      require('provider').configure({ services = { { id = 42 } } })
+      require('configuration_loader').save({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -171,7 +171,7 @@ env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   resolver 127.0.0.1:1953 ipv6=off;
   init_by_lua_block {
-      require('provider').configure({ services = { { id = 42 } } })
+      require('configuration_loader').save({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;

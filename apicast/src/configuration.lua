@@ -18,11 +18,9 @@ local concat = table.concat
 local pcall = pcall
 local setmetatable = setmetatable
 
-local util = require 'util'
-local split = util.string_split
-
 local inspect = require 'inspect'
 local cjson = require 'cjson'
+local re = require 'ngx.re'
 
 local mt = { __index = _M }
 
@@ -43,7 +41,6 @@ local function regexpify(path)
 end
 
 local function check_rule(req, rule, usage_t, matched_rules)
-  local param = {}
   local pattern = rule.regexpified_pattern
   local match = ngx.re.match(req.path, format("^%s", pattern), 'oj')
 
@@ -51,11 +48,12 @@ local function check_rule(req, rule, usage_t, matched_rules)
     local args = req.args
 
     if rule.querystring_params(args) then -- may return an empty table
+      -- FIXME: this had no effect, what is it supposed to do?
       -- when no querystringparams
       -- in the rule. it's fine
-      for i,p in ipairs(rule.parameters or {}) do
-        param[p] = match[i]
-      end
+      -- for i,p in ipairs(rule.parameters or {}) do
+      --   param[p] = match[i]
+      -- end
 
       insert(matched_rules, rule.pattern)
       usage_t[rule.system_name] = set_or_inc(usage_t, rule.system_name, rule.delta)
@@ -152,8 +150,8 @@ function _M.parse_service(service)
         app_key = lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
       },
       extract_usage = function (config, request, _)
-        local method, url = unpack(split(request," "))
-        local path, _ = unpack(split(url, "?"))
+        local method, url = unpack(re.split(request, " ", 'oj'))
+        local path, _ = unpack(re.split(url, "\\?", 'oj'))
         local usage_t =  {}
         local matched_rules = {}
 
@@ -211,7 +209,7 @@ end
 
 function _M.encode(contents, encoder)
   if type(contents) == 'string' then return contents end
-  
+
   encoder = encoder or cjson
 
   return encoder.encode(contents)
@@ -246,7 +244,7 @@ function _M.services_limit()
   local subset = os.getenv('APICAST_SERVICES')
   if not subset or subset == '' then return services end
 
-  local ids = split(subset, ',')
+  local ids = re.split(subset, ',', 'oj')
 
   return to_hash(ids)
 end

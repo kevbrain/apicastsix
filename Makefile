@@ -9,7 +9,8 @@ SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
-BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7
+OPENRESTY_VERSION ?= 1.11.2.2
+BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
 lua_files = $(shell find apicast/src -type f -name '*.lua')

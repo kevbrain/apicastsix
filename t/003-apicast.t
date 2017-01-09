@@ -140,10 +140,12 @@ It asks backend and then forwards the request to the api.
 
   location /transactions/authrep.xml {
     content_by_lua_block {
-      expected = "service_token=token-value&service_id=42&usage[hits]=2&user_key=value"
-      if ngx.var.args == expected then
+      local expected = "service_token=token-value&service_id=42&usage[hits]=2&user_key=value"
+      local args = ngx.var.args
+      if args == expected then
         ngx.exit(200)
       else
+        ngx.log(ngx.ERR, expected, ' did not match: ', args)
         ngx.exit(403)
       end
     }
@@ -159,6 +161,8 @@ yay, api backend: 127.0.0.1
 --- error_code: 200
 --- error_log
 apicast cache miss key: 42:value:usage[hits]=2
+--- no_error_log
+[error]
 
 === TEST 5: call to backend is cached
 First call is done synchronously and the second out of band.

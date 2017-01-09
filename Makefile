@@ -92,6 +92,8 @@ dependencies:
 clean: ## Remove all running docker containers
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans
 
+doc: dependencies ## Generate documentation
+	ldoc -c doc/config.ld .
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

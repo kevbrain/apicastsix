@@ -10,5 +10,12 @@ describe('Configuration File loader', function()
     it('reads a file', function()
       assert.truthy(loader.call('fixtures/config.json'))
     end)
+
+    it('reads absolute path', function()
+      local pl_path = require('pl.path')
+      local _, path = loader.call('fixtures/config.json')
+
+      assert.match(pl_path.currentdir(), path)
+    end)
   end)
 end)

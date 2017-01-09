@@ -1,0 +1,30 @@
+version: '2'
+services:
+  gateway:
+    image: ${IMAGE_NAME}
+    depends_on:
+    - redis
+    ports:
+      - "8080:8080"
+      - "8090:8090"
+    env_file: .env
+  test:
+    image: ${IMAGE_NAME}
+    depends_on:
+      - gateway
+    entrypoint: ""
+    dns: 127.0.0.1
+  prove:
+    image: ${IMAGE_NAME}
+    user: root
+    environment:
+      TEST_NGINX_BINARY: openresty
+      TEST_NGINX_APICAST_PATH: /opt/app
+      TEST_NGINX_REDIS_HOST: redis
+    command: prove
+    depends_on:
+      - redis
+    volumes:
+            - ./t:/opt/app/t
+  redis:
+    image: redis

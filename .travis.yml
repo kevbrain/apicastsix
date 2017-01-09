@@ -1,0 +1,62 @@
+language: c
+sudo: false
+services:
+- docker
+- redis-server
+addons:
+  artifacts: true
+  apt:
+    packages:
+    - perl-modules
+    - wget
+    - cpanminus
+cache:
+  apt: true
+  directories:
+  - "$HOME/openresty"
+  - "$HOME/perl5"
+  - "$HOME/local"
+  - "$HOME/bin"
+  - "$HOME/.luarocks"
+before_cache:
+  - rm -fr $HOME/local/cache
+env:
+  global:
+  - PERL_MM_USE_DEFAULT=1
+  - PERL_CPANM_OPT="--local-lib=~/perl5"
+  - PERL_CARTON_PATH="~/local"
+  - TEST_NGINX_INIT_BY_LUA="pcall(require, 'luarocks.loader')"
+  - IMAGE_NAME="apicast:v2"
+  - TEST_NGINX_ERROR_LOG=tmp/nginx.log
+  - secure: LLEaIHNfFqblICN7o2KrThFAXAuIwmc1ZMvSVgd6CXDi5FAZNhtwl35hKNOUiyTdvAuDWrJT503UoCnEwrJeKKGbpcjBC6hIgaXy8+K1UU5zh47D7bzOkuXmSv/FrRl6bqfulD7kjERQEozj6DJleNbBHmUckc2j89pdXca9d7lBzYeFMJFDDKhnIVRdTVUSjd1ccQNyEdP1a74gUI5rxKK79ynHPKgF3OneYNZLySkASoud/8i/30uop8gKwqyavQVkMXlhEkAHY1CSHiKo5mUQ5NR5fBl7ZBCFeKJ2h8DQI+R3BHbaA/mzmnacTE8B+w03d8OylZQCDhYdfNqQWBWOO1V0fpYc860Nf6TfMWuCzIG4zbOrweubOM67Tmrfw7wg8FhdXZPxNjlHUIkAVutC7KqM/h9I8cVdwNyp026mCG0pxZ/OrpoJl++S7+bIWBmtR6lP3s78t3K/FG3a3JsIfUgdZuscVpjqKkJ9RkT1v8dWWJULLJONJMZa39lblS1amcw6ZQeL0z6ILJ5Zr0JSEbtPyC/CXErrtV610xnhmcKb9XNpWZmqRaTT6EXtl06kaDoz6PYmeNUvgGfHrOSEU49iK+poDCFOIYNRFQuuQEk63O94OKWI1gT8BbJEqoUkSLochXpuKmkK80ctNXfWefwPDhVv1LQqFwp9hsQ=
+  - secure: UtFN6c5cd7KEfqBanUEeNSBZ7WtTM4JEQYlQJIefcN41Duse3qSEjNs6uMtJWn6PVB1NPLAbbZ2lwbznI56M1gNQXdHrVjInK90fo28zftG+8iSYpbPEuYIvyDIvLXtCJx0TT09DOzU9g5a8psfqYhnC3N3uBwStXoLLlxjf3fu5JISVpIA1CzGOB0xVmrbybWNyvjZlf5PXBqaYlIEuxB/t0O68J3duaJZFDLNjJVDtwzuzGyGS+w+R6YcasRoEpB2iGpaAAGAdOPoKznZqLm9aY+rQkMmXvQWWDtN+vpe6HqlOmkSgZjY//vLN/Hc0CMKsKxZ78FEe6C3zhWE+z2nQuvsdHOQ9DEHms6uRN9oOswvE6iKhJlKCbEPn/6gFTja/DCh/hUrsszTQC6x4BurfZAg/qHH2LViDfc7zX+Mh22e2gRsUH+nl+UweuFgHmpXDDeJEdL/luEFB8oo/HScGUgmUBRRfwq6I7C35QIl7ah5mql0l8IIOO+R7aPP290zm4lW/g7RXbPxqedJQBNiEHGrosKygonoYvBjnx4LBu2Qdwq6GNAhlIvdOxf1am7ixiVQnGqQhkHUnS7SriJmafo7TO9mKhrdDuhNqXgirwC13wxCAGrSlDGNUzITCeyyLSrS6pH8L+4VsS5p0d2dx+9gSDlL0iNiIB3CxqLg=
+  matrix:
+  - OPENRESTY_VERSION=1.11.2.2 LUAROCKS_VERSION=2.3.0 S2I_VERSION=1.1.1-724c0dd
+before_install:
+- travis/install-openresty.sh
+- travis/install-luarocks.sh
+- travis/install-s2i.sh
+- find ${HOME}/openresty
+- eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`
+- perl -MCarton -e'shell' 2>/dev/null || cpanm Carton
+- export PATH="${PATH}:${HOME}/openresty/bin:${HOME}/openresty/luajit/bin:${HOME}/openresty/nginx/sbin:${HOME}/bin:${HOME}/.luarocks/bin"
+install:
+- make dependencies
+- carton install --cached --deployment
+before_script:
+- mkdir -p $(dirname ${TEST_NGINX_ERROR_LOG})
+script:
+- make check
+- make busted
+- make prove
+- make builder-image
+- make test-builder-image
+- make prove-docker
+- make test-runtime-image
+- make doc
+after_success:
+- if [ "${TRAVIS_BRANCH}" = "v2" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+  docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" quay.io;
+  make runtime-image;
+  make push;
+  fi

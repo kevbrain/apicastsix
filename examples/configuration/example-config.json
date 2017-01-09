@@ -1,0 +1,49 @@
+{
+  "id": 1234567890987,
+  "provider_key": "provider-key",
+  "services": [
+    {
+      "id": 654321,
+      "backend_version": "2",
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "service-token-1234567890",
+      "proxy": {
+        "api_backend": "https://echo-api.3scale.net:443",
+        "auth_app_key": "app_key",
+        "auth_app_id": "app_id",
+        "auth_user_key": "user_key",
+        "credentials_location": "query",
+        "error_auth_failed": "Authentication failed",
+        "error_auth_missing": "Authentication parameters missing",
+        "error_status_auth_failed": 403,
+        "error_headers_auth_failed": "text/plain; charset=us-ascii",
+        "error_status_auth_missing": 403,
+        "error_headers_auth_missing": "text/plain; charset=us-ascii",
+        "error_no_match": "No Mapping Rule matched",
+        "error_status_no_match": 404,
+        "error_headers_no_match": "text/plain; charset=us-ascii",
+        "secret_token": "Shared_secret_sent_from_proxy_to_API_backend",
+        "hostname_rewrite": null,
+        "oauth_login_url": null,
+        "hosts": [
+          "localhost",
+          "api-1234567890987.staging.apicast.io"
+        ],
+        "backend": {
+          "endpoint": "https://su1.3scale.net",
+          "host": "su1.3scale.net"
+        },
+        "proxy_rules": [
+          {
+            "http_method": "GET",
+            "pattern": "/",
+            "metric_system_name": "hits",
+            "delta": 1,
+            "parameters": [],
+            "querystring_parameters": {}
+          }
+        ]
+      }
+    }
+  ]
+}

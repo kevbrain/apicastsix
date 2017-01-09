@@ -1,0 +1,9 @@
+return {
+  _all = {
+    helper = 'spec/spec_helper.lua'
+  },
+  default = {
+    verbose = true,
+    lpath = "./spec/?.lua;./apicast/src/?.lua;"
+  },
+}

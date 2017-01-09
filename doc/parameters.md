@@ -6,7 +6,7 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
  
 - `APICAST_CUSTOM_CONFIG`
  
- Defines the name of the Lua module that implements custom logic overriding the existing APIcast logic. Find more information about custom config in [the documentation](/doc/custom-config.md).
+ Defines the name of the Lua module that implements custom logic overriding the existing APIcast logic.
 
 - `APICAST_LOG_FILE`  
  **Default:** _stderr_
@@ -35,7 +35,7 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
  - `true` or `1` for _true_
  - `false`, `0` or empty for _false_
  
- When this parameter is set to _true_, the gateway will use path-based routing instead of the default host-based routing. Learn more about the path routing mode in [the documentation](/doc/path-routing.md).
+ When this parameter is set to _true_, the gateway will use path-based routing instead of the default host-based routing.
 
 - `APICAST_RELOAD_CONFIG`  
  **Values:**

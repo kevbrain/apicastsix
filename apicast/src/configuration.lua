@@ -41,7 +41,6 @@ local function regexpify(path)
 end
 
 local function check_rule(req, rule, usage_t, matched_rules)
-  local param = {}
   local pattern = rule.regexpified_pattern
   local match = ngx.re.match(req.path, format("^%s", pattern), 'oj')
 
@@ -49,11 +48,12 @@ local function check_rule(req, rule, usage_t, matched_rules)
     local args = req.args
 
     if rule.querystring_params(args) then -- may return an empty table
+      -- FIXME: this had no effect, what is it supposed to do?
       -- when no querystringparams
       -- in the rule. it's fine
-      for i,p in ipairs(rule.parameters or {}) do
-        param[p] = match[i]
-      end
+      -- for i,p in ipairs(rule.parameters or {}) do
+      --   param[p] = match[i]
+      -- end
 
       insert(matched_rules, rule.pattern)
       usage_t[rule.system_name] = set_or_inc(usage_t, rule.system_name, rule.delta)
@@ -209,7 +209,7 @@ end
 
 function _M.encode(contents, encoder)
   if type(contents) == 'string' then return contents end
-  
+
   encoder = encoder or cjson
 
   return encoder.encode(contents)

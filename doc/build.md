@@ -36,7 +36,7 @@ Both use the [s2i-openresty](https://github.com/3scale/s2i-openresty) builder im
 
 ## Release
 
-`v2` branch is automatically built and pushed on every successful build [by Travis](https://github.com/3scale/apicast/blob/bc8631fcf91fcab25cae84152e16536ce01d22be/.travis.yml#L51-L56) to [`quay.io/3scale/apicast:v2`](https://quay.io/repository/3scale/apicast?tab=tags&tag=v2).
+`master` branch is automatically built and pushed on every successful build [by Travis](https://github.com/3scale/apicast/blob/bc8631fcf91fcab25cae84152e16536ce01d22be/.travis.yml#L51-L56) to [`quay.io/3scale/apicast:master`](https://quay.io/repository/3scale/apicast?tab=tags&tag=master).
 
 
 

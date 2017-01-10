@@ -27,7 +27,7 @@ You'll need to run the API gateway locally, either in docker or by compiling Ope
 Run the docker container with custom configuration:
 
 ```shell
-docker run --rm --publish-all --env THREESCALE_CONFIG_FILE=/config.json --volume $(pwd)/examples/configuration/multiservice.json:/config.json --name test-gateway-config quay.io/3scale/apicast:v2
+docker run --rm --publish-all --env THREESCALE_CONFIG_FILE=/config.json --volume $(pwd)/examples/configuration/multiservice.json:/config.json --name test-gateway-config quay.io/3scale/apicast:master
 ```
 
 And send to that docker image against that configuration:

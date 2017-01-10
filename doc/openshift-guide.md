@@ -186,7 +186,7 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 4. Create an application for your APIcast Gateway from the template, and start the deployment:
 
- <pre><code>oc new-app -f https://raw.githubusercontent.com/3scale/apicast/v2/openshift/apicast-template.yml</code></pre>
+ <pre><code>oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml</code></pre>
 
  You should see a message indicating _deploymentconfig_ and _service_ have been successfully created.
 
@@ -304,7 +304,7 @@ APIcast v2 gateway has a number of parameters that can enable/disable different 
 
 You can specify the values for the parameters when creating a new application with `oc new-app` command using the `-p | --param` argument, for example:
 
-<pre><code>oc new-app -f https://raw.githubusercontent.com/3scale/apicast/v2/openshift/apicast-template.yml -p APICAST_LOG_LEVEL=debug</code></pre>
+<pre><code>oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml -p APICAST_LOG_LEVEL=debug</code></pre>
 
 In order to change the parameters for an existing application, you can modify the environment variables values. Go to **Applications > Deployments > threescalegw** and select the _Environment_ tab.
 

@@ -9,7 +9,7 @@ APIcast will read all `.conf` files in the `apicast.d` folder inside its prefix 
 ## Starting Docker
 
 ```sh
-docker run -it -v $(pwd)/apicast.d:/opt/app/apicast.d:ro -v $(pwd)/cert:/opt/app/conf/cert:ro --env THREESCALE_PORTAL_ENDPOINT=https://git.io/vXHTA --publish 8443:8443 quay.io/3scale/apicast:v2
+docker run -it -v $(pwd)/apicast.d:/opt/app/apicast.d:ro -v $(pwd)/cert:/opt/app/conf/cert:ro --env THREESCALE_PORTAL_ENDPOINT=https://git.io/vXHTA --publish 8443:8443 quay.io/3scale/apicast:master
 ```
 
 Mounts `cert` and `apicast.d` folder to the correct place and exposes port 8443 that the `ssl.conf` defines.

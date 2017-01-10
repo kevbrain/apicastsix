@@ -113,7 +113,7 @@ parameters:
   name: THREESCALE_GATEWAY_NAME
   required: true
 - description: "Docker image to use."
-  value: 'quay.io/3scale/apicast:v2'
+  value: 'quay.io/3scale/apicast:master'
   name: THREESCALE_GATEWAY_IMAGE
   required: true
 - description: "DNS Resolver for openresty, if empty it will be autodiscovered"

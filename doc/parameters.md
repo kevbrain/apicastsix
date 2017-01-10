@@ -2,7 +2,7 @@
 
 APIcast v2 has a number of parameters configured as environment variables that can modify the behavior of the gateway. The following reference provides descriptions of these parameters.
 
-Note that when deploying APIcast v2 with OpenShift, some of thee parameters can be configured via OpenShift template parameters. The latter can be consulted directly in the [template](https://raw.githubusercontent.com/3scale/apicast/v2/openshift/apicast-template.yml).
+Note that when deploying APIcast v2 with OpenShift, some of thee parameters can be configured via OpenShift template parameters. The latter can be consulted directly in the [template](https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml).
  
 - `APICAST_CUSTOM_CONFIG`
  
@@ -115,6 +115,6 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
  
  When the gateway is deployed using Docker, the file has to be injected to the docker image as a read only volume, and the path should indicate where the volume is mounted, i.e. path local to the docker container.
  
- You can find sample configuration files in [examples](https://github.com/3scale/apicast/tree/v2/examples/configuration) folder.
+ You can find sample configuration files in [examples](https://github.com/3scale/apicast/tree/master/examples/configuration) folder.
  
  It is **required** to provide either `THREESCALE_PORTAL_ENDPOINT` or `THREESCALE_CONFIG_FILE` (takes precedence) for the gateway to run successfully.

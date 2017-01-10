@@ -5,7 +5,7 @@ Source-to-image can be used to create Docker image with baked in customizations.
 ## Build
 
 ```sh
-s2i build . quay.io/3scale/apicast:v2 my-image-name
+s2i build . quay.io/3scale/apicast:master my-image-name
 ```
 
 ## Test

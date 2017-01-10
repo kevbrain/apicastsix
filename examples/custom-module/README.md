@@ -13,7 +13,7 @@ This example implements a module that extends apicast default one and adds more 
 APICAST_MODULE=$(pwd)/verbose.lua ../../bin/apicast -c $(pwd)/../configuration/local.json
 ```
 
-This starts apicast with module `verbose.lua` instead of the default [`apicast.lua`](https://github.com/3scale/apicast/blob/v2/apicast/src/apicast.lua). Using local configuration  so no 3scale account is needed.
+This starts apicast with module `verbose.lua` instead of the default [`apicast.lua`](https://github.com/3scale/apicast/blob/master/apicast/src/apicast.lua). Using local configuration  so no 3scale account is needed.
 
 ## Testing
 

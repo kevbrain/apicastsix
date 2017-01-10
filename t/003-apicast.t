@@ -491,3 +491,28 @@ GET /test?user_key=foo
 --- response_body
 api response
 --- error_code: 200
+
+=== TEST 11: print warning on duplicate service hosts
+So when booting it can be immediately known that some of them won't work.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+location /t {
+  content_by_lua_block {
+    require('provider').configure({
+      services = {
+        { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
+        { id = 2, proxy = { hosts = { 'foo', 'daz' } } },
+      }
+    })
+    ngx.say('all ok')
+  }
+}
+--- request
+GET /t
+--- response_body
+all ok
+--- log_level: warn
+--- error_code: 200
+--- error_log
+host foo already defined by service 1

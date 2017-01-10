@@ -3,9 +3,13 @@ local ipairs = ipairs
 local pairs = pairs
 local tostring = tostring
 local insert = table.insert
+local next = next
+
+local util = require 'util'
 
 local _M = {
-  _VERSION = '0.1'
+  _VERSION = '0.1',
+  path_routing = util.env_enabled('APICAST_PATH_ROUTING_ENABLED')
 }
 
 local mt = { __index = _M }
@@ -81,9 +85,15 @@ function _M.add(self, service)
     local index = hosts[host] or {}
     local id = tostring(service.id)
 
+    local exists = not _M.path_routing and next(index)
+
     index[id] = service
     all[id] = service
     hosts[host] = index
+
+    if exists then
+      ngx.log(ngx.WARN, 'host ', host, ' already defined by service ', exists)
+    end
   end
 end
 

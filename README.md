@@ -35,7 +35,7 @@ The 3scale gateway image requires one of two environment variables. The first op
 * **THREESCALE_PORTAL_ENDPOINT**
 
 URI that includes your password and portal endpoint in following format: `schema://access-token@domain`. The password can be either the [provider key](https://support.3scale.net/docs/terminology#apikey) or an [access token](https://support.3scale.net/docs/terminology#tokens) for the 3scale Account Management API. Note: these should not be confused with [service tokens](https://support.3scale.net/docs/terminology#tokens)
-Example: https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net (where the host name is the same as the domain for the URL when you are logged into the admin portal from a browser.
+Example: `https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net` (where the host name is the same as the domain for the URL when you are logged into the admin portal from a browser.
 
 When `THREESCALE_PORTAL_ENDPOINT` environment variable is provided, the gateway will download the configuration from the 3scale on initializing. The configuration includes all the settings provided on the Integration page of the API(s).
 
@@ -45,7 +45,7 @@ docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https:
 
 * **THREESCALE_CONFIG_FILE**
 
-Path to saved JSON file with configuration for the gateway. The configuration can be downloaded from the 3scale admin portal using the URL https://ACCOUNT-admin.3scale.net/admin/api/nginx/spec.json (replace `ACCOUNT` with your 3scale account name). The file has to be injected to the docker image as read only volume, and the path should indicate where the volume is mounted, i.e. path local to the docker container.
+Path to saved JSON file with configuration for the gateway. The configuration can be downloaded from the 3scale admin portal using the URL `https://ACCOUNT-admin.3scale.net/admin/api/nginx/spec.json` (replace `ACCOUNT` with your 3scale account name). The file has to be injected to the docker image as read only volume, and the path should indicate where the volume is mounted, i.e. path local to the docker container.
 
 ```shell
 docker run --name apicast --rm -p 8080:8080 -v $(pwd)/config.json:/opt/app/config.json:ro -e THREESCALE_CONFIG_FILE=/opt/app/config.json quay.io/3scale/apicast:v2

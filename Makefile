@@ -95,6 +95,13 @@ clean: ## Remove all running docker containers
 
 doc: dependencies ## Generate documentation
 	ldoc -c doc/config.ld .
+
+node_modules/.bin/markdown-link-check:
+	npm install markdown-link-check
+
+test-doc: node_modules/.bin/markdown-link-check
+	@find . \( -name node_modules -o -name .git \) -prune -o -name "*.md" -print0 | xargs -0 -n1  -I % sh -c 'echo; echo ====================; echo Checking: %; node_modules/.bin/markdown-link-check  %' \;
+
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

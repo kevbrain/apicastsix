@@ -18,4 +18,9 @@ else
   make install
   ln -sf "${PREFIX}"/luajit/bin/luajit-* "${PREFIX}/luajit/bin/luajit"
   ln -sf "${PREFIX}"/luajit/include/luajit-* "${PREFIX}/luajit/include/lua5.1"
+
+  # If resty does resolve ipv6 by default (<= 0.16) disable it
+  if ! (grep resolve_ipv6 "${PREFIX}/bin/resty"); then
+    sed -i.bak 's/my @nameservers;/my @nameservers = ("ipv6=off");/' "${PREFIX}/bin/resty"
+  fi
 fi

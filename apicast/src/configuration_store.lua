@@ -92,7 +92,7 @@ function _M.add(self, service)
     hosts[host] = index
 
     if exists then
-      ngx.log(ngx.WARN, 'host ', host, ' already defined by service ', exists)
+      ngx.log(ngx.WARN, 'host ', host, ' for service ', id, ' already defined by service ', exists)
     end
   end
 end

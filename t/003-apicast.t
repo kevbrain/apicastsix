@@ -515,4 +515,4 @@ all ok
 --- log_level: warn
 --- error_code: 200
 --- error_log
-host foo already defined by service 1
+host foo for service 2 already defined by service 1

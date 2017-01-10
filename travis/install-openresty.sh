@@ -3,9 +3,12 @@ set -eux
 
 PREFIX=${1:-$HOME/openresty}
 OPENRESTY_ARCHIVE="openresty-${OPENRESTY_VERSION}"
+OPENRESTY="${PREFIX}/bin/openresty"
 
-if [ ! -d "${PREFIX}/bin" ]; then
-  cd /tmp/
+if [ -f "${OPENRESTY}" ] && ("${OPENRESTY}" -v 2>&1 | grep "${OPENRESTY_VERSION}" > /dev/null); then
+  echo "Using cached openresty."
+  "${OPENRESTY}" -V
+else
   wget -T 60 -q -c "http://openresty.org/download/${OPENRESTY_ARCHIVE}.tar.gz"
   tar -xzf "${OPENRESTY_ARCHIVE}.tar.gz"
   rm -rf "${OPENRESTY_ARCHIVE}.tar.gz"
@@ -15,6 +18,4 @@ if [ ! -d "${PREFIX}/bin" ]; then
   make install
   ln -sf "${PREFIX}"/luajit/bin/luajit-* "${PREFIX}/luajit/bin/luajit"
   ln -sf "${PREFIX}"/luajit/include/luajit-* "${PREFIX}/luajit/include/lua5.1"
-else
-  echo "Using cached openresty."
 fi

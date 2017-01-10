@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Require openresty 1.11.2 [PR #194](https://github.com/3scale/apicast/pull/194)
+- moved development from `v2` branch to `master` [PR #209](https://github.com/3scale/apicast/pull/209)
 
 ### Fixed
 

@@ -1,7 +1,7 @@
-version: '2'
+version: '2.1'
 services:
   gateway:
-    image: ${IMAGE_NAME}
+    image: ${IMAGE_NAME:-apicast-test}
     depends_on:
     - redis
     ports:
@@ -9,13 +9,13 @@ services:
       - "8090:8090"
     env_file: .env
   test:
-    image: ${IMAGE_NAME}
+    image: ${IMAGE_NAME:-apicast-test}
     depends_on:
       - gateway
     entrypoint: ""
     dns: 127.0.0.1
   prove:
-    image: ${IMAGE_NAME}
+    image: ${IMAGE_NAME:-apicast-test}
     user: root
     environment:
       TEST_NGINX_BINARY: openresty

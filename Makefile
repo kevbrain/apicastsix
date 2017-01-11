@@ -58,6 +58,7 @@ bash: ## Run bash inside the builder image
 
 test-builder-image: export IMAGE_NAME = apicast-test
 test-builder-image: builder-image clean ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
+	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
 	@echo -e $(SEPARATOR)

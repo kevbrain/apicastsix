@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 ### Added
 - A CHANGELOG.md to track important changes
+- User-Agent header with APIcast version and system information [PR #214](https://github.com/3scale/apicast/pull/214)
 
 ### Changed
 - Require openresty 1.11.2 [PR #194](https://github.com/3scale/apicast/pull/194)

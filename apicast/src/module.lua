@@ -47,6 +47,11 @@ function _M.call(self, phase, ...)
 end
 
 local cache = {}
+
+function _M.flush()
+  cache = {}
+end
+
 local prequire = function(file)
 
   if cache[file] then
@@ -58,6 +63,11 @@ local prequire = function(file)
   if not ok and ret then
     -- dofile can load absolue paths, require can't
     ok, ret = pcall(dofile, file)
+  end
+
+  if type(ret) == 'userdata' then
+    ngx.log(ngx.WARN, 'cyclic require detected: ', debug.traceback())
+    return false, ret
   end
 
   if ok then
@@ -103,6 +113,19 @@ function _M.load(name, phase)
   end
 
   return nil, 'could not load plugin'
+end
+
+function _M:require()
+  local name = self.name
+
+  if not name then
+    return nil, 'not initialized'
+  end
+
+  local ok, ret = prequire(name)
+
+  if ok and ret then return ret
+  else return ok, ret end
 end
 
 return _M

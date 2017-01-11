@@ -65,6 +65,11 @@ local prequire = function(file)
     ok, ret = pcall(dofile, file)
   end
 
+  if type(ret) == 'userdata' then
+    ngx.log(ngx.WARN, 'cyclic require detected: ', debug.traceback())
+    return false, ret
+  end
+
   if ok then
     cache[file] = ret
   else

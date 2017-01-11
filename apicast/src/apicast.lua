@@ -7,9 +7,11 @@ local tonumber = tonumber
 local math = math
 local getenv = os.getenv
 local reload_config = util.env_enabled('APICAST_RELOAD_CONFIG')
+local user_agent = require('user_agent')
 
 local _M = {
-  _VERSION = '0.1'
+  _VERSION = '2.0',
+  _NAME = 'APIcast'
 }
 
 local missing_configuration = getenv('APICAST_MISSING_CONFIGURATION') or 'log'
@@ -28,6 +30,8 @@ local function handle_missing_configuration(err)
 end
 
 function _M.init()
+  user_agent.cache()
+
   math.randomseed(ngx.now())
   -- First calls to math.random after a randomseed tend to be similar; discard them
   for _=1,3 do math.random() end

@@ -75,7 +75,7 @@ test-builder-image: builder-image clean ## Smoke test the builder image. Pass an
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X POST http://gateway:8090/boot
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep lua-resty-http
+	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep 'APIcast/'
 	@echo -e $(SEPARATOR)
 
 test-runtime-image: export IMAGE_NAME = apicast-release-test

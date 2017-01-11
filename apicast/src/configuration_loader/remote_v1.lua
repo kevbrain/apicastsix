@@ -8,6 +8,7 @@ local resty_url = require 'resty.url'
 local http = require "resty.http"
 local configuration = require 'configuration'
 local util = require 'util'
+local user_agent = require 'user_agent'
 
 local _M = {
   version = '0.1'
@@ -89,6 +90,8 @@ function _M.download(endpoint, _)
   if user or pass then
     headers['Authorization'] = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
   end
+
+  headers['User-Agent'] = user_agent()
 
   -- TODO: this does not fully implement HTTP spec, it first should send
   -- request without Authentication and then send it after gettting 401

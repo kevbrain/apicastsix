@@ -516,3 +516,49 @@ all ok
 --- error_code: 200
 --- error_log
 host foo for service 2 already defined by service 1
+
+=== TEST 12: return headers with debugging info
+When X-3scale-Debug header has value of the backend authentication.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('provider').configure({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'service-token',
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/",
+            backend = {
+                endpoint = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT'
+            },
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
+            }
+          }
+       },
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  include $TEST_NGINX_BACKEND_CONFIG;
+
+  location /api/ {
+    echo "all ok";
+  }
+--- request
+GET /t?user_key=val
+--- more_headers
+X-3scale-Debug: service-token
+--- response_body
+all ok
+--- error_code: 200
+--- no_error_log
+[error]
+--- response_headers
+X-3scale-matched-rules: /
+X-3scale-usage: usage[hits]=2

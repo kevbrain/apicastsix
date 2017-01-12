@@ -12,16 +12,19 @@ local _M = {}
 local function contains(expected, actual)
   if actual == expected then return true end
   local t1,t2 = type(actual), type(expected)
-  if t1 ~= t2 then return false end
+  if t1 ~= t2 then return false, format("can't compare %q with %q", t1, t2) end
 
   if t1 == 'table' then
     for k,v in pairs(expected) do
-      if not contains(actual[k], v) then return false, format('[%q] %q does not match %q', k, actual[k], v) end
+      local ok, err = contains(v, actual[k])
+      if not ok then
+        return false, format('[%q] %s', k, err)
+      end
     end
     return true
   end
 
-  return false
+  return false, format('%q does not match %q', actual, expected)
 end
 
 

@@ -5,6 +5,7 @@ local setmetatable = setmetatable
 local insert = table.insert
 local remove = table.remove
 local error = error
+local format = string.format
 
 local _M = {}
 
@@ -15,7 +16,7 @@ local function contains(expected, actual)
 
   if t1 == 'table' then
     for k,v in pairs(expected) do
-      if not contains(actual[k], v) then return false end
+      if not contains(actual[k], v) then return false, format('[%q] %q does not match %q', k, actual[k], v) end
     end
     return true
   end
@@ -55,7 +56,8 @@ _M.new = function()
     local expectation = remove(expectations, 1)
 
     if not expectation then error('no expectation') end
-    if not _M.expectation.match(expectation, request) then error('expectation does not match') end
+    local match, err = _M.expectation.match(expectation, request)
+    if not match then error('expectation does not match: ' .. err) end
 
     insert(requests, request)
 

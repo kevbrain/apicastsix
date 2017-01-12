@@ -30,7 +30,7 @@ describe('test backend',function()
     it('matches expectation', function()
       backend.expect{method = 'POST'}
       local req = request.new{method = 'GET', url = 'http://example.com' }
-      assert.has.error(function() backend.send(req) end, 'expectation does not match')
+      assert.has.error(function() backend.send(req) end, 'expectation does not match: ["method"] "GET" does not match "POST"')
     end)
   end)
 end)

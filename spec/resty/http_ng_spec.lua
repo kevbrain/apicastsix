@@ -20,6 +20,28 @@ describe('http_ng', function()
     end)
   end
 
+  it('OPTIONS method works with default options', function()
+    http = http_ng.new{backend = backend, options = { headers = { host = "foo" }}}
+    local response = http.OPTIONS('http://example.com')
+    local last_request = assert(backend.last_request)
+
+    assert.truthy(response)
+    assert.equal('OPTIONS', last_request.method)
+    assert.equal('http://example.com', last_request.url)
+    assert.equal('foo', last_request.headers.host)
+  end)
+
+  pending('options method works with default options', function()
+    http = http_ng.new{backend = backend, options = { headers = { host = "foo" }}}
+    local response = http.options('http://example.com')
+    local last_request = assert(backend.last_request)
+
+    assert.truthy(response)
+    assert.equal('OPTIONS', last_request.method)
+    assert.equal('http://example.com', last_request.url)
+    assert.equal('foo', last_request.headers.host)
+  end)
+
   for _,method in ipairs{ 'put', 'post', 'patch' } do
     it('makes ' .. method .. ' call to backend with body', function()
       local response = http[method]('http://example.com', 'body')
@@ -66,6 +88,34 @@ describe('http_ng', function()
       http.get('http://example.com', { headers = { host = 'overriden' }})
       local last_request = assert(backend.last_request)
       assert.equal('overriden', last_request.headers.host)
+    end)
+
+    it('overrides headers from initial options', function()
+      http = http_ng.new{backend = backend, options = { headers = { user_agent = 'foobar' } } }
+
+      http.get('http://example.com', { headers = { user_agent = 'overriden' }})
+
+      local last_request = assert(backend.last_request)
+      assert.equal('overriden', last_request.headers.user_agent)
+    end)
+
+    it('uses headers from initial options', function()
+      http = http_ng.new{backend = backend, options = { headers = { user_agent = 'foobar' } } }
+
+      http.get('http://example.com')
+
+      local last_request = assert(backend.last_request)
+      assert.equal('foobar', last_request.headers.user_agent)
+    end)
+
+    it('merges passed headers with initial options', function()
+      http = http_ng.new{backend = backend, options = { headers = { user_agent = 'foo' } } }
+
+      http.get('http://example.com', { headers = { host = 'bar' }})
+      local last_request = assert(backend.last_request)
+
+      assert.equal('foo', last_request.headers.user_agent)
+      assert.equal('bar', last_request.headers.host)
     end)
 
     it('passed headers for requests with body', function()

@@ -4,6 +4,11 @@ local assert = assert
 local tostring = tostring
 local setmetatable = setmetatable
 local rawset = rawset
+local upper = string.upper
+local rawget = rawget
+local pack = table.pack
+local next = next
+local pairs = pairs
 
 ------------
 --- HTTP
@@ -18,6 +23,28 @@ local json = require 'cjson'
 local request = require 'resty.http_ng.request'
 local http = { request = request }
 
+local function merge(...)
+  local all = pack(...)
+
+  if #all == 1 then return all[next(all)] end
+
+  local res
+
+  for i = 1, all.n do
+    local t = all[i]
+
+    if type(t) == 'table' then
+      res = res or {}
+      for k,v in pairs(t) do
+        res[k] = merge(res[k], v)
+      end
+    elseif t then
+      res = t
+    end
+  end
+
+  return res
+end
 
 http.method = function(method, client)
   assert(method)
@@ -34,7 +61,7 @@ http.method = function(method, client)
     local req = http.request.new({
       url         = url,
       method      = method,
-      options     = options,
+      options     = merge(rawget(client, 'options'), options),
       client      = client,
       serializer  = client.serializer or http.serializers.default
     })
@@ -67,28 +94,28 @@ end
 -- @param[type=options] options
 -- @return[type=response] a response
 -- @function http.get
-http.get = http.method
+http.GET = http.method
 
 --- Make HEAD request.
 -- @param[type=string] url
 -- @param[type=options] options
 -- @return[type=response] a response
 -- @function http.head
-http.head = http.method
+http.HEAD = http.method
 
 --- Make DELETE request.
 -- @param[type=string] url
 -- @param[type=options] options
 -- @return[type=response] a response
 -- @function http.delete
-http.delete = http.method
+http.DELETE = http.method
 
 --- Make OPTIONS request.
 -- @param[type=string] url
 -- @param[type=options] options
 -- @return[type=response] a response
 -- @function http.options
-http.options = http.method
+http.OPTIONS = http.method
 
 --- Make PUT request.
 -- The **body** is serialized by @{HTTP.urlencoded} unless you used different serializer.
@@ -97,7 +124,7 @@ http.options = http.method
 -- @param[type=options] options
 -- @return[type=response] a response
 -- @function http.put
-http.put = http.method_with_body
+http.PUT = http.method_with_body
 
 --- Make POST request.
 -- The **body** is serialized by @{HTTP.urlencoded} unless you used different serializer.
@@ -106,7 +133,7 @@ http.put = http.method_with_body
 -- @param[type=options] options
 -- @return[type=response] a response
 -- @function http.post
-http.post = http.method_with_body
+http.POST = http.method_with_body
 
 --- Make PATCH request.
 -- The **body** is serialized by @{HTTP.urlencoded} unless you used different serializer.
@@ -115,9 +142,9 @@ http.post = http.method_with_body
 -- @param[type=options] options
 -- @return[type=response] a response
 -- @function http.patch
-http.patch = http.method_with_body
+http.PATCH = http.method_with_body
 
-http.trace = http.method_with_body
+http.TRACE = http.method_with_body
 
 http.serializers = {}
 
@@ -162,11 +189,19 @@ http.serializers.default = function(req)
 end
 
 local function add_http_method(client, method)
-  local generator = http[method:lower()]
+  local m = upper(method)
+
+  local cached = rawget(client, m)
+
+  if cached then
+    return cached
+  end
+
+  local generator = http[m]
 
   if generator then
-    local func = generator(method:upper(), client)
-    rawset(client, method, func)
+    local func = generator(m, client)
+    rawset(client, m, func)
     return func
   end
 end

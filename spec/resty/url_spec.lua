@@ -38,4 +38,13 @@ describe('resty.url', function()
     end)
   end)
 
+
+  describe('.join', function()
+    local join = url.join
+
+    it('works with a slash', function()
+      assert.same('https://example.com/foo', join('https://example.com', '/foo'))
+    end)
+  end)
+
 end)

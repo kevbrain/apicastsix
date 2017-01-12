@@ -31,5 +31,10 @@ function _M.split(url)
   return { scheme, user or false, pass or false, host, port or false, path or nil }
 end
 
+function _M.join(...)
+  local t = table.pack(...)
+  return table.concat(t, '')
+end
+
 
 return _M

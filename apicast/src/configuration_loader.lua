@@ -1,6 +1,7 @@
 local mock_loader = require 'configuration_loader.mock'
 local file_loader = require 'configuration_loader.file'
 local remote_loader_v1 = require 'configuration_loader.remote_v1'
+local remote_loader_v2 = require 'configuration_loader.remote_v2'
 local util = require 'util'
 
 local tostring = tostring
@@ -12,7 +13,7 @@ local _M = {
 }
 
 function _M.boot(host)
-  return mock_loader.call() or file_loader.call() or remote_loader_v1.call(host) or error('missing configuration')
+  return mock_loader.call() or file_loader.call() or remote_loader_v2.call() or remote_loader_v1.call(host) or error('missing configuration')
 end
 
 _M.save = mock_loader.save

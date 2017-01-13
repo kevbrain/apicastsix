@@ -11,11 +11,11 @@ objects:
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    name: ${THREESCALE_GATEWAY_NAME}
+    name: "${THREESCALE_GATEWAY_NAME}"
   spec:
     replicas: 2
     selector:
-      deploymentconfig: ${THREESCALE_GATEWAY_NAME}
+      deploymentconfig: "${THREESCALE_GATEWAY_NAME}"
     strategy:
       resources: {}
       rollingParams:
@@ -28,36 +28,40 @@ objects:
     template:
       metadata:
         labels:
-          deploymentconfig: ${THREESCALE_GATEWAY_NAME}
+          deploymentconfig: "${THREESCALE_GATEWAY_NAME}"
       spec:
         containers:
         - env:
           - name: THREESCALE_PORTAL_ENDPOINT
             valueFrom:
               secretKeyRef:
-                name: ${THREESCALE_PORTAL_ENDPOINT_SECRET}
+                name: "${THREESCALE_PORTAL_ENDPOINT_SECRET}"
                 key: password
           - name: THREESCALE_CONFIG_FILE
-            value: ${THREESCALE_CONFIG_FILE}
+            value: "${THREESCALE_CONFIG_FILE}"
           - name: RESOLVER
-            value: ${RESOLVER}
+            value: "${RESOLVER}"
           - name: APICAST_SERVICES
-            value: ${APICAST_SERVICES}
+            value: "${APICAST_SERVICES}"
           - name: APICAST_MISSING_CONFIGURATION
-            value: ${MISSING_CONFIGURATION}
+            value: "${MISSING_CONFIGURATION}"
           - name: APICAST_LOG_LEVEL
-            value: ${APICAST_LOG_LEVEL}
+            value: "${APICAST_LOG_LEVEL}"
           - name: APICAST_PATH_ROUTING_ENABLED
-            value: ${PATH_ROUTING}
+            value: "${PATH_ROUTING}"
           - name: APICAST_RESPONSE_CODES
-            value: ${RESPONSE_CODES}
+            value: "${RESPONSE_CODES}"
           - name: APICAST_REQUEST_LOGS
-            value: ${REQUEST_LOGS}
+            value: "${REQUEST_LOGS}"
           - name: APICAST_RELOAD_CONFIG
-            value: ${APICAST_RELOAD_CONFIG}
-          image: ${THREESCALE_GATEWAY_IMAGE}
+            value: "${APICAST_RELOAD_CONFIG}"
+          - name: REDIS_HOST
+            value: "${REDIS_HOST}"
+          - name: REDIS_PORT
+            value: "${REDIS_PORT}"
+          image: "${THREESCALE_GATEWAY_IMAGE}"
           imagePullPolicy: Always
-          name: ${THREESCALE_GATEWAY_NAME}
+          name: "${THREESCALE_GATEWAY_NAME}"
           livenessProbe:
             httpGet:
               path: /status/live
@@ -86,7 +90,7 @@ objects:
   kind: Service
   metadata:
     creationTimestamp: null
-    name: ${THREESCALE_GATEWAY_NAME}
+    name: "${THREESCALE_GATEWAY_NAME}"
   spec:
     ports:
     - name: 8080-tcp
@@ -94,7 +98,7 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
-      deploymentconfig: ${THREESCALE_GATEWAY_NAME}
+      deploymentconfig: "${THREESCALE_GATEWAY_NAME}"
     sessionAffinity: None
     type: ClusterIP
   status:
@@ -147,3 +151,10 @@ parameters:
   value: "false"
   name: APICAST_RELOAD_CONFIG
   required: false
+- description: "Redis host. Required for OAuth2 integration."
+  name: REDIS_HOST
+  required: false
+- description: "Redis port. Required for OAuth2 integration."
+  name: REDIS_PORT
+  required: false
+  value: "6379"

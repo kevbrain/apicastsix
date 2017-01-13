@@ -9,6 +9,7 @@ local rawget = rawget
 local pack = table.pack
 local next = next
 local pairs = pairs
+local concat = table.concat
 
 ------------
 --- HTTP
@@ -21,6 +22,10 @@ local pairs = pairs
 local resty_backend = require 'resty.http_ng.backend.resty'
 local json = require 'cjson'
 local request = require 'resty.http_ng.request'
+local resty_url = require 'resty.url'
+
+local DEFAULT_PATH = ''
+
 local http = { request = request }
 
 local function merge(...)
@@ -38,7 +43,7 @@ local function merge(...)
       for k,v in pairs(t) do
         res[k] = merge(res[k], v)
       end
-    elseif t then
+    elseif type(t) ~= 'nil' then
       res = t
     end
   end
@@ -58,13 +63,22 @@ http.method = function(method, client)
 
     assert(url, 'url as first parameter is required')
 
+    local opts = {}
+    local scheme, user, pass, host, port, path = unpack(assert(resty_url.split(url)))
+    if port then host = concat({host, port}, ':') end
+
+    if user or pass then
+      opts.headers = { ['Authorization'] = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':')) }
+    end
+
     local req = http.request.new({
-      url         = url,
+      url         = concat({ scheme, '://', host, path or DEFAULT_PATH }, ''),
       method      = method,
-      options     = merge(rawget(client, 'options'), options),
+      options     = merge(opts, rawget(client, 'options'), options),
       client      = client,
       serializer  = client.serializer or http.serializers.default
     })
+
     return client.backend.send(req)
   end
 end

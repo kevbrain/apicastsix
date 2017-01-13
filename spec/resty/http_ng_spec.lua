@@ -81,8 +81,27 @@ describe('http_ng', function()
     end)
   end)
 
+  describe('inital options', function()
+    it('can turn off ssl validation', function()
+      http = http_ng.new{backend = backend, options = { ssl = { verify = false } } }
+
+      http.get('http://example.com')
+      local last_request = assert(backend.last_request)
+
+      assert.equal(false, last_request.options.ssl.verify)
+    end)
+  end)
+
   describe('headers', function()
     local headers = { custom_header = 'value' }
+
+    it('parses userid and password from the url', function()
+      http.get('http://foo:bar@example.com')
+
+      local last_request = assert(backend.last_request)
+
+      assert.equal('Basic ' .. ngx.encode_base64('foo:bar'), last_request.headers.authorization)
+    end)
 
     it('can override Host header', function()
       http.get('http://example.com', { headers = { host = 'overriden' }})
@@ -116,6 +135,16 @@ describe('http_ng', function()
 
       assert.equal('foo', last_request.headers.user_agent)
       assert.equal('bar', last_request.headers.host)
+    end)
+
+    it('uses initial headers for all requests', function()
+      http = http_ng.new{backend = backend, options = { headers = { user_agent = 'foo' } } }
+      http.get('http://example.com')
+      http.get('http://example.com')
+
+      local last_request = assert(backend.last_request)
+
+      assert.equal('foo', last_request.headers.user_agent)
     end)
 
     it('passed headers for requests with body', function()

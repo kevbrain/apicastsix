@@ -112,8 +112,8 @@ end
 local build_querystring = build_querystring_formatter("usage[%s]=%s")
 local build_query = build_querystring_formatter("%s=%s")
 
-local function get_debug_value()
-  return ngx.var.http_x_3scale_debug == _M.configuration.debug_header
+local function get_debug_value(service)
+  return ngx.var.http_x_3scale_debug == service.backend_authentication.value
 end
 
 local function find_service_strict(host)
@@ -362,7 +362,7 @@ function _M.access(service)
     return error_no_match(service)
   end
 
-  if get_debug_value() then
+  if get_debug_value(service) then
     ngx.header["X-3scale-matched-rules"] = matched_patterns
     ngx.header["X-3scale-credentials"]   = ngx.var.credentials
     ngx.header["X-3scale-usage"]         = ngx.var.usage

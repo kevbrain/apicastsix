@@ -231,26 +231,26 @@ Two services can exist together and are split by their hostname.
     require('configuration_loader').save({
       services = {
         {
-          id = 42,
+          id = 1,
           backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'service-one',
           proxy = {
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/one/",
             hosts = { 'one' },
-            backend_authentication_type = 'service_token',
-            backend_authentication_value = 'service-one',
             proxy_rules = {
               { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1 }
             }
           }
         },
         {
-          id = 21,
+          id = 2,
           backend_version = 2,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'service-two',
           proxy = {
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/two/",
             hosts = { 'two' },
-            backend_authentication_type = 'service_token',
-            backend_authentication_value = 'service-two',
             proxy_rules = {
               { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
             }
@@ -266,7 +266,19 @@ Two services can exist together and are split by their hostname.
   set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /transactions/authrep.xml {
-    content_by_lua_block { ngx.exit(200) }
+    content_by_lua_block {
+      if ngx.var.arg_service_id == '1' then
+        if ngx.var.arg_service_token == 'service-one' then
+         return ngx.exit(200)
+       end
+     elseif ngx.var.arg_service_id == '2' then
+       if ngx.var.arg_service_token == 'service-two' then
+         return ngx.exit(200)
+       end
+     end
+
+     ngx.exit(403)
+    }
   }
 
   location ~ /api-backend(/.+) {
@@ -288,12 +300,14 @@ GET /t
 yay, api backend: /one/
 yay, api backend: /two/
 --- error_code: 200
+--- no_error_log
+[error]
 --- grep_error_log eval: qr/apicast cache (?:hit|miss|write) key: [^,\s]+/
 --- grep_error_log_out
-apicast cache miss key: 42:one-key:usage[hits]=1
-apicast cache write key: 42:one-key:usage[hits]=1
-apicast cache miss key: 21:two-id:two-key:usage[hits]=2
-apicast cache write key: 21:two-id:two-key:usage[hits]=2
+apicast cache miss key: 1:one-key:usage[hits]=1
+apicast cache write key: 1:one-key:usage[hits]=1
+apicast cache miss key: 2:two-id:two-key:usage[hits]=2
+apicast cache write key: 2:two-id:two-key:usage[hits]=2
 
 === TEST 7: mapping rule with fixed value is mandatory
 When mapping rule has a parameter with fixed value it has to be matched.
@@ -516,3 +530,49 @@ all ok
 --- error_code: 200
 --- error_log
 host foo for service 2 already defined by service 1
+
+=== TEST 12: return headers with debugging info
+When X-3scale-Debug header has value of the backend authentication.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('provider').configure({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'service-token',
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/",
+            backend = {
+                endpoint = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT'
+            },
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
+            }
+          }
+       },
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  include $TEST_NGINX_BACKEND_CONFIG;
+
+  location /api/ {
+    echo "all ok";
+  }
+--- request
+GET /t?user_key=val
+--- more_headers
+X-3scale-Debug: service-token
+--- response_body
+all ok
+--- error_code: 200
+--- no_error_log
+[error]
+--- response_headers
+X-3scale-matched-rules: /
+X-3scale-usage: usage[hits]=2

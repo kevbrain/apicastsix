@@ -270,8 +270,7 @@ function _M.new(configuration)
 
   return setmetatable({
     version = configuration.timestamp,
-    services = _M.filter_services(map(_M.parse_service, services)),
-    debug_header = configuration.provider_key -- TODO: change this to something secure
+    services = _M.filter_services(map(_M.parse_service, services))
   }, mt)
 end
 

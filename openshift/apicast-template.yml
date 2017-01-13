@@ -55,6 +55,10 @@ objects:
             value: "${REQUEST_LOGS}"
           - name: APICAST_RELOAD_CONFIG
             value: "${APICAST_RELOAD_CONFIG}"
+          - name: REDIS_HOST
+            value: "${REDIS_HOST}"
+          - name: REDIS_PORT
+            value: "${REDIS_PORT}"
           image: "${THREESCALE_GATEWAY_IMAGE}"
           imagePullPolicy: Always
           name: "${THREESCALE_GATEWAY_NAME}"
@@ -147,3 +151,10 @@ parameters:
   value: "false"
   name: APICAST_RELOAD_CONFIG
   required: false
+- description: "Redis host. Required for OAuth2 integration."
+  name: REDIS_HOST
+  required: false
+- description: "Redis port. Required for OAuth2 integration."
+  name: REDIS_PORT
+  required: false
+  value: "6379"

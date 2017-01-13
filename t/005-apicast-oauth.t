@@ -326,7 +326,7 @@ GET /t
 --- error_code: 200
 
 
-=== TEST 1: calling with correct access_token proxies to the api upstream
+=== TEST 11: calling with correct access_token proxies to the api upstream
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   include $TEST_NGINX_UPSTREAM_CONFIG;

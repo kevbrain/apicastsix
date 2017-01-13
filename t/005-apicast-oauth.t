@@ -76,14 +76,12 @@ Location: http://example.com/redirect?error=invalid_client
     }
   }
 --- request
-GET /authorize?client_id=id&redirect_uri=otheruri&response_type=code&scope=whatever
+GET /authorize?client_id=id&redirect_uri=otheruri&response_type=code&scope=whatever&state=123456
 --- error_code: 302
 --- response_headers_like
-Location: http://example.com/redirect\?scope=whatever&response_type=code&state=\w+&tok=\w+&redirect_uri=otheruri&client_id=id
+Location: http://example.com/redirect\?scope=whatever&response_type=code&state=[a-z0-9]{40}&tok=\w+&redirect_uri=otheruri&client_id=id
 --- no_error_log
 [error]
-
-
 
 === TEST 3: calling /authorize works (Implicit)
 [Section 1.3.2 of RFC 6749](https://tools.ietf.org/html/rfc6749#section-1.3.2)
@@ -245,7 +243,8 @@ Not part of the RFC. This is the Gateway API to create access tokens and redirec
         client_id = 'foo',
         state = 'somestate',
         redirect_uri = redirect_uri,
-        scope = 'plan'
+        scope = 'plan',
+        client_state='clientstate'
       })
       ngx.exec('/callback?redirect_uri=' .. redirect_uri .. '&state=' .. nonce)
     }
@@ -256,7 +255,7 @@ GET /fake-authorize
 --- response_body_like chomp
 ^<html>
 --- response_headers_like
-Location: http://example.com/redirect\?code=\w+&state=\w+
+Location: http://example.com/redirect\?code=\w+&state=clientstate
 
 === TEST 10: calling /oauth/token returns correct error message on invalid parameters
 --- main_config
@@ -361,3 +360,38 @@ GET /?access_token=foobar
 --- error_code: 200
 --- response_body
 yay, upstream
+
+=== TEST 12: calling /authorize with state returns same value back on redirect_uri
+--- main_config
+  env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
+--- http_config
+  resolver $TEST_NGINX_RESOLVER;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require('configuration_loader').save({
+      services = {
+        { id = 42,
+          backend_version = 'oauth',
+          proxy = { oauth_login_url = "" } }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location = /fake-authorize {
+    content_by_lua_block {
+      local authorize = require('authorize')
+      local params = authorize.extract_params()
+      local nonce = authorize.persist_nonce(42, params)
+      ngx.exec('/callback?redirect_uri=' .. params.redirect_uri .. '&state=' .. nonce)
+    }
+  }
+--- request
+GET /fake-authorize?client_id=id&redirect_uri=http://example.com/redirect&response_type=code&scope=whatever&state=12345
+--- error_code: 302
+--- response_body_like chomp
+^<html>
+--- response_headers_like 
+Location: http://example.com/redirect\?code=\w+&state=12345

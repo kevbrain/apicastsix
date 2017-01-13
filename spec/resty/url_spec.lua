@@ -36,6 +36,10 @@ describe('resty.url', function()
     it('works with port and path', function()
       assert.same({'http', false, false, 'example.com', '8080', '/path'}, split('http://example.com:8080/path'))
     end)
+
+    it('removes the trailing slash', function()
+      assert.same({'http', false, false, 'api.twitter.com', false }, split('http://api.twitter.com/'))
+    end)
   end)
 
 

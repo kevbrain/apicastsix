@@ -15,7 +15,7 @@ function _M.split(url)
     return nil, 'missing endpoint'
   end
 
-  local match = ngx.re.match(url, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+?)(?::(\\d+))?(\\/.+)?$", 'oj')
+  local match = ngx.re.match(url, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+?)(?::(\\d+))?(\\/.*)?$", 'oj')
 
   if not match then
     return nil, 'invalid endpoint' -- TODO: maybe improve the error message?

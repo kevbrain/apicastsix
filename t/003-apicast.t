@@ -531,7 +531,33 @@ all ok
 --- error_log
 host foo for service 2 already defined by service 1
 
-=== TEST 12: return headers with debugging info
+=== TEST 12: print message that service was added to the configuration
+Including it's host so it is easy to see that configuration was loaded.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+location /t {
+  content_by_lua_block {
+    require('provider').configure({
+      services = {
+        { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
+        { id = 2, proxy = { hosts = { 'baz', 'daz' } } },
+      }
+    })
+    ngx.say('all ok')
+  }
+}
+--- request
+GET /t
+--- response_body
+all ok
+--- log_level: info
+--- error_code: 200
+--- error_log
+added service 1 configuration with hosts: foo, bar
+added service 2 configuration with hosts: baz, daz
+
+=== TEST 13: return headers with debugging info
 When X-3scale-Debug header has value of the backend authentication.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;

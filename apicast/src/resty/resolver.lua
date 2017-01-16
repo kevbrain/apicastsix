@@ -122,6 +122,9 @@ end
 
 
 local function new_server(answer, port)
+  local address = answer.address
+  if not address then return nil, 'server missing address' end
+
   return {
     address = answer.address,
     ttl = answer.ttl,

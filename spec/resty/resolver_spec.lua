@@ -43,6 +43,21 @@ describe('resty.resolver', function()
       assert.spy(dns.query).was.called_with(dns, '3scale.net', { qtype = 1 })
     end)
 
+    it('skips answers with no address', function()
+      dns.query = spy.new(function()
+        return {
+          { name = 'www.3scale.net' , cname = '3scale.net' },
+          { name = '3scale.net' , address = '127.0.0.1' }
+        }
+      end)
+
+      local servers, err = resolver:get_servers('www.3scale.net')
+
+      assert.falsy(err)
+      assert.equal(1, #servers)
+      assert.spy(dns.query).was.called_with(dns, 'www.3scale.net', {})
+    end)
+
     it('searches domains', function()
       dns.TYPE_A = 1
       dns.query = spy.new(function(_, qname)

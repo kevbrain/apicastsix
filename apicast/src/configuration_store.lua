@@ -3,6 +3,7 @@ local ipairs = ipairs
 local pairs = pairs
 local tostring = tostring
 local insert = table.insert
+local concat = table.concat
 local next = next
 
 local util = require 'util'
@@ -81,10 +82,10 @@ function _M.add(self, service)
     return nil, 'not initialized'
   end
 
+  local id = tostring(service.id)
+
   for _,host in ipairs(service.hosts) do
     local index = hosts[host] or {}
-    local id = tostring(service.id)
-
     local exists = not _M.path_routing and next(index)
 
     index[id] = service
@@ -95,6 +96,8 @@ function _M.add(self, service)
       ngx.log(ngx.WARN, 'host ', host, ' for service ', id, ' already defined by service ', exists)
     end
   end
+
+  ngx.log(ngx.INFO, 'added service ', id, ' configuration with hosts: ', concat(service.hosts, ', '))
 end
 
 return _M

@@ -517,6 +517,7 @@ location /t {
       services = {
         { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
         { id = 2, proxy = { hosts = { 'foo', 'daz' } } },
+        { id = 1, proxy = { hosts = { 'foo', 'fee' } } },
       }
     })
     ngx.say('all ok')
@@ -528,7 +529,8 @@ GET /t
 all ok
 --- log_level: warn
 --- error_code: 200
---- error_log
+--- grep_error_log eval: qr/host .+? for service .? already defined by service [^,\s]+/
+--- grep_error_log_out
 host foo for service 2 already defined by service 1
 
 === TEST 12: print message that service was added to the configuration

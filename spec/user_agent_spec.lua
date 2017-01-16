@@ -28,7 +28,7 @@ describe('3scale', function()
 
       user_agent.env.threescale_deployment_env = 'production'
 
-      assert.match('APIcast/' .. user_agent._VERSION, user_agent.call())
+      assert.match('APIcast/' .. user_agent._VERSION, user_agent.call(), nil, true)
     end)
 
     it('includes system information', function()
@@ -36,7 +36,7 @@ describe('3scale', function()
     end)
 
     it('includes platform information', function()
-      assert.match(' ' .. user_agent.platform(), user_agent.call())
+      assert.match(' ' .. user_agent.platform(), user_agent.call(), nil, true)
     end)
 
     it('works as tostring', function()

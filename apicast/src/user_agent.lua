@@ -4,7 +4,7 @@ local module = require 'module'
 local setmetatable = setmetatable
 
 local _M = {
-  _VERSION = '2.0'
+  _VERSION = '3.0.0-pre'
 }
 
 function _M.deployment()

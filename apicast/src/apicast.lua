@@ -10,7 +10,7 @@ local reload_config = util.env_enabled('APICAST_RELOAD_CONFIG')
 local user_agent = require('user_agent')
 
 local _M = {
-  _VERSION = '2.0',
+  _VERSION = '3.0.0-pre',
   _NAME = 'APIcast'
 }
 

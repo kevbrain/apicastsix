@@ -24,12 +24,12 @@ pick_openresty() {
     fi
   done
 
+  (>&2 echo "ERROR: Could not find openresty executable in your PATH.")
+  (>&2 echo "Make sure you have one of: $(printf "%s " "$@")")
   exit 1
 }
 
-default_openresty_binary=$(pick_openresty openresty-debug openresty nginx)
-
-openresty_binary=${APICAST_OPENRESTY_BINARY:-$default_openresty_binary}
+openresty_binary=${APICAST_OPENRESTY_BINARY:-$(pick_openresty openresty-debug openresty nginx)}
 log_level=${APICAST_LOG_LEVEL:-warn}
 log_file=${APICAST_LOG_FILE:-stderr}
 log_levels=(emerg alert crit error warn notice info debug)

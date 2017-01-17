@@ -1,6 +1,5 @@
 local _M = {
-  _VERSION = '0.1',
-  env = {}
+  _VERSION = '0.1'
 }
 
 local getenv = os.getenv
@@ -36,4 +35,9 @@ function _M.set(name, value)
   return previous
 end
 
-return _M
+function _M.reset()
+  _M.env = {}
+  return _M
+end
+
+return _M.reset()

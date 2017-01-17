@@ -33,4 +33,14 @@ describe('env', function()
       assert.equal('val', _M.env.SOME_MISSING_KEY)
     end)
   end)
+
+  describe('.reset', function()
+    it('cleans the cache', function()
+      _M.env.SOMETHING_EMPTY = 'foo'
+
+      _M.reset()
+
+      assert.same(nil, _M.env.SOMETHING_EMPTY)
+    end)
+  end)
 end)

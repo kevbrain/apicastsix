@@ -1,11 +1,11 @@
 local cjson = require 'cjson'
-local custom_config = os.getenv('APICAST_CUSTOM_CONFIG')
+local env = require 'resty.env'
+local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local configuration = require 'configuration'
 local configuration_store = require 'configuration_store'
 
 local inspect = require 'inspect'
 local oauth = require 'oauth'
-local util = require 'util'
 local resty_url = require 'resty.url'
 
 local type = type
@@ -24,8 +24,8 @@ local tonumber = tonumber
 local resty_resolver = require 'resty.resolver'
 local dns_resolver = require 'resty.resolver.dns'
 
-local response_codes = util.env_enabled('APICAST_RESPONSE_CODES')
-local request_logs = util.env_enabled('APICAST_REQUEST_LOGS')
+local response_codes = env.enabled('APICAST_RESPONSE_CODES')
+local request_logs = env.enabled('APICAST_REQUEST_LOGS')
 
 local _M = {
   -- FIXME: this is really bad idea, this file is shared across all requests,

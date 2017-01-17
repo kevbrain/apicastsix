@@ -6,11 +6,11 @@ local insert = table.insert
 local concat = table.concat
 local next = next
 
-local util = require 'util'
+local env = require 'resty.env'
 
 local _M = {
   _VERSION = '0.1',
-  path_routing = util.env_enabled('APICAST_PATH_ROUTING_ENABLED')
+  path_routing = env.enabled('APICAST_PATH_ROUTING_ENABLED')
 }
 
 local mt = { __index = _M }

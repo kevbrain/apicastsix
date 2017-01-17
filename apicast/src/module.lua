@@ -5,6 +5,8 @@ local dofile = dofile
 local pairs = pairs
 local type = type
 
+local env = require 'resty.env'
+
 local _M = {
   _VERSION = '0.1'
 }
@@ -12,7 +14,7 @@ local _M = {
 local mt = { __index = _M }
 
 function _M.new(name)
-  name = name or os.getenv('APICAST_MODULE') or 'apicast'
+  name = name or env.get('APICAST_MODULE') or 'apicast'
 
   ngx.log(ngx.DEBUG, 'init plugin ', name)
   return setmetatable({

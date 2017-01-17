@@ -1,5 +1,6 @@
 local configuration = require 'configuration'
 local cjson = require 'cjson'
+local env = require 'resty.env'
 
 describe('Configuration object', function()
   describe('.parse', function()
@@ -77,7 +78,7 @@ describe('Configuration object', function()
     local services_limit = configuration.services_limit
 
     it('reads from environment', function()
-      stub(os, 'getenv').on_call_with('APICAST_SERVICES').returns('42,21')
+      env.set('APICAST_SERVICES', '42,21')
 
       local services = services_limit()
 
@@ -85,7 +86,7 @@ describe('Configuration object', function()
     end)
 
     it('reads from environment', function()
-      stub(os, 'getenv').on_call_with('APICAST_SERVICES').returns('')
+      env.set('APICAST_SERVICES', '')
 
       local services = services_limit()
 

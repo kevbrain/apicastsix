@@ -1,12 +1,13 @@
 local user_agent = require 'user_agent'
 local ffi = require("ffi")
+local env = require 'resty.env'
 
 describe('3scale', function()
   before_each(function() user_agent.reset() end)
 
   describe('.deployment', function()
     it('reads from environment', function()
-      stub(os, 'getenv').on_call_with('THREESCALE_DEPLOYMENT_ENV').returns('foobar')
+      env.set('THREESCALE_DEPLOYMENT_ENV', 'foobar')
 
       user_agent.reset()
 

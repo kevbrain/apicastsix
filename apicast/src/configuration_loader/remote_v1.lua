@@ -1,4 +1,3 @@
-local getenv = os.getenv
 local unpack = unpack
 local concat = table.concat
 local tostring = tostring
@@ -9,6 +8,7 @@ local http = require "resty.http"
 local configuration = require 'configuration'
 local util = require 'util'
 local user_agent = require 'user_agent'
+local env = require 'resty.env'
 
 local _M = {
   version = '0.1'
@@ -16,7 +16,7 @@ local _M = {
 
 
 function _M.call(host)
-  local endpoint = getenv('THREESCALE_PORTAL_ENDPOINT')
+  local endpoint = env.get('THREESCALE_PORTAL_ENDPOINT')
 
   return _M.wait(endpoint, 3) or _M.download(endpoint, host) or _M.curl(endpoint, host)
 end
@@ -136,7 +136,7 @@ function _M.curl(endpoint)
     return nil, err
   end
 
-  local timeout = getenv('CURL_TIMEOUT') or 3
+  local timeout = env.get('CURL_TIMEOUT') or 3
   local scheme, user, pass, host, port, path = unpack(url)
 
   if port then host = concat({host, port}, ':') end

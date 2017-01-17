@@ -1,12 +1,11 @@
 local provider = require('provider')
 local balancer = require('balancer')
 local configuration_loader = require('configuration_loader')
-local util = require('util')
 local pcall = pcall
 local tonumber = tonumber
 local math = math
-local getenv = os.getenv
-local reload_config = util.env_enabled('APICAST_RELOAD_CONFIG')
+local env = require('resty.env')
+local reload_config = env.enabled('APICAST_RELOAD_CONFIG')
 local user_agent = require('user_agent')
 
 local _M = {
@@ -14,8 +13,8 @@ local _M = {
   _NAME = 'APIcast'
 }
 
-local missing_configuration = getenv('APICAST_MISSING_CONFIGURATION') or 'log'
-local request_logs = util.env_enabled('APICAST_REQUEST_LOGS')
+local missing_configuration = env.get('APICAST_MISSING_CONFIGURATION') or 'log'
+local request_logs = env.enabled('APICAST_REQUEST_LOGS')
 
 local function handle_missing_configuration(err)
   if missing_configuration == 'log' then
@@ -55,7 +54,7 @@ local function refresh_config()
 end
 
 function _M.init_worker()
-  local interval = tonumber(getenv('AUTO_UPDATE_INTERVAL'), 10) or 0
+  local interval = tonumber(env.get('AUTO_UPDATE_INTERVAL'), 10) or 0
 
   local function schedule(...)
     local ok, err = ngx.timer.at(...)

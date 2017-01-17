@@ -9,7 +9,6 @@ local len = string.len
 local open = io.open
 local execute = os.execute
 local tmpname = os.tmpname
-local getenv = os.getenv
 local unpack = unpack
 
 function _M.timer(name, fun, ...)
@@ -19,20 +18,6 @@ function _M.timer(name, fun, ...)
   local time = ngx_now() - start
   ngx.log(ngx.INFO, 'benchmark ' .. name .. ' took ' .. time)
   return unpack(ret)
-end
-
-
-function _M.env_enabled(name)
-  local val = getenv(name)
-  local mapping = {
-    ['true'] = true,
-    ['false'] = false,
-    ['1'] = true,
-    ['0'] = false,
-    [''] = false
-  }
-
-  return mapping[val]
 end
 
 local function read(file)

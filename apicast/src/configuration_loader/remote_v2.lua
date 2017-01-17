@@ -1,4 +1,3 @@
-local getenv = os.getenv
 local setmetatable = setmetatable
 local format = string.format
 local ipairs = ipairs
@@ -8,6 +7,7 @@ local resty_url = require 'resty.url'
 local http_ng = require "resty.http_ng"
 local user_agent = require 'user_agent'
 local cjson = require 'cjson'
+local resty_env = require 'resty.env'
 
 local _M = {
   _VERSION = '0.1'
@@ -17,7 +17,7 @@ local mt = {
 }
 
 function _M.new(url, options)
-  local endpoint = url or getenv('THREESCALE_PORTAL_ENDPOINT')
+  local endpoint = url or resty_env.get('THREESCALE_PORTAL_ENDPOINT')
   local opts = options or {}
 
   local http_client = http_ng.new{
@@ -46,7 +46,7 @@ function _M:call(environment)
     return nil, 'not initialized'
   end
 
-  local env = environment or getenv('THREESCALE_DEPLOYMENT_ENV')
+  local env = environment or resty_env.get('THREESCALE_DEPLOYMENT_ENV')
   if not env then
     return nil, 'missing environment'
   end

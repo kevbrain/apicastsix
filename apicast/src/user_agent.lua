@@ -1,5 +1,6 @@
 local ffi = require 'ffi'
 local module = require 'module'
+local env = require 'resty.env'
 
 local setmetatable = setmetatable
 
@@ -49,13 +50,13 @@ local mt = {
 }
 
 function _M.reset()
-  local env = {
-    threescale_deployment_env = os.getenv('THREESCALE_DEPLOYMENT_ENV')
+  local cache = {
+    threescale_deployment_env = env.get('THREESCALE_DEPLOYMENT_ENV')
   }
 
-  mt.__index = env
+  mt.__index = cache
 
-  _M.env = env
+  _M.env = cache
 
   mt.__call = _M.call
   mt.__tostring = _M.call

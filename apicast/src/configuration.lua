@@ -21,6 +21,7 @@ local setmetatable = setmetatable
 local inspect = require 'inspect'
 local cjson = require 'cjson'
 local re = require 'ngx.re'
+local env = require 'resty.env'
 
 local mt = { __index = _M }
 
@@ -241,7 +242,7 @@ end
 
 function _M.services_limit()
   local services = {}
-  local subset = os.getenv('APICAST_SERVICES')
+  local subset = env.get('APICAST_SERVICES')
   if not subset or subset == '' then return services end
 
   local ids = re.split(subset, ',', 'oj')

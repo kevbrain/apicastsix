@@ -341,9 +341,12 @@ function _M.access(service)
 
   ngx.var.secret_token = service.secret_token
 
-  local credentials = service:extract_credentials()
+  local credentials, err = service:extract_credentials()
 
-  if #credentials == 0 then
+  if not credentials or #credentials == 0 then
+    if err then
+      ngx.log(ngx.WARN, "cannot get credentials: ", err)
+    end
     return error_no_credentials(service)
   end
 

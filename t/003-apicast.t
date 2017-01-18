@@ -42,7 +42,6 @@ GET /
 credentials missing!
 --- error_code: 401
 
-
 === TEST 2: no mapping rules matched
 The message is configurable and status also.
 --- http_config
@@ -513,7 +512,7 @@ So when booting it can be immediately known that some of them won't work.
 --- config
 location /t {
   content_by_lua_block {
-    require('provider').configure({
+    require('proxy').configure({
       services = {
         { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
         { id = 2, proxy = { hosts = { 'foo', 'daz' } } },
@@ -540,7 +539,7 @@ Including it's host so it is easy to see that configuration was loaded.
 --- config
 location /t {
   content_by_lua_block {
-    require('provider').configure({
+    require('proxy').configure({
       services = {
         { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
         { id = 2, proxy = { hosts = { 'baz', 'daz' } } },
@@ -565,7 +564,7 @@ When X-3scale-Debug header has value of the backend authentication.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('provider').configure({
+    require('proxy').configure({
       services = {
         {
           id = 42,

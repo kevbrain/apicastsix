@@ -20,6 +20,7 @@ local format = string.format
 local gsub = string.gsub
 local unpack = unpack
 local tonumber = tonumber
+local setmetatable = setmetatable
 
 local resty_resolver = require 'resty.resolver'
 local dns_resolver = require 'resty.resolver.dns'
@@ -34,7 +35,19 @@ local _M = {
   configuration = configuration_store.new()
 }
 
-function _M.configure(contents)
+local mt = {
+  __index = _M
+}
+
+function _M.new(configuration)
+  return setmetatable({
+    configuration = configuration
+  }, mt)
+end
+
+function _M:configure(contents)
+  if self and not contents then contents = self end
+
   local config, err = configuration_parser.parse(contents)
 
   if err then
@@ -44,20 +57,25 @@ function _M.configure(contents)
     return nil, err
   end
 
+  -- FIXME: using global configuration interface
+  local configuration = self.configuration or _M.configuration
+
   if config then
-    return _M.configuration:store(config)
+    return configuration:store(config)
   end
 end
 
-function _M.configured(host)
-  local hosts = _M.configuration:find(host)
+function _M:configured(host)
+  if not self then return nil, 'not initialized' end
+  local configuration = self.configuration
+  if not configuration or not configuration.find then return nil, 'not initialized' end
+
+  local hosts = configuration:find(host)
 
   return next(hosts) and true
 end
 
-function _M.init(config)
-  return _M.configure(config)
-end
+_M.init = function(config) return _M.configure(_M, config) end
 
 -- Error Codes
 local function error_no_credentials(service)
@@ -116,8 +134,8 @@ local function get_debug_value(service)
   return ngx.var.http_x_3scale_debug == service.backend_authentication.value
 end
 
-local function find_service_strict(host)
-  for _,service in pairs(_M.configuration:find(host)) do
+local function find_service_strict(self, host)
+  for _,service in pairs(self.configuration:find(host)) do
     if type(host) == 'number' and service.id == host then
       return service
     end
@@ -131,9 +149,9 @@ local function find_service_strict(host)
   ngx.log(ngx.ERR, 'service not found for host ' .. host)
 end
 
-local function find_service_cascade(host)
+local function find_service_cascade(self, host)
   local request = ngx.var.request
-  for _,service in pairs(_M.configuration:find(host)) do
+  for _,service in pairs(self.configuration:find(host)) do
     for _,_host in ipairs(service.hosts or {}) do
       if _host == host then
         local name = service.system_name or service.id
@@ -242,7 +260,7 @@ end
 
 function _M.set_service(host)
   host = host or ngx.var.host
-  local service = _M.find_service(host)
+  local service = _M:find_service(host)
 
   if not service then
     error_service_not_found(host)
@@ -281,10 +299,10 @@ function _M.set_upstream()
   ngx.req.set_header('Host', upstream.host or ngx.var.host)
 end
 
-function _M.call(host)
+function _M:call(host)
   host = host or ngx.var.host
   if not ngx.ctx.service then
-    _M.set_service(host)
+    self.set_service(host)
   end
 
   local service = ngx.ctx.service
@@ -295,7 +313,7 @@ function _M.call(host)
 
   ngx.var.service_id = tostring(service.id)
 
-  ngx.var.version = _M.configuration.version
+  ngx.var.version = self.configuration.version
 
   -- set backend
   local scheme, _, _, server, port, path = unpack(resty_url.split(service.backend.endpoint or ngx.var.backend_endpoint))
@@ -323,11 +341,11 @@ function _M.call(host)
 
   return function()
     -- call access phase
-    return _M.access(service)
+    return self:access(service)
   end
 end
 
-function _M.access(service)
+function _M:access(service)
   local backend_version = service.backend_version
   local usage
   local matched_patterns
@@ -372,7 +390,7 @@ function _M.access(service)
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
 
-  _M.authorize(backend_version, service)
+  self.authorize(backend_version, service)
 end
 
 
@@ -399,7 +417,9 @@ end
 function _M.post_action()
   local service_id = tonumber(ngx.var.service_id, 10)
 
-  _M.call(service_id) -- initialize resolver and get backend upstream peers
+  local p = _M.new()
+  ngx.ctx.proxy = p
+  p:call(service_id) -- initialize resolver and get backend upstream peers
 
   local cached_key = ngx.var.cached_key
   local service = ngx.ctx.service

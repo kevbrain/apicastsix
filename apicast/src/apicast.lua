@@ -1,4 +1,4 @@
-local provider = require('provider')
+local proxy = require('proxy')
 local balancer = require('balancer')
 local configuration_loader = require('configuration_loader')
 local pcall = pcall
@@ -36,7 +36,7 @@ function _M.init()
   for _=1,3 do math.random() end
 
   local config, err = configuration_loader.init()
-  local init = config and provider.init(config)
+  local init = config and proxy.init(config)
 
   if not init then
     handle_missing_configuration(err)
@@ -47,7 +47,7 @@ local function refresh_config()
   local config, err = configuration_loader.boot()
 
   if config then
-    provider.init(config)
+    proxy.init(config)
   else
     ngx.log(ngx.ERR, 'failed to refresh configuration: ', err)
   end
@@ -90,24 +90,27 @@ end
 
 function _M.rewrite()
   local host = ngx.var.host
+  local p = assert(proxy.new())
+  ngx.ctx.proxy = p
   -- load configuration if not configured
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
-  if not provider.configured(host) or reload_config then
+  if not p:configured(host) or reload_config then
     local config = configuration_loader.boot(host)
-    provider.configure(config)
+    p:configure(config)
   end
 
-  provider.set_service()
-  provider.set_upstream()
+  p.set_service()
+  p.set_upstream()
 end
 
 function _M.post_action()
-  provider.post_action()
+  proxy:post_action()
 end
 
 function _M.access()
-  local fun = provider.call()
+  local p = ngx.ctx.proxy
+  local fun = p:call()
   return fun()
 end
 

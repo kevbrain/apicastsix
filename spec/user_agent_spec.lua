@@ -2,7 +2,7 @@ local user_agent = require 'user_agent'
 local ffi = require("ffi")
 local env = require 'resty.env'
 
-describe('3scale', function()
+describe('User Agent', function()
   before_each(function() user_agent.reset() end)
 
   describe('.deployment', function()
@@ -49,7 +49,6 @@ describe('3scale', function()
     end)
   end)
 
-
   describe('.system_information', function()
     it('includes os information', function()
       assert.match(ffi.os ..'; ' .. ffi.arch, user_agent.system_information())
@@ -66,6 +65,22 @@ describe('3scale', function()
       local apicast = require('apicast')
 
       assert.same('APIcast/' .. apicast._VERSION, user_agent.platform())
+    end)
+
+    it('works when module fails to load', function()
+
+      local module = require('module')
+
+      stub(module, 'require').returns(42, 'failed to load')
+
+      assert.truthy(user_agent.platform())
+    end)
+  end)
+
+  describe('.call', function()
+    it('returns a string', function()
+      stub(user_agent, 'platform').returns(nil)
+      assert.equal('string', type(user_agent.call()))
     end)
   end)
 

@@ -1,6 +1,7 @@
 local ffi = require 'ffi'
 local module = require 'module'
 local env = require 'resty.env'
+local type = type
 
 local setmetatable = setmetatable
 
@@ -16,7 +17,7 @@ end
 -- User-Agent: Mozilla/<version> (<system-information>) <platform> (<platform-details>) <extensions>
 
 function _M.call()
-  return 'APIcast/' .. _M._VERSION .. ' (' .. _M.system_information() .. ') ' .. _M.platform()
+  return 'APIcast/' .. _M._VERSION .. ' (' .. _M.system_information() .. ') ' .. (_M.platform() or '')
 end
 
 function _M.system_information()
@@ -26,8 +27,9 @@ end
 function _M.platform()
   local m = module.new()
   local table, err = m:require()
-  local version = table and table._VERSION
-  local name = table and table._NAME or m.name
+  local t = type(table) == 'table'
+  local version = t and table._VERSION
+  local name = t and table._NAME or m.name
 
   if not name then
     return nil, 'missing module name'

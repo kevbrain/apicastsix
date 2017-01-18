@@ -237,7 +237,7 @@ Not part of the RFC. This is the Gateway API to create access tokens and redirec
 
   location = /fake-authorize {
     content_by_lua_block {
-      local authorize = require('authorize')
+      local authorize = require('oauth.apicast_oauth.authorize')
       local redirect_uri = 'http://example.com/redirect'
       local nonce = authorize.persist_nonce(42, {
         client_id = 'foo',
@@ -276,8 +276,8 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorize = require('authorize')
-      local authorized_callback = require('authorized_callback')
+      local authorize = require('oauth.apicast_oauth.authorize')
+      local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
       local redirect_uri = 'http://example.com/redirect'
       local nonce = authorize.persist_nonce(42, {
         client_id = 'foo',

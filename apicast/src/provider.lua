@@ -1,7 +1,7 @@
 local cjson = require 'cjson'
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
-local configuration = require 'configuration'
+local configuration_parser = require 'configuration_parser'
 local configuration_store = require 'configuration_store'
 
 local inspect = require 'inspect'
@@ -35,7 +35,7 @@ local _M = {
 }
 
 function _M.configure(contents)
-  local config, err = configuration.parse(contents)
+  local config, err = configuration_parser.parse(contents)
 
   if err then
     ngx.log(ngx.WARN, 'not configured: ', err)

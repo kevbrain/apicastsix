@@ -15,11 +15,9 @@ local next = next
 local lower = string.lower
 local insert = table.insert
 local concat = table.concat
-local pcall = pcall
 local setmetatable = setmetatable
 
 local inspect = require 'inspect'
-local cjson = require 'cjson'
 local re = require 'ngx.re'
 local env = require 'resty.env'
 
@@ -185,45 +183,6 @@ function _M.parse_service(service)
       -- And returning the original back is the easiest option for now.
       serializable = service
     })
-end
-
-function _M.decode(contents, encoder)
-  if not contents then return nil end
-  if type(contents) == 'string' and len(contents) == 0 then return nil end
-  if type(contents) == 'table' then return contents end
-  if contents == '\n' then return nil end
-
-  encoder = encoder or cjson
-
-  local ok, ret = pcall(encoder.decode, contents)
-
-  if not ok then
-    return nil, ret
-  end
-
-  if ret == encoder.null then
-    return nil
-  end
-
-  return ret
-end
-
-function _M.encode(contents, encoder)
-  if type(contents) == 'string' then return contents end
-
-  encoder = encoder or cjson
-
-  return encoder.encode(contents)
-end
-
-function _M.parse(contents, encoder)
-  local config, err = _M.decode(contents, encoder)
-
-  if config then
-    return _M.new(config)
-  else
-    return nil, err
-  end
 end
 
 local function to_hash(table)

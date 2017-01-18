@@ -21,6 +21,10 @@ describe('Configuration object', function()
       loader.download('https://user@localhost')
       loader.download('http://:pass@lvh.me:3000')
     end)
+
+    it('decodes config #network', function()
+      assert(loader.download('http://127.0.0.1:1984/json'))
+    end)
   end)
 
   describe('.curl', function()

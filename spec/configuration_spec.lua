@@ -1,17 +1,7 @@
 local configuration = require 'configuration'
-local cjson = require 'cjson'
 local env = require 'resty.env'
 
 describe('Configuration object', function()
-  describe('.parse', function()
-    it('returns new configuration object', function()
-      assert.same(configuration.new({}), configuration.parse('{}', cjson))
-    end)
-
-    it('works with table', function()
-      assert.same(configuration.new({}), configuration.parse({}))
-    end)
-  end)
 
   describe('provides information from the config file', function()
     local config = configuration.new({services = { 'a' }})
@@ -33,28 +23,6 @@ describe('Configuration object', function()
       local config = configuration.parse_service({ proxy = { hostname_rewrite = 'example.com' }})
 
       assert.same('example.com', config.hostname_rewrite)
-    end)
-  end)
-
-  describe('.decode', function()
-    it('ignores empty string', function()
-      assert.same(nil, configuration.decode(''))
-    end)
-  end)
-
-  describe('.encode', function()
-    it('encodes to json by default', function()
-      local t = { a = 1, b = 2 }
-      assert.same('{"a":1,"b":2}', configuration.encode(t))
-    end)
-
-    it('does not do double encoding', function()
-      local str = '{"a":1,"b":2}'
-      assert.same(str, configuration.encode(str))
-    end)
-
-    it('encodes nil to null', function()
-      assert.same('null', configuration.encode(nil))
     end)
   end)
 

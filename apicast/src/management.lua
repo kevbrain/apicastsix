@@ -3,7 +3,7 @@ local _M = {}
 local cjson = require('cjson')
 local provider = require('provider')
 local router = require('router')
-local configuration = require('configuration')
+local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')
 local inspect = require('inspect')
 
@@ -56,7 +56,7 @@ function _M.update_config()
     data = assert(io.open(file)):read('*a')
   end
 
-  local config = configuration.decode(data)
+  local config = configuration_parser.decode(data)
   provider.configure(config)
   -- TODO: respond with proper 304 Not Modified when config is the same
   local response = cjson.encode({ status = 'ok', config = config or cjson.null })
@@ -78,7 +78,7 @@ local util = require 'util'
 
 function _M.boot()
   local data = util.timer('configuration.boot', configuration_loader.boot)
-  local config = configuration.decode(data)
+  local config = configuration_parser.decode(data)
   local response = cjson.encode({ status = 'ok', config = config or cjson.null })
 
   ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(data))

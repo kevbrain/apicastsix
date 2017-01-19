@@ -108,9 +108,9 @@ local function store_code(client_data, params, code)
 end
 
 -- Returns the code to the client
-local function send_code(client_data, params, code)
+local function send_code(client_data, code)
   ngx.header.content_type = "application/x-www-form-urlencoded"
-  return ngx.redirect( client_data.redirect_uri .. "?code="..code.."&state=" .. (params.state or ""))
+  return ngx.redirect( client_data.redirect_uri .. "?code="..code.."&state=" .. (client_data.state or ""))
 end
 
 -- Get Authorization Code
@@ -121,7 +121,7 @@ local function get_code(service_id, params)
   local stored = store_code(client_data, params, code)
 
   if stored then
-    send_code(client_data, params, code)
+    send_code(client_data, code)
   end
 end
 

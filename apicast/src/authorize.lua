@@ -20,7 +20,7 @@ local function extract_params()
   params.client_id = uri_params.client_id
   params.redirect_uri = uri_params.redirect_uri
   params.scope =  uri_params.scope
-  params.state = uri_params.state
+  params.client_state = uri_params.state
 
   return params
 end
@@ -37,12 +37,13 @@ local function persist_nonce(service_id, params)
     {client_id = params.client_id,
       redirect_uri = params.redirect_uri,
       plan_id = params.scope,
-      access_token = pre_token})
+      access_token = pre_token,
+      state = params.client_state})
 
   if not ok then
     ts.error(ts.dump(err))
   end
-
+  params.client_state = nil
   return n, err
 end
 
@@ -126,5 +127,6 @@ function _M.call()
 end
 
 _M.persist_nonce = persist_nonce
+_M.extract_params = extract_params
 
 return _M

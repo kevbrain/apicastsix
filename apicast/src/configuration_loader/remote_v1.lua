@@ -5,7 +5,7 @@ local len = string.len
 
 local resty_url = require 'resty.url'
 local http = require "resty.http"
-local configuration = require 'configuration'
+local configuration_parser = require 'configuration_parser'
 local util = require 'util'
 local user_agent = require 'user_agent'
 local env = require 'resty.env'
@@ -115,7 +115,7 @@ function _M.download(endpoint, _)
     ngx.log(ngx.DEBUG, 'configuration response received:' .. body)
 
     local ok
-    ok, err = configuration.decode(body)
+    ok, err = configuration_parser.decode(body)
     if ok then
       return body
     else

@@ -1,11 +1,16 @@
 local busted = require('busted')
 
 local ngx_var = ngx.var
+local ngx_ctx = ngx.ctx
 
-busted.after_each(function()
+local function cleanup()
   ngx.var = ngx_var
-end)
+  ngx.ctx = ngx_ctx
+end
 
-busted.teardown(function()
-  ngx.var = ngx_var
+busted.after_each(cleanup)
+busted.teardown(cleanup)
+
+busted.before_each(function()
+  ngx.ctx = { }
 end)

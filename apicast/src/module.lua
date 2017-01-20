@@ -37,11 +37,16 @@ function _M.call(self, phase, ...)
 
   phase = phase or ngx.get_phase()
 
-  local fun = _M.load(name, phase)
+  local fun, mod = _M.load(name, phase)
 
   if fun then
-    ngx.log(ngx.DEBUG, 'plugin ', name, ' calling phase ', phase)
-    return fun(...)
+    if mod then
+      ngx.log(ngx.DEBUG, 'plugin ', name, ' calling instance phase ', phase)
+      return fun(mod, ...)
+    else
+      ngx.log(ngx.DEBUG, 'plugin ', name, ' calling phase ', phase)
+      return fun(...)
+    end
   else
     ngx.log(ngx.DEBUG, 'plugin ', name, ' skipping phase ', phase)
     return nil, 'plugin does not have ' .. phase
@@ -100,10 +105,27 @@ function _M.load(name, phase)
     if ok and type(ret) == 'table' then
       ngx.log(ngx.DEBUG, 'plugin loaded: ', file)
 
+      local new = ret.new
+      local mod
+
       local f = ret[method]
 
+      if phase ~= 'init' then
+        mod = ngx.ctx.module
+
+        if new and not mod then
+          ngx.log(ngx.DEBUG, 'initializing mod ', file, ' phase: ', phase)
+          mod = new()
+          ngx.ctx.module = mod
+        end
+
+        if mod then
+          f = mod[method] or f
+        end
+      end
+
       if f then
-        return f
+        return f, mod
       else
         ngx.log(ngx.ERR, 'plugin ', file, ' missing function ', method)
       end

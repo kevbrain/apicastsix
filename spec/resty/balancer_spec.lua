@@ -71,7 +71,7 @@ describe('resty.balancer', function()
     local peers = balancer:peers(servers)
     peers.cur = 1
 
-    it('loops through peers', function()
+    it(':set_peer loops through peers', function()
       local first = balancer:set_peer(peers)
       local second = balancer:set_peer(peers)
       local third = balancer:set_peer(peers)
@@ -82,5 +82,18 @@ describe('resty.balancer', function()
         { '127.0.0.3', 8090 }
       }, { first, second, third})
     end)
+
+    it(':select_peer loops through peers', function()
+      local first = balancer:select_peer(peers)
+      local second = balancer:select_peer(peers)
+      local third = balancer:select_peer(peers)
+
+      assert.same({
+        { '127.0.0.1', 80 },
+        { '127.0.0.2', 8080 },
+        { '127.0.0.3', 8090 }
+      }, { first, second, third})
+    end)
+
   end)
 end)

@@ -69,25 +69,31 @@ function _M.peers(_, servers, port)
   return peers, err
 end
 
-function _M.set_peer(self, peers)
+function _M.select_peer(self, peers)
   local mode = self.mode
-  local balancer = self.balancer
-
-  local address, port, peer, ok, err
 
   if not mode then
     return nil, 'not initialized'
-  end
-
-  if not balancer then
-    return nil, 'balancer not available'
   end
 
   if not peers then
     return nil, 'missing peers'
   end
 
-  peer, err = mode(peers)
+  local peer, err = mode(peers)
+
+  return peer, err or 'no peer found'
+end
+
+function _M.set_peer(self, peers)
+  local balancer = self.balancer
+
+  if not balancer then
+    return nil, 'balancer not available'
+  end
+
+  local peer, err = self:select_peer(peers)
+  local address, port, ok
 
   if not peer then
     return nil, err or 'no peer found'

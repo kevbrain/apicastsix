@@ -389,7 +389,7 @@ yay, upstream
 
   location = /fake-authorize {
     content_by_lua_block {
-      local authorize = require('authorize')
+      local authorize = require('oauth.apicast_oauth.authorize')
       local params = authorize.extract_params()
       local nonce = authorize.persist_nonce(42, params)
       ngx.exec('/callback?redirect_uri=' .. params.redirect_uri .. '&state=' .. nonce)

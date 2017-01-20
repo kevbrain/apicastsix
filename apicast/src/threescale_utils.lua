@@ -2,6 +2,12 @@
 local redis = require 'resty.redis'
 local env = require 'resty.env'
 
+local dns_resolver = require 'resty.resolver.dns'
+local resty_resolver = require 'resty.resolver'
+local resty_balancer = require 'resty.balancer'
+
+local unpack = unpack
+
 local _M = {} -- public interface
 
 -- private
@@ -88,11 +94,31 @@ function _M.required_params_present(f_req, actual)
   return true
 end
 
+local balancer = resty_balancer.new(function(peers) return peers[1] end)
+
+function _M.resolve(host, port)
+  local dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
+  local resolver = resty_resolver.new(dns)
+
+  local servers = resolver:get_servers(host, { port = port })
+  local peers = balancer:peers(servers)
+  local peer = balancer:select_peer(peers)
+
+  local ip = host
+
+  if peer then
+    ip, port = unpack(peer)
+  end
+
+  return ip, port
+end
+
 function _M.connect_redis(host, port)
   local h = host or env.get('REDIS_HOST') or "127.0.0.1"
   local p = port or env.get('REDIS_PORT') or 6379
   local red = redis:new()
-  local ok, err = red:connect(h, p)
+
+  local ok, err = red:connect(_M.resolve(h, p))
   if not ok then
     return nil, _M.error("failed to connect to redis on " .. h .. ":" .. p .. ":", err)
   end

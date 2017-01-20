@@ -4,6 +4,7 @@ local configuration_loader = require('configuration_loader')
 local pcall = pcall
 local tonumber = tonumber
 local math = math
+local setmetatable = setmetatable
 local env = require('resty.env')
 local reload_config = env.enabled('APICAST_RELOAD_CONFIG')
 local user_agent = require('user_agent')
@@ -26,6 +27,13 @@ local function handle_missing_configuration(err)
     ngx.log(ngx.ERR, 'unknown value of APICAST_MISSING_CONFIGURATION: ', missing_configuration)
     os.exit(1)
   end
+end
+
+local mt = {
+  __index = _M
+}
+function _M.new()
+  return setmetatable({ proxy = proxy.new() }, mt)
 end
 
 function _M.init()
@@ -88,10 +96,9 @@ function _M.init_worker()
   end
 end
 
-function _M.rewrite()
+function _M:rewrite()
   local host = ngx.var.host
-  local p = assert(proxy.new())
-  ngx.ctx.proxy = p
+  local p = self.proxy
   -- load configuration if not configured
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
@@ -108,8 +115,8 @@ function _M.post_action()
   proxy:post_action()
 end
 
-function _M.access()
-  local p = ngx.ctx.proxy
+function _M:access()
+  local p = self.proxy
   local fun = p:call()
   return fun()
 end

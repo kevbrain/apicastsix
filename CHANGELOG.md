@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - [OAuth] Return correct state value back to client
 
 ### Removed
+- Nginx resolver directive auto detection. Rely on internal DNS resolver [PR #237](https://github.com/3scale/apicast/pull/237)
 
 ## [3.0.0-alpha1] - 2017-01-16
 ### Added

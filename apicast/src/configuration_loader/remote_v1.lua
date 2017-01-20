@@ -4,7 +4,7 @@ local tostring = tostring
 local len = string.len
 
 local resty_url = require 'resty.url'
-local http = require "resty.http"
+local http = require "resty.resolver.http"
 local configuration_parser = require 'configuration_parser'
 local util = require 'util'
 local user_agent = require 'user_agent'

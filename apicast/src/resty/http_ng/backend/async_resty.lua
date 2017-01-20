@@ -13,7 +13,7 @@ local spawn = ngx.thread.spawn
 local _M = {}
 
 local response = require 'resty.http_ng.response'
-local http = require 'resty.http'
+local http = require 'resty.resolver.http'
 
 _M.async = function(req)
   local httpc = http.new()

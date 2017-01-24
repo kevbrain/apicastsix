@@ -1,6 +1,6 @@
 local backend = {}
 local response = require 'resty.http_ng.response'
-local http = require 'resty.http'
+local http = require 'resty.resolver.http'
 
 backend.send = function(request)
   local httpc = http.new()

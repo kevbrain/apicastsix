@@ -22,7 +22,7 @@ When configuration is saved, readiness probe returns success.
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('provider').configure({ services = { { id = 42 } } })
+    require('proxy').configure({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -53,7 +53,7 @@ Should respond with error status and a reason.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('provider').configure({services = { }})
+    require('proxy').configure({services = { }})
   }
 --- config
   include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -86,7 +86,7 @@ Endpoint that dumps the original configuration.
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('provider').configure({ services = { { id = 42 } } })
+    require('proxy').configure({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;

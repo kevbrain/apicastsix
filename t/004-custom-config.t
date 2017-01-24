@@ -23,7 +23,7 @@ __DATA__
   location /t {
     content_by_lua_block {
       path = package.path
-      require('provider')
+      require('proxy')
       assert(path == package.path)
       ngx.exit(ngx.HTTP_OK)
     }

@@ -1,7 +1,7 @@
 local _M = {}
 
 local cjson = require('cjson')
-local provider = require('provider')
+local provider = require('proxy')
 local router = require('router')
 local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')

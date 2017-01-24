@@ -1,9 +1,10 @@
-local provider = require('provider')
+local proxy = require('proxy')
 local balancer = require('balancer')
 local configuration_loader = require('configuration_loader')
 local pcall = pcall
 local tonumber = tonumber
 local math = math
+local setmetatable = setmetatable
 local env = require('resty.env')
 local reload_config = env.enabled('APICAST_RELOAD_CONFIG')
 local user_agent = require('user_agent')
@@ -28,6 +29,13 @@ local function handle_missing_configuration(err)
   end
 end
 
+local mt = {
+  __index = _M
+}
+function _M.new()
+  return setmetatable({ proxy = proxy.new() }, mt)
+end
+
 function _M.init()
   user_agent.cache()
 
@@ -36,7 +44,7 @@ function _M.init()
   for _=1,3 do math.random() end
 
   local config, err = configuration_loader.init()
-  local init = config and provider.init(config)
+  local init = config and proxy.init(config)
 
   if not init then
     handle_missing_configuration(err)
@@ -47,7 +55,7 @@ local function refresh_config()
   local config, err = configuration_loader.boot()
 
   if config then
-    provider.init(config)
+    proxy.init(config)
   else
     ngx.log(ngx.ERR, 'failed to refresh configuration: ', err)
   end
@@ -88,26 +96,28 @@ function _M.init_worker()
   end
 end
 
-function _M.rewrite()
+function _M:rewrite()
   local host = ngx.var.host
+  local p = self.proxy
   -- load configuration if not configured
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
-  if not provider.configured(host) or reload_config then
+  if not p:configured(host) or reload_config then
     local config = configuration_loader.boot(host)
-    provider.configure(config)
+    p:configure(config)
   end
 
-  provider.set_service()
-  provider.set_upstream()
+  p.set_service()
+  p.set_upstream()
 end
 
 function _M.post_action()
-  provider.post_action()
+  proxy:post_action()
 end
 
-function _M.access()
-  local fun = provider.call()
+function _M:access()
+  local p = self.proxy
+  local fun = p:call()
   return fun()
 end
 

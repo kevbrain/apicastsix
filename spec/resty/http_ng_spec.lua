@@ -158,6 +158,14 @@ describe('http_ng', function()
       local last_request = assert(backend.last_request)
       assert.equal('value', last_request.headers['Custom-Header'])
     end)
+
+    it('properly extracts header from complicated calls', function()
+      http.get('http://localhost:3000/auth/realms/rh-sso-demo/protocol/openid-connect/auth?client_id=foobar&redirect_uri=http://127.0.0.1:3011&response_type=code&scope=test')
+
+      local last_request = assert(backend.last_request)
+
+      assert.equal('localhost:3000', last_request.headers['Host'])
+    end)
   end)
 
   describe('json', function()

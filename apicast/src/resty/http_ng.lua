@@ -67,8 +67,10 @@ http.method = function(method, client)
     local scheme, user, pass, host, port, path = unpack(assert(resty_url.split(url)))
     if port then host = concat({host, port}, ':') end
 
+    opts.headers = { ['Host'] = host }
+
     if user or pass then
-      opts.headers = { ['Authorization'] = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':')) }
+      opts.headers.Authorization = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
     end
 
     local req = http.request.new({

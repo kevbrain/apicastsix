@@ -7,7 +7,6 @@ local sub = string.sub
 
 local util = require 'util'
 local cjson = require 'cjson'
-local inspect = require 'inspect'
 
 local http_ng = require "resty.http_ng"
 local resty_url = require 'resty.url'
@@ -34,7 +33,7 @@ function _M.authorize(self)
   local url = resty_url.join(self.config.authorize_url,'?', ngx.var.args)
 
   -- TODO: maybe use the same method the original request uses, not overriding to GET
-  local res, err = http_client.get(url)
+  local res = http_client.get(url)
 
   -- TODO: is there a better way to populate the response headers?..
   for name,value in pairs(res.headers) do
@@ -49,7 +48,7 @@ end
 function _M.get_token(self)
 
   local http_client = self.http_client
-  
+
   if not http_client then
     return nil, 'not initialized'
   end
@@ -65,7 +64,7 @@ function _M.get_token(self)
   ngx.req.read_body()
   local req_body = ngx.req.get_post_args()
 
-  local res, err = http_client.post(url, req_body)
+  local res = http_client.post(url, req_body)
   for name,value in pairs(res.headers) do
     ngx.header[name] = value
   end
@@ -75,7 +74,7 @@ function _M.get_token(self)
   ngx.exit(ngx.HTTP_OK)
 end
 
-function _M.callback(self)
+function _M.callback()
   return
 end
 
@@ -107,8 +106,8 @@ end
 -- TODO: probably there's a better way to do it, but this doesn't need any external libraries
 local function format_public_key(key)
   local formatted_key = "-----BEGIN PUBLIC KEY-----\n"
-  local len = string.len(key)
-  for i=1,len,64 do
+  local key_len = len(key)
+  for i=1,key_len,64 do
     formatted_key = formatted_key..string.sub(key, i, i+63).."\n"
   end
   formatted_key = formatted_key.."-----END PUBLIC KEY-----"
@@ -124,9 +123,24 @@ end
 --  "public_key": "FOR_VALIDATING_JWT"
 --}
 
-function _M.new(config_path)
+function _M.init(config_path)
 
+  -- TODO: handle reading and parsing errors
   local config = parse(config_path)
+  _M.configured = true
+  _M.configuration = config
+end
+
+function _M.new()
+
+  if not _M.configured then
+    ngx.log(ngx.ERR,'Keycloak is not configured')
+    return nil
+  end
+
+  -- TODO: return an error if some settings are not OK
+
+  local config = _M.configuration
 
   local realm_url = resty_url.join(config.server, '/auth/realms/', config.realm)
 
@@ -144,11 +158,9 @@ function _M.new(config_path)
     }
   }
 
-  -- TODO: return an error if some settings are not OK
-
   return setmetatable({
     config = keycloak_config,
-    http_client = http_ng.new()
+    http_client = http_client
     }, mt)
 end
 

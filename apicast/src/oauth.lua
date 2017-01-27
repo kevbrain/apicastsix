@@ -1,10 +1,7 @@
-local env = require 'resty.env'
 local apicast_oauth = require 'oauth.apicast_oauth'
 local keycloak = require 'oauth.keycloak'
 
 local router = require 'router'
-local inspect = require 'inspect'
-local setmetatable = setmetatable
 
 local _M = {
   _VERSION = '0.0.2'
@@ -12,11 +9,10 @@ local _M = {
 
 function _M.new()
   local oauth
-  local custom_openid = env.get('OPENID_CONFIG')
-  if not custom_openid or custom_openid == '' then
-    oauth = apicast_oauth.new()
+  if keycloak.configured then
+    oauth = keycloak.new()
   else
-    oauth = keycloak.new(custom_openid)
+    oauth = apicast_oauth.new()
   end
   return oauth
 end
@@ -27,14 +23,14 @@ function _M.router()
 
   local oauth = _M.new()
 
-  r:get('/authorize', function(params) oauth:authorize() end)
-  r:post('/authorize', function(params) oauth:authorize() end)
+  r:get('/authorize', function() oauth:authorize() end)
+  r:post('/authorize', function() oauth:authorize() end)
 
   -- TODO: only applies to apicast oauth...
-  r:post('/callback', function(params) oauth:callback() end)
-  r:get('/callback', function(params) oauth:callback() end)
+  r:post('/callback', function() oauth:callback() end)
+  r:get('/callback', function() oauth:callback() end)
 
-  r:post('/oauth/token', function(params) oauth:get_token() end)
+  r:post('/oauth/token', function() oauth:get_token() end)
 
   return r
 end

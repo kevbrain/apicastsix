@@ -22,4 +22,7 @@ curl 'localhost:8080?user_key=foo'
 ```
 
 And see in the apicast output:
-> 2016/11/16 16:52:00 [warn] 98009#0: *5 [lua] verbose.lua:7: call(): upstream response time: 0.001 upstream connect time: 0.000 while logging request, client: 127.0.0.1, server: _, request: "GET /?user_key=foo HTTP/1.1", upstream: "http://127.0.0.1:8081/?user_key=foo", host: "echo"
+
+```
+2016/11/16 16:52:00 [warn] 98009#0: *5 [lua] verbose.lua:7: call(): upstream response time: 0.001 upstream connect time: 0.000 while logging request, client: 127.0.0.1, server: _, request: "GET /?user_key=foo HTTP/1.1", upstream: "http://127.0.0.1:8081/?user_key=foo", host: "echo"
+```

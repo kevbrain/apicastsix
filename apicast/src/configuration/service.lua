@@ -5,11 +5,18 @@
 local setmetatable = setmetatable
 local tostring = tostring
 local rawget = rawget
+local next = next
 local lower = string.lower
 local gsub = string.gsub
+local insert = table.insert
+local sort = table.sort
+local pairs = pairs
 local select = select
+local type = type
 
 local http_authorization = require 'resty.http_authorization'
+local keycloak = require('oauth.keycloak')
+local util = require 'util'
 
 
 local _M = { }
@@ -49,6 +56,19 @@ local function read_http_header(name)
   return ngx.var['http_' .. normalized]
 end
 
+local credentials_mt = {
+  -- nipairs = only non integer pairs
+  __pairs = function (t)
+    return function(_, k)
+      local v
+      repeat
+        k, v = next(t, k)
+      until k == nil or type(k) ~= 'number'
+      return k, v
+    end, t, nil
+  end
+}
+
 local backend_version_credentials = { }
 
 function backend_version_credentials.version_1(config)
@@ -73,7 +93,7 @@ function backend_version_credentials.version_1(config)
   -- @field 1 User Key
   -- @field user_key User Key
   -- @table credentials_v1
-  return { user_key, user_key = user_key }
+  return { user_key = user_key }
 end
 
 function backend_version_credentials.version_2(config)
@@ -112,13 +132,14 @@ function backend_version_credentials.version_2(config)
   -- @field app_id App ID
   -- @field app_key App Key
   -- @table credentials_v2
-  return { app_id, app_key, app_id = app_id, app_key = app_key }
+  return { app_id = app_id, app_key = app_key }
 end
 
 function backend_version_credentials.version_oauth(config)
   local name = (config.access_token or 'access_token')
   local authorization = http_authorization.new(ngx.var.http_authorization)
   local access_token
+  local app_id
 
   if config.location == 'query' then
     access_token = ngx.var['arg_' .. name] or read_body_args(name)[1]
@@ -137,17 +158,41 @@ function backend_version_credentials.version_oauth(config)
   -- Resource servers MUST support this method. [Bearer]
   access_token = access_token or authorization.token
 
+  if keycloak.configured then
+    local jwt_obj = keycloak.parse_and_verify_token(access_token, util.format_public_key(keycloak.configuration.public_key))
+    local app_id = jwt_obj.payload.aud
   ------
-  -- oauth credentials.
+  -- oauth credentials for keycloak
+  -- @field 1 Client id
+  -- @field app_id Client id
+  -- @table credentials_oauth
+    return { app_id = app_id }
+  else
+  ------
+  -- oauth credentials for APIcast oauth
   -- @field 1 Access Token
   -- @field access_token Access Token
   -- @table credentials_oauth
-  return { access_token, access_token = access_token }
+  return { access_token = access_token}
+  end
 end
 
 -- This table can be used with `table.concat` to serialize
 -- just the numeric keys, but also with `pairs` to iterate
 -- over just the non numeric keys (for query building).
+
+local function to_hybrid_array_table(table)
+  local hybrid = {}
+
+  for k,v in pairs(table) do
+    hybrid[k] = v
+    insert(hybrid, v)
+  end
+
+  sort(hybrid)
+
+  return setmetatable(hybrid, credentials_mt)
+end
 
 --- extracts credentials from the current request
 -- @return @{credentials_v1}, @{credentials_v2}, or @{credentials_oauth}
@@ -166,7 +211,13 @@ function _M:extract_credentials()
    return nil, 'invalid backend version: ' .. backend_version
   end
 
-  return extractor(credentials)
+  local result, err = extractor(credentials)
+
+  if result then
+    return to_hybrid_array_table(result)
+  else
+    return nil, err
+  end
 end
 
 return _M

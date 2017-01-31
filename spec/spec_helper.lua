@@ -1,5 +1,7 @@
 require 'ffi'
 require 'resty.lrucache'
+require 'resty.aes'
+require 'resty.hmac'
 
 require 'ngx_helper'
 require 'luassert_helper'

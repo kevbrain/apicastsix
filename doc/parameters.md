@@ -28,7 +28,7 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
 - `APICAST_MODULE`  
  **Default:** "apicast"
  
- Specifies the name of the main Lua module that implements the API gateway logic. Custom modules can override the functionality of the default `apicast.lua` module. See [an example](/examples/custom-module) of how to use modules.
+ Specifies the name of the main Lua module that implements the API gateway logic. Custom modules can override the functionality of the default `apicast.lua` module. See [an example](../examples/custom-module) of how to use modules.
 
 - `APICAST_PATH_ROUTING_ENABLED`  
  **Values:**
@@ -111,7 +111,7 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
 
 - `THREESCALE_CONFIG_FILE`
  
- Path to the JSON file with the configuration for the gateway. The configuration can be downloaded from the 3scale admin portal using the URL: `<schema>://<admin-portal-domain>/admin/api/nginx/spec.json` (**Example**: https://account-admin.3scale.net/admin/api/nginx/spec.json).
+ Path to the JSON file with the configuration for the gateway. The configuration can be downloaded from the 3scale admin portal using the URL: `<schema>://<admin-portal-domain>/admin/api/nginx/spec.json` (**Example**: `https://account-admin.3scale.net/admin/api/nginx/spec.json`).
  
  When the gateway is deployed using Docker, the file has to be injected to the docker image as a read only volume, and the path should indicate where the volume is mounted, i.e. path local to the docker container.
  

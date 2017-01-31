@@ -19,7 +19,7 @@ Available endpoints:
  ```shell
  curl -XPOST http://gateway:8090/config -d @example-config.json
  ```
- See [example-config.json](../examples/configuration/example-config.json) file for an example of the payload. This JSON contains the configuration of the API(s) in 3scale account, and can be downloaded from the 3scale admin portal using the URL [https://ACCOUNT-admin.3scale.net/admin/api/nginx/spec.json](https://ACCOUNT-admin.3scale.net/admin/api/nginx/spec.json) (replace `ACCOUNT` with your 3scale account name).
+ See [example-config.json](../examples/configuration/example-config.json) file for an example of the payload. This JSON contains the configuration of the API(s) in 3scale account, and can be downloaded from the 3scale admin portal using the URL `https://ACCOUNT-admin.3scale.net/admin/api/nginx/spec.json`] (replace `ACCOUNT` with your 3scale account name).
  The call should return something like:
  
  ```shell

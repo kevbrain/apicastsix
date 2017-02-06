@@ -118,3 +118,9 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
  You can find sample configuration files in [examples](https://github.com/3scale/apicast/tree/master/examples/configuration) folder.
  
  It is **required** to provide either `THREESCALE_PORTAL_ENDPOINT` or `THREESCALE_CONFIG_FILE` (takes precedence) for the gateway to run successfully.
+
+- `BACKEND_ENDPOINT_OVERRIDE`
+
+  URI that overrides backend endpoint from the configuration. Useful when deploying outside OpenShift deployed AMP.
+
+  **Example**: `https://backend.example.com`.

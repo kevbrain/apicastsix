@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+- A way to override backend endpoint [PR #248](https://github.com/3scale/apicast/pull/248)
+
 ### Changed
 - Cache all calls to `os.getenv` via custom module [PR #231](https://github.com/3scale/apicast/pull/231)
 - Bump s2i-openresty to 1.11.2.2-1 [PR #239](https://github.com/3scale/apicast/pull/239)

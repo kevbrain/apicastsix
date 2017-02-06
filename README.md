@@ -152,3 +152,23 @@ make help
 
 # Contributing
 For details on how to contribute to this repo see [CONTRIBUTING](.github/CONTRIBUTING.md)
+
+# Releasing
+
+To build a release run:
+
+```shell
+make runtime-image IMAGE_NAME=apicast:release-name
+```
+
+Test the release:
+
+```shell
+make test-runtime-image IMAGE_NAME=apicast:release-name
+```
+
+Push the release to the registry (optional REGISTRY value, defaults to quay.io):
+
+```shell
+make push IMAGE_NAME=apicast:release-name
+```

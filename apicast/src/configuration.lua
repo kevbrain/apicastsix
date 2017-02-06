@@ -20,6 +20,7 @@ local setmetatable = setmetatable
 local inspect = require 'inspect'
 local re = require 'ngx.re'
 local env = require 'resty.env'
+local resty_url = require 'resty.url'
 
 local mt = { __index = _M }
 
@@ -116,6 +117,8 @@ function _M.parse_service(service)
   local backend_version = tostring(service.backend_version)
   local proxy = service.proxy or {}
   local backend = proxy.backend or {}
+  local backend_endpoint_override = env.get("BACKEND_ENDPOINT_OVERRIDE")
+  local _, _, _, backend_host_override = unpack(resty_url.split(backend_endpoint_override) or {})
 
   return Service.new({
       id = service.id or 'default',
@@ -139,8 +142,8 @@ function _M.parse_service(service)
         value = service.backend_authentication_value
       },
       backend = {
-        endpoint = backend.endpoint,
-        host = backend.host
+        endpoint = backend_endpoint_override or backend.endpoint,
+        host = backend_host_override or backend.host
       },
       credentials = {
         location = proxy.credentials_location or 'query',

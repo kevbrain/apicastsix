@@ -24,6 +24,17 @@ describe('Configuration object', function()
 
       assert.same('example.com', config.hostname_rewrite)
     end)
+
+    it('overrides backend endpoint from ENV', function()
+      env.set('BACKEND_ENDPOINT_OVERRIDE', 'https://backend.example.com')
+
+      local config = configuration.parse_service({ proxy = {
+        backend = { endpoint = 'http://example.com', host = 'foo.example.com' }
+      }})
+
+      assert.same('https://backend.example.com', config.backend.endpoint)
+      assert.same('backend.example.com', config.backend.host)
+    end)
   end)
 
   describe('.filter_services', function()

@@ -3,3 +3,4 @@ local/
 t/servroot/
 doc/api/
 node_modules
+.vagrant/

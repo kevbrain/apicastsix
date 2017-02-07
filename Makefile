@@ -17,7 +17,7 @@ lua_files = $(shell find apicast/src -type f -name '*.lua')
 spec_files = $(shell find spec -type f -name '*.lua')
 
 test: ## Run all tests
-	$(MAKE) --keep-going busted prove test-builder-image prove-docker test-runtime-image
+	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
 
 busted: dependencies ## Test Lua.
 	@bin/busted
@@ -44,6 +44,7 @@ builder-image: ## Build builder image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --copy --incremental
 
 runtime-image: PULL_POLICY ?= always
+runtime-image: IMAGE_NAME = apicast-runtime-test
 runtime-image: ## Build runtime image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY)
 
@@ -76,8 +77,8 @@ test-builder-image: builder-image clean ## Smoke test the builder image. Pass an
 	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep 'APIcast/'
 	@echo -e $(SEPARATOR)
 
-test-runtime-image: export IMAGE_NAME = apicast-release-test
-test-runtime-image: runtime-image clean ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
+test-runtime-image: export IMAGE_NAME = apicast-runtime-test
+test-runtime-image: clean ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_MISSING_CONFIGURATION=exit -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d

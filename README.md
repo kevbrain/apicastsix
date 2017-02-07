@@ -63,10 +63,10 @@ docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https:
 Here are some useful options that can be used with `docker run` command:
 
 - `--rm`
-Automatically remove the container when it exits
+  Automatically remove the container when it exits
 
 - `-d` or `--detach`
-Run container in background and print container ID. When it is not specified, the container runs in foreground mode, and you can stop it by `CTRL + c`. When started in detached mode, you can reattach to the container with the _docker attach_ command, for example, `docker attach apicast`.
+  Run container in background and print container ID. When it is not specified, the container runs in foreground mode, and you can stop it by `CTRL + c`. When started in detached mode, you can reattach to the container with the _docker attach_ command, for example, `docker attach apicast`.
 
 - `-p` or `--publish` Publish a container's port to the host. The value should have the format `<host port>:<container port>`, so `-p 80:8080` will bind port `8080` of the container to port `80` of the host machine.
 
@@ -102,22 +102,22 @@ For developing and testing APIcast the following tools are needed:
 - [OpenResty](http://openresty.org/en/) - a bundle based on NGINX core and including LuaJIT and Lua modules. Follow the [installation instructions](http://openresty.org/en/installation.html) according to your OS.
 
 - [LuaRocks](https://luarocks.org/) - the Lua package manager.
- You can find [installation instructions](https://github.com/keplerproject/luarocks/wiki/Download#installing) for different platforms in the documentation.
- For Mac OS X the following [Homebrew](http://brew.sh/) formula can be used:
- ```shell
+   You can find [installation instructions](https://github.com/keplerproject/luarocks/wiki/Download#installing) for different platforms in the documentation.
+   For Mac OS X the following [Homebrew](http://brew.sh/) formula can be used:
+```shell
  brew install apitools/openresty/luarocks
- ```
+```
 
 - [busted](http://olivinelabs.com/busted/) - unit testing framework, used for unit testing.
- ```shell
+```shell
  luarocks install busted
- ```
+```
 
 - [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx-0.25/lib/Test/Nginx/Socket.pm) – used for integration testing.
- ```shell
+```shell
  cpan install Carton
  cpan install Test::Nginx
- ```
+```
 
 - [redis](http://redis.io/) in-memory data store is used for caching. The tests for the OAuth flow require a redis instance running on `localhost`.
 
@@ -152,3 +152,23 @@ make help
 
 # Contributing
 For details on how to contribute to this repo see [CONTRIBUTING](.github/CONTRIBUTING.md)
+
+# Releasing
+
+To build a release run:
+
+```shell
+make runtime-image IMAGE_NAME=apicast:release-name
+```
+
+Test the release:
+
+```shell
+make test-runtime-image IMAGE_NAME=apicast:release-name
+```
+
+Push the release to the registry (optional REGISTRY value, defaults to quay.io):
+
+```shell
+make push IMAGE_NAME=apicast:release-name
+```

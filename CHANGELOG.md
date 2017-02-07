@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Changed
+- Lazy load DNS resolver to improve performance [PR #251](https://github.com/3scale/apicast/pull/251)
 
 ## [3.0.0-alpha2] - 2017-02-06
 ### Added
@@ -41,4 +43,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [Unreleased]: https://github.com/3scale/apicast/compare/v2.0.0...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
-[3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
+[3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2

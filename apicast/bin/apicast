@@ -56,13 +56,20 @@ usage () {
 	  -v Increase verbosity (can be repeated)
 	  -i Auto update interval in seconds.
 	  -r Reload configuration on every request. WARNING: not for production. It has to download configuration on every request.
+	  -w <workers> Number of worker processes to start.
+	  -m <on|off> Whether to start worker processes. Only for development.
+	  -s <signal> Send signal to a master process: stop, quit, reopen, reload
+	  -p <pid> Path to the PID file.
 USAGE
 }
 
-while getopts ":dc:hvqi:r" opt; do
+main=("")
+args=("")
+
+while getopts ":dc:hvqi:rw:m:s:p:" opt; do
   case "${opt}" in
     d)
-      daemon=on
+      daemon="on"
       ;;
     r)
       export APICAST_RELOAD_CONFIG=1
@@ -79,6 +86,18 @@ while getopts ":dc:hvqi:r" opt; do
     i)
       export AUTO_UPDATE_INTERVAL="${OPTARG}"
     ;;
+    w)
+      main+=("worker_processes ${OPTARG};")
+    ;;
+    m)
+      main+=("master_process ${OPTARG};")
+    ;;
+    p)
+      main+=("pid ${PWD}/${OPTARG};")
+    ;;
+    s)
+      args+=("-s" "${OPTARG}")
+    ;;
     h)
       usage
       exit 0
@@ -92,4 +111,10 @@ while getopts ":dc:hvqi:r" opt; do
   esac
 done
 
-exec "${openresty_binary}" -p "${apicast_dir}" -c conf/nginx.conf -g "daemon ${daemon}; error_log ${log_file} ${log_levels[log_level]};"
+main+=("daemon ${daemon};")
+
+function join_by { local IFS="$1"; shift; echo "$*"; }
+args=$(join_by '' "${args[@]}")
+main=$(join_by '' "${main[@]}")
+# shellcheck disable=SC2086
+exec "${openresty_binary}" -p "${apicast_dir}" -c conf/nginx.conf ${args} -g "${main} error_log ${log_file} ${log_levels[log_level]};"

@@ -9,7 +9,7 @@ describe('Configuration Store', function()
 
       store:store({services = { service }})
 
-      assert.same({ ['42'] = service }, store.hosts['example.com'])
+      assert.same({ [42] = service }, store.hosts['example.com'])
     end)
   end)
 

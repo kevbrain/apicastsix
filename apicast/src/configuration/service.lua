@@ -15,7 +15,6 @@ local select = select
 local type = type
 
 local http_authorization = require 'resty.http_authorization'
-local keycloak = require('oauth.keycloak')
 local util = require 'util'
 
 
@@ -158,23 +157,12 @@ function backend_version_credentials.version_oauth(config)
   -- Resource servers MUST support this method. [Bearer]
   access_token = access_token or authorization.token
 
-  if keycloak.configured then
-    local jwt_obj = keycloak.parse_and_verify_token(access_token, util.format_public_key(keycloak.configuration.public_key))
-    local app_id = jwt_obj.payload.aud
-  ------
-  -- oauth credentials for keycloak
-  -- @field 1 Client id
-  -- @field app_id Client id
-  -- @table credentials_oauth
-    return { app_id = app_id }
-  else
   ------
   -- oauth credentials for APIcast oauth
   -- @field 1 Access Token
   -- @field access_token Access Token
   -- @table credentials_oauth
   return { access_token = access_token}
-  end
 end
 
 -- This table can be used with `table.concat` to serialize

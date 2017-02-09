@@ -1,9 +1,6 @@
 local setmetatable = setmetatable
-local len = string.len
-local tostring = tostring
-local open = io.open
 local assert = assert
-local sub = string.sub
+local len = string.len
 
 local util = require 'util'
 local cjson = require 'cjson'
@@ -33,35 +30,43 @@ _M.params = {
   }
 }
 
-function _M.init(config)
-  _M.configured = true
-  _M.configuration = config
+function _M.init(endpoint, public_key)
+  _M.configured = endpoint and public_key
+
+  local config = { endpoint = endpoint, public_key = public_key }
+  if _M.configured then 
+    _M.configuration = config  
+  end 
 end
 
-function _M.new(config, url)
-  local endpoint = url or resty_env.get('RHSSO_ENDPOINT')
-  ngx.log(0, inspect(endpoint))
+local function format_public_key(key)
+  if not key then return nil, 'missing key' end
+  
+  local formatted_key = "-----BEGIN PUBLIC KEY-----\n"
+  local key_len = len(key)
+  for i=1,key_len,64 do
+    formatted_key = formatted_key..string.sub(key, i, i+63).."\n"
+  end
+  formatted_key = formatted_key.."-----END PUBLIC KEY-----"
+  return formatted_key
+end
+
+function _M.new(config)
   local configuration = config or _M.configuration
+  -- TODO: return an error if some settings are not OK
 
   if not configuration then
     ngx.log(ngx.ERR,'Keycloak is not configured')
     return nil
   end
 
-  -- TODO: return an error if some settings are not OK
-
-  local config = configuration
-
-  -- local realm_url = resty_url.join(config.server, '/auth/realms/', config.realm)
-
   local keycloak_config = {
-    authorize_url = resty_url.join(endpoint,'/protocol/openid-connect/auth'),
-    token_url = resty_url.join(endpoint,'/protocol/openid-connect/token'),
-    client_registrations_url = resty_url.join(endpoint,'/clients-registrations/default'),
-    initial_access_token = config.initial_access_token,
-    public_key = util.format_public_key(config.public_key)
+    endpoint = configuration.endpoint,
+    authorize_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/auth'),
+    token_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/token'),
+    public_key = format_public_key(configuration.public_key)
   }
-
+  
   local http_client = http_ng.new{
     backend = configuration.client,
     options = {
@@ -193,39 +198,5 @@ end
 function _M.callback()
   return
 end
-
-local pwd
-
--- TODO: extract this function (initially from the 'configuration_loader.file') to some common
-local function read(path)
-  if not path or len(tostring(path)) == 0 then
-    return nil, 'missing path'
-  end
-
-  local relative_path = sub(path, 1, 1) ~= '/'
-  local absolute_path
-
-  if relative_path then
-    pwd = pwd or util.system('pwd')
-    absolute_path =  sub(pwd, 1, len(pwd) - 1) .. '/' .. path
-  else
-    absolute_path = path
-  end
-  return assert(open(absolute_path)):read('*a'), absolute_path
-end
-
-local function parse(config_path)
-  local conf = read(config_path)
-  return cjson.decode(conf)
-end
-
--- The format of the config file is the following:
---{
---  "type": "keycloak",
---  "server": "http://KEYCLOAK_HOST:8080",
---  "realm": "REALM_NAME",
---  "initial_access_token": "FOR_CLIENT_REGISTRATION",
---  "public_key": "FOR_VALIDATING_JWT"
---}
 
 return _M

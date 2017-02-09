@@ -105,7 +105,11 @@ local function check_querystring_params(params, args)
     else
       if err then ngx.log(ngx.ERR, 'check match error ', err) end
 
-      -- TODO: check if value is an array
+      -- if many values were passed use the last one
+      if type(value) == 'table' then
+        value = value[#value]
+      end
+
       if value ~= expected then -- normal variables have to have exact value
         ngx.log(ngx.DEBUG, 'check query params does not match ', param, ' value ' , value, ' == ', expected)
         match = false

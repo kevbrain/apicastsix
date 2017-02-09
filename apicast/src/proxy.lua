@@ -368,6 +368,12 @@ function _M:access(service)
   local _, matched_patterns, params = service:extract_usage(request)
   local usage = encode_args(params)
 
+  -- remove integer keys for serialization
+  -- as ngx.encode_args can't serialize integer keys
+  for i=1,#credentials do
+    credentials[i] = nil
+  end
+
   credentials = encode_args(credentials)
 
   ngx.var.credentials = credentials

@@ -236,6 +236,7 @@ local function oauth_authrep(service)
 end
 
 local function authrep(service)
+  -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local api_keys = ngx.shared.api_keys
   local is_known = api_keys and api_keys:get(cached_key)
@@ -370,7 +371,7 @@ function _M:access(service)
     ngx.exit(403)
   end
 
-  local request = ngx.var.request
+  local request = ngx.var.request -- NYI: return to lower frame
 
   ngx.var.secret_token = service.secret_token
 

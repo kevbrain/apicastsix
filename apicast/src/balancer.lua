@@ -4,7 +4,8 @@ local _M = { }
 
 function _M.call()
   local balancer = round_robin.new()
-  local peers = balancer:peers(ngx.ctx[ngx.var.proxy_host])
+  local host = ngx.var.proxy_host -- NYI: return to lower frame
+  local peers = balancer:peers(ngx.ctx[host])
 
   local peer, err = balancer:set_peer(peers)
 

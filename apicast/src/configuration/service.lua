@@ -63,7 +63,7 @@ local credentials_mt = {
         k, v = next(t, k)
       until k == nil or type(k) ~= 'number'
       return k, v
-    end, t, nil
+    end, t, nil -- NYI: bytecode 51
   end
 }
 
@@ -170,7 +170,7 @@ end
 local function to_hybrid_array_table(table)
   local hybrid = {}
 
-  for k,v in pairs(table) do
+  for k,v in pairs(table) do -- NYI: bytecode 72
     hybrid[k] = v
     insert(hybrid, v)
   end

@@ -20,6 +20,7 @@ local resty_resolver = require 'resty.resolver'
 local empty = {}
 
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
+local keycloak = env.get('RHSSO_ENDPOINT')
 
 local _M = { }
 
@@ -306,6 +307,16 @@ function _M:access(service)
   ngx.var.secret_token = service.secret_token
 
   local credentials, err = service:extract_credentials()
+
+  if keycloak then
+    k = oauth.new()
+    
+    jwt = k.parse_and_verify_token(credentials.access_token, k.config.public_key)
+    credentials.access_token = nil
+
+    local app_id = jwt.payload.aud
+    credentials.app_id = app_id
+  end
 
   if not credentials or #credentials == 0 then
     if err then

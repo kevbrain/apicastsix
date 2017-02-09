@@ -112,17 +112,18 @@ local function error_service_not_found(host)
 end
 -- End Error Codes
 
-local function build_querystring_formatter(fmt)
-  return function (query)
-    local function kvmap(f, t)
-      local res = {}
-      for k, v in pairs(t) do
-        insert(res, f(k, v))
-      end
-      return res
-    end
+local function kvmap(f, t)
+  local res = {}
+  for k, v in pairs(t) do
+    insert(res, f(k, v))
+  end
+  return res
+end
 
-    return concat(kvmap(function(k,v) return format(fmt, k, tostring(v)) end, query or {}), "&")
+local function build_querystring_formatter(fmt)
+  local function map(k,v) return format(fmt, k, tostring(v)) end
+  return function (query)
+    return concat(kvmap(map, query or {}), "&")
   end
 end
 

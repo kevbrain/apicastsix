@@ -60,19 +60,6 @@ local function check_rule(req, rule, usage_t, matched_rules)
   end
 end
 
-
-local function first_values(a)
-  local r = {}
-  for k,v in pairs(a) do
-    if type(v) == "table" then
-      r[k] = v[1]
-    else
-      r[k] = v
-    end
-  end
-  return r
-end
-
 local function get_auth_params(method)
   local params
 
@@ -82,32 +69,48 @@ local function get_auth_params(method)
     ngx.req.read_body()
     params = ngx.req.get_post_args()
   end
-  return first_values(params)
+
+  return params
 end
 
 local regex_variable = '\\{[-\\w_]+\\}'
 
+local function hash_to_array(hash)
+  local array = {}
+  for k,v in pairs(hash or {}) do
+    insert(array, { k, v })
+  end
+  return array
+end
+
 local function check_querystring_params(params, args)
-  for param, expected in pairs(params) do
+  local match = true
+
+  for i=1, #params do
+    local param = params[i][1]
+    local expected = params[i][2]
     local m, err = re_match(expected, regex_variable, 'oj')
     local value = args[param]
 
     if m then
       if not value then -- regex variable have to have some value
-        ngx.log(ngx.DEBUG, 'check query params ' .. param .. ' value missing ' .. tostring(expected))
-        return false
+        ngx.log(ngx.DEBUG, 'check query params ', param, ' value missing ', expected)
+        match = false
+        break
       end
     else
-      if err then ngx.log(ngx.ERR, 'check match error ' .. err) end
+      if err then ngx.log(ngx.ERR, 'check match error ', err) end
 
+      -- TODO: check if value is an array
       if value ~= expected then -- normal variables have to have exact value
-        ngx.log(ngx.DEBUG, 'check query params does not match ' .. param .. ' value ' .. tostring(value) .. ' == ' .. tostring(expected))
-        return false
+        ngx.log(ngx.DEBUG, 'check query params does not match ', param, ' value ' , value, ' == ', expected)
+        match = false
+        break
       end
     end
   end
 
-  return true
+  return match
 end
 
 local Service = require 'configuration.service'
@@ -170,13 +173,15 @@ function _M.parse_service(service)
         return usage_t, concat(matched_rules, ", ")
       end,
       rules = map(function(proxy_rule)
+        local querystring_parameters = hash_to_array(proxy_rule.querystring_parameters)
+
         return {
           method = proxy_rule.http_method,
           pattern = proxy_rule.pattern,
           regexpified_pattern = regexpify(proxy_rule.pattern),
           parameters = proxy_rule.parameters,
           querystring_params = function(args)
-            return check_querystring_params(proxy_rule.querystring_parameters or {}, args)
+            return check_querystring_params(querystring_parameters, args)
           end,
           system_name = proxy_rule.metric_system_name or error('missing metric name of rule ' .. inspect(proxy_rule)),
           delta = proxy_rule.delta

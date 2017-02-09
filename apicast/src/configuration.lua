@@ -39,7 +39,7 @@ local function regexpify(path)
   return path:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
 end
 
-local function check_rule(req, rule, usage_t, matched_rules)
+local function check_rule(req, rule, usage_t, matched_rules, params)
   local pattern = rule.regexpified_pattern
   local match = re_match(req.path, format("^%s", pattern), 'oj')
 
@@ -47,6 +47,7 @@ local function check_rule(req, rule, usage_t, matched_rules)
     local args = req.args
 
     if rule.querystring_params(args) then -- may return an empty table
+      local system_name = rule.system_name
       -- FIXME: this had no effect, what is it supposed to do?
       -- when no querystringparams
       -- in the rule. it's fine
@@ -54,8 +55,11 @@ local function check_rule(req, rule, usage_t, matched_rules)
       --   param[p] = match[i]
       -- end
 
+      local value = set_or_inc(usage_t, system_name, rule.delta)
+
+      usage_t[system_name] = value
+      params['usage[' .. system_name .. ']'] = value
       insert(matched_rules, rule.pattern)
-      usage_t[rule.system_name] = set_or_inc(usage_t, rule.system_name, rule.delta)
     end
   end
 end
@@ -159,6 +163,7 @@ function _M.parse_service(service)
         local path = re.split(url, "\\?", 'oj')[1]
         local usage_t =  {}
         local matched_rules = {}
+        local params = {}
         local rules = config.rules
 
         local args = get_auth_params(method)
@@ -166,11 +171,11 @@ function _M.parse_service(service)
         ngx.log(ngx.DEBUG, '[mapping] service ', config.id, ' has ', #config.rules, ' rules')
 
         for i = 1, #rules do
-          check_rule({path=path, method=method, args=args}, rules[i], usage_t, matched_rules)
+          check_rule({path=path, method=method, args=args}, rules[i], usage_t, matched_rules, params)
         end
 
         -- if there was no match, usage is set to nil and it will respond a 404, this behavior can be changed
-        return usage_t, concat(matched_rules, ", ")
+        return usage_t, concat(matched_rules, ", "), params
       end,
       rules = map(function(proxy_rule)
         local querystring_parameters = hash_to_array(proxy_rule.querystring_parameters)

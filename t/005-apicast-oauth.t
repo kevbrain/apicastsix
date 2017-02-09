@@ -346,7 +346,7 @@ GET /t
       }
     })
 
-    ngx.shared.api_keys:set('default:foobar:usage[hits]=0', 200)
+    ngx.shared.api_keys:set('default:foobar:usage%5Bhits%5D=0', 200)
   }
   lua_shared_dict api_keys 1m;
 --- config
@@ -424,7 +424,7 @@ Location: http://example.com/redirect\?code=\w+&state=12345
       }
     })
 
-    ngx.shared.api_keys:set('default:foobar:usage[hits]=0', 200)
+    ngx.shared.api_keys:set('default:foobar:usage%5Bhits%5D=0', 200)
   }
   lua_shared_dict api_keys 1m;
 --- config

@@ -140,7 +140,7 @@ It asks backend and then forwards the request to the api.
 
   location /transactions/authrep.xml {
     content_by_lua_block {
-      local expected = "service_token=token-value&service_id=42&usage[hits]=2&user_key=value"
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
       local args = ngx.var.args
       if args == expected then
         ngx.exit(200)
@@ -160,7 +160,7 @@ GET /?user_key=value
 yay, api backend: 127.0.0.1
 --- error_code: 200
 --- error_log
-apicast cache miss key: 42:value:usage[hits]=2
+apicast cache miss key: 42:value:usage%5Bhits%5D=2
 --- no_error_log
 [error]
 
@@ -289,7 +289,7 @@ api response
 --- error_code: 200
 --- response_headers
 X-3scale-matched-rules: /foo?bar={baz}
-X-3scale-usage: usage[bar]=3
+X-3scale-usage: usage%5Bbar%5D=3
 
 
 === TEST 10: https api backend works
@@ -458,4 +458,4 @@ all ok
 [error]
 --- response_headers
 X-3scale-matched-rules: /
-X-3scale-usage: usage[hits]=2
+X-3scale-usage: usage%5Bhits%5D=2

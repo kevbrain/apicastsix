@@ -70,9 +70,9 @@ yay, api backend
 --- error_code: 200
 --- grep_error_log eval: qr/apicast cache (?:hit|miss|write) key: [^,\s]+/
 --- grep_error_log_out
-apicast cache miss key: 42:value:usage[hits]=2
-apicast cache write key: 42:value:usage[hits]=2
-apicast cache hit key: 42:value:usage[hits]=2
+apicast cache miss key: 42:value:usage%5Bhits%5D=2
+apicast cache write key: 42:value:usage%5Bhits%5D=2
+apicast cache hit key: 42:value:usage%5Bhits%5D=2
 
 === TEST 6: multi service configuration
 Two services can exist together and are split by their hostname.
@@ -156,7 +156,7 @@ yay, api backend: /two/
 [error]
 --- grep_error_log eval: qr/apicast cache (?:hit|miss|write) key: [^,\s]+/
 --- grep_error_log_out
-apicast cache miss key: 1:one-key:usage[hits]=1
-apicast cache write key: 1:one-key:usage[hits]=1
-apicast cache miss key: 2:two-id:two-key:usage[hits]=2
-apicast cache write key: 2:two-id:two-key:usage[hits]=2
+apicast cache miss key: 1:one-key:usage%5Bhits%5D=1
+apicast cache write key: 1:one-key:usage%5Bhits%5D=1
+apicast cache miss key: 2:two-id:two-key:usage%5Bhits%5D=2
+apicast cache write key: 2:two-id:two-key:usage%5Bhits%5D=2

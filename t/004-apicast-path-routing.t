@@ -86,10 +86,10 @@ yay, api backend: /two/
 --- error_code: 200
 --- grep_error_log eval: qr/apicast cache (?:hit|miss|write) key: [^,\s]+/
 --- grep_error_log_out
-apicast cache miss key: 42:one-key:usage[one]=1
-apicast cache write key: 42:one-key:usage[one]=1
-apicast cache miss key: 21:two-id:two-key:usage[two]=2
-apicast cache write key: 21:two-id:two-key:usage[two]=2
+apicast cache miss key: 42:one-key:usage%5Bone%5D=1
+apicast cache write key: 42:one-key:usage%5Bone%5D=1
+apicast cache miss key: 21:two-id:two-key:usage%5Btwo%5D=2
+apicast cache write key: 21:two-id:two-key:usage%5Btwo%5D=2
 
 
 === TEST 2: multi service configuration with path based routing defaults to host routing

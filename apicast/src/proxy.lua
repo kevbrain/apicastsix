@@ -9,17 +9,15 @@ local resty_url = require 'resty.url'
 
 local assert = assert
 local type = type
-local pairs = pairs
 local next = next
 local insert = table.insert
 
 local concat = table.concat
-local tostring = tostring
-local format = string.format
 local gsub = string.gsub
 local tonumber = tonumber
 local setmetatable = setmetatable
 local exit = ngx.exit
+local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
 local dns_resolver = require 'resty.resolver.dns'
 local empty = {}
@@ -111,24 +109,6 @@ local function error_service_not_found(host)
   ngx.exit(ngx.status)
 end
 -- End Error Codes
-
-local function kvmap(f, t)
-  local res = {}
-  for k, v in pairs(t) do
-    insert(res, f(k, v))
-  end
-  return res
-end
-
-local function build_querystring_formatter(fmt)
-  local function map(k,v) return format(fmt, k, tostring(v)) end
-  return function (query)
-    return concat(kvmap(map, query or {}), "&")
-  end
-end
-
-local build_querystring = build_querystring_formatter("usage[%s]=%s")
-local build_query = build_querystring_formatter("%s=%s")
 
 local function get_debug_value(service)
   return ngx.var.http_x_3scale_debug == service.backend_authentication.value
@@ -363,8 +343,6 @@ end
 
 function _M:access(service)
   local backend_version = service.backend_version
-  local usage
-  local matched_patterns
 
   if ngx.status == 403  then
     ngx.say("Throttling due to too many requests")
@@ -387,10 +365,10 @@ function _M:access(service)
   insert(credentials, 1, service.id)
   ngx.var.cached_key = concat(credentials, ':')
 
-  usage, matched_patterns = service:extract_usage(request)
+  local _, matched_patterns, params = service:extract_usage(request)
+  local usage = encode_args(params)
 
-  usage = build_querystring(usage)
-  credentials = build_query(credentials)
+  credentials = encode_args(credentials)
 
   ngx.var.credentials = credentials
   ngx.var.usage = usage

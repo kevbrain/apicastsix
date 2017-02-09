@@ -17,7 +17,8 @@ local mt = { __index = _M }
 function _M.new()
   return setmetatable({
     services = {},
-    hosts = {}
+    hosts = {},
+    cache = {}
   }, mt)
 end
 
@@ -43,34 +44,15 @@ function _M.find_by_id(self, service_id)
     return nil, 'not initialized'
   end
 
-  if service_id then
-    return all[service_id]
-  end
-  return nil
+  return all[service_id]
 end
 
 function _M.find_by_host(self, host)
-  local hosts = self.hosts
-  if not hosts then
+  local cache = self.cache
+  if not cache then
     return nil, 'not initialized'
   end
-  return hosts[host] or { }
-end
-
-function _M.find(self, host_or_id)
-  local hosts = self.hosts
-  local all = self.services
-
-  if not hosts or not all then
-    return nil, 'not initialized'
-  end
-
-  local exact_match = all[host_or_id]
-  if exact_match then
-    return { exact_match }
-  end
-
-  return hosts[host_or_id] or { }
+  return cache[host] or { }
 end
 
 function _M.store(self, config)
@@ -91,12 +73,14 @@ function _M.reset(self)
 
   self.services = {}
   self.hosts = {}
+  self.cache = {}
   self.configured = false
 end
 
 function _M.add(self, service)
   local hosts = self.hosts
   local all = self.services
+  local cache = self.cache
 
   if not hosts or not all then
     return nil, 'not initialized'
@@ -104,12 +88,28 @@ function _M.add(self, service)
 
   local id = service.id
 
+  if not service.hosts then
+    ngx.log(ngx.WARN, 'service ', id, ' is missing hosts')
+    return
+  end
+
   for _,host in ipairs(service.hosts) do
     local index = hosts[host] or {}
     local exists = not _M.path_routing and next(index)
 
-    index[id] = service
-    all[id] = service
+    -- already exists in cache
+    local pos = index[id]
+    local c = cache[host] or {}
+
+    if pos then
+      c[pos] = service
+    else
+      insert(c, service)
+      index[id] = #c
+      all[id] = service
+    end
+
+    cache[host] = c
     hosts[host] = index
 
     if exists and exists ~= id then

@@ -10,7 +10,6 @@ local resty_url = require 'resty.url'
 local assert = assert
 local type = type
 local pairs = pairs
-local ipairs = ipairs
 local next = next
 local insert = table.insert
 
@@ -68,7 +67,7 @@ end
 function _M:configured(host)
   if not self then return nil, 'not initialized' end
   local configuration = self.configuration
-  if not configuration or not configuration.find then return nil, 'not initialized' end
+  if not configuration or not configuration.find_by_host then return nil, 'not initialized' end
 
   local hosts = configuration:find_by_host(host)
 
@@ -135,34 +134,51 @@ local function get_debug_value(service)
 end
 
 local function find_service_strict(self, host)
-  for _,service in pairs(self.configuration:find_by_host(host)) do
-    for _,_host in ipairs(service.hosts or {}) do
-      if _host == host then
-        return service
+  local found
+  local services = self.configuration:find_by_host(host)
+
+  for s=1, #services do
+    local service = services[s]
+    local hosts = service.hosts or {}
+
+    for h=1, #hosts do
+      if hosts[h] == host then
+        found = service
+        break
       end
     end
+    if found then break end
   end
-  ngx.log(ngx.ERR, 'service not found for host ', host)
+
+  return found or ngx.log(ngx.ERR, 'service not found for host ', host)
 end
 
 local function find_service_cascade(self, host)
+  local found
   local request = ngx.var.request
-  for _,service in pairs(self.configuration:find_by_host(host)) do
-    for _,_host in ipairs(service.hosts or {}) do
-      if _host == host then
+  local services = self.configuration:find_by_host(host)
+
+  for s=1, #services do
+    local service = services[s]
+    local hosts = service.hosts or {}
+
+    for h=1, #hosts do
+      if hosts[h] == host then
         local name = service.system_name or service.id
-        ngx.log(ngx.DEBUG, 'service ', name, ' matched host ', _host)
+        ngx.log(ngx.DEBUG, 'service ', name, ' matched host ', hosts[h])
         local usage, matched_patterns = service:extract_usage(request)
 
         if next(usage) and matched_patterns ~= '' then
           ngx.log(ngx.DEBUG, 'service ', name, ' matched patterns ', matched_patterns)
-          return service
+          found = service
+          break
         end
       end
     end
+    if found then break end
   end
 
-  return find_service_strict(self, host)
+  return found or find_service_strict(self, host)
 end
 
 if configuration_store.path_routing then

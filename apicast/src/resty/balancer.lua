@@ -80,7 +80,11 @@ function _M.select_peer(self, peers)
 
   local peer, err = mode(peers)
 
-  return peer, err or 'no peer found'
+  if not peer then
+    return nil, err or  'no peer found'
+  end
+
+  return peer
 end
 
 function _M.set_peer(self, peers)

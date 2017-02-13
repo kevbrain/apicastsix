@@ -65,7 +65,7 @@ function _M:call(environment)
     if config then
       insert(configs, config)
     else
-      return nil, err
+      ngx.log(ngx.INFO, 'could not get configuration for service ', object.service.id, ': ', err)
     end
   end
 

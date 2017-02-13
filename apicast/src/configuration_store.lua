@@ -1,7 +1,6 @@
 local setmetatable = setmetatable
 local ipairs = ipairs
 local pairs = pairs
-local tostring = tostring
 local insert = table.insert
 local concat = table.concat
 local next = next
@@ -18,7 +17,8 @@ local mt = { __index = _M }
 function _M.new()
   return setmetatable({
     services = {},
-    hosts = {}
+    hosts = {},
+    cache = {}
   }, mt)
 end
 
@@ -37,28 +37,30 @@ function _M.all(self)
   return services
 end
 
-function _M.find(self, host)
-  local hosts = self.hosts
+function _M.find_by_id(self, service_id)
   local all = self.services
 
-  if not hosts or not all then
+  if not all then
     return nil, 'not initialized'
   end
 
-  local exact_match = all[tostring(host)]
+  return all[service_id]
+end
 
-  if exact_match then
-    return { exact_match }
+function _M.find_by_host(self, host)
+  local cache = self.cache
+  if not cache then
+    return nil, 'not initialized'
   end
-
-  return hosts[host] or { }
+  return cache[host] or { }
 end
 
 function _M.store(self, config)
   self.configured = true
+  local services = config.services
 
-  for _,service in ipairs(config.services) do
-    _M.add(self, service)
+  for i = 1, #services do
+    _M.add(self, services[i])
   end
 
   return config
@@ -71,25 +73,43 @@ function _M.reset(self)
 
   self.services = {}
   self.hosts = {}
+  self.cache = {}
   self.configured = false
 end
 
 function _M.add(self, service)
   local hosts = self.hosts
   local all = self.services
+  local cache = self.cache
 
   if not hosts or not all then
     return nil, 'not initialized'
   end
 
-  local id = tostring(service.id)
+  local id = service.id
+
+  if not service.hosts then
+    ngx.log(ngx.WARN, 'service ', id, ' is missing hosts')
+    return
+  end
 
   for _,host in ipairs(service.hosts) do
     local index = hosts[host] or {}
     local exists = not _M.path_routing and next(index)
 
-    index[id] = service
-    all[id] = service
+    -- already exists in cache
+    local pos = index[id]
+    local c = cache[host] or {}
+
+    if pos then
+      c[pos] = service
+    else
+      insert(c, service)
+      index[id] = #c
+      all[id] = service
+    end
+
+    cache[host] = c
     hosts[host] = index
 
     if exists and exists ~= id then

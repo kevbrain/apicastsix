@@ -40,7 +40,7 @@ __DATA__
       }
     })
 
-    ngx.shared.api_keys:set('42:somekey:usage[bar]=0', 200)
+    ngx.shared.api_keys:set('42:somekey:usage%5Bbar%5D=0', 200)
   }
   lua_shared_dict api_keys 1m;
 --- config
@@ -92,7 +92,7 @@ env APICAST_REQUEST_LOGS=1;
       }
     })
 
-    ngx.shared.api_keys:set('42:somekey:usage[bar]=0', 200)
+    ngx.shared.api_keys:set('42:somekey:usage%5Bbar%5D=0', 200)
   }
   lua_shared_dict api_keys 1m;
 --- config
@@ -122,7 +122,7 @@ api response
 --- grep_error_log_out eval
 <<"END";
 log[request]: {"path":"\\/foo?user_key=somekey","method":"GET","headers":{"host":"127.0.0.1","connection":"close"}}
-log[response]: {"headers":{"x-3scale-matched-rules":"\\/","content-type":"text\\/plain","connection":"close","x-3scale-usage":"usage[bar]=0","x-3scale-hostname":"$::host","x-3scale-credentials":"user_key=somekey"},"body":"api response\\n"}
+log[response]: {"headers":{"x-3scale-matched-rules":"\\/","content-type":"text\\/plain","connection":"close","x-3scale-usage":"usage%5Bbar%5D=0","x-3scale-hostname":"$::host","x-3scale-credentials":"user_key=somekey"},"body":"api response\\n"}
 END
 
 
@@ -149,7 +149,7 @@ env APICAST_RESPONSE_CODES=1;
       }
     })
 
-    ngx.shared.api_keys:set('42:somekey:usage[bar]=0', 200)
+    ngx.shared.api_keys:set('42:somekey:usage%5Bbar%5D=0', 200)
   }
   lua_shared_dict api_keys 1m;
 --- config
@@ -207,7 +207,7 @@ env APICAST_RESPONSE_CODES=1;
       }
     })
 
-    ngx.shared.api_keys:set('42:somekey:usage[bar]=0', 200)
+    ngx.shared.api_keys:set('42:somekey:usage%5Bbar%5D=0', 200)
   }
   lua_shared_dict api_keys 1m;
 --- config
@@ -237,7 +237,7 @@ api response
 --- grep_error_log eval: qr/log\[\w+\]:.+/
 --- grep_error_log_out eval
 <<"END";
-log[response]: {"headers":{"x-3scale-matched-rules":"\\/","content-type":"text\\/plain","connection":"close","x-3scale-usage":"usage[bar]=0","x-3scale-hostname":"$::host","x-3scale-credentials":"user_key=somekey"},"body":"api response\\n"}
+log[response]: {"headers":{"x-3scale-matched-rules":"\\/","content-type":"text\\/plain","connection":"close","x-3scale-usage":"usage%5Bbar%5D=0","x-3scale-hostname":"$::host","x-3scale-credentials":"user_key=somekey"},"body":"api response\\n"}
 log[request]: {"path":"\\/foo?user_key=somekey","method":"GET","headers":{"host":"127.0.0.1","connection":"close"}}
 log[code]: 202
 END

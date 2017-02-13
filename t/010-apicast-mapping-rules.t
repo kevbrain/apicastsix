@@ -16,9 +16,8 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: multi service configuration limited to specific service
---- main_config
-env APICAST_SERVICES=42,21;
+=== TEST 5: call to backend is cached
+First call is done synchronously and the second out of band.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -29,17 +28,15 @@ env APICAST_SERVICES=42,21;
           id = 42,
           backend_version = 1,
           proxy = {
-            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/one/",
-            hosts = { 'one' },
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'one', delta = 1 }
+              { id = 1, http_method = "GET",
+                pattern = "/{env}/video/encode?size={size}&speed=2x",
+                metric_system_name = "weeee", delta = 1,
+                parameters = { "env" },
+                querystring_parameters = { size = "{size}", speed = "2x" }
+              }
             }
-          }
-        },
-        {
-          id = 11,
-          proxy = {
-            hosts = { 'two' }
           }
         }
       }
@@ -50,19 +47,18 @@ env APICAST_SERVICES=42,21;
   include $TEST_NGINX_APICAST_CONFIG;
 
   set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+  set $backend_authentication_type 'service_token';
+  set $backend_authentication_value 'token-value';
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
   }
 
-  location ~ /api-backend(/.+) {
-     echo 'yay, api backend: $1';
+  location /api-backend/ {
+     echo 'yay, api backend';
   }
---- pipelined_requests eval
-["GET /?user_key=1","GET /?user_key=2"]
---- more_headers eval
-["Host: one", "Host: two"]
---- response_body eval
-["yay, api backend: /one/\n", ""]
---- error_code eval
-[200, 404]
+--- request
+GET /staging/video/encode?size=100&speed=3x&user_key=foo&speed=2x
+--- response_body
+yay, api backend
+--- error_code: 200

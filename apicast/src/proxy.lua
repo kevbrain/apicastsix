@@ -4,26 +4,23 @@ local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local configuration_parser = require 'configuration_parser'
 local configuration_store = require 'configuration_store'
 
-local inspect = require 'inspect'
 local oauth = require 'oauth'
 local resty_url = require 'resty.url'
 
+local assert = assert
 local type = type
-local pairs = pairs
-local ipairs = ipairs
 local next = next
 local insert = table.insert
 
 local concat = table.concat
-local tostring = tostring
-local format = string.format
 local gsub = string.gsub
-local unpack = unpack
 local tonumber = tonumber
 local setmetatable = setmetatable
-
+local exit = ngx.exit
+local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
 local dns_resolver = require 'resty.resolver.dns'
+local empty = {}
 
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
 local request_logs = env.enabled('APICAST_REQUEST_LOGS')
@@ -68,9 +65,9 @@ end
 function _M:configured(host)
   if not self then return nil, 'not initialized' end
   local configuration = self.configuration
-  if not configuration or not configuration.find then return nil, 'not initialized' end
+  if not configuration or not configuration.find_by_host then return nil, 'not initialized' end
 
-  local hosts = configuration:find(host)
+  local hosts = configuration:find_by_host(host)
 
   return next(hosts) and true
 end
@@ -79,7 +76,7 @@ _M.init = function(config) return _M.configure(_M, config) end
 
 -- Error Codes
 local function error_no_credentials(service)
-  ngx.log(ngx.INFO, 'no credentials provided for service ' .. tostring(service.id))
+  ngx.log(ngx.INFO, 'no credentials provided for service ', service.id)
   ngx.var.cached_key = nil
   ngx.status = service.auth_missing_status
   ngx.header.content_type = service.auth_missing_headers
@@ -88,7 +85,7 @@ local function error_no_credentials(service)
 end
 
 local function error_authorization_failed(service)
-  ngx.log(ngx.INFO, 'authorization failed for service ' .. tostring(service.id))
+  ngx.log(ngx.INFO, 'authorization failed for service ', service.id)
   ngx.var.cached_key = nil
   ngx.status = service.auth_failed_status
   ngx.header.content_type = service.auth_failed_headers
@@ -97,7 +94,7 @@ local function error_authorization_failed(service)
 end
 
 local function error_no_match(service)
-  ngx.log(ngx.INFO, 'no rules matched for service ' .. tostring(service.id))
+  ngx.log(ngx.INFO, 'no rules matched for service ', service.id)
   ngx.var.cached_key = nil
   ngx.status = service.no_match_status
   ngx.header.content_type = service.no_match_headers
@@ -113,60 +110,56 @@ local function error_service_not_found(host)
 end
 -- End Error Codes
 
-local function build_querystring_formatter(fmt)
-  return function (query)
-    local function kvmap(f, t)
-      local res = {}
-      for k, v in pairs(t) do
-        insert(res, f(k, v))
-      end
-      return res
-    end
-
-    return concat(kvmap(function(k,v) return format(fmt, k, v) end, query or {}), "&")
-  end
-end
-
-local build_querystring = build_querystring_formatter("usage[%s]=%s")
-local build_query = build_querystring_formatter("%s=%s")
-
 local function get_debug_value(service)
   return ngx.var.http_x_3scale_debug == service.backend_authentication.value
 end
 
 local function find_service_strict(self, host)
-  for _,service in pairs(self.configuration:find(host)) do
-    if type(host) == 'number' and service.id == host then
-      return service
-    end
+  local found
+  local services = self.configuration:find_by_host(host)
 
-    for _,_host in ipairs(service.hosts or {}) do
-      if _host == host then
-        return service
+  for s=1, #services do
+    local service = services[s]
+    local hosts = service.hosts or {}
+
+    for h=1, #hosts do
+      if hosts[h] == host then
+        found = service
+        break
       end
     end
+    if found then break end
   end
-  ngx.log(ngx.ERR, 'service not found for host ' .. host)
+
+  return found or ngx.log(ngx.ERR, 'service not found for host ', host)
 end
 
 local function find_service_cascade(self, host)
+  local found
   local request = ngx.var.request
-  for _,service in pairs(self.configuration:find(host)) do
-    for _,_host in ipairs(service.hosts or {}) do
-      if _host == host then
+  local services = self.configuration:find_by_host(host)
+
+  for s=1, #services do
+    local service = services[s]
+    local hosts = service.hosts or {}
+
+    for h=1, #hosts do
+      if hosts[h] == host then
         local name = service.system_name or service.id
-        ngx.log(ngx.DEBUG, 'service ' .. name .. ' matched host ' .. _host)
+        ngx.log(ngx.DEBUG, 'service ', name, ' matched host ', hosts[h])
         local usage, matched_patterns = service:extract_usage(request)
 
         if next(usage) and matched_patterns ~= '' then
-          ngx.log(ngx.DEBUG, 'service ' .. name .. ' matched patterns ' .. matched_patterns)
-          return service
+          ngx.log(ngx.DEBUG, 'service ', name, ' matched patterns ', matched_patterns)
+          found = service
+          break
         end
       end
     end
+    if found then break end
   end
 
-  return find_service_strict(host)
+  return found or find_service_strict(self, host)
 end
 
 if configuration_store.path_routing then
@@ -178,7 +171,7 @@ end
 
 local http = {
   get = function(url)
-    ngx.log(ngx.INFO, '[http] requesting ' .. url)
+    ngx.log(ngx.INFO, '[http] requesting ', url)
     local backend_upstream = ngx.ctx.backend_upstream
     local previous_real_url = ngx.var.real_url
     ngx.log(ngx.DEBUG, '[ctx] copying backend_upstream of size: ', #backend_upstream)
@@ -187,9 +180,9 @@ local http = {
     local real_url = ngx.var.real_url
 
     if real_url ~= previous_real_url then
-      ngx.log(ngx.INFO, '[http] ', real_url, ' (',tostring(res.status), ')')
+      ngx.log(ngx.INFO, '[http] ', real_url, ' (',res.status, ')')
     else
-      ngx.log(ngx.INFO, '[http] status: ', tostring(res.status))
+      ngx.log(ngx.INFO, '[http] status: ', res.status)
     end
 
     ngx.var.real_url = ''
@@ -199,11 +192,14 @@ local http = {
 }
 
 local function oauth_authrep(service)
-  ngx.var.cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
+  local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local access_tokens = assert(ngx.shared.api_keys, 'missing shared dictionary: api_keys')
-  local is_known = access_tokens:get(ngx.var.cached_key)
+  local is_known = access_tokens:get(cached_key)
 
-  if is_known ~= 200 then
+  if is_known == 200 then
+    ngx.log(ngx.DEBUG, 'apicast cache hit key: ', cached_key)
+    ngx.var.cached_key = cached_key
+  else
     local res = http.get("/threescale_oauth_authrep")
 
     if res.status ~= 200   then
@@ -220,22 +216,23 @@ local function oauth_authrep(service)
 end
 
 local function authrep(service)
+  -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local api_keys = ngx.shared.api_keys
   local is_known = api_keys and api_keys:get(cached_key)
 
   if is_known == 200 then
-    ngx.log(ngx.DEBUG, 'apicast cache hit key: ' .. cached_key)
+    ngx.log(ngx.DEBUG, 'apicast cache hit key: ', cached_key)
     ngx.var.cached_key = cached_key
   else
-    ngx.log(ngx.INFO, 'apicast cache miss key: ' .. cached_key)
+    ngx.log(ngx.INFO, 'apicast cache miss key: ', cached_key)
     local res = http.get("/threescale_authrep")
 
-    ngx.log(ngx.DEBUG, '[backend] response status: ' .. tostring(res.status) .. ' body: ' .. tostring(res.body))
+    ngx.log(ngx.DEBUG, '[backend] response status: ', res.status, ' body: ', res.body)
 
     if res.status == 200 then
       if api_keys then
-        ngx.log(ngx.INFO, 'apicast cache write key: ' .. tostring(cached_key))
+        ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key)
         api_keys:set(cached_key, 200)
       end
     else -- TODO: proper error handling
@@ -267,29 +264,28 @@ function _M.set_service(host)
   end
 
   ngx.ctx.service = service
+  ngx.var.service_id = service.id
+  return service
 end
 
 function _M.get_upstream(service)
   service = service or ngx.ctx.service
 
-  -- The default values are only for tests. We need to set at least the scheme.
-  local scheme, _, _, host, port, path =
-    unpack(resty_url.split(service.api_backend) or { 'http' })
-
-  if not port then
-    port = resty_url.default_port(scheme)
-  end
+  local url = resty_url.split(service.api_backend) or empty
+  local scheme = url[1] or 'http'
+  local host, port, path =
+    url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
 
   return {
     server = host,
     host = service.hostname_rewrite or host,
-    uri  = scheme .. '://upstream' .. (path or ''),
+    uri  = scheme .. '://upstream' .. path,
     port = tonumber(port)
   }
 end
 
-function _M.set_upstream()
-  local upstream = _M.get_upstream()
+function _M.set_upstream(service)
+  local upstream = _M.get_upstream(service)
 
   ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
   ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
@@ -299,28 +295,19 @@ function _M.set_upstream()
   ngx.req.set_header('Host', upstream.host or ngx.var.host)
 end
 
-function _M:call(host)
-  host = host or ngx.var.host
-  if not ngx.ctx.service then
-    self.set_service(host)
-  end
-
-  local service = ngx.ctx.service
+function _M:set_backend_upstream(service)
+  service = service or ngx.ctx.service
 
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
   ngx.var.backend_host = service.backend.host or ngx.var.backend_host
 
-  ngx.var.service_id = tostring(service.id)
-
   ngx.var.version = self.configuration.version
 
   -- set backend
-  local scheme, _, _, server, port, path = unpack(resty_url.split(service.backend.endpoint or ngx.var.backend_endpoint))
-
-  if not port then
-    port = resty_url.default_port(scheme)
-  end
+  local url = resty_url.split(service.backend.endpoint or ngx.var.backend_endpoint)
+  local scheme, _, _, server, port, path =
+    url[1], url[2], url[3], url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
 
   ngx.ctx.dns = ngx.ctx.dns or dns_resolver:new{ nameservers = resty_resolver.nameservers() }
   ngx.ctx.resolver = ngx.ctx.resolver or resty_resolver.new(ngx.ctx.dns)
@@ -328,7 +315,16 @@ function _M:call(host)
   local backend_upstream = ngx.ctx.resolver:get_servers(server, { port = port or nil })
   ngx.log(ngx.DEBUG, '[resolver] resolved backend upstream: ', #backend_upstream)
   ngx.ctx.backend_upstream = backend_upstream
-  ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. (path or '')
+
+  ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. path
+
+end
+
+function _M:call(host)
+  host = host or ngx.var.host
+  local service = ngx.ctx.service or self.set_service(host)
+
+  self:set_backend_upstream(service)
 
   if service.backend_version == 'oauth' then
     local f, params = oauth.call()
@@ -347,15 +343,13 @@ end
 
 function _M:access(service)
   local backend_version = service.backend_version
-  local usage
-  local matched_patterns
 
   if ngx.status == 403  then
     ngx.say("Throttling due to too many requests")
     ngx.exit(403)
   end
 
-  local request = ngx.var.request
+  local request = ngx.var.request -- NYI: return to lower frame
 
   ngx.var.secret_token = service.secret_token
 
@@ -371,11 +365,20 @@ function _M:access(service)
   insert(credentials, 1, service.id)
   ngx.var.cached_key = concat(credentials, ':')
 
-  usage, matched_patterns = service:extract_usage(request)
+  local _, matched_patterns, params = service:extract_usage(request)
+  local usage = encode_args(params)
 
-  ngx.log(ngx.INFO, inspect{usage, matched_patterns})
-  ngx.var.credentials = build_query(credentials)
-  ngx.var.usage = build_querystring(usage)
+  -- remove integer keys for serialization
+  -- as ngx.encode_args can't serialize integer keys
+  for i=1,#credentials do
+    credentials[i] = nil
+  end
+
+  credentials = encode_args(credentials)
+
+  ngx.var.credentials = credentials
+  ngx.var.usage = usage
+  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
 
   -- WHAT TO DO IF NO USAGE CAN BE DERIVED FROM THE REQUEST.
   if ngx.var.usage == '' then
@@ -397,6 +400,10 @@ end
 local function request_logs_encoded_data()
   local request_log = {}
 
+  if not request_logs and not response_codes then
+    return ''
+  end
+
   if request_logs then
     local method, path, headers = ngx.req.get_method(), ngx.var.request_uri, ngx.req.get_headers()
 
@@ -414,18 +421,16 @@ local function request_logs_encoded_data()
   return ngx.escape_uri(ngx.encode_args(request_log))
 end
 
-function _M.post_action()
-  local service_id = tonumber(ngx.var.service_id, 10)
-
-  local p = _M.new()
-  ngx.ctx.proxy = p
-  p:call(service_id) -- initialize resolver and get backend upstream peers
+function _M:post_action()
 
   local cached_key = ngx.var.cached_key
-  local service = ngx.ctx.service
 
   if cached_key and cached_key ~= "null" then
-    ngx.log(ngx.INFO, '[async] reporting to backend asynchronously')
+    ngx.log(ngx.INFO, '[async] reporting to backend asynchronously, cached_key: ', cached_key)
+
+    local service_id = ngx.var.service_id
+    local service = ngx.ctx.service or self.configuration:find_by_id(service_id)
+    self:set_backend_upstream(service)
 
     local auth_uri = service.backend_version == 'oauth' and 'threescale_oauth_authrep' or 'threescale_authrep'
     local res = http.get("/".. auth_uri .."?log=" .. request_logs_encoded_data())
@@ -434,7 +439,7 @@ function _M.post_action()
       local api_keys = ngx.shared.api_keys
 
       if api_keys then
-        ngx.log(ngx.NOTICE, 'apicast cache delete key: ' .. cached_key .. ' cause status ' .. tostring(res.status))
+        ngx.log(ngx.NOTICE, 'apicast cache delete key: ', cached_key, ' cause status ', res.status)
         api_keys:delete(cached_key)
       else
         ngx.log(ngx.ALERT, 'apicast cache error missing shared memory zone api_keys')
@@ -444,7 +449,7 @@ function _M.post_action()
     ngx.log(ngx.INFO, '[async] skipping after action, no cached key')
   end
 
-  ngx.exit(ngx.HTTP_OK)
+  exit(ngx.HTTP_OK)
 end
 
 if custom_config then
@@ -456,13 +461,13 @@ if custom_config then
 
   if ok then
     if type(c) == 'table' and type(c.setup) == 'function' then
-      ngx.log(ngx.DEBUG, 'executing custom config ' .. custom_config)
+      ngx.log(ngx.DEBUG, 'executing custom config ', custom_config)
       c.setup(_M)
     else
-      ngx.log(ngx.ERR, 'failed to load custom config ' .. tostring(custom_config) .. ' because it does not return table with function setup')
+      ngx.log(ngx.ERR, 'failed to load custom config ', custom_config, ' because it does not return table with function setup')
     end
   else
-    ngx.log(ngx.ERR, 'failed to load custom config ' .. tostring(custom_config) .. ' with ' .. tostring(c))
+    ngx.log(ngx.ERR, 'failed to load custom config ', custom_config, ' with ', c)
   end
 end
 

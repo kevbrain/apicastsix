@@ -2,15 +2,10 @@ local resty_lrucache = require "resty.lrucache"
 local inspect = require 'inspect'
 
 local setmetatable = setmetatable
-local ipairs = ipairs
 local pairs = pairs
 local min = math.min
 local insert = table.insert
 local concat = table.concat
-
-local co_yield = coroutine.yield
-local co_create = coroutine.create
-local co_resume = coroutine.resume
 
 local lrucache = resty_lrucache.new(1000)
 
@@ -30,7 +25,8 @@ local function compact_answers(servers)
   local hash = {}
   local compact = {}
 
-  for _, server in ipairs(servers) do
+  for i=1, #servers do
+    local server = servers[i]
     local name = server.name or server.address
 
     local packed = hash[name]
@@ -93,58 +89,56 @@ function _M.save(self, answers)
   return ans
 end
 
+local function fetch_answers(hostname, cache, stale, circular_reference)
+  if not hostname then
+    return {}, 'missing name'
+  end
+
+  if circular_reference[hostname] then
+    error('circular reference detected when querying '.. hostname)
+    return
+  else
+    circular_reference[hostname] = true
+  end
+
+  local answers, stale_answers = cache:get(hostname)
+
+  if not answers then
+    if stale and stale_answers then
+      return stale_answers
+    else
+      return {}
+    end
+  end
+
+  ngx.log(ngx.DEBUG, 'resolver cache read ', hostname, ' ', #answers, ' entries')
+
+  return answers
+end
+
+local function yieldfetch(found, hostname, cache, stale, circular_reference)
+  local answers = fetch_answers(hostname, cache, stale, circular_reference)
+  local ret = found or {}
+
+  for i=1, #answers do
+    yieldfetch(ret, answers[i].cname, cache, stale, circular_reference)
+    insert(ret, answers[i])
+  end
+
+  return ret
+end
 
 local function fetch(cache, name, stale)
   local circular_reference = {}
 
-  local function fetch_answers(hostname)
-    if not hostname then
-      return {}, 'missing name'
-    end
-
-    if circular_reference[hostname] then
-      error('circular reference detected when querying '.. hostname)
-      return
-    else
-      circular_reference[hostname] = true
-    end
-
-    local answers, stale_answers = cache:get(hostname)
-
-    if not answers then
-      if stale and stale_answers then
-        return stale_answers
-      else
-        return {}
-      end
-    end
-
-    ngx.log(ngx.DEBUG, 'resolver cache read ', hostname, ' ', #answers, ' entries')
-
-    return answers
-  end
-
-  local function yieldfetch(hostname)
-    local answers = fetch_answers(hostname)
-
-    for _,answer in ipairs(answers) do
-      yieldfetch(answer.cname)
-      co_yield(answer)
-    end
-  end
-
-  local co = co_create(function () yieldfetch(name) end)
-
-  return function ()
-    local code, res = co_resume(co)
-
-    if code then
-      return res
-    else
-      return nil, 'error when trying to fetch from cache'
-    end
-  end
+  return yieldfetch(nil, name, cache, stale, circular_reference)
 end
+
+local answers_mt = {
+  __tostring = function(t)
+    return concat(t.addresses, ', ')
+  end
+}
 
 function _M.get(self, name)
   local cache = self.cache
@@ -153,23 +147,21 @@ function _M.get(self, name)
     return nil, 'not initialized'
   end
 
-  local answers = { addresses = {} }
+  local answers = setmetatable({ addresses = {} }, answers_mt)
+  local records = fetch(cache, name)
 
-  for data in fetch(cache, name) do
-    insert(answers, data)
-
-    if data.address then
-      insert(answers.addresses, data.address)
-    end
+  for i=1, #records do
+    insert(answers, records[i])
+    insert(answers.addresses, records[i].address)
   end
 
-  if #answers == 0 then
+  if #records == 0 then
     ngx.log(ngx.DEBUG, 'resolver cache miss: ', name)
-    return nil
   else
-    ngx.log(ngx.DEBUG, 'resolver cache hit: ', name, ' ', concat(answers.addresses, ', '))
-    return answers
+    ngx.log(ngx.DEBUG, 'resolver cache hit: ', name, ' ', answers)
   end
+
+  return answers
 end
 
 return _M

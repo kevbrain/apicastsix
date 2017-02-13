@@ -296,7 +296,7 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
     }
   }
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
+    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
     set $backend_host '127.0.0.1';
     set $backend_authentication_type 'provider_key';
     set $backend_authentication_value 'fookey';
@@ -346,7 +346,7 @@ GET /t
       }
     })
 
-    ngx.shared.api_keys:set('default:foobar:usage[hits]=0', 200)
+    ngx.shared.api_keys:set('default:foobar:usage%5Bhits%5D=0', 200)
   }
   lua_shared_dict api_keys 1m;
 --- config
@@ -355,6 +355,12 @@ GET /t
 
   location /api-backend/ {
     echo "yay, upstream";
+  }
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
+
+  location = /backend/transactions/oauth_authrep.xml {
+    echo 'ok';
   }
 --- request
 GET /?access_token=foobar
@@ -418,7 +424,7 @@ Location: http://example.com/redirect\?code=\w+&state=12345
       }
     })
 
-    ngx.shared.api_keys:set('default:foobar:usage[hits]=0', 200)
+    ngx.shared.api_keys:set('default:foobar:usage%5Bhits%5D=0', 200)
   }
   lua_shared_dict api_keys 1m;
 --- config
@@ -427,6 +433,11 @@ Location: http://example.com/redirect\?code=\w+&state=12345
 
   location /api-backend/ {
     echo "yay, upstream";
+  }
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
+
+  location = /backend/transactions/oauth_authrep.xml {
+    echo 'ok';
   }
 --- request
 GET /

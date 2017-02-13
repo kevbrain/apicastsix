@@ -37,7 +37,7 @@ end
 function _M.system(command)
   local tmpout = tmpname()
   local tmperr = tmpname()
-  ngx.log(ngx.DEBUG, 'os execute ' .. command)
+  ngx.log(ngx.DEBUG, 'os execute ', command)
 
   local success, exit, code = execute('(' .. command .. ')' .. ' > ' .. tmpout .. ' 2> ' .. tmperr)
   local err
@@ -57,7 +57,7 @@ function _M.system(command)
   -- os.execute returns exit code as first return value on OSX
   -- even though the documentation says otherwise (true/false)
   if success == 0 or success == true then
-    if len(tmperr) then
+    if len(tmperr) > 0 then
       ngx.log(ngx.WARN, 'os execute stderr: \n', tmperr)
     end
 

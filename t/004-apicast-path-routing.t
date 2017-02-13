@@ -10,7 +10,7 @@ $ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 
 log_level('debug');
-repeat_each(1);
+repeat_each(1); # Can't be 2 as the second run would hit the cache
 no_root_location();
 run_tests();
 
@@ -86,7 +86,67 @@ yay, api backend: /two/
 --- error_code: 200
 --- grep_error_log eval: qr/apicast cache (?:hit|miss|write) key: [^,\s]+/
 --- grep_error_log_out
-apicast cache miss key: 42:one-key:usage[one]=1
-apicast cache write key: 42:one-key:usage[one]=1
-apicast cache miss key: 21:two-id:two-key:usage[two]=2
-apicast cache write key: 21:two-id:two-key:usage[two]=2
+apicast cache miss key: 42:one-key:usage%5Bone%5D=1
+apicast cache write key: 42:one-key:usage%5Bone%5D=1
+apicast cache miss key: 21:two-id:two-key:usage%5Btwo%5D=2
+apicast cache write key: 21:two-id:two-key:usage%5Btwo%5D=2
+
+
+=== TEST 2: multi service configuration with path based routing defaults to host routing
+If none of the services match it goes for the host.
+--- main_config
+env APICAST_PATH_ROUTING_ENABLED=1;
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').save({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/one/",
+            hosts = { 'localhost' },
+            backend_authentication_type = 'service_token',
+            backend_authentication_value = 'service-one',
+            error_status_no_match = 412,
+            proxy_rules = {
+              { pattern = '/one', http_method = 'GET', metric_system_name = 'one', delta = 1 }
+            }
+          }
+        },
+        {
+          id = 21,
+          backend_version = 2,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/two/",
+            hosts = { 'localhost' },
+            backend_authentication_type = 'service_token',
+            backend_authentication_value = 'service-two',
+            proxy_rules = {
+              { pattern = '/two', http_method = 'GET', metric_system_name = 'two', delta = 2 }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict api_keys 10m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+
+  location ~ /api-backend(/.+) {
+     echo 'yay, api backend: $1';
+  }
+--- request eval
+["GET /foo?user_key=1","GET /foo?user_key=2"]
+--- no_error_log
+--- error_code eval
+[ 412, 412 ]

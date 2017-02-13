@@ -1,7 +1,5 @@
 local ffi = require 'ffi'
-local module = require 'module'
 local env = require 'resty.env'
-local type = type
 
 local setmetatable = setmetatable
 
@@ -25,18 +23,17 @@ function _M.system_information()
 end
 
 function _M.platform()
-  local m = module.new()
-  local table, err = m:require()
-  local t = type(table) == 'table'
-  local version = t and table._VERSION
-  local name = t and table._NAME or m.name
+  local module = require('module')
+
+  if not module then
+    return nil, 'invalid module'
+  end
+
+  local version = module._VERSION
+  local name = module._NAME
 
   if not name then
     return nil, 'missing module name'
-  end
-
-  if not table and err then
-    return nil, err
   end
 
   if version then

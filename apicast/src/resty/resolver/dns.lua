@@ -2,6 +2,10 @@ local resty_resolver = require 'resty.dns.resolver'
 
 local setmetatable = setmetatable
 local insert = table.insert
+local th_spawn = ngx.thread.spawn
+local th_wait = ngx.thread.wait
+local th_kill = ngx.thread.kill
+local unpack = unpack
 
 local _M = {
   _VERSION = '0.1'
@@ -33,22 +37,39 @@ function _M:init_resolvers()
   return resolvers
 end
 
+local function query(resolver, qname, opts, nameserver)
+  ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' nameserver: ', nameserver[1],':', nameserver[2])
+  return resolver:query(qname, opts)
+end
+
 function _M.query(self, qname, opts)
   local resolvers = self.resolvers
-  local answers, err
 
   if not self.initialized then
     resolvers = self:init_resolvers()
   end
 
-  for i=1, #resolvers do
-    answers, err = resolvers[i][2]:query(qname, opts)
+  local threads = {}
+  local n = #resolvers
 
-    ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' nameserver: ', resolvers[i][1][1],':', resolvers[i][1][2])
+  for i=1, n do
+    insert(threads, th_spawn(query, resolvers[i][2], qname, opts, resolvers[i][1]))
+  end
 
-    if answers and not answers.errcode and not err then
-      break
-    end
+  local answers, err
+
+  do
+    local found, ok
+    local i=1
+    repeat
+      ok, answers, err = th_wait(unpack(threads))
+      i = i + 1
+      found = ok and answers and not answers.errcode and not err
+    until found or i > n
+  end
+
+  for i=1, n do
+    th_kill(threads[i])
   end
 
   return answers, err

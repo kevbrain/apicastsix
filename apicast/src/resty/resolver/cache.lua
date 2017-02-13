@@ -27,22 +27,25 @@ local function compact_answers(servers)
 
   for i=1, #servers do
     local server = servers[i]
-    local name = server.name or server.address
 
-    local packed = hash[name]
+    if server then
+      local name = server.name or server.address
 
-    if packed then
-      insert(packed, server)
-      packed.ttl = min(packed.ttl, server.ttl)
-    else
-      packed = {
-        server,
-        name = name,
-        ttl = server.ttl
-      }
+      local packed = hash[name]
 
-      insert(compact, packed)
-      hash[name] = packed
+      if packed then
+        insert(packed, server)
+        packed.ttl = min(packed.ttl, server.ttl)
+      else
+        packed = {
+          server,
+          name = name,
+          ttl = server.ttl
+        }
+
+        insert(compact, packed)
+        hash[name] = packed
+      end
     end
   end
 

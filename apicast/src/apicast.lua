@@ -98,7 +98,14 @@ function _M.init_worker()
   end
 end
 
+function _M.cleanup()
+  -- now abort all the "light threads" running in the current request handler
+  ngx.exit(499)
+end
+
 function _M:rewrite()
+  ngx.on_abort(_M.cleanup)
+
   local host = ngx.var.host
   local p = self.proxy
   -- load configuration if not configured

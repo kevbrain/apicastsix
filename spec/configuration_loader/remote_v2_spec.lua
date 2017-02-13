@@ -113,7 +113,7 @@ describe('Configuration Rmote Loader V2', function()
       assert.equal('invalid status', err)
     end)
 
-    it('does not crash on error when getting config', function()
+    it('returns configuration even when some services are missing', function()
       test_backend.expect{ url = 'http://example.com/admin/api/services.json' }.
         respond_with{ status = 200, body = cjson.encode({ services = {
             { service = { id = 1 }},
@@ -133,10 +133,12 @@ describe('Configuration Rmote Loader V2', function()
       test_backend.expect{ url = 'http://example.com/admin/api/services/2/proxy/configs/staging/latest.json' }.
         respond_with{ status = 404 }
 
-      local config, err = loader:call('staging')
+      local config = assert(loader:call('staging'))
 
-      assert.falsy(config)
-      assert.equal('invalid status', err)
+      assert.truthy(config)
+      assert.equals('string', type(config))
+
+      assert.equals(1, #(cjson.decode(config).services))
     end)
   end)
 

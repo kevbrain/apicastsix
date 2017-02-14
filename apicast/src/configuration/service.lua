@@ -15,8 +15,6 @@ local select = select
 local type = type
 
 local http_authorization = require 'resty.http_authorization'
-local util = require 'util'
-
 
 local _M = { }
 local mt = { __index = _M  }
@@ -138,7 +136,6 @@ function backend_version_credentials.version_oauth(config)
   local name = (config.access_token or 'access_token')
   local authorization = http_authorization.new(ngx.var.http_authorization)
   local access_token
-  local app_id
 
   if config.location == 'query' then
     access_token = ngx.var['arg_' .. name] or read_body_args(name)[1]
@@ -158,11 +155,11 @@ function backend_version_credentials.version_oauth(config)
   access_token = access_token or authorization.token
 
   ------
-  -- oauth credentials for APIcast oauth
+  -- oauth credentials.
   -- @field 1 Access Token
   -- @field access_token Access Token
   -- @table credentials_oauth
-  return { access_token = access_token}
+  return { access_token = access_token }
 end
 
 -- This table can be used with `table.concat` to serialize

@@ -8,7 +8,7 @@ local _M = {
 
 function _M.new()
   local keycloak = env.get('RHSSO_ENDPOINT')
-  if keycloak then 
+  if keycloak then
     oauth = require 'oauth.keycloak'
     local public_key = env.get('RHSSO_PUBLIC_KEY')
     oauth.init(keycloak, public_key)
@@ -21,8 +21,6 @@ end
 function _M.router()
   -- TODO: use configuration to customize urls
   local r = router:new()
-
-  local oauth = _M.new()
 
   r:get('/authorize', function() oauth:authorize() end)
   r:post('/authorize', function() oauth:authorize() end)

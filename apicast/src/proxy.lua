@@ -309,9 +309,8 @@ function _M:access(service)
   local credentials, err = service:extract_credentials()
 
   if keycloak then
-    k = oauth.new()
-    
-    jwt = k.parse_and_verify_token(credentials.access_token, k.config.public_key)
+    local k = oauth.new()
+    local jwt = k.parse_and_verify_token(credentials.access_token, k.config.public_key)
     credentials.access_token = nil
 
     local app_id = jwt.payload.aud

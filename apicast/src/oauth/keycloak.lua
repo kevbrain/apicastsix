@@ -1,20 +1,14 @@
 local setmetatable = setmetatable
-local assert = assert
 local len = string.len
-
-local util = require 'util'
-local cjson = require 'cjson'
 local http_ng = require "resty.http_ng"
 local resty_url = require 'resty.url'
-local inspect = require 'inspect'
 local jwt = require 'resty.jwt'
-local resty_env = require 'resty.env'
 
 local _M = {
   _VERSION = '0.1'
 }
-local mt = { 
-  __index = _M 
+local mt = {
+  __index = _M
 }
 
 -- Required params for each grant type and response type.
@@ -34,14 +28,16 @@ function _M.init(endpoint, public_key)
   _M.configured = endpoint and public_key
 
   local config = { endpoint = endpoint, public_key = public_key }
-  if _M.configured then 
-    _M.configuration = config  
-  end 
+  if _M.configured then
+    _M.configuration = config
+  end
 end
 
 local function format_public_key(key)
-  if not key then return nil, 'missing key' end
-  
+  if not key then
+    return nil, 'missing key'
+  end
+
   local formatted_key = "-----BEGIN PUBLIC KEY-----\n"
   local key_len = len(key)
   for i=1,key_len,64 do
@@ -66,7 +62,7 @@ function _M.new(config)
     token_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/token'),
     public_key = format_public_key(configuration.public_key)
   }
-  
+
   local http_client = http_ng.new{
     backend = configuration.client,
     options = {
@@ -112,6 +108,8 @@ function _M.authorize_check_params(params)
       return false, 'invalid_request'
     end
   end
+
+  
   return true
 end
 
@@ -162,9 +160,7 @@ function _M.authorize(self)
     _M.respond_with_error(401, 'invalid_client')
   end
 
-  -- call Keycloak authorize
   local url = resty_url.join(self.config.authorize_url, ngx.var.is_args, ngx.var.args)
-  
   local http_client = self.http_client
   local res = http_client.get(url)
 

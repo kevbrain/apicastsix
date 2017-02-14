@@ -37,7 +37,7 @@ function _M.query(self, qname, opts)
   local resolvers = self.resolvers
   local answers, err
 
-  if not self.initializeed then
+  if not self.initialized then
     resolvers = self:init_resolvers()
   end
 

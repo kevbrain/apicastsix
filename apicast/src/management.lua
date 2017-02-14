@@ -6,8 +6,15 @@ local router = require('router')
 local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')
 local inspect = require('inspect')
+local resolver_cache = require('resty.resolver.cache')
 
 local live = cjson.encode({status = 'live', success = true})
+
+local function json_response(body, status)
+  ngx.header.content_type = 'application/json; charset=utf-8'
+  ngx.status = status or 200
+  ngx.say(cjson.encode(body))
+end
 
 function _M.ready()
   local status = _M.status()
@@ -88,6 +95,11 @@ function _M.boot()
   ngx.say(response)
 end
 
+function _M.dns_cache()
+  local cache = resolver_cache.new()
+  return json_response(cache:all())
+end
+
 function _M.router()
   local r = router.new()
 
@@ -98,6 +110,8 @@ function _M.router()
 
   r:get('/status/ready', _M.ready)
   r:get('/status/live', _M.live)
+
+  r:get('/dns/cache', _M.dns_cache)
 
   r:post('/boot', _M.boot)
 

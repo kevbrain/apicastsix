@@ -6,6 +6,7 @@ local pairs = pairs
 local min = math.min
 local insert = table.insert
 local concat = table.concat
+local ngx_now = ngx.now
 
 local lrucache = resty_lrucache.new(1000)
 
@@ -143,7 +144,25 @@ local answers_mt = {
   end
 }
 
-function _M.get(self, name)
+function _M.all(self)
+  local cache = self.cache
+
+  if not cache then
+    return nil, 'not initialized'
+  end
+
+  local results = {}
+  local now = ngx_now()
+
+  for k,v in pairs(cache.hasht) do
+    local node = cache.key2node[k]
+    results[k] = { value = v, expires_in = node.expire - now }
+  end
+
+  return results
+end
+
+function _M.get(self, name, stale)
   local cache = self.cache
 
   if not cache then

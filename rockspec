@@ -7,6 +7,7 @@ dependencies = {
   'lua-cjson >= 0',
   'ldoc >= 0',
   'lua-resty-repl >= 0',
+  'lua-resty-jwt >= 0'
 }
 build = {
   type = "builtin",

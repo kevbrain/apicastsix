@@ -12,6 +12,14 @@ describe('resty.resolver', function()
 
       assert.equal(dns, r.dns)
     end)
+
+    it('populates options', function()
+      local dns = { TYPE_A = 1 }
+
+      local r = new(dns)
+
+      assert.same({qtype = 1 }, r.options)
+    end)
   end)
 
   describe(':get_servers', function()
@@ -29,18 +37,18 @@ describe('resty.resolver', function()
     end)
 
     it('returns servers', function()
-      dns.TYPE_A = 1
       dns.query = spy.new(function()
         return {
           { name = '3scale.net' , address = '127.0.0.1' }
         }
       end)
+      resolver.options = { qtype = 'A' }
 
       local servers, err = resolver:get_servers('3scale.net')
 
       assert.falsy(err)
       assert.equal(1, #servers)
-      assert.spy(dns.query).was.called_with(dns, '3scale.net', { qtype = 1 })
+      assert.spy(dns.query).was.called_with(dns, '3scale.net', { qtype = 'A' })
     end)
 
     it('skips answers with no address', function()
@@ -59,7 +67,6 @@ describe('resty.resolver', function()
     end)
 
     it('searches domains', function()
-      dns.TYPE_A = 1
       dns.query = spy.new(function(_, qname)
         if qname == '3scale.net' then
           return {
@@ -69,15 +76,16 @@ describe('resty.resolver', function()
           return { errcode = 3, errstr = 'name error' }
         end
       end)
+      resolver.options = { qtype = 'A' }
       resolver.search = { 'example.com', 'net' }
 
       local servers, err = resolver:get_servers('3scale')
 
       assert.falsy(err)
       assert.equal(1, #servers)
-      assert.spy(dns.query).was.called_with(dns, '3scale', { qtype = 1 })
-      assert.spy(dns.query).was.called_with(dns, '3scale.example.com', { qtype = 1 })
-      assert.spy(dns.query).was.called_with(dns, '3scale.net', { qtype = 1 })
+      assert.spy(dns.query).was.called_with(dns, '3scale', resolver.options)
+      assert.spy(dns.query).was.called_with(dns, '3scale.example.com', resolver.options)
+      assert.spy(dns.query).was.called_with(dns, '3scale.net', resolver.options)
     end)
 
     it('returns servers for ip', function()

@@ -53,7 +53,7 @@ local function compact_answers(servers)
   return compact
 end
 
-function _M.store(self, answer)
+function _M.store(self, answer, force_ttl)
   local cache = self.cache
 
   if not cache then
@@ -69,7 +69,7 @@ function _M.store(self, answer)
 
   ngx.log(ngx.DEBUG, 'resolver cache write ', name, ' with TLL ', answer.ttl)
 
-  local ttl = answer.ttl
+  local ttl = force_ttl or answer.ttl
 
   if ttl == -1 then
     ttl = nil
@@ -105,19 +105,22 @@ local function fetch_answers(hostname, cache, stale, circular_reference)
     circular_reference[hostname] = true
   end
 
-  local answers, stale_answers = cache:get(hostname)
+  local answer, stale_answer = cache:get(hostname)
 
-  if not answers then
-    if stale and stale_answers then
-      return stale_answers
+  if answer then
+    ngx.log(ngx.DEBUG, 'resolver cache read ', hostname, ' ', #answer, ' entries')
+  else
+    if stale and stale_answer then
+      cache:set(hostname, stale_answer, 0)
+      ngx.log(ngx.DEBUG, 'resolver cache stale ', hostname, ' ', #stale_answer, 'entries')
+      answer = stale_answer
     else
-      return {}
+      ngx.log(ngx.DEBUG, 'resolver cache miss ', hostname)
+      answer = {}
     end
   end
 
-  ngx.log(ngx.DEBUG, 'resolver cache read ', hostname, ' ', #answers, ' entries')
-
-  return answers
+  return answer
 end
 
 local function yieldfetch(found, hostname, cache, stale, circular_reference)

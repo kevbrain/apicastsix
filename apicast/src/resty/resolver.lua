@@ -10,6 +10,7 @@ local io_type = io.type
 local re_match = ngx.re.match
 local semaphore = require "ngx.semaphore"
 local resolver_cache = require 'resty.resolver.cache'
+local re = require('ngx.re')
 
 local init = semaphore.new(1)
 
@@ -58,14 +59,14 @@ function _M.parse_nameservers(path)
   end
 
   if resolver then
-    insert(nameservers, { resolver })
+    local m = re.split(resolver, ':', 'oj')
+    insert(nameservers, { m[1] , m[2] or default_resolver_port })
   end
 
   for nameserver in gmatch(output, 'nameserver%s+([^%s]+)') do
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
-    local port = default_resolver_port
     if nameserver ~= resolver then
-      insert(nameservers, { nameserver, port } )
+      insert(nameservers, { nameserver, default_resolver_port } )
     end
   end
 

@@ -38,7 +38,7 @@ function _M:init_resolvers()
 end
 
 local function query(resolver, qname, opts, nameserver)
-  ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' nameserver: ', nameserver[1],':', nameserver[2])
+  ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' nameserver: ', nameserver[1],':', nameserver[2] or 53)
   return resolver:query(qname, opts)
 end
 

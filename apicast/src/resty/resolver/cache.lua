@@ -170,7 +170,7 @@ function _M.get(self, name, stale)
   end
 
   local answers = setmetatable({ addresses = {} }, answers_mt)
-  local records = fetch(cache, name)
+  local records = fetch(cache, name, stale)
 
   for i=1, #records do
     insert(answers, records[i])

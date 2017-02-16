@@ -63,7 +63,7 @@ dev: USER = root
 dev: ## Run APIcast inside the container mounted to local volume
 	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
 test-builder-image: export IMAGE_NAME = apicast-test
-test-builder-image: builder-image clean ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
+test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
 	@echo -e $(SEPARATOR)
@@ -83,7 +83,7 @@ test-builder-image: builder-image clean ## Smoke test the builder image. Pass an
 	@echo -e $(SEPARATOR)
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
-test-runtime-image: clean ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
+test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_MISSING_CONFIGURATION=exit -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d
@@ -94,9 +94,11 @@ dependencies:
 	luarocks make apicast/*.rockspec
 	luarocks make rockspec
 
-clean: ## Remove all running docker containers
+clean-containers:
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans
-	- docker rmi apicast-test apicast-runtime-test
+
+clean: clean-containers ## Remove all running docker containers and images
+	- docker rmi apicast-test apicast-runtime-test --force
 
 doc: dependencies ## Generate documentation
 	ldoc -c doc/config.ld .

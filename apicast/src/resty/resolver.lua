@@ -72,6 +72,7 @@ function _M.parse_nameservers(path)
   if resolver then
     local m = re.split(resolver, ':', 'oj')
     insert(nameservers, { m[1] , m[2] or default_resolver_port })
+    return nameservers
   end
 
   for nameserver in gmatch(output, 'nameserver%s+([^%s]+)') do

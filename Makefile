@@ -9,7 +9,7 @@ SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
-OPENRESTY_VERSION ?= 1.11.2.2-1
+OPENRESTY_VERSION ?= 1.11.2.2-2
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 

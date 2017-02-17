@@ -7,8 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 ### Changed
 - Lazy load DNS resolver to improve performance [PR #251](https://github.com/3scale/apicast/pull/251)
+- Execute queries to all defined nameservers in parallel [PR #260](https://github.com/3scale/apicast/pull/260)
+- `RESOLVER` ENV variable overrides all other nameservers detected from `/etc/resolv.conf` [PR #260](https://github.com/3scale/apicast/pull/260)
+- Use stale DNS cache when there is a query in progress for that record [PR #260](https://github.com/3scale/apicast/pull/260)
+- Bump s2i-openresty to 1.11.2.2-2 [PR #260](https://github.com/3scale/apicast/pull/260)
+
+### Added
+
+* Start local caching DNS server in the container [PR #260](https://github.com/3scale/apicast/pull/260)
+* Management API to show the DNS cache [PR #260](https://github.com/3scale/apicast/pull/260)
 
 ## [3.0.0-alpha2] - 2017-02-06
+
 ### Added
 - A way to override backend endpoint [PR #248](https://github.com/3scale/apicast/pull/248)
 

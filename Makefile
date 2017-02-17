@@ -70,6 +70,7 @@ test-builder-image: builder-image clean-containers ## Smoke test the builder ima
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p .
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test bash -c 'for i in {1..5}; do curl --fail http://gateway:8090/status/live && break || sleep 1; done'
+	$(DOCKER_COMPOSE) logs gateway
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X PUT http://gateway:8090/config --data '{"services":[{"id":42}]}'
 	@echo -e $(SEPARATOR)

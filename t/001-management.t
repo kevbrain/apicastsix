@@ -236,3 +236,30 @@ JSON response body and content type application/json should be returned.
   '{"services":[{"id":42}]}'."\n" ]  
 --- no_error_log
 [error]
+
+
+=== TEST 12: GET /dns/cache
+JSON response of the internal DNS cache.
+--- http_config
+lua_package_path "$TEST_NGINX_LUA_PATH";
+init_by_lua_block {
+  ngx.now = function() return 0 end
+  local cache = require('resty.resolver.cache').new():save({ {
+    address = "127.0.0.1",
+    class = 1,
+    name = "127.0.0.1.xip.io",
+    section = 1,
+    ttl = 199,
+    type = 1
+  }})
+}
+--- config
+  include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+GET /dns/cache
+--- response_headers
+Content-Type: application/json; charset=utf-8
+--- response_body
+{"127.0.0.1.xip.io":{"expires_in":199,"value":{"1":{"address":"127.0.0.1","section":1,"type":1,"class":1,"name":"127.0.0.1.xip.io","ttl":199},"name":"127.0.0.1.xip.io","ttl":199}}}
+--- no_error_log
+[error]

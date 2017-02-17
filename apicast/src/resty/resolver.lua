@@ -3,15 +3,27 @@ local next = next
 local open = io.open
 local gmatch = string.gmatch
 local match = string.match
+local format = string.format
 local insert = table.insert
+local rawset = rawset
 local getenv = os.getenv
 local concat = table.concat
 local io_type = io.type
 local re_match = ngx.re.match
 local semaphore = require "ngx.semaphore"
 local resolver_cache = require 'resty.resolver.cache'
+local re = require('ngx.re')
 
 local init = semaphore.new(1)
+local semaphore_mt = {
+ __index = function(t, k)
+   local sema = semaphore.new(1)
+   rawset(t, k, sema)
+   return sema
+ end
+}
+
+local synchronization = setmetatable({}, semaphore_mt)
 
 local default_resolver_port = 53
 
@@ -58,14 +70,15 @@ function _M.parse_nameservers(path)
   end
 
   if resolver then
-    insert(nameservers, { resolver })
+    local m = re.split(resolver, ':', 'oj')
+    insert(nameservers, { m[1] , m[2] or default_resolver_port })
+    return nameservers
   end
 
   for nameserver in gmatch(output, 'nameserver%s+([^%s]+)') do
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
-    local port = default_resolver_port
     if nameserver ~= resolver then
-      insert(nameservers, { nameserver, port } )
+      insert(nameservers, { nameserver, default_resolver_port } )
     end
   end
 
@@ -114,6 +127,7 @@ function _M.new(dns, opts)
 
   return setmetatable({
     dns = dns,
+    options = { qtype = dns.TYPE_A },
     cache = cache,
     search = search
   }, mt)
@@ -121,6 +135,7 @@ end
 
 
 local function new_server(answer, port)
+  if not answer then return nil, 'missing answer' end
   local address = answer.address
   if not address then return nil, 'server missing address' end
 
@@ -169,12 +184,37 @@ local function convert_answers(answers, port)
   return servers
 end
 
+local function lookup(dns, qname, search, options)
+  ngx.log(ngx.DEBUG, 'resolver query: ', qname)
+
+  local answers, err
+
+  if is_ip(qname) then
+    ngx.log(ngx.DEBUG, 'host is ip address: ', qname)
+    answers = { new_answer(qname) }
+  else
+    answers, err = dns:query(qname, options)
+
+    if not has_tld(qname) and not have_addresses(answers) then
+      for i=1, #search do
+
+        local query = qname .. '.' .. search[i]
+        ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' search: ', search[i], ' query: ', query)
+        answers, err = dns:query(query, options)
+
+        if answers and not answers.errcode and #answers > 0 then
+          break
+        end
+      end
+    end
+  end
+
+  return answers, err
+end
+
 function _M.get_servers(self, qname, opts)
   opts = opts or {}
   local dns = self.dns
-  local port = opts.port
-  local cache = self.cache
-  local search = self.search or {}
 
   if not dns then
     return nil, 'resolver not initialized'
@@ -184,33 +224,24 @@ function _M.get_servers(self, qname, opts)
     return nil, 'query missing'
   end
 
-  -- TODO: implement cache
+  local cache = self.cache
+  local search = self.search or {}
+
+
   -- TODO: pass proper options to dns resolver (like SRV query type)
 
-  local answers, err = cache:get(qname)
+  local sema = synchronization[format('qname:%s:qtype:%s', qname, 'A')]
+  local ok = sema:wait(0)
 
-  if not answers or #answers.addresses == 0 then
-    ngx.log(ngx.DEBUG, 'resolver query: ', qname)
+  local answers, err = cache:get(qname, not ok)
 
-    if is_ip(qname) then
-      ngx.log(ngx.DEBUG, 'host is ip address: ', qname)
-      answers = { new_answer(qname) }
-    else
-      answers, err = dns:query(qname, { qtype = dns.TYPE_A })
-
-      if not has_tld(qname) and not have_addresses(answers) then
-        for i=1, #search do
-
-          local query = qname .. '.' .. search[i]
-          ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' search: ', search[i], ' query: ', query)
-          answers, err = dns:query(query, { qtype = dns.TYPE_A })
-
-          if answers and not answers.errcode and #answers > 0 then break end
-        end
-      end
-    end
-
+  if not answers or err or #answers.addresses == 0 then
+    answers, err = lookup(dns, qname, search, self.options)
     cache:save(answers)
+  end
+
+  if ok then
+    sema:post()
   end
 
   if err then
@@ -221,7 +252,7 @@ function _M.get_servers(self, qname, opts)
     return {}, 'no answers'
   end
 
-  local servers = convert_answers(answers, port)
+  local servers = convert_answers(answers, opts.port)
 
   servers.query = qname
 

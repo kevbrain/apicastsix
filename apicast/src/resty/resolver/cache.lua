@@ -6,6 +6,7 @@ local pairs = pairs
 local min = math.min
 local insert = table.insert
 local concat = table.concat
+local ngx_now = ngx.now
 
 local lrucache = resty_lrucache.new(1000)
 
@@ -27,29 +28,32 @@ local function compact_answers(servers)
 
   for i=1, #servers do
     local server = servers[i]
-    local name = server.name or server.address
 
-    local packed = hash[name]
+    if server then
+      local name = server.name or server.address
 
-    if packed then
-      insert(packed, server)
-      packed.ttl = min(packed.ttl, server.ttl)
-    else
-      packed = {
-        server,
-        name = name,
-        ttl = server.ttl
-      }
+      local packed = hash[name]
 
-      insert(compact, packed)
-      hash[name] = packed
+      if packed then
+        insert(packed, server)
+        packed.ttl = min(packed.ttl, server.ttl)
+      else
+        packed = {
+          server,
+          name = name,
+          ttl = server.ttl
+        }
+
+        insert(compact, packed)
+        hash[name] = packed
+      end
     end
   end
 
   return compact
 end
 
-function _M.store(self, answer)
+function _M.store(self, answer, force_ttl)
   local cache = self.cache
 
   if not cache then
@@ -65,7 +69,7 @@ function _M.store(self, answer)
 
   ngx.log(ngx.DEBUG, 'resolver cache write ', name, ' with TLL ', answer.ttl)
 
-  local ttl = answer.ttl
+  local ttl = force_ttl or answer.ttl
 
   if ttl == -1 then
     ttl = nil
@@ -101,19 +105,22 @@ local function fetch_answers(hostname, cache, stale, circular_reference)
     circular_reference[hostname] = true
   end
 
-  local answers, stale_answers = cache:get(hostname)
+  local answer, stale_answer = cache:get(hostname)
 
-  if not answers then
-    if stale and stale_answers then
-      return stale_answers
+  if answer then
+    ngx.log(ngx.DEBUG, 'resolver cache read ', hostname, ' ', #answer, ' entries')
+  else
+    if stale and stale_answer then
+      cache:set(hostname, stale_answer, 0)
+      ngx.log(ngx.DEBUG, 'resolver cache stale ', hostname, ' ', #stale_answer, 'entries')
+      answer = stale_answer
     else
-      return {}
+      ngx.log(ngx.DEBUG, 'resolver cache miss ', hostname)
+      answer = {}
     end
   end
 
-  ngx.log(ngx.DEBUG, 'resolver cache read ', hostname, ' ', #answers, ' entries')
-
-  return answers
+  return answer
 end
 
 local function yieldfetch(found, hostname, cache, stale, circular_reference)
@@ -140,7 +147,25 @@ local answers_mt = {
   end
 }
 
-function _M.get(self, name)
+function _M.all(self)
+  local cache = self.cache
+
+  if not cache then
+    return nil, 'not initialized'
+  end
+
+  local results = {}
+  local now = ngx_now()
+
+  for k,v in pairs(cache.hasht) do
+    local node = cache.key2node[k]
+    results[k] = { value = v, expires_in = node.expire - now }
+  end
+
+  return results
+end
+
+function _M.get(self, name, stale)
   local cache = self.cache
 
   if not cache then
@@ -148,7 +173,7 @@ function _M.get(self, name)
   end
 
   local answers = setmetatable({ addresses = {} }, answers_mt)
-  local records = fetch(cache, name)
+  local records = fetch(cache, name, stale)
 
   for i=1, #records do
     insert(answers, records[i])

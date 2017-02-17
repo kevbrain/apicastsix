@@ -9,7 +9,7 @@ SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
-OPENRESTY_VERSION ?= 1.11.2.2-1
+OPENRESTY_VERSION ?= 1.11.2.2-2
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
@@ -55,16 +55,22 @@ push: ## Push image to the registry
 bash: export IMAGE_NAME = apicast-test
 bash: export SERVICE = gateway
 bash: ## Run bash inside the builder image
-	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash $(SERVICE) -i
+	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash $(SERVICE)
 
+dev: export IMAGE_NAME = apicast-test
+dev: export SERVICE = dev
+dev: USER = root
+dev: ## Run APIcast inside the container mounted to local volume
+	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
 test-builder-image: export IMAGE_NAME = apicast-test
-test-builder-image: builder-image clean ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
+test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p .
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test bash -c 'for i in {1..5}; do curl --fail http://gateway:8090/status/live && break || sleep 1; done'
+	$(DOCKER_COMPOSE) logs gateway
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X PUT http://gateway:8090/config --data '{"services":[{"id":42}]}'
 	@echo -e $(SEPARATOR)
@@ -78,7 +84,7 @@ test-builder-image: builder-image clean ## Smoke test the builder image. Pass an
 	@echo -e $(SEPARATOR)
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
-test-runtime-image: clean ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
+test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_MISSING_CONFIGURATION=exit -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d
@@ -89,8 +95,11 @@ dependencies:
 	luarocks make apicast/*.rockspec
 	luarocks make rockspec
 
-clean: ## Remove all running docker containers
+clean-containers:
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans
+
+clean: clean-containers ## Remove all running docker containers and images
+	- docker rmi apicast-test apicast-runtime-test --force
 
 doc: dependencies ## Generate documentation
 	ldoc -c doc/config.ld .

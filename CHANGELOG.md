@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Management API to show the DNS cache [PR #260](https://github.com/3scale/apicast/pull/260)
 * Extract correct Host header from the backend endpoint when backend host not provided [PR #267](https://github.com/3scale/apicast/pull/267)
 
+### Removed
+
+* Support for downloading configuration via curl [PR #266](https://github.com/3scale/apicast/pull/266)
+
 ## [3.0.0-alpha2] - 2017-02-06
 
 ### Added

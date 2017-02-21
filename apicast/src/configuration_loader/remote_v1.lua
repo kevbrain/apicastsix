@@ -1,12 +1,11 @@
 local unpack = unpack
 local concat = table.concat
 local tostring = tostring
-local len = string.len
+local tonumber = tonumber
 
 local resty_url = require 'resty.url'
 local http = require "resty.resolver.http"
 local configuration_parser = require 'configuration_parser'
-local util = require 'util'
 local user_agent = require 'user_agent'
 local env = require 'resty.env'
 
@@ -14,14 +13,13 @@ local _M = {
   version = '0.1'
 }
 
-
 function _M.call(host)
   local endpoint = env.get('THREESCALE_PORTAL_ENDPOINT')
 
-  return _M.wait(endpoint, 3) or _M.download(endpoint, host) or _M.curl(endpoint, host)
+  _M.wait(endpoint, tonumber(env.get("APICAST_CONFIGURATION_TIMEOUT") or 3))
+
+  return _M.download(endpoint, host)
 end
-
-
 
 -- wait until a connection to a TCP socket can be established
 function _M.wait(endpoint, timeout)
@@ -56,7 +54,7 @@ function _M.wait(endpoint, timeout)
     if ok then
       ngx.log(ngx.DEBUG, 'connected to ' .. host .. ':' .. tostring(port))
       sock:close()
-      return
+      return true
     else
       ngx.log(ngx.DEBUG, 'failed to connect to ' .. host .. ':' .. tostring(port) .. ': ' .. err)
     end
@@ -126,40 +124,5 @@ function _M.download(endpoint, _)
     return nil, err or res.reason
   end
 end
-
--- curl is used because resty command that runs libexec/boot does not have correct DNS resolvers set up
--- resty is using google's public DNS servers and there is no way to change that
-function _M.curl(endpoint)
-  local url, err = resty_url.split(endpoint)
-
-  if not url and err then
-    return nil, err
-  end
-
-  local timeout = env.get('CURL_TIMEOUT') or 3
-  local scheme, user, pass, host, port, path = unpack(url)
-
-  if port then host = concat({host, port}, ':') end
-
-  url = concat({ scheme, '://', concat({user or '', pass or ''}, ':'), '@', host, path or '/admin/api/nginx/spec.json' }, '')
-
-  local config, stderr, code = util.system('curl --silent --show-error --fail --max-time ' .. timeout .. ' --location ' .. url)
-
-  ngx.log(ngx.INFO, 'configuration request sent: ', url)
-
-  if config and len(config) > 0 then
-    ngx.log(ngx.DEBUG, 'configuration response received:', config)
-    return config
-  else
-    if code then
-      ngx.log(ngx.ERR, 'configuration download error ', stderr, ' ', code)
-      return nil, 'curl finished with ' .. stderr .. ' ' .. code
-    else
-      ngx.log(ngx.WARN, 'configuration download error: ',  stderr)
-      return nil, stderr
-    end
-  end
-end
-
 
 return _M

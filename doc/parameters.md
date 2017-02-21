@@ -76,11 +76,6 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
 
   Specifies the interval (in seconds) that will be used by the gateway to update the configuration automatically. The value should be set more than 60. For example, if `AUTO_UPDATE_INTERVAL` is set to 120, the gateway will reload the configuration every 2 minutes (120 seconds).
 
-- `CURL_TIMEOUT`
-  **Default:** 3
-
-  Sets the timeout (in seconds) for the `curl` command that is used to download the gateway configuration from the 3scale API Manager.
-
 - `REDIS_HOST`
   **Default:** "127.0.0.1"
 

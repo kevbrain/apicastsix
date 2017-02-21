@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Danger bot to check for consistency in Pull Requests [PR #265](https://github.com/3scale/apicast/pull/265)
 * Start local caching DNS server in the container [PR #260](https://github.com/3scale/apicast/pull/260)
 * Management API to show the DNS cache [PR #260](https://github.com/3scale/apicast/pull/260)
+* Extract correct Host header from the backend endpoint when backend host not provided [PR #267](https://github.com/3scale/apicast/pull/267)
 
 ## [3.0.0-alpha2] - 2017-02-06
 

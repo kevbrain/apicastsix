@@ -9,6 +9,8 @@ $ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 
+require("t/dns.pl");
+
 log_level('debug');
 repeat_each(2);
 no_root_location();
@@ -459,3 +461,59 @@ all ok
 --- response_headers
 X-3scale-matched-rules: /
 X-3scale-usage: usage%5Bhits%5D=2
+
+=== TEST 14: uses endpoint host as Host header
+when connecting to the backend
+--- main_config
+env RESOLVER=127.0.0.1:1953;
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('proxy').configure({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'service-token',
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/",
+            backend = {
+                endpoint = 'http://localhost.example.com:$TEST_NGINX_SERVER_PORT'
+            },
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
+            }
+          }
+       },
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /api/ {
+    echo "all ok";
+  }
+
+  location /transactions/authrep.xml {
+     content_by_lua_block {
+       if ngx.var.host == 'localhost.example.com' then
+         ngx.exit(200)
+       else
+         ngx.exit(404)
+       end
+     }
+  }
+
+--- request
+GET /t?user_key=val
+--- response_body
+all ok
+--- error_code: 200
+--- udp_listen: 1953
+--- udp_reply eval
+$::dns->("localhost.example.com", "127.0.0.1")
+--- no_error_log
+[error]

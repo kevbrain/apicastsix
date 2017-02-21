@@ -300,8 +300,6 @@ function _M:set_backend_upstream(service)
 
   ngx.var.backend_authentication_type = service.backend_authentication.type
   ngx.var.backend_authentication_value = service.backend_authentication.value
-  ngx.var.backend_host = service.backend.host or ngx.var.backend_host
-
   ngx.var.version = self.configuration.version
 
   -- set backend
@@ -317,7 +315,7 @@ function _M:set_backend_upstream(service)
   ngx.ctx.backend_upstream = backend_upstream
 
   ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. path
-
+  ngx.var.backend_host = service.backend.host or server or ngx.var.backend_host
 end
 
 function _M:call(host)

@@ -19,6 +19,11 @@ spec_files = $(shell find spec -type f -name '*.lua')
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
 
+danger: TEMPFILE := $(shell mktemp)
+danger:
+	env | grep -E 'TRAVIS|DANGER|SEAL' > $(TEMPFILE)
+	docker run --rm -v $(PWD):/src/ -w /src/ --env-file=$(TEMPFILE) -u $(shell id -u) quay.io/3scale/danger danger
+
 busted: dependencies ## Test Lua.
 	@bin/busted
 	@- luacov

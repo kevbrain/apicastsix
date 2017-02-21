@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Start local caching DNS server in the container [PR #260](https://github.com/3scale/apicast/pull/260)
 * Management API to show the DNS cache [PR #260](https://github.com/3scale/apicast/pull/260)
 
+### Removed
+
+* Support for downloading configuration via curl [PR #266](https://github.com/3scale/apicast/pull/266)
+
 ## [3.0.0-alpha2] - 2017-02-06
 
 ### Added

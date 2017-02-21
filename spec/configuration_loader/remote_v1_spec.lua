@@ -26,13 +26,4 @@ describe('Configuration object', function()
       assert(loader.download('http://127.0.0.1:1984/json'))
     end)
   end)
-
-  describe('.curl', function()
-    it('returns error', function()
-      local config, err = loader.curl('http://127.0.0.1:1234')
-
-      assert.falsy(config)
-      assert.match('curl finished with', err)
-    end)
-  end)
 end)

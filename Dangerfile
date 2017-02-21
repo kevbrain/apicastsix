@@ -20,5 +20,5 @@ ENV['LANG'] = 'en_US.utf8'
 prose.lint_files markdown_files - %w(CHANGELOG.md)
 
 # Look for spelling issues
-prose.ignored_words = %w(s2i openresty APIcast nameservers resty-resolver nginx Redis OAuth ENV backend)
+prose.ignored_words = %w(s2i openresty APIcast nameservers resty-resolver nginx Redis OAuth ENV backend 3scale OpenShift Default Lua)
 prose.check_spelling markdown_files - %w(CHANGELOG.md)

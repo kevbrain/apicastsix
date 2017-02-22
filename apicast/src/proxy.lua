@@ -64,7 +64,7 @@ function _M:configured(host)
 
   local hosts = configuration:find_by_host(host)
 
-  return next(hosts) and true
+  return #(hosts) > 0
 end
 
 -- Error Codes

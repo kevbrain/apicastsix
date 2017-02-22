@@ -1,7 +1,7 @@
 local _M = {}
 
 local cjson = require('cjson')
-local provider = require('proxy')
+local proxy = require('module').proxy
 local router = require('router')
 local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')
@@ -31,8 +31,8 @@ end
 
 function _M.status()
   -- TODO: this should be fixed for multi-tenant deployment
-  local has_configuration = provider.configuration.configured
-  local has_services = #(provider.configuration:all()) > 0
+  local has_configuration = proxy.configuration.configured
+  local has_services = #(proxy.configuration:all()) > 0
 
   if not has_configuration then
     return { status = 'error', error = 'not configured',  success = false }
@@ -44,7 +44,7 @@ function _M.status()
 end
 
 function _M.config()
-  local config = provider.configuration
+  local config = proxy.configuration
   local contents = cjson.encode(config.configured and { services = config:all() } or nil)
 
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -64,7 +64,7 @@ function _M.update_config()
   end
 
   local config = configuration_parser.decode(data)
-  provider.configure(config)
+  proxy:configure(config)
   -- TODO: respond with proper 304 Not Modified when config is the same
   local response = cjson.encode({ status = 'ok', config = config or cjson.null })
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -74,7 +74,7 @@ end
 function _M.delete_config()
   ngx.log(ngx.DEBUG, 'management config delete')
 
-  provider.configuration:reset()
+  proxy.configuration:reset()
   -- TODO: respond with proper 304 Not Modified when config is the same
   local response = cjson.encode({ status = 'ok', config = cjson.null })
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -90,7 +90,7 @@ function _M.boot()
 
   ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(data))
 
-  provider.init(config)
+  proxy:configure(config)
 
   ngx.say(response)
 end

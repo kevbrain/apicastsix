@@ -6,7 +6,7 @@ insulate('Configuration object', function()
 
     it('saves mock configuration', function()
       local config = { 'foo' }
-      configuration.save(config)
+      configuration.mock(config)
 
       assert.equal(config, mock_loader.config)
     end)

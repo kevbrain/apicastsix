@@ -16,7 +16,7 @@ function _M.boot(host)
   return mock_loader.call() or file_loader.call() or remote_loader_v2.call() or remote_loader_v1.call(host) or error('missing configuration')
 end
 
-_M.save = mock_loader.save
+_M.mock = mock_loader.save
 
 -- Cosocket API is not available in the init_by_lua* context (see more here: https://github.com/openresty/lua-nginx-module#cosockets-not-available-everywhere)
 -- For this reason a new process needs to be started to download the configuration through 3scale API

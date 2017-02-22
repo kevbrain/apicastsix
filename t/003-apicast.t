@@ -23,7 +23,7 @@ The message is configurable as well as the status.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           backend_version = 1,
@@ -49,7 +49,7 @@ The message is configurable and status also.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -77,7 +77,7 @@ The message is configurable and default status is 403.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           backend_version = 1,
@@ -118,7 +118,7 @@ It asks backend and then forwards the request to the api.
 
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -172,7 +172,7 @@ When mapping rule has a parameter with fixed value it has to be matched.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -210,7 +210,7 @@ When mapping rule has a parameter with fixed value it has to be matched.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -255,7 +255,7 @@ When mapping rule has a parameter with variable value it has to exist.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -300,7 +300,7 @@ X-3scale-usage: usage%5Bbar%5D=3
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -370,7 +370,7 @@ So when booting it can be immediately known that some of them won't work.
 --- config
 location /t {
   content_by_lua_block {
-    require('proxy').configure({
+    require('module').proxy:configure({
       services = {
         { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
         { id = 2, proxy = { hosts = { 'foo', 'daz' } } },
@@ -397,7 +397,7 @@ Including it's host so it is easy to see that configuration was loaded.
 --- config
 location /t {
   content_by_lua_block {
-    require('proxy').configure({
+    require('module').proxy:configure({
       services = {
         { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
         { id = 2, proxy = { hosts = { 'baz', 'daz' } } },
@@ -422,7 +422,7 @@ When X-3scale-Debug header has value of the backend authentication.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('proxy').configure({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -470,7 +470,7 @@ env RESOLVER=127.0.0.1:1953;
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('proxy').configure({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,

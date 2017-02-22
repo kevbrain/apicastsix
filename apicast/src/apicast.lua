@@ -7,6 +7,7 @@ local math = math
 local setmetatable = setmetatable
 local env = require('resty.env')
 local reload_config = env.enabled('APICAST_RELOAD_CONFIG')
+local configuration_store = require('configuration_store')
 local user_agent = require('user_agent')
 
 local noop = function() end
@@ -34,11 +35,16 @@ end
 local mt = {
   __index = _M
 }
+--- This is called when APIcast boots the master process.
 function _M.new()
-  return setmetatable({ proxy = proxy.new() }, mt)
+  -- FIXME: this is really bad idea, this file is shared across all requests,
+  -- so that means sharing something in this module would be sharing it acros all requests
+  -- and in multi-tenant environment that would mean leaking information
+  local configuration = configuration_store.new()
+  return setmetatable({ proxy = proxy.new(configuration) }, mt)
 end
 
-function _M.init()
+function _M:init()
   user_agent.cache()
 
   math.randomseed(ngx.now())
@@ -46,24 +52,24 @@ function _M.init()
   for _=1,3 do math.random() end
 
   local config, err = configuration_loader.init()
-  local init = config and proxy.init(config)
+  local init = config and self.proxy:configure(config)
 
   if not init then
     handle_missing_configuration(err)
   end
 end
 
-local function refresh_config()
+local function refresh_config(p)
   local config, err = configuration_loader.boot()
 
   if config then
-    proxy.init(config)
+    p:configure(config)
   else
     ngx.log(ngx.ERR, 'failed to refresh configuration: ', err)
   end
 end
 
-function _M.init_worker()
+function _M:init_worker()
   local interval = tonumber(env.get('AUTO_UPDATE_INTERVAL'), 10) or 0
 
   local function schedule(...)
@@ -77,12 +83,12 @@ function _M.init_worker()
 
   local handler
 
-  handler = function (premature)
+  handler = function (premature, ...)
     if premature then return end
 
     ngx.log(ngx.INFO, 'auto updating configuration')
 
-    local updated, err = pcall(refresh_config)
+    local updated, err = pcall(refresh_config, ...)
 
     if updated then
       ngx.log(ngx.INFO, 'auto updating configuration finished successfuly')
@@ -90,11 +96,11 @@ function _M.init_worker()
       ngx.log(ngx.ERR, 'auto updating configuration failed with: ', err)
     end
 
-    schedule(interval, handler)
+    schedule(interval, handler, ...)
   end
 
   if interval > 0 then
-    schedule(interval, handler)
+    schedule(interval, handler, self.proxy)
   end
 end
 
@@ -116,11 +122,11 @@ function _M:rewrite()
     p:configure(config)
   end
 
-  p.set_upstream(p.set_service(host))
+  p.set_upstream(p:set_service(host))
 end
 
-function _M.post_action()
-  proxy:post_action()
+function _M:post_action()
+  self.proxy:post_action()
 end
 
 function _M:access()

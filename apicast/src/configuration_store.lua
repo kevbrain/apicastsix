@@ -1,9 +1,8 @@
 local setmetatable = setmetatable
-local ipairs = ipairs
 local pairs = pairs
 local insert = table.insert
 local concat = table.concat
-local next = next
+local rawset = rawset
 
 local env = require 'resty.env'
 
@@ -16,9 +15,18 @@ local mt = { __index = _M }
 
 function _M.new()
   return setmetatable({
+    -- services hashed by id, example: {
+    --   ["16"] = service1
+    -- }
     services = {},
-    hosts = {},
+
+    -- hash of hosts pointing to services, example: {
+    --  ["host.example.com"] = {
+    --    { service1 },
+    --    { service2 }
+    --  }
     cache = {}
+
   }, mt)
 end
 
@@ -52,15 +60,47 @@ function _M.find_by_host(self, host)
   if not cache then
     return nil, 'not initialized'
   end
+
   return cache[host] or { }
 end
 
+local hashed_array = {
+  __index = function(t,k)
+    local v = {}
+    rawset(t,k, v)
+    return v
+  end
+}
+
 function _M.store(self, config)
   self.configured = true
-  local services = config.services
 
-  for i = 1, #services do
-    _M.add(self, services[i])
+  local services = config.services
+  local by_host = setmetatable({}, hashed_array)
+
+  for i=1, #services do
+    local hosts = services[i].hosts or {}
+    local id = services[i].id
+
+    ngx.log(ngx.INFO, 'added service ', id, ' configuration with hosts: ', concat(hosts, ', '))
+
+    for j=1, #hosts do
+      local h = by_host[hosts[j]]
+
+      if #(h) == 0 or _M.path_routing then
+        insert(h, services[i])
+      else
+        ngx.log(ngx.WARN, 'skipping host ', hosts[j], ' for service ', id, ' already defined by service ', h[1].id)
+      end
+    end
+
+    self.services[id] = services[i]
+  end
+
+  local cache = self.cache
+
+  for host, services in pairs(by_host) do
+    cache[host] = services
   end
 
   return config
@@ -72,52 +112,16 @@ function _M.reset(self)
   end
 
   self.services = {}
-  self.hosts = {}
   self.cache = {}
   self.configured = false
 end
 
 function _M.add(self, service)
-  local hosts = self.hosts
-  local all = self.services
-  local cache = self.cache
-
-  if not hosts or not all then
+  if not self.services then
     return nil, 'not initialized'
   end
 
-  local id = service.id
-
-  if not service.hosts then
-    ngx.log(ngx.WARN, 'service ', id, ' is missing hosts')
-    return
-  end
-
-  for _,host in ipairs(service.hosts) do
-    local index = hosts[host] or {}
-    local exists = not _M.path_routing and next(index)
-
-    -- already exists in cache
-    local pos = index[id]
-    local c = cache[host] or {}
-
-    if pos then
-      c[pos] = service
-    else
-      insert(c, service)
-      index[id] = #c
-      all[id] = service
-    end
-
-    cache[host] = c
-    hosts[host] = index
-
-    if exists and exists ~= id then
-      ngx.log(ngx.WARN, 'host ', host, ' for service ', id, ' already defined by service ', exists)
-    end
-  end
-
-  ngx.log(ngx.INFO, 'added service ', id, ' configuration with hosts: ', concat(service.hosts, ', '))
+  return self:store({ services = { service }})
 end
 
 return _M

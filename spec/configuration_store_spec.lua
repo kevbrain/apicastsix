@@ -9,21 +9,7 @@ describe('Configuration Store', function()
 
       store:store({services = { service }})
 
-      assert.truthy(store.hosts['example.com']['42'])
-    end)
-  end)
-
-  describe('.add', function()
-    it('stores cached touples of services', function()
-      local store = configuration.new()
-      local service1 =  { id = '1', hosts = { 'localhost' } }
-      local service2 = { id = '2', hosts = { 'localhost' } }
-
-      store:add(service1)
-      store:add(service2)
-
-
-      assert.same({ service1, service2 }, store.cache.localhost)
+      assert.equal(service, store:find_by_id('42'))
     end)
   end)
 
@@ -41,7 +27,6 @@ describe('Configuration Store', function()
       local service =  { 'service' }
 
       store.services['42'] = service
-      store.hosts['example.com'] = { ['42'] = service }
 
       assert.is_nil(store:find_by_id('example.com'))
     end)
@@ -91,11 +76,11 @@ describe('Configuration Store', function()
     end)
 
     it('deletes stored hosts', function()
-      store.hosts['example.com'] = { ['42'] = { } }
+      store.cache['example.com'] = { { '42'} }
 
       store:reset()
 
-      assert.equal(0, #store.hosts)
+      assert.equal(0, #store.cache)
     end)
 
     it('deletes all services', function()

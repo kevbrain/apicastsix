@@ -86,7 +86,10 @@ test-builder-image: builder-image clean-containers ## Smoke test the builder ima
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X POST http://gateway:8090/boot
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep 'APIcast/'
-	@echo -e $(SEPARATOR)
+
+gateway-logs: export IMAGE_NAME = does-not-matter
+gateway-logs:
+	$(DOCKER_COMPOSE) logs gateway
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
 test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.

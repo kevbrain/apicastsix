@@ -50,10 +50,10 @@ script:
 - make busted
 - make prove
 - make builder-image
-- make test-builder-image
-- make prove-docker
+- make test-builder-image gateway-logs --keep-going
+- make prove-docker 
 - make runtime-image
-- make test-runtime-image
+- make test-runtime-image gateway-logs --keep-going
 - make doc
 - make test-doc
 - make danger

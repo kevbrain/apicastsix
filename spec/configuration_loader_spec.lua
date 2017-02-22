@@ -1,6 +1,6 @@
 insulate('Configuration object', function()
 
-  insulate('.save', function()
+  insulate('.mock', function()
     local configuration = require 'configuration_loader'
     local mock_loader = require 'configuration_loader.mock'
 

@@ -3,10 +3,16 @@ local file_loader = require 'configuration_loader.file'
 local remote_loader_v1 = require 'configuration_loader.remote_v1'
 local remote_loader_v2 = require 'configuration_loader.remote_v2'
 local util = require 'util'
+local env = require('resty.env')
 
 local tostring = tostring
 local error = error
 local len = string.len
+local assert = assert
+local pcall = pcall
+local tonumber = tonumber
+
+local noop = function() end
 
 local _M = {
   _VERSION = '0.1'
@@ -38,6 +44,83 @@ function _M.init(cwd)
       return nil, err
     end
   end
+end
+
+local boot = { rewrite = noop }
+
+function boot.init(proxy)
+  local config, err = _M.init()
+  local init, conferr = proxy:configure(config)
+
+  if config and init then
+    ngx.log(ngx.DEBUG, 'downloaded configuration: ', config)
+  else
+    ngx.log(ngx.EMERG, 'failed to load configuration, exiting: ', err or conferr)
+    os.exit(1)
+  end
+end
+
+local function refresh_configuration(proxy)
+  local config = _M.boot()
+  local init, err = proxy:configure(config)
+
+  if init then
+    ngx.log(ngx.DEBUG, 'updated configuration via timer: ', config)
+  else
+    ngx.log(ngx.EMERG, 'failed to update configuration: ', err)
+  end
+end
+
+function boot.init_worker(proxy)
+  local interval = tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10) or 0
+
+  local function schedule(...)
+    local ok, err = ngx.timer.at(...)
+
+    if not ok then
+      ngx.log(ngx.ERR, "failed to create the auto update timer: ", err)
+      return
+    end
+  end
+
+  local handler
+
+  handler = function (premature, ...)
+    if premature then return end
+
+    ngx.log(ngx.INFO, 'auto updating configuration')
+
+    local updated, err = pcall(refresh_configuration, ...)
+
+    if updated then
+      ngx.log(ngx.INFO, 'auto updating configuration finished successfuly')
+    else
+      ngx.log(ngx.ERR, 'auto updating configuration failed with: ', err)
+    end
+
+    schedule(interval, handler, ...)
+  end
+
+  if interval > 0 then
+    schedule(interval, handler, proxy)
+  end
+end
+
+local lazy = { init = noop, init_worker = noop }
+
+function lazy.rewrite(proxy, host)
+  if not proxy:configured(host) then
+    local config = _M.boot(host)
+    proxy:configure(config)
+  end
+end
+
+local modes = {
+  boot = boot, lazy = lazy, default = 'lazy'
+}
+
+function _M.new(mode)
+  return assert(modes[mode or modes.default], 'invalid config loader mode')
 end
 
 return _M

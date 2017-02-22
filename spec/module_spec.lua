@@ -27,8 +27,10 @@ describe('module', function()
 
     it('defaults to apicast', function()
       local apicast = require('apicast')
+      local module = require('module')
 
-      assert.same(apicast.new(), require('module'))
+      assert.truthy(module._NAME)
+      assert.same(apicast._NAME, module._NAME)
     end)
   end)
 end)

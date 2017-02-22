@@ -16,17 +16,17 @@ describe('Configuration Store', function()
   describe('.find_by_id', function()
     it('finds service by id', function()
       local store = configuration.new()
-      local service = { 'service' }
+      local service = { id = '42' }
 
-      store.services['42'] = service
+      store:add(service)
 
       assert.same(service, store:find_by_id('42'))
     end)
     it('it does not seach by host', function()
       local store = configuration.new()
-      local service =  { 'service' }
+      local service = { id = '42', hosts = { 'example.com' } }
 
-      store.services['42'] = service
+      store:add(service)
 
       assert.is_nil(store:find_by_id('example.com'))
     end)
@@ -104,9 +104,10 @@ describe('Configuration Store', function()
     it('returns all services', function()
       local store = configuration.new()
 
-      store.services['42'] = { 'service' }
+      local service = { id = '42' }
+      store:add(service)
 
-      assert.same({{'service'}}, store:all())
+      assert.same({ service }, store:all())
     end)
   end)
 end)

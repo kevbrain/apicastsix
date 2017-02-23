@@ -18,6 +18,9 @@ services:
     volumes:
       - .:/opt/app
     env_file: .env
+    environment:
+      TEST_NGINX_BINARY: openresty
+      TEST_NGINX_REDIS_HOST: redis
   test:
     image: ${IMAGE_NAME}
     depends_on:

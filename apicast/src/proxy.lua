@@ -19,7 +19,6 @@ local setmetatable = setmetatable
 local exit = ngx.exit
 local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
-local dns_resolver = require 'resty.resolver.dns'
 local empty = {}
 
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
@@ -287,9 +286,7 @@ end
 function _M.set_upstream(service)
   local upstream = _M.get_upstream(service)
 
-  ngx.ctx.dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
-  ngx.ctx.resolver = resty_resolver.new(ngx.ctx.dns)
-  ngx.ctx.upstream = ngx.ctx.resolver:get_servers(upstream.server, { port = upstream.port })
+  ngx.ctx.upstream = resty_resolver:instance():get_servers(upstream.server, { port = upstream.port })
 
   ngx.var.proxy_pass = upstream.uri
   ngx.req.set_header('Host', upstream.host or ngx.var.host)
@@ -307,10 +304,7 @@ function _M:set_backend_upstream(service)
   local scheme, _, _, server, port, path =
     url[1], url[2], url[3], url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
 
-  ngx.ctx.dns = ngx.ctx.dns or dns_resolver:new{ nameservers = resty_resolver.nameservers() }
-  ngx.ctx.resolver = ngx.ctx.resolver or resty_resolver.new(ngx.ctx.dns)
-
-  local backend_upstream = ngx.ctx.resolver:get_servers(server, { port = port or nil })
+  local backend_upstream = resty_resolver:instance():get_servers(server, { port = port or nil })
   ngx.log(ngx.DEBUG, '[resolver] resolved backend upstream: ', #backend_upstream)
   ngx.ctx.backend_upstream = backend_upstream
 

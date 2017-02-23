@@ -23,9 +23,9 @@ lua_package_path "$TEST_NGINX_LUA_PATH";
 location /t {
   rewrite_by_lua_block {
     local resty_resolver = require 'resty.resolver'
-    local dns_resolver = require 'resty.dns.resolver'
+    local dns_client = require 'resty.dns.resolver'
 
-    local dns = dns_resolver:new{ nameservers = { { "127.0.0.1", 1953 } } }
+    local dns = dns_client:new{ nameservers = { { "127.0.0.1", 1953 } } }
     local resolver = resty_resolver.new(dns)
 
     local servers = resolver:get_servers('3scale.net')
@@ -124,9 +124,9 @@ location /api {
 location /t {
   rewrite_by_lua_block {
     local resty_resolver = require 'resty.resolver'
-    local dns_resolver = require 'resty.dns.resolver'
+    local dns_client = require 'resty.dns.resolver'
 
-    local dns = dns_resolver:new{ nameservers = { { "127.0.0.1", 1953 } } }
+    local dns = dns_client:new{ nameservers = { { "127.0.0.1", 1953 } } }
     local resolver = resty_resolver.new(dns)
 
     ngx.ctx.upstream = resolver:get_servers('localhost', { port = $TEST_NGINX_SERVER_PORT })

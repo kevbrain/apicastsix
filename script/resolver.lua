@@ -3,9 +3,9 @@
 local inspect = require 'inspect'
 
 local resty_resolver = require 'resty.resolver'
-local dns_resolver = require 'resty.dns.resolver'
+local dns_client = require 'resty.dns.resolver'
 
-local dns, err = dns_resolver:new{ nameservers = { "8.8.8.8", "8.8.4.4" } }
+local dns, err = dns_client:new{ nameservers = { "8.8.8.8", "8.8.4.4" } }
 
 if err then
   print('error: ', err)

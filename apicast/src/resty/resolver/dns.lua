@@ -40,8 +40,16 @@ function _M:init_resolvers()
   local resolvers = self.resolvers
   local nameservers = self.nameservers
 
+  ngx.log(ngx.DEBUG, 'initializing ', #nameservers, ' nameservers')
   for i=1,#nameservers do
-    insert(resolvers, { nameservers[i], resty_resolver:new({ nameservers = { nameservers[i] }}) })
+    insert(resolvers, {
+      nameserver = nameservers[i],
+      resolver = resty_resolver:new({
+        nameservers = { nameservers[i] },
+        timeout = 2900
+      })
+    })
+    ngx.log(ngx.DEBUG, 'nameserver ', nameservers[i][1],':',nameservers[i][2] or 53, ' initialized')
   end
 
   self.initialized = true
@@ -54,18 +62,12 @@ local function query(resolver, qname, opts, nameserver)
   return resolver:query(qname, opts)
 end
 
-function _M.query(self, qname, opts)
-  local resolvers = self.resolvers
-
-  if not self.initialized then
-    resolvers = self:init_resolvers()
-  end
-
+local function parallel_query(resolvers, qname, opts)
   local threads = {}
   local n = #resolvers
 
   for i=1, n do
-    insert(threads, th_spawn(query, resolvers[i][2], qname, opts, resolvers[i][1]))
+    insert(threads, th_spawn(query, resolvers[i].resolver, qname, opts, resolvers[i].nameserver))
   end
 
   local answers, err
@@ -85,6 +87,31 @@ function _M.query(self, qname, opts)
   end
 
   return answers, err
+end
+
+local function serial_query(resolvers, qname, opts)
+  local answers, err
+
+  for i=1, #resolvers do
+    answers, err = query(resolvers[i].resolver, qname, opts, resolvers[i].nameserver)
+
+    if answers and not answers.errcode and not err then
+      break
+    end
+  end
+
+  return answers
+end
+
+function _M.query(self, qname, opts)
+  local resolvers = self.resolvers
+
+  if not self.initialized then
+    resolvers = self:init_resolvers()
+  end
+
+  -- this is here so you can try the other one when suspicous something is wrong
+  return (parallel_query or serial_query)(resolvers, qname, opts)
 end
 
 return _M

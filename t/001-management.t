@@ -144,9 +144,9 @@ Could not resolve GET /foobar - nil
 exposes boot function
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
+env RESOLVER=127.0.0.1:1953;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
-  resolver 127.0.0.1:1953 ipv6=off;
   init_by_lua_block {
       require('configuration_loader').save({ services = { { id = 42 } } })
   }
@@ -167,9 +167,9 @@ $::dns->("localhost", "127.0.0.1", 60)
 keeps the same configuration
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
+env RESOLVER=127.0.0.1:1953;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
-  resolver 127.0.0.1:1953 ipv6=off;
   init_by_lua_block {
       require('configuration_loader').save({ services = { { id = 42 } } })
   }

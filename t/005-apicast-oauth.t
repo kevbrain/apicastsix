@@ -44,8 +44,8 @@ Location: http://example.com/redirect?error=invalid_client
 [Section 1.3.1 of RFC 6749](https://tools.ietf.org/html/rfc6749#section-1.3.1)
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
+  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
-  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
@@ -200,8 +200,8 @@ include $TEST_NGINX_APICAST_CONFIG;
 === TEST 8: calling /callback redirects to correct error when state is missing
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
+  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
-  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').save({
@@ -222,8 +222,8 @@ include $TEST_NGINX_APICAST_CONFIG;
 Not part of the RFC. This is the Gateway API to create access tokens and redirect back to the Client.
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
+  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
-  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').save({
@@ -260,8 +260,8 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
 === TEST 10: calling /oauth/token returns correct error message on invalid parameters
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
+  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
-  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').save({
@@ -371,8 +371,8 @@ yay, upstream
 === TEST 12: calling /authorize with state returns same value back on redirect_uri
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
+  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
-  resolver $TEST_NGINX_RESOLVER;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {

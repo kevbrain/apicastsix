@@ -35,11 +35,7 @@ local _M = {
 
 local mt = { __index = _M }
 
-function _M.parse_nameservers(path)
-  local search = {}
-  local nameservers = { search = search }
-  local resolver = getenv('RESOLVER')
-
+local function read_resolv_conf(path)
   path = path or '/etc/resolv.conf'
 
   local handle, err
@@ -56,13 +52,26 @@ function _M.parse_nameservers(path)
     handle:seek("set")
     output = handle:read("*a")
     handle:close()
-  else
-    ngx.log(ngx.ERR, 'resolver could not get nameservers: ', err)
+  end
+
+  return output, err
+end
+
+function _M.parse_nameservers(path)
+  local resolv_conf, err = read_resolv_conf(path)
+
+  if not resolv_conf and err then
+    ngx.log(ngx.WARN, 'resolver could not get nameservers: ', err)
     return nil, err
   end
-  ngx.log(ngx.DEBUG, '/etc/resolv.conf:\n', output)
 
-  local domains = match(output, 'search%s+([^\n]+)')
+  ngx.log(ngx.DEBUG, '/etc/resolv.conf:\n', resolv_conf)
+
+  local search = {}
+  local nameservers = { search = search }
+  local resolver = getenv('RESOLVER')
+  local domains = match(resolv_conf, 'search%s+([^\n]+)')
+
   ngx.log(ngx.DEBUG, 'search ', domains)
   for domain in gmatch(domains or '', '([^%s]+)') do
     ngx.log(ngx.DEBUG, 'search domain: ', domain)
@@ -75,7 +84,7 @@ function _M.parse_nameservers(path)
     return nameservers
   end
 
-  for nameserver in gmatch(output, 'nameserver%s+([^%s]+)') do
+  for nameserver in gmatch(resolv_conf, 'nameserver%s+([^%s]+)') do
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
     if nameserver ~= resolver then
       insert(nameservers, { nameserver, default_resolver_port } )

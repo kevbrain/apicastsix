@@ -66,6 +66,10 @@ local function parallel_query(resolvers, qname, opts)
   local threads = {}
   local n = #resolvers
 
+  if n < 1 then
+    return nil, 'no resolvers'
+  end
+
   for i=1, n do
     insert(threads, th_spawn(query, resolvers[i].resolver, qname, opts, resolvers[i].nameserver))
   end

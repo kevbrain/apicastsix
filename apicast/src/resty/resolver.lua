@@ -55,15 +55,14 @@ local function read_resolv_conf(path)
     handle:close()
   end
 
-  return output, err
+  return output or "", err
 end
 
 function _M.parse_nameservers(path)
   local resolv_conf, err = read_resolv_conf(path)
 
-  if not resolv_conf and err then
+  if err then
     ngx.log(ngx.WARN, 'resolver could not get nameservers: ', err)
-    return nil, err
   end
 
   ngx.log(ngx.DEBUG, '/etc/resolv.conf:\n', resolv_conf)
@@ -206,6 +205,8 @@ local function convert_answers(answers, port)
   return servers
 end
 
+local empty = {}
+
 local function lookup(dns, qname, search, options)
   ngx.log(ngx.DEBUG, 'resolver query: ', qname)
 
@@ -231,6 +232,7 @@ local function lookup(dns, qname, search, options)
     end
   end
 
+  ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' finished with ', #(answers or empty), ' answers')
   return answers, err
 end
 
@@ -267,12 +269,16 @@ function _M.get_servers(self, qname, opts)
   end
 
   if err then
+    ngx.log(ngx.DEBUG, 'query for ', qname, ' finished with error: ', err)
     return {}, err
   end
 
   if not answers then
+    ngx.log(ngx.DEBUG, 'query for ', qname, ' finished with no answers')
     return {}, 'no answers'
   end
+
+  ngx.log(ngx.DEBUG, 'query for ', qname, ' finished with ' , #answers, ' answers')
 
   local servers = convert_answers(answers, opts.port)
 

@@ -12,6 +12,7 @@ local io_type = io.type
 local re_match = ngx.re.match
 local semaphore = require "ngx.semaphore"
 local resolver_cache = require 'resty.resolver.cache'
+local dns_resolver = require 'resty.resolver.dns'
 local re = require('ngx.re')
 
 local init = semaphore.new(1)
@@ -142,6 +143,18 @@ function _M.new(dns, opts)
   }, mt)
 end
 
+function _M:instance()
+  local ctx = ngx.ctx
+  local resolver = ctx.resolver
+
+  if not resolver then
+    local dns = dns_resolver:instance(self.nameservers())
+    resolver = self.new(dns)
+    ctx.resolver = resolver
+  end
+
+  return resolver
+end
 
 local function new_server(answer, port)
   if not answer then return nil, 'missing answer' end

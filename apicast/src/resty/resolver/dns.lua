@@ -24,6 +24,18 @@ function _M.new(_, options)
   }, mt)
 end
 
+function _M:instance(nameservers)
+  local ctx = ngx.ctx
+  local resolver = ctx.dns
+
+  if not resolver then
+    resolver = self:new({ nameservers = nameservers })
+    ctx.dns = resolver
+  end
+
+  return resolver
+end
+
 function _M:init_resolvers()
   local resolvers = self.resolvers
   local nameservers = self.nameservers

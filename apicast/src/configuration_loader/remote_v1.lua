@@ -5,6 +5,7 @@ local tonumber = tonumber
 
 local resty_url = require 'resty.url'
 local http = require "resty.resolver.http"
+local socket_resolver = require('resty.resolver.socket')
 local configuration_parser = require 'configuration_parser'
 local user_agent = require 'user_agent'
 local env = require 'resty.env'
@@ -46,7 +47,7 @@ function _M.wait(endpoint, timeout)
   end
 
   while now < fin do
-    local sock = ngx.socket.tcp()
+    local sock = socket_resolver.new(ngx.socket.tcp())
     local ok
 
     ok, err = sock:connect(host, port)
@@ -54,7 +55,7 @@ function _M.wait(endpoint, timeout)
     if ok then
       ngx.log(ngx.DEBUG, 'connected to ' .. host .. ':' .. tostring(port))
       sock:close()
-      return true
+      break
     else
       ngx.log(ngx.DEBUG, 'failed to connect to ' .. host .. ':' .. tostring(port) .. ': ' .. err)
     end
@@ -64,7 +65,7 @@ function _M.wait(endpoint, timeout)
     now = ngx.now()
   end
 
-  return nil, err
+  return not err, err
 end
 
 function _M.download(endpoint, _)

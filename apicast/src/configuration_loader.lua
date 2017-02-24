@@ -46,7 +46,10 @@ function _M.init(cwd)
   end
 end
 
-local boot = { rewrite = noop }
+local boot = {
+  rewrite = noop,
+  ttl = function() return tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10) end
+}
 
 function boot.init(proxy)
   local config, err = _M.init()
@@ -57,6 +60,11 @@ function boot.init(proxy)
   else
     ngx.log(ngx.EMERG, 'failed to load configuration, exiting: ', err or conferr)
     os.exit(1)
+  end
+
+  if boot.ttl() == 0 then
+    ngx.log(ngx.EMERG, 'cache is off, cannot store configuration, exiting')
+    os.exit(0)
   end
 end
 
@@ -72,7 +80,7 @@ local function refresh_configuration(proxy)
 end
 
 function boot.init_worker(proxy)
-  local interval = tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10) or 0
+  local interval = boot.ttl() or 0
 
   local function schedule(...)
     local ok, err = ngx.timer.at(...)

@@ -87,7 +87,7 @@ function _M.store(self, config, ttl)
     local id = services[i].id
 
     if not ids[id] then
-      ngx.log(ngx.INFO, 'added service ', id, ' configuration with hosts: ', concat(hosts, ', '))
+      ngx.log(ngx.INFO, 'added service ', id, ' configuration with hosts: ', concat(hosts, ', '), ' ttl: ', ttl)
 
       for j=1, #hosts do
         local h = by_host[hosts[j]]

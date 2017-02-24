@@ -4,7 +4,7 @@ local math = math
 local setmetatable = setmetatable
 local env = require('resty.env')
 local configuration_store = require('configuration_store')
-local configuration_loader = require('configuration_loader').new(env.get('APICAST_CONFIGURATION_LOADER'))
+local configuration_loader = require('configuration_loader').new()
 local user_agent = require('user_agent')
 
 local noop = function() end

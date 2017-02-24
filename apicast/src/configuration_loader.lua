@@ -120,7 +120,10 @@ local modes = {
 }
 
 function _M.new(mode)
-  return assert(modes[mode or modes.default], 'invalid config loader mode')
+  mode = mode or env.get('APICAST_CONFIGURATION_LOADER') or modes.default
+  local loader = modes[mode]
+  ngx.log(ngx.INFO, 'using ', mode, ' configuration loader')
+  return assert(loader, 'invalid config loader mode')
 end
 
 return _M

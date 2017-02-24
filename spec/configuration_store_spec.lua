@@ -9,39 +9,24 @@ describe('Configuration Store', function()
 
       store:store({services = { service }})
 
-      assert.truthy(store.hosts['example.com']['42'])
-    end)
-  end)
-
-  describe('.add', function()
-    it('stores cached touples of services', function()
-      local store = configuration.new()
-      local service1 =  { id = '1', hosts = { 'localhost' } }
-      local service2 = { id = '2', hosts = { 'localhost' } }
-
-      store:add(service1)
-      store:add(service2)
-
-
-      assert.same({ service1, service2 }, store.cache.localhost)
+      assert.equal(service, store:find_by_id('42'))
     end)
   end)
 
   describe('.find_by_id', function()
     it('finds service by id', function()
       local store = configuration.new()
-      local service = { 'service' }
+      local service = { id = '42' }
 
-      store.services['42'] = service
+      store:add(service)
 
       assert.same(service, store:find_by_id('42'))
     end)
     it('it does not seach by host', function()
       local store = configuration.new()
-      local service =  { 'service' }
+      local service = { id = '42', hosts = { 'example.com' } }
 
-      store.services['42'] = service
-      store.hosts['example.com'] = { ['42'] = service }
+      store:add(service)
 
       assert.is_nil(store:find_by_id('example.com'))
     end)
@@ -91,11 +76,11 @@ describe('Configuration Store', function()
     end)
 
     it('deletes stored hosts', function()
-      store.hosts['example.com'] = { ['42'] = { } }
+      store.cache['example.com'] = { { '42'} }
 
       store:reset()
 
-      assert.equal(0, #store.hosts)
+      assert.equal(0, #store.cache)
     end)
 
     it('deletes all services', function()
@@ -119,9 +104,10 @@ describe('Configuration Store', function()
     it('returns all services', function()
       local store = configuration.new()
 
-      store.services['42'] = { 'service' }
+      local service = { id = '42' }
+      store:add(service)
 
-      assert.same({{'service'}}, store:all())
+      assert.same({ service }, store:all())
     end)
   end)
 end)

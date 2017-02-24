@@ -48,7 +48,7 @@ describe('resty.resolver', function()
 
       assert.falsy(err)
       assert.equal(1, #servers)
-      assert.spy(dns.query).was.called_with(dns, '3scale.net', { qtype = 'A' })
+      assert.spy(dns.query).was.called_with(dns, '3scale.net.', { qtype = 'A' })
     end)
 
     it('skips answers with no address', function()
@@ -63,7 +63,7 @@ describe('resty.resolver', function()
 
       assert.falsy(err)
       assert.equal(1, #servers)
-      assert.spy(dns.query).was.called_with(dns, 'www.3scale.net', {})
+      assert.spy(dns.query).was.called_with(dns, 'www.3scale.net.', {})
     end)
 
     it('searches domains', function()
@@ -77,13 +77,13 @@ describe('resty.resolver', function()
         end
       end)
       resolver.options = { qtype = 'A' }
-      resolver.search = { 'example.com', 'net' }
+      resolver.search = { '', 'example.com', 'net' }
 
       local servers, err = resolver:get_servers('3scale')
 
       assert.falsy(err)
       assert.equal(1, #servers)
-      assert.spy(dns.query).was.called_with(dns, '3scale', resolver.options)
+      assert.spy(dns.query).was.called_with(dns, '3scale.', resolver.options)
       assert.spy(dns.query).was.called_with(dns, '3scale.example.com', resolver.options)
       assert.spy(dns.query).was.called_with(dns, '3scale.net', resolver.options)
     end)
@@ -139,8 +139,8 @@ describe('resty.resolver', function()
     it('returns search domains', function()
       local search = resty_resolver.parse_nameservers(tmpname).search
 
-      assert.equal(2, #search)
-      assert.same({ 'localdomain.example.com', 'local' },  search)
+      assert.equal(3, #search)
+      assert.same({ '', 'localdomain.example.com', 'local' },  search)
     end)
 
   end)

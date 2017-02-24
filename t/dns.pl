@@ -1,5 +1,5 @@
 our $dns = sub ($$$) {
-  my ($host, $ip) = @_;
+  my ($host, $ip, $ttl) = @_;
 
   return sub {
     # Get DNS request ID from passed UDP datagram
@@ -27,7 +27,7 @@ our $dns = sub ($$$) {
     # $name = pack("n", 0b1100000000001100);
 
     # name + type A + class IN + TTL + length + data(ip)
-    $s .= $name. pack("nnNn", 1, 1, 0, 4) . $data;
+    $s .= $name. pack("nnNn", 1, 1, $ttl || 0, 4) . $data;
     return $s;
   }
 };

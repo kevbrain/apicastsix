@@ -2,7 +2,6 @@
 local redis = require 'resty.redis'
 local env = require 'resty.env'
 
-local dns_resolver = require 'resty.resolver.dns'
 local resty_resolver = require 'resty.resolver'
 local resty_balancer = require 'resty.balancer'
 
@@ -95,8 +94,7 @@ end
 local balancer = resty_balancer.new(function(peers) return peers[1] end)
 
 function _M.resolve(host, port)
-  local dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
-  local resolver = resty_resolver.new(dns)
+  local resolver = resty_resolver:instance()
 
   local servers = resolver:get_servers(host, { port = port })
   local peers = balancer:peers(servers)

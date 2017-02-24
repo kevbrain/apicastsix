@@ -1,5 +1,4 @@
 local resty_http = require 'resty.http'
-local dns_resolver = require 'resty.resolver.dns'
 local resty_resolver = require 'resty.resolver'
 local round_robin = require 'resty.balancer.round_robin'
 
@@ -12,9 +11,8 @@ local mt = { __index = _M }
 
 function _M.new()
   local http = resty_http:new()
-  local dns = dns_resolver:new{ nameservers = resty_resolver.nameservers() }
 
-  http.resolver = resty_resolver.new(dns)
+  http.resolver = resty_resolver:instance()
   http.balancer = round_robin.new()
 
   return setmetatable(http, mt)

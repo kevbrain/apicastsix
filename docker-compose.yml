@@ -18,12 +18,19 @@ services:
     volumes:
       - .:/opt/app
     env_file: .env
+    environment:
+      TEST_NGINX_BINARY: openresty
+      TEST_NGINX_REDIS_HOST: redis
+    dns_search:
+      - example.com
   test:
     image: ${IMAGE_NAME}
     depends_on:
       - gateway
     entrypoint: ""
     dns: 127.0.0.1
+    dns_search:
+      - example.com
   prove:
     image: ${IMAGE_NAME}
     user: root
@@ -32,6 +39,8 @@ services:
       TEST_NGINX_APICAST_PATH: /opt/app
       TEST_NGINX_REDIS_HOST: redis
     command: prove
+    dns_search:
+      - example.com
     depends_on:
       - redis
     volumes:

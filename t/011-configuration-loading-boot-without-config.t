@@ -1,4 +1,4 @@
-use Test::Nginx::Socket::Lua 'no_plan';
+use Test::Nginx::Socket 'no_plan';
 use Cwd qw(cwd);
 
 my $pwd = cwd();

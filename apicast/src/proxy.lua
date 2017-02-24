@@ -24,12 +24,7 @@ local empty = {}
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
 local request_logs = env.enabled('APICAST_REQUEST_LOGS')
 
-local _M = {
-  -- FIXME: this is really bad idea, this file is shared across all requests,
-  -- so that means sharing something in this module would be sharing it acros all requests
-  -- and in multi-tenant environment that would mean leaking information
-  configuration = configuration_store.new()
-}
+local _M = { }
 
 local mt = {
   __index = _M
@@ -37,12 +32,16 @@ local mt = {
 
 function _M.new(configuration)
   return setmetatable({
-    configuration = configuration
+    configuration = assert(configuration, 'missing proxy configuration')
   }, mt)
 end
 
 function _M:configure(contents)
-  if self and not contents then contents = self end
+  local configuration = self.configuration
+
+  if not configuration then
+    return nil, 'not initialized'
+  end
 
   local config, err = configuration_parser.parse(contents)
 
@@ -52,9 +51,6 @@ function _M:configure(contents)
 
     return nil, err
   end
-
-  -- FIXME: using global configuration interface
-  local configuration = self.configuration or _M.configuration
 
   if config then
     return configuration:store(config)
@@ -70,8 +66,6 @@ function _M:configured(host)
 
   return next(hosts) and true
 end
-
-_M.init = function(config) return _M.configure(_M, config) end
 
 -- Error Codes
 local function error_no_credentials(service)
@@ -254,9 +248,9 @@ function _M.authorize(backend_version, service)
   end
 end
 
-function _M.set_service(host)
+function _M:set_service(host)
   host = host or ngx.var.host
-  local service = _M:find_service(host)
+  local service = self:find_service(host)
 
   if not service then
     error_service_not_found(host)
@@ -314,7 +308,7 @@ end
 
 function _M:call(host)
   host = host or ngx.var.host
-  local service = ngx.ctx.service or self.set_service(host)
+  local service = ngx.ctx.service or self:set_service(host)
 
   self:set_backend_upstream(service)
 

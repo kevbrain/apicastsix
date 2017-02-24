@@ -24,7 +24,7 @@ __DATA__
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { backend_version = 'oauth',
           proxy = { oauth_login_url = "http://example.com/redirect" } }
@@ -49,7 +49,7 @@ Location: http://example.com/redirect?error=invalid_client
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { backend_version = 'oauth',
           proxy = { oauth_login_url = "http://example.com/redirect" } }
@@ -89,7 +89,7 @@ Location: http://example.com/redirect\?scope=whatever&response_type=code&state=[
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
          id = 42, backend_version = 'oauth',
@@ -127,7 +127,7 @@ Location: http://example.com/redirect\?scope=whatever&response_type=token&error=
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -145,7 +145,7 @@ POST /oauth/token
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -163,7 +163,7 @@ POST /oauth/token?grant_type=authorization_code&client_id=client_id&redirect_uri
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -181,7 +181,7 @@ GET /callback
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -204,7 +204,7 @@ include $TEST_NGINX_APICAST_CONFIG;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -226,7 +226,7 @@ Not part of the RFC. This is the Gateway API to create access tokens and redirec
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth', oauth_login_url = "" }
       }
@@ -264,7 +264,7 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth' }
       }
@@ -331,7 +331,7 @@ GET /t
   include $TEST_NGINX_UPSTREAM_CONFIG;
 
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',
@@ -376,7 +376,7 @@ yay, upstream
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         { id = 42,
           backend_version = 'oauth',
@@ -409,7 +409,7 @@ Location: http://example.com/redirect\?code=\w+&state=12345
   include $TEST_NGINX_UPSTREAM_CONFIG;
 
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',
@@ -452,7 +452,7 @@ yay, upstream
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',
@@ -483,7 +483,7 @@ credentials missing!
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',

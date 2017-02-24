@@ -23,7 +23,7 @@ env APICAST_SERVICES=42,21;
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,

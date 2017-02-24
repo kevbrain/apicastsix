@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Bump s2i-openresty to 1.11.2.2-2 [PR #260](https://github.com/3scale/apicast/pull/260)
 - Echo API on port 8081 listens accepts any Host [PR #268](https://github.com/3scale/apicast/pull/268)
 - Always use DNS search scopes [PR #271](https://github.com/3scale/apicast/pull/271)
+- Reduce use of global objects [PR #273](https://github.com/3scale/apicast/pull/273)
 - Load V2 configuration for all services in parallel [PR #272](https://github.com/3scale/apicast/pull/272)
 
 ### Added

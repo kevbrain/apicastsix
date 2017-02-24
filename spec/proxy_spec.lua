@@ -1,9 +1,11 @@
-local proxy = require 'proxy'
 local configuration_store = require 'configuration_store'
 
 describe('Proxy', function()
+  local configuration, proxy
+
   before_each(function()
-    proxy.configuration:reset()
+    configuration = configuration_store.new()
+    proxy = require('proxy').new(configuration)
   end)
 
   it('has access function', function()
@@ -23,12 +25,10 @@ describe('Proxy', function()
 
   it('finds service by host', function()
     local example = { id = 42, hosts = { 'example.com'} }
-    local configuration = configuration_store.new()
-    local p = assert(proxy.new(configuration))
 
     configuration:add(example)
 
-    assert.same(example, p:find_service('example.com'))
+    assert.same(example, proxy:find_service('example.com'))
     assert.falsy(proxy:find_service('unknown'))
   end)
 
@@ -49,9 +49,9 @@ describe('Proxy', function()
     end)
 
     it('returns true when configured', function()
-      local configuration = configuration_store.new()
-      configuration:add({ id = 42, hosts = { 'example.com' } })
-      local p = assert(proxy.new(configuration))
+      local config = configuration_store.new()
+      config:add({ id = 42, hosts = { 'example.com' } })
+      local p = assert(proxy.new(config))
 
       assert.truthy(p:configured('example.com'))
     end)

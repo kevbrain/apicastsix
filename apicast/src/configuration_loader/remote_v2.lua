@@ -58,19 +58,19 @@ function _M:call(environment)
     return nil, err
   end
 
-  local config
   for _, object in ipairs(res) do
-    config, err = self:config(object.service, env, 'latest')
-
-    if config then
-      insert(configs, config)
-    else
-      ngx.log(ngx.INFO, 'could not get configuration for service ', object.service.id, ': ', err)
-    end
+    insert(configs, ngx.thread.spawn(self.config, self, object.service, env, 'latest'))
   end
 
   for i, c in ipairs(configs) do
-    configs[i] = c.content
+    local ok, ret = ngx.thread.wait(c)
+
+    if ok then
+      configs[i] = ret and ret.content or nil
+    else
+      configs[i] = nil
+      ngx.log(ngx.WARN, 'failed to download configuration: ', ret)
+    end
   end
 
   return cjson.encode({ services = configs })
@@ -113,9 +113,12 @@ function _M:config(service, environment, version)
 
   local url = resty_url.join(self.endpoint, '/admin/api/services/', id , '/proxy/configs/', environment, '/', format('%s.json', version))
 
+  ngx.log(ngx.INFO, 'downloading configuration from: ', url)
+
   local res, err = http_client.get(url)
 
   if not res and err then
+    ngx.log(ngx.WARN, 'could not get configuration for service ', id, ': ', err)
     return nil, err
   end
 
@@ -124,6 +127,7 @@ function _M:config(service, environment, version)
 
     return json.proxy_config
   else
+    ngx.log(ngx.WARN, 'could not get configuration for service ', id, ': status ', res.status, ' != 200')
     return nil, 'invalid status'
   end
 end

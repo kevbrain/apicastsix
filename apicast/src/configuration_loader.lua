@@ -27,7 +27,7 @@ _M.mock = mock_loader.save
 -- Cosocket API is not available in the init_by_lua* context (see more here: https://github.com/openresty/lua-nginx-module#cosockets-not-available-everywhere)
 -- For this reason a new process needs to be started to download the configuration through 3scale API
 function _M.init(cwd)
-  cwd = cwd or ngx.config.prefix()
+  cwd = cwd or env.get('TEST_NGINX_APICAST_PATH') or ngx.config.prefix()
   local config, err, code = util.system("cd '" .. cwd .."' && libexec/boot")
 
   -- Try to read the file in current working directory before changing to the prefix.

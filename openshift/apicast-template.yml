@@ -53,8 +53,8 @@ objects:
             value: "${RESPONSE_CODES}"
           - name: APICAST_REQUEST_LOGS
             value: "${REQUEST_LOGS}"
-          - name: APICAST_RELOAD_CONFIG
-            value: "${APICAST_RELOAD_CONFIG}"
+          - name: APICAST_CONFIGURATION_CACHE
+            value: "${CONFIGURATION_CACHE}"
           - name: REDIS_HOST
             value: "${REDIS_HOST}"
           - name: REDIS_PORT
@@ -149,9 +149,9 @@ parameters:
   value: "false"
   name: RESPONSE_CODES
   required: false
-- description: "Reload config on every request"
-  value: "false"
-  name: APICAST_RELOAD_CONFIG
+- name: CONFIGURATION_CACHE
+  description: "For how long to cache the downloaded configuration in seconds. Can be left empty, 0 or greater than 60."
+  value: ""
   required: false
 - description: "Redis host. Required for OAuth2 integration."
   name: REDIS_HOST

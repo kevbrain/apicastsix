@@ -37,13 +37,6 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
 
   When this parameter is set to _true_, the gateway will use path-based routing instead of the default host-based routing.
 
-- `APICAST_RELOAD_CONFIG`
-  **Values:**
-  -  `true` or `1` for _true_
-  -  `false`, `0` or empty for _false_
-
-  When this parameter is set to _true_ the configuration will be reloaded on every request. This is useful for development and testing, however it is highly discouraged to use it in production environment.
-
 - `APICAST_REQUEST_LOGS`
   **Values:**
   - `true` or `1` for _true_

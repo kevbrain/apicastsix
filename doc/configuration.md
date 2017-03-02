@@ -1,6 +1,6 @@
 # Configuration and its persistence
 
-Gateway needs configuation in order to work. It needs it to determine service configuration, hostname, etc.
+Gateway needs configuration in order to work. It needs it to determine service configuration, hostname, etc.
 
 Gateway can load the configuration from file, API or write it through management API (for debugging purposes).
 

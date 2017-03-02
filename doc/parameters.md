@@ -70,11 +70,11 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
   Used to filter the services configured in the 3scale API Manager, and only use the configuration for specific services in the gateway, discarding those services IDs of which are not specified in the list.
   Service IDs can be found on the **Dashboard > APIs** page, tagged as _ID for API calls_.
 
-- `AUTO_UPDATE_INTERVAL`
+- `APICAST_CONFIGURATION_CACHE`
   **Values:** _a number > 60_
   **Default:** 0
 
-  Specifies the interval (in seconds) that will be used by the gateway to update the configuration automatically. The value should be set more than 60. For example, if `AUTO_UPDATE_INTERVAL` is set to 120, the gateway will reload the configuration every 2 minutes (120 seconds).
+  Specifies the interval (in seconds) that will be the configuration stored for. The value should be set to 0 or more than 60. For example, if `APICAST_CONFIGURATION_CACHE` is set to 120, the gateway will reload the configuration every 2 minutes (120 seconds).
 
 - `REDIS_HOST`
   **Default:** "127.0.0.1"

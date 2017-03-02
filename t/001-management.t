@@ -18,6 +18,8 @@ __DATA__
 
 === TEST 1: readiness probe with saved configuration
 When configuration is saved, readiness probe returns success.
+--- main_config
+env APICAST_MANAGEMENT_API=status;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
@@ -36,6 +38,8 @@ GET /status/ready
 
 === TEST 2: readiness probe without configuration
 Should respond with error status and a reason.
+--- main_config
+env APICAST_MANAGEMENT_API=status;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config
@@ -50,6 +54,8 @@ GET /status/ready
 
 === TEST 3: readiness probe with 0 services
 Should respond with error status and a reason.
+--- main_config
+env APICAST_MANAGEMENT_API=status;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -67,6 +73,8 @@ GET /status/ready
 
 === TEST 4: liveness probe returns success
 As it is always alive.
+--- main_config
+env APICAST_MANAGEMENT_API=status;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config
@@ -81,7 +89,8 @@ GET /status/live
 
 === TEST 5: config endpoint returns the configuration
 Endpoint that dumps the original configuration.
-
+--- main_config
+env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
@@ -102,7 +111,8 @@ Content-Type: application/json; charset=utf-8
 
 === TEST 6: config endpoint can write configuration
 And can be later retrieved.
-
+--- main_config
+env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config
@@ -145,6 +155,7 @@ exposes boot function
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
 env RESOLVER=127.0.0.1:1953;
+env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -168,6 +179,7 @@ keeps the same configuration
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
 env RESOLVER=127.0.0.1:1953;
+env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -193,6 +205,8 @@ $::dns->("localhost", "127.0.0.1", 60)
 
 
 === TEST 10: config endpoint can delete configuration
+--- main_config
+env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config
@@ -216,6 +230,8 @@ null
 
 === TEST 11: all endpoints use correct Content-Type
 JSON response body and content type application/json should be returned.
+--- main_config
+env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config
@@ -240,6 +256,8 @@ JSON response body and content type application/json should be returned.
 
 === TEST 12: GET /dns/cache
 JSON response of the internal DNS cache.
+--- main_config
+env APICAST_MANAGEMENT_API=debug;
 --- http_config
 lua_package_path "$TEST_NGINX_LUA_PATH";
 init_by_lua_block {
@@ -261,5 +279,38 @@ GET /dns/cache
 Content-Type: application/json; charset=utf-8
 --- response_body
 {"127.0.0.1.xip.io":{"expires_in":199,"value":{"1":{"address":"127.0.0.1","section":1,"type":1,"class":1,"name":"127.0.0.1.xip.io","ttl":199},"name":"127.0.0.1.xip.io","ttl":199}}}
+--- no_error_log
+[error]
+
+
+=== TEST 13: liveness status is not accessible
+Unless the APICAST_MANAGEMENT_API is set to 'status'.
+--- main_config
+env APICAST_MANAGEMENT_API=disabled;
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+  include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+GET /status/live
+--- error_code: 404
+--- no_error_log
+[error]
+
+=== TEST 14: config endpoint is not accessible
+Unless the APICAST_MANAGEMENT_API is set to 'debug'.
+--- main_config
+env APICAST_MANAGEMENT_API=status;
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require('module').proxy:configure({ services = { { id = 42 } } })
+  }
+--- config
+include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+GET /config
+--- error_code: 404
 --- no_error_log
 [error]

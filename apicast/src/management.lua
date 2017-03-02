@@ -7,25 +7,26 @@ local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')
 local inspect = require('inspect')
 local resolver_cache = require('resty.resolver.cache')
+local env = require('resty.env')
 
 local live = cjson.encode({status = 'live', success = true})
 
 local function json_response(body, status)
   ngx.header.content_type = 'application/json; charset=utf-8'
-  ngx.status = status or 200
+  ngx.status = status or ngx.HTTP_OK
   ngx.say(cjson.encode(body))
 end
 
 function _M.ready()
   local status = _M.status()
-  local code = status.success and 200 or 412
+  local code = status.success and ngx.HTTP_OK or 412
 
   ngx.status = code
   ngx.say(cjson.encode(status))
 end
 
 function _M.live()
-  ngx.status = 200
+  ngx.status = ngx.HTTP_OK
   ngx.say(live)
 end
 
@@ -48,7 +49,7 @@ function _M.config()
   local contents = cjson.encode(config.configured and { services = config:all() } or nil)
 
   ngx.header.content_type = 'application/json; charset=utf-8'
-  ngx.status = 200
+  ngx.status = ngx.HTTP_OK
   ngx.say(contents)
 end
 
@@ -100,20 +101,47 @@ function _M.dns_cache()
   return json_response(cache:all())
 end
 
-function _M.router()
-  local r = router.new()
+function _M.disabled()
+  ngx.exit(ngx.HTTP_FORBIDDEN)
+end
 
+local routes = {}
+
+function routes.disabled(r)
+  r:get('/', _M.disabled)
+end
+
+function routes.status(r)
+  r:get('/status/ready', _M.ready)
+  r:get('/status/live', _M.live)
+end
+
+function routes.debug(r)
   r:get('/config', _M.config)
   r:put('/config', _M.update_config)
   r:post('/config', _M.update_config)
   r:delete('/config', _M.delete_config)
 
-  r:get('/status/ready', _M.ready)
-  r:get('/status/live', _M.live)
+  routes.status(r)
 
   r:get('/dns/cache', _M.dns_cache)
 
   r:post('/boot', _M.boot)
+end
+
+function _M.router()
+  local r = router.new()
+
+  local name = env.value('APICAST_MANAGEMENT_API') or 'status'
+  local api = routes[name]
+
+  ngx.log(ngx.DEBUG, 'management api mode: ', name)
+
+  if api then
+    api(r)
+  else
+    ngx.log(ngx.ERR, 'invalid management api setting: ', name)
+  end
 
   return r
 end

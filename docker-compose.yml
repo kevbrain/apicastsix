@@ -29,6 +29,8 @@ services:
       - gateway
     entrypoint: ""
     dns: 127.0.0.1
+    environment:
+      APICAST_MANAGEMENT_API: debug
     dns_search:
       - example.com
   prove:

@@ -59,6 +59,8 @@ objects:
             value: "${REDIS_HOST}"
           - name: REDIS_PORT
             value: "${REDIS_PORT}"
+          - name: APICAST_MANAGEMENT_API
+            value: "${MANAGEMENT_API}"
           image: "${THREESCALE_GATEWAY_IMAGE}"
           imagePullPolicy: Always
           name: "${THREESCALE_GATEWAY_NAME}"
@@ -158,3 +160,7 @@ parameters:
   name: REDIS_PORT
   required: false
   value: "6379"
+- name: MANAGEMENT_API
+  description: "Scope of the Management API. Can be disabled, status or debug. At least status required for health checks."
+  required: false
+  value: "status"

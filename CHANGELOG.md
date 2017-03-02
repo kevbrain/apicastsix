@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Reduce use of global objects [PR #273](https://github.com/3scale/apicast/pull/273)
 - Load V2 configuration for all services in parallel [PR #272](https://github.com/3scale/apicast/pull/272)
 - Configuration is using LRU cache [PR #274](https://github.com/3scale/apicast/pull/274)
+- Management API not opened by default [PR #276](https://github.com/3scale/apicast/pull/276)
 
 ### Added
 

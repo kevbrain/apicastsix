@@ -119,3 +119,14 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
   URI that overrides backend endpoint from the configuration. Useful when deploying outside OpenShift deployed AMP.
 
   **Example**: `https://backend.example.com`.
+
+- `APICAST_MANAGEMENT_API`
+
+  **Values:**
+
+  - `disabled`: completely disabled, just listens on the port
+  - `status`: only the `/status/` endpoints enabled for health checks
+  - `debug`: full API is open
+
+  The [Management API](./management-api.md) is powerful and can control the APIcast configuration.
+  You should enable the debug level only for debugging.

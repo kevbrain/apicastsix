@@ -24,10 +24,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Start local caching DNS server in the container [PR #260](https://github.com/3scale/apicast/pull/260)
 * Management API to show the DNS cache [PR #260](https://github.com/3scale/apicast/pull/260)
 * Extract correct Host header from the backend endpoint when backend host not provided [PR #267](https://github.com/3scale/apicast/pull/267)
+* `APICAST_CONFIGURATION_CACHE` environment variable [PR #270](https://github.com/3scale/apicast/pull/270)
+* `APICAST_CONFIGURATION_LOADER` environment variable [PR #270](https://github.com/3scale/apicast/pull/270)
 
 ### Removed
 
 * Support for downloading configuration via curl [PR #266](https://github.com/3scale/apicast/pull/266)
+* `AUTO_UPDATE_INTERVAL` environment variable [PR #270](https://github.com/3scale/apicast/pull/270)
+* `APICAST_RELOAD_CONFIG` environment variable [PR #270](https://github.com/3scale/apicast/pull/270)
+* `APICAST_MISSING_CONFIGURATION` environment variable [PR #270](https://github.com/3scale/apicast/pull/270)
 
 ## [3.0.0-alpha2] - 2017-02-06
 

@@ -314,3 +314,20 @@ GET /config
 --- error_code: 404
 --- no_error_log
 [error]
+
+=== TEST 15: writing invalid configuration
+JSON should be validated before trying to save it.
+--- main_config
+env APICAST_MANAGEMENT_API=debug;
+--- http_config
+lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+POST /config
+invalid json
+--- response_body
+{"status":"error","error":"Expected value but found invalid token at character 1","config":null}
+--- error_code: 400
+--- no_error_log
+[error]

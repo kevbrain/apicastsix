@@ -64,12 +64,15 @@ function _M.update_config()
     data = assert(io.open(file)):read('*a')
   end
 
-  local config = configuration_parser.decode(data)
-  proxy:configure(config)
-  -- TODO: respond with proper 304 Not Modified when config is the same
-  local response = cjson.encode({ status = 'ok', config = config or cjson.null })
-  ngx.header.content_type = 'application/json; charset=utf-8'
-  ngx.say(response)
+  local config, err = configuration_parser.decode(data)
+
+  if config then
+    proxy:configure(config)
+    -- TODO: respond with proper 304 Not Modified when config is the same
+    json_response({ status = 'ok', config = config or cjson.null })
+  else
+    json_response({ status = 'error', config = config or cjson.null, error = err}, ngx.HTTP_BAD_REQUEST)
+  end
 end
 
 function _M.delete_config()

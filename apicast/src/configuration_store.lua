@@ -63,7 +63,9 @@ function _M.find_by_host(self, host)
     return nil, 'not initialized'
   end
 
-  return cache:get(host) or { }
+  local services, stale = cache:get(host)
+
+  return services or stale or { }
 end
 
 local hashed_array = {
@@ -125,12 +127,12 @@ function _M.reset(self, cache_size)
   self.configured = false
 end
 
-function _M.add(self, service)
+function _M.add(self, service, ttl)
   if not self.services then
     return nil, 'not initialized'
   end
 
-  return self:store({ services = { service }})
+  return self:store({ services = { service }}, ttl)
 end
 
 return _M

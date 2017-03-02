@@ -19,11 +19,13 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
 
   Specifies the log level for the OpenResty logs.
 
-- `APICAST_MISSING_CONFIGURATION`
-  **Values:** log | exit
-  **Default:** log
+- `APICAST_CONFIGURATION_LOADER`
+  **Values:** boot | lazy
+  **Default:** lazy
 
-  Used to define what APIcast should do when the configuration is missing at the initialization time. By default (_"log"_), the gateway will start successfully, and print an error message notifying of missing configuration. If set to _"exit"_, the gateway will fail to start.
+  Defines how to load the configuration.
+  Boot will require configuration when the gateway starts.
+  Lazy will load it on demand on incoming request.
 
 - `APICAST_MODULE`
   **Default:** "apicast"

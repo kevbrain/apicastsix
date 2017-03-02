@@ -43,8 +43,8 @@ objects:
             value: "${RESOLVER}"
           - name: APICAST_SERVICES
             value: "${APICAST_SERVICES}"
-          - name: APICAST_MISSING_CONFIGURATION
-            value: "${MISSING_CONFIGURATION}"
+          - name: APICAST_CONFIGURATION_LOADER
+            value: "${CONFIGURATION_LOADER}"
           - name: APICAST_LOG_LEVEL
             value: "${APICAST_LOG_LEVEL}"
           - name: APICAST_PATH_ROUTING_ENABLED
@@ -130,10 +130,10 @@ parameters:
   value:
   name: APICAST_SERVICES
   required: false
-- description: "What to do on missing or invalid configuration. Allowed values are: log, exit."
-  value: exit
+- name: CONFIGURATION_LOADER
+  description: "When to load configuration. If on gateway start or incoming request. Allowed values are: lazy, boot."
+  value: boot
   required: false
-  name: MISSING_CONFIGURATION
 - description: "Log level. One of the following: debug, info, notice, warn, error, crit, alert, or emerg."
   name: APICAST_LOG_LEVEL
   required: false

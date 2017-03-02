@@ -1,3 +1,11 @@
+------------
+-- Resty ENV
+-- OpenResty module for working with ENV variables.
+--
+-- @module resty.env
+-- @author mikz
+-- @license Apache License Version 2.0
+
 local _M = {
   _VERSION = '0.1'
 }
@@ -12,8 +20,28 @@ local function fetch(name)
   return value
 end
 
+--- Return the raw value from ENV. Uses local cache.
+-- @tparam string name name of the environment variable
 function _M.get(name)
   return _M.env[name] or fetch(name)
+end
+
+local value_mapping = {
+  [''] = false
+}
+
+--- Return value from ENV.
+--- Returns false if it is empty. Uses @{get} internally.
+-- @tparam string name name of the environment variable
+function _M.value(name)
+  local value = _M.get(name)
+  local mapped = value_mapping[value]
+
+  if mapped == nil then
+    return value
+  else
+    return mapped
+  end
 end
 
 local env_mapping = {
@@ -24,10 +52,17 @@ local env_mapping = {
   [''] = false
 }
 
+--- Returns true/false from ENV variable.
+--- Converts 0 to false and 1 to true.
+-- @tparam string name name of the environment variable
 function _M.enabled(name)
   return env_mapping[_M.get(name)]
 end
 
+--- Sets value to the local cache.
+-- @tparam string name name of the environment variable
+-- @tparam string value value to be cached
+-- @see resty.env.get
 function _M.set(name, value)
   local env = _M.env
   local previous = env[name]
@@ -35,6 +70,7 @@ function _M.set(name, value)
   return previous
 end
 
+--- Reset local cache.
 function _M.reset()
   _M.env = {}
   return _M

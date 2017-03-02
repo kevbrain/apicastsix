@@ -26,6 +26,18 @@ describe('env', function()
     end)
   end)
 
+  describe('.value', function()
+    it('returns false instead of empty value', function()
+      _M.set('KEY', '')
+      assert.equal(false, _M.value('KEY'))
+    end)
+
+    it('returns the value if not emptu', function()
+      _M.set('KEY', 'value')
+      assert.equal('value', _M.value('KEY'))
+    end)
+  end)
+
   describe('.set', function()
     it('saves value to the cache', function()
       _M.set('SOME_MISSING_KEY', 'val')

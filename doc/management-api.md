@@ -2,6 +2,8 @@
 
 Management API is a simple API that allows updating or retrieving the configuration currently used by the gateway. The API is available on port `8090`.
 
+This is mean to be used for **debugging purposes only**. Offers no authentication or synchronization between several instances.
+
 Available endpoints:
 
 - `GET /config`

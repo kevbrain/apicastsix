@@ -8,7 +8,7 @@ warn("PR is classed as Work in Progress") if github.pr_title.include? "[WIP]"
 # Warn when there is a big PR
 warn("Big PR") if git.lines_of_code > 500
 
-has_app_changes = git.modified_files.grep(%{apicast/})
+has_app_changes = git.modified_files.grep(%{apicast/}).any?
 markdown_files = git.modified_files.grep(/\.md$/)
 
 if !git.modified_files.include?("CHANGELOG.md") && has_app_changes
@@ -20,5 +20,8 @@ ENV['LANG'] = 'en_US.utf8'
 prose.lint_files markdown_files - %w(CHANGELOG.md)
 
 # Look for spelling issues
-prose.ignored_words = %w(s2i openresty APIcast nameservers resty-resolver nginx Redis OAuth ENV backend 3scale OpenShift Default Lua)
+prose.ignored_words = %w(
+  s2i openresty APIcast nameservers resty-resolver nginx Redis OAuth ENV backend 3scale OpenShift Default Lua
+  hostname LRU cosocket TODO lua-resty-lrucache
+)
 prose.check_spelling markdown_files - %w(CHANGELOG.md)

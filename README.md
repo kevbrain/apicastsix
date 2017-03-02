@@ -4,7 +4,7 @@ To learn more about deployment options, environments provided, and how to get st
 
 # APIcast
 
-`master` branch is **not stable** and **not recommended for production** use. For the latest release, go to [Relases page](https://github.com/3scale/apicast/releases).
+`master` branch is **not stable** and **not recommended for production** use. For the latest release, go to [Releases page](https://github.com/3scale/apicast/releases).
 
 ## Description
 

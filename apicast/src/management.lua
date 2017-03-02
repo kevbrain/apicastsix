@@ -67,9 +67,13 @@ function _M.update_config()
   local config, err = configuration_parser.decode(data)
 
   if config then
-    proxy:configure(config)
+    local configured, error = proxy:configure(config)
     -- TODO: respond with proper 304 Not Modified when config is the same
-    json_response({ status = 'ok', config = config or cjson.null })
+    if configured and #(configured.services) > 0 then
+      json_response({ status = 'ok', config = config, services = #(configured.services)})
+    else
+      json_response({ status = 'not_configured', config = config, services = 0, error = error }, ngx.HTTP_NOT_ACCEPTABLE)
+    end
   else
     json_response({ status = 'error', config = config or cjson.null, error = err}, ngx.HTTP_BAD_REQUEST)
   end

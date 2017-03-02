@@ -130,7 +130,7 @@ GET /test
 --- response_body
 {"status":"ok","config":null}
 null
-{"status":"ok","config":{"services":[{"id":42}]}}
+{"status":"ok","services":1,"config":{"services":[{"id":42}]}}
 {"services":[{"id":42}]}
 --- error_code: 200
 --- no_error_log
@@ -221,7 +221,7 @@ env APICAST_MANAGEMENT_API=debug;
 --- request
 GET /test
 --- response_body
-{"status":"ok","config":{"services":[{"id":42}]}}
+{"status":"ok","services":1,"config":{"services":[{"id":42}]}}
 {"status":"ok","config":null}
 null
 --- error_code: 200
@@ -247,8 +247,8 @@ env APICAST_MANAGEMENT_API=debug;
   'Content-Type: application/json; charset=utf-8' ]
 --- response_body eval
 [ '{"status":"ok","config":null}'."\n",
-  '{"status":"ok","config":{"services":[{"id":42}]}}'."\n",
-  '{"status":"ok","config":{"services":[{"id":42}]}}'."\n",
+  '{"status":"ok","services":1,"config":{"services":[{"id":42}]}}'."\n",
+  '{"status":"ok","services":1,"config":{"services":[{"id":42}]}}'."\n",
   '{"services":[{"id":42}]}'."\n" ]  
 --- no_error_log
 [error]
@@ -329,5 +329,23 @@ invalid json
 --- response_body
 {"status":"error","error":"Expected value but found invalid token at character 1","config":null}
 --- error_code: 400
+--- no_error_log
+[error]
+
+
+=== TEST 15: writing wrong configuration
+JSON is valid but it not a configuration.
+--- main_config
+env APICAST_MANAGEMENT_API=debug;
+--- http_config
+lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+POST /config
+{"id":42}
+--- response_body
+{"status":"not_configured","services":0,"config":{"id":42}}
+--- error_code: 406
 --- no_error_log
 [error]

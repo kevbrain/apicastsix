@@ -115,7 +115,11 @@ function boot.init_worker(proxy)
   end
 end
 
-local lazy = { init = noop, init_worker = noop }
+local lazy = { init_worker = noop }
+
+function lazy.init(proxy)
+  proxy.configuration.configured = true
+end
 
 function lazy.rewrite(proxy, host)
   local sema = synchronization:acquire(host)

@@ -30,15 +30,16 @@ function _M.live()
   ngx.say(live)
 end
 
-function _M.status()
+function _M.status(p)
+  p = p or proxy
   -- TODO: this should be fixed for multi-tenant deployment
-  local has_configuration = proxy.configuration.configured
-  local has_services = #(proxy.configuration:all()) > 0
+  local has_configuration = p.configuration.configured
+  local has_services = #(p.configuration:all()) > 0
 
   if not has_configuration then
     return { status = 'error', error = 'not configured',  success = false }
   elseif not has_services then
-    return { status = 'warning', warning = 'no services', success = false }
+    return { status = 'warning', warning = 'no services', success = true }
   else
     return { status = 'ready', success = true }
   end

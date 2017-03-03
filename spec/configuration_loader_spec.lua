@@ -1,3 +1,5 @@
+local proxy = require('proxy')
+
 insulate('Configuration object', function()
 
   insulate('.mock', function()
@@ -20,6 +22,20 @@ insulate('Configuration object', function()
 
       assert.falsy(config)
       assert.match('missing configuration', err)
+    end)
+  end)
+
+  describe('lazy', function()
+    local configuration_loader = require 'configuration_loader'
+
+    it('configures proxy on init', function()
+      local config = {}
+      local p = proxy.new(config)
+      local lazy = configuration_loader.new('lazy')
+
+      assert.falsy(config.configured)
+      lazy.init(p)
+      assert.truthy(config.configured)
     end)
   end)
 end)

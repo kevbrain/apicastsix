@@ -1,6 +1,7 @@
 file = {
   '../apicast/src/configuration/service.lua',
-  '../apicast/src/resty/env.lua'
+  '../apicast/src/resty/env.lua',
+  '../apicast/src/resty/synchronization.lua',
 }
 dir = '../doc/api'
 project = 'APIcast'

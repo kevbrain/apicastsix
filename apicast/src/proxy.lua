@@ -38,6 +38,7 @@ end
 
 function _M:configure(contents)
   local configuration = self.configuration
+  local ttl = tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10)
 
   if not configuration then
     return nil, 'not initialized'
@@ -53,7 +54,7 @@ function _M:configure(contents)
   end
 
   if config then
-    return configuration:store(config)
+    return configuration:store(config, ttl)
   end
 end
 

@@ -5,26 +5,17 @@ local gmatch = string.gmatch
 local match = string.match
 local format = string.format
 local insert = table.insert
-local rawset = rawset
 local getenv = os.getenv
 local concat = table.concat
 local io_type = io.type
 local re_match = ngx.re.match
-local semaphore = require "ngx.semaphore"
 local resolver_cache = require 'resty.resolver.cache'
 local dns_client = require 'resty.resolver.dns_client'
 local re = require('ngx.re')
+local semaphore = require "ngx.semaphore"
+local synchronization = require('resty.synchronization').new(1)
 
 local init = semaphore.new(1)
-local semaphore_mt = {
- __index = function(t, k)
-   local sema = semaphore.new(1)
-   rawset(t, k, sema)
-   return sema
- end
-}
-
-local synchronization = setmetatable({}, semaphore_mt)
 
 local default_resolver_port = 53
 
@@ -240,7 +231,7 @@ function _M.get_servers(self, qname, opts)
 
   -- TODO: pass proper options to dns resolver (like SRV query type)
 
-  local sema = synchronization[format('qname:%s:qtype:%s', qname, 'A')]
+  local sema, key = synchronization:acquire(format('qname:%s:qtype:%s', qname, 'A'))
   local ok = sema:wait(0)
 
   local answers, err = cache:get(qname, not ok)
@@ -251,6 +242,8 @@ function _M.get_servers(self, qname, opts)
   end
 
   if ok then
+    -- cleanup the key so we don't have unbounded growth of this table
+    synchronization:release(key)
     sema:post()
   end
 

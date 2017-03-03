@@ -4,7 +4,7 @@ To learn more about deployment options, environments provided, and how to get st
 
 # APIcast
 
-`master` branch is **not stable** and **not recommended for production** use. For the latest release, go to [Relases page](https://github.com/3scale/apicast/releases).
+`master` branch is **not stable** and **not recommended for production** use. For the latest release, go to [Releases page](https://github.com/3scale/apicast/releases).
 
 ## Description
 
@@ -79,10 +79,10 @@ See the Docker [commands reference](https://docs.docker.com/engine/reference/com
 
 ### Auto updating
 
-The gateway is able of checking the configuration from time to time and self update, you can enable this by adjusting the AUTO_UPDATE_INTERVAL (seconds) to some value greater than 60:
+The gateway is able of checking the configuration from time to time and self update, you can enable this by adjusting the APICAST_CONFIGURATION_CACHE (seconds) to some value greater than 60:
 
 ```
--e AUTO_UPDATE_INTERVAL=300
+-e APICAST_CONFIGURATION_CACHE=300
 ```
 
 This variable is set to 0 by default.

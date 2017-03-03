@@ -19,11 +19,13 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
 
   Specifies the log level for the OpenResty logs.
 
-- `APICAST_MISSING_CONFIGURATION`
-  **Values:** log | exit
-  **Default:** log
+- `APICAST_CONFIGURATION_LOADER`
+  **Values:** boot | lazy
+  **Default:** lazy
 
-  Used to define what APIcast should do when the configuration is missing at the initialization time. By default (_"log"_), the gateway will start successfully, and print an error message notifying of missing configuration. If set to _"exit"_, the gateway will fail to start.
+  Defines how to load the configuration.
+  Boot will require configuration when the gateway starts.
+  Lazy will load it on demand on incoming request.
 
 - `APICAST_MODULE`
   **Default:** "apicast"
@@ -36,13 +38,6 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
   - `false`, `0` or empty for _false_
 
   When this parameter is set to _true_, the gateway will use path-based routing instead of the default host-based routing.
-
-- `APICAST_RELOAD_CONFIG`
-  **Values:**
-  -  `true` or `1` for _true_
-  -  `false`, `0` or empty for _false_
-
-  When this parameter is set to _true_ the configuration will be reloaded on every request. This is useful for development and testing, however it is highly discouraged to use it in production environment.
 
 - `APICAST_REQUEST_LOGS`
   **Values:**
@@ -70,11 +65,11 @@ Note that when deploying APIcast v2 with OpenShift, some of thee parameters can 
   Used to filter the services configured in the 3scale API Manager, and only use the configuration for specific services in the gateway, discarding those services IDs of which are not specified in the list.
   Service IDs can be found on the **Dashboard > APIs** page, tagged as _ID for API calls_.
 
-- `AUTO_UPDATE_INTERVAL`
+- `APICAST_CONFIGURATION_CACHE`
   **Values:** _a number > 60_
   **Default:** 0
 
-  Specifies the interval (in seconds) that will be used by the gateway to update the configuration automatically. The value should be set more than 60. For example, if `AUTO_UPDATE_INTERVAL` is set to 120, the gateway will reload the configuration every 2 minutes (120 seconds).
+  Specifies the interval (in seconds) that will be the configuration stored for. The value should be set to 0 or more than 60. For example, if `APICAST_CONFIGURATION_CACHE` is set to 120, the gateway will reload the configuration every 2 minutes (120 seconds).
 
 - `REDIS_HOST`
   **Default:** "127.0.0.1"

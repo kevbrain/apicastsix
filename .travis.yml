@@ -4,7 +4,11 @@ services:
 - docker
 - redis-server
 addons:
-  artifacts: true
+  artifacts:
+    paths:
+     - t/servroot
+     - doc/api
+     - tmp
   apt:
     packages:
     - perl-modules

@@ -43,8 +43,8 @@ objects:
             value: "${RESOLVER}"
           - name: APICAST_SERVICES
             value: "${APICAST_SERVICES}"
-          - name: APICAST_MISSING_CONFIGURATION
-            value: "${MISSING_CONFIGURATION}"
+          - name: APICAST_CONFIGURATION_LOADER
+            value: "${CONFIGURATION_LOADER}"
           - name: APICAST_LOG_LEVEL
             value: "${APICAST_LOG_LEVEL}"
           - name: APICAST_PATH_ROUTING_ENABLED
@@ -53,8 +53,8 @@ objects:
             value: "${RESPONSE_CODES}"
           - name: APICAST_REQUEST_LOGS
             value: "${REQUEST_LOGS}"
-          - name: APICAST_RELOAD_CONFIG
-            value: "${APICAST_RELOAD_CONFIG}"
+          - name: APICAST_CONFIGURATION_CACHE
+            value: "${CONFIGURATION_CACHE}"
           - name: REDIS_HOST
             value: "${REDIS_HOST}"
           - name: REDIS_PORT
@@ -130,10 +130,10 @@ parameters:
   value:
   name: APICAST_SERVICES
   required: false
-- description: "What to do on missing or invalid configuration. Allowed values are: log, exit."
-  value: exit
+- name: CONFIGURATION_LOADER
+  description: "When to load configuration. If on gateway start or incoming request. Allowed values are: lazy, boot."
+  value: boot
   required: false
-  name: MISSING_CONFIGURATION
 - description: "Log level. One of the following: debug, info, notice, warn, error, crit, alert, or emerg."
   name: APICAST_LOG_LEVEL
   required: false
@@ -149,9 +149,9 @@ parameters:
   value: "false"
   name: RESPONSE_CODES
   required: false
-- description: "Reload config on every request"
-  value: "false"
-  name: APICAST_RELOAD_CONFIG
+- name: CONFIGURATION_CACHE
+  description: "For how long to cache the downloaded configuration in seconds. Can be left empty, 0 or greater than 60."
+  value: ""
   required: false
 - description: "Redis host. Required for OAuth2 integration."
   name: REDIS_HOST

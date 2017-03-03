@@ -95,7 +95,7 @@ test-runtime-image: export IMAGE_NAME = apicast-runtime-test
 test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_MISSING_CONFIGURATION=exit -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d
+	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_CONFIGURATION_LOADER=boot -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'
 

@@ -1,13 +1,10 @@
 local proxy = require('proxy')
 local balancer = require('balancer')
-local configuration_loader = require('configuration_loader')
-local pcall = pcall
-local tonumber = tonumber
 local math = math
 local setmetatable = setmetatable
 local env = require('resty.env')
-local reload_config = env.enabled('APICAST_RELOAD_CONFIG')
 local configuration_store = require('configuration_store')
+local configuration_loader = require('configuration_loader').new()
 local user_agent = require('user_agent')
 
 local noop = function() end
@@ -17,20 +14,7 @@ local _M = {
   _NAME = 'APIcast'
 }
 
-local missing_configuration = env.get('APICAST_MISSING_CONFIGURATION') or 'log'
 local request_logs = env.enabled('APICAST_REQUEST_LOGS')
-
-local function handle_missing_configuration(err)
-  if missing_configuration == 'log' then
-    ngx.log(ngx.ERR, 'failed to load configuration, continuing: ', err)
-  elseif missing_configuration == 'exit' then
-    ngx.log(ngx.EMERG, 'failed to load configuration, exiting: ', err)
-    os.exit(1)
-  else
-    ngx.log(ngx.ERR, 'unknown value of APICAST_MISSING_CONFIGURATION: ', missing_configuration)
-    os.exit(1)
-  end
-end
 
 local mt = {
   __index = _M
@@ -51,57 +35,11 @@ function _M:init()
   -- First calls to math.random after a randomseed tend to be similar; discard them
   for _=1,3 do math.random() end
 
-  local config, err = configuration_loader.init()
-  local init = config and self.proxy:configure(config)
-
-  if not init then
-    handle_missing_configuration(err)
-  end
-end
-
-local function refresh_config(p)
-  local config, err = configuration_loader.boot()
-
-  if config then
-    p:configure(config)
-  else
-    ngx.log(ngx.ERR, 'failed to refresh configuration: ', err)
-  end
+  configuration_loader.init(self.proxy)
 end
 
 function _M:init_worker()
-  local interval = tonumber(env.get('AUTO_UPDATE_INTERVAL'), 10) or 0
-
-  local function schedule(...)
-    local ok, err = ngx.timer.at(...)
-
-    if not ok then
-      ngx.log(ngx.ERR, "failed to create the auto update timer: ", err)
-      return
-    end
-  end
-
-  local handler
-
-  handler = function (premature, ...)
-    if premature then return end
-
-    ngx.log(ngx.INFO, 'auto updating configuration')
-
-    local updated, err = pcall(refresh_config, ...)
-
-    if updated then
-      ngx.log(ngx.INFO, 'auto updating configuration finished successfuly')
-    else
-      ngx.log(ngx.ERR, 'auto updating configuration failed with: ', err)
-    end
-
-    schedule(interval, handler, ...)
-  end
-
-  if interval > 0 then
-    schedule(interval, handler, self.proxy)
-  end
+  configuration_loader.init_worker(self.proxy)
 end
 
 function _M.cleanup()
@@ -117,10 +55,8 @@ function _M:rewrite()
   -- load configuration if not configured
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
-  if not p:configured(host) or reload_config then
-    local config = configuration_loader.boot(host)
-    p:configure(config)
-  end
+
+  configuration_loader.rewrite(p, host)
 
   p.set_upstream(p:set_service(host))
 end

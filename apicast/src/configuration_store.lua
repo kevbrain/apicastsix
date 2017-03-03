@@ -79,7 +79,7 @@ local hashed_array = {
 function _M.store(self, config, ttl)
   self.configured = true
 
-  local services = config.services
+  local services = config.services or {}
   local by_host = setmetatable({}, hashed_array)
 
   local ids = {}

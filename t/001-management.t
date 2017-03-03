@@ -66,8 +66,8 @@ env APICAST_MANAGEMENT_API=status;
 --- request
 GET /status/ready
 --- response_body
-{"status":"warning","warning":"no services","success":false}
---- error_code: 412
+{"status":"warning","warning":"no services","success":true}
+--- error_code: 200
 --- no_error_log
 [error]
 

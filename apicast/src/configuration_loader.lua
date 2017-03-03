@@ -4,6 +4,7 @@ local remote_loader_v1 = require 'configuration_loader.remote_v1'
 local remote_loader_v2 = require 'configuration_loader.remote_v2'
 local util = require 'util'
 local env = require('resty.env')
+local synchronization = require('resty.synchronization').new(1)
 
 local tostring = tostring
 local error = error
@@ -117,9 +118,21 @@ end
 local lazy = { init = noop, init_worker = noop }
 
 function lazy.rewrite(proxy, host)
-  if not proxy:configured(host) then
+  local sema = synchronization:acquire(host)
+
+  local ok, err = sema:wait(15)
+
+  if ok and not proxy:configured(host) then
+    ngx.log(ngx.INFO, 'lazy loading configuration for: ', host)
     local config = _M.boot(host)
     proxy:configure(config)
+  end
+
+  if ok then
+    synchronization:release(host)
+    sema:post()
+  else
+    ngx.log(ngx.WARN, 'failed to acquire lock to lazy load: ', host, ' error: ', err)
   end
 end
 

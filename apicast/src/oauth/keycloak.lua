@@ -47,11 +47,16 @@ local function format_public_key(key)
   return formatted_key
 end
 
+local function validate_config(configuration)
+  return configuration.endpoint and configuration.public_key
+end
+
 function _M.new(config)
   local configuration = config or _M.configuration
-  -- TODO: return an error if some settings are not OK
 
-  if not configuration then
+  local is_valid = validate_config(configuration)
+
+  if not is_valid then
     ngx.log(ngx.ERR,'Keycloak is not configured')
     return nil
   end
@@ -90,6 +95,8 @@ function _M.respond_and_exit(status, body, headers)
 end
 
 function _M.respond_with_error(status, message)
+
+  --TODO: as per the RFC (https://tools.ietf.org/html/rfc6749#section-5.2) return WWW-Authenticate response header if 401
   local headers = {
     ['Content-Type'] = 'application/json;charset=UTF-8'
   }
@@ -109,7 +116,6 @@ function _M.authorize_check_params(params)
     end
   end
 
-  
   return true
 end
 
@@ -138,9 +144,18 @@ function _M.parse_and_verify_token(jwt_token, public_key)
   return jwt_obj
 end
 
-function _M.check_client_id(client_id)
-  -- make a call to 3scale to verify the credentials
-  return true
+function _M.check_credentials(params)
+  local res = ngx.location.capture("/_threescale/check_credentials",
+    {
+      args = {
+        app_id = params.client_id,
+        app_key = params.client_secret,
+        redirect_uri = params.redirect_uri
+      },
+      copy_all_vars = true,
+      ctx = ngx.ctx
+    })
+  return res.status == 200
 end
 
 function _M.authorize(self)
@@ -153,9 +168,7 @@ function _M.authorize(self)
     _M.respond_with_error(400, err)
   end
 
-  -- TODO: check client_id at 3scale to see if it's valid, reply with error if it's not
-  local client_id = params.client_id
-  ok, err = _M.check_client_id(client_id)
+  ok, err = _M.check_credentials(params)
   if err then
     _M.respond_with_error(401, 'invalid_client')
   end
@@ -168,23 +181,29 @@ function _M.authorize(self)
 end
 
 function _M.get_token(self)
-
+  local ok, err
   local http_client = self.http_client
 
   if not http_client then
     return nil, 'not initialized'
   end
 
-  -- TODO: check request params and reply with error if something is wrong
-
-  -- TODO: check client_id at 3scale to see if it's valid, reply with error if it's not
-
-  -- call Keycloak authorize
-  local url = self.config.token_url
-
   -- TODO: maybe use the same method the original request uses
   ngx.req.read_body()
   local req_body = ngx.req.get_post_args()
+
+  ok, err = _M.token_check_params(req_body)
+  if err then
+    _M.respond_with_error(400, err)
+  end
+
+   ok, err = _M.check_credentials(req_body)
+  if err then
+    _M.respond_with_error(401, 'invalid_client')
+  end
+
+  -- call Keycloak authorize
+  local url = self.config.token_url
 
   local res = http_client.post(url, req_body)
 

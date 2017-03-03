@@ -21,7 +21,7 @@ end
 function _M.router()
   -- TODO: use configuration to customize urls
   local r = router:new()
-
+  oauth = _M.new()
   r:get('/authorize', function() oauth:authorize() end)
   r:post('/authorize', function() oauth:authorize() end)
 

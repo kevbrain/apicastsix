@@ -3,6 +3,7 @@ local len = string.len
 local http_ng = require "resty.http_ng"
 local resty_url = require 'resty.url'
 local jwt = require 'resty.jwt'
+local cjson = require 'cjson'
 
 local _M = {
   _VERSION = '0.1'
@@ -24,16 +25,27 @@ _M.params = {
   }
 }
 
-function _M.init(endpoint, public_key)
-  _M.configured = endpoint and public_key
+function _M.init(endpoint)
+  _M.configured = endpoint
 
-  local config = { endpoint = endpoint, public_key = public_key }
+  local config = { endpoint = endpoint}
   if _M.configured then
     _M.configuration = config
   end
 end
 
-local function format_public_key(key)
+local function get_public_key(http_client, endpoint)
+  if not http_client then
+    return nil, 'not initialized'
+  end
+
+  local res = http_client.get(endpoint)
+  local key
+  if res.status == 200 then
+    local json = cjson.decode(res.body)
+    key = json.public_key
+  end
+
   if not key then
     return nil, 'missing key'
   end
@@ -48,7 +60,7 @@ local function format_public_key(key)
 end
 
 local function validate_config(configuration)
-  return configuration.endpoint and configuration.public_key
+  return configuration.endpoint
 end
 
 function _M.new(config)
@@ -61,18 +73,18 @@ function _M.new(config)
     return error('missing keycloak configuration')
   end
 
-  local keycloak_config = {
-    endpoint = configuration.endpoint,
-    authorize_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/auth'),
-    token_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/token'),
-    public_key = format_public_key(configuration.public_key)
-  }
-
   local http_client = http_ng.new{
     backend = configuration.client,
     options = {
       ssl = { verify = false }
     }
+  }
+
+  local keycloak_config = {
+    endpoint = configuration.endpoint,
+    authorize_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/auth'),
+    token_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/token'),
+    public_key = get_public_key(http_client, configuration.endpoint)
   }
 
   return setmetatable({

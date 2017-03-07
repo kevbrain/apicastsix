@@ -8,27 +8,24 @@ describe('Keycloak', function()
 
   describe('.new', function()
     it('accepts configuration', function()
-        local keycloak = assert(_M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', public_key = 'foobar' }))
+        local keycloak = assert(_M.new({ endpoint = 'http://www.example.com:80/auth/realms/test'}))
 
-         assert.equals('-----BEGIN PUBLIC KEY-----\nfoobar\n-----END PUBLIC KEY-----', keycloak.config.public_key)
          assert.equals('http://www.example.com:80/auth/realms/test', keycloak.config.endpoint)
          assert.equals('http://www.example.com:80/auth/realms/test/protocol/openid-connect/auth', keycloak.config.authorize_url)
          assert.equals('http://www.example.com:80/auth/realms/test/protocol/openid-connect/token', keycloak.config.token_url)
     end)
 
-    it('fails with nil public_key', function()
-      assert.has_error(function () _M.new({endpoint = 'http://www.example.com:80/auth/realms/test', public_key = nil }) end, "missing keycloak configuration" )
-    end)
-
     it('fails with nil endpoint', function()
-      assert.has_error(function () _M.new({endpoint = nil, public_key = 'foobar' }) end, "missing keycloak configuration" )
+      assert.has_error(function () _M.new({endpoint = nil}) end, "missing keycloak configuration" )
     end)
   end)
 
   describe('.authorize', function()
 
     it('connects to keycloak', function()
-        local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', public_key = 'foobar', client = test_backend })
+        test_backend.expect{ url = 'http://www.example.com:80/auth/realms/test' }.respond_with{ status = 200 , body = '{"public_key":"foo"}', headers = {} }
+
+        local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', client = test_backend })
 
         stub(_M, 'check_credentials', function () return true end)
 
@@ -45,7 +42,7 @@ describe('Keycloak', function()
     end)
 
     it('returns error when response_type missing', function()
-      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', public_key = 'foobar'})
+      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test'})
 
       stub(_M, 'check_credentials', function () return true end)
 
@@ -58,7 +55,7 @@ describe('Keycloak', function()
     end)
 
     it('returns error when credentials are wrong', function ()
-      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/reams/test', public_key = 'foobar'})
+      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/reams/test'})
 
       stub(_M, 'check_credentials', function () return false end)
 
@@ -72,7 +69,8 @@ describe('Keycloak', function()
 
   describe('.get_token', function()
     it('connects to keycloak', function()
-      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', public_key = 'foobar', client = test_backend })
+      test_backend.expect{ url = 'http://www.example.com:80/auth/realms/test' }.respond_with{ status = 200 , body = '{"public_key":"foo"}', headers = {} }
+      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', client = test_backend })
 
       stub(ngx.location, 'capture', function () return { status = 200 } end )
 
@@ -89,7 +87,7 @@ describe('Keycloak', function()
     end)
 
     it('returns "invalid_request" when grant_type missing', function ()
-      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', public_key = 'foobar'})
+      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test'})
 
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'read_body', function() return { } end)
@@ -101,7 +99,7 @@ describe('Keycloak', function()
     end)
 
     it('returns "unsupported_grant_type" when grant_type not "recognised"', function ()
-      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', public_key = 'foobar'})
+      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test'})
 
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'read_body', function() return { } end)
@@ -113,7 +111,7 @@ describe('Keycloak', function()
     end)
 
     it('returns "invalid_request" when required params not sent', function ()
-      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', public_key = 'foobar'})
+      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test'})
 
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'read_body', function() return { } end)
@@ -125,7 +123,7 @@ describe('Keycloak', function()
     end)
 
     it('returns "invalid_client" when credentials are wrong', function ()
-      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test', public_key = 'foobar'})
+      local keycloak = _M.new({ endpoint = 'http://www.example.com:80/auth/realms/test'})
 
       stub(_M, 'check_credentials', function () return false end)
 

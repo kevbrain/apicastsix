@@ -57,15 +57,19 @@ function _M.find_by_id(self, service_id)
   return all:get(service_id)
 end
 
-function _M.find_by_host(self, host)
+function _M.find_by_host(self, host, stale)
   local cache = self.cache
   if not cache then
     return nil, 'not initialized'
   end
 
-  local services, stale = cache:get(host)
+  if stale == nil then
+    stale = true
+  end
 
-  return services or stale or { }
+  local services, expired = cache:get(host)
+
+  return services or (stale and expired) or { }
 end
 
 local hashed_array = {

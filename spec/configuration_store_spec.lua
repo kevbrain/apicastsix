@@ -67,13 +67,23 @@ describe('Configuration Store', function()
       assert.same({ }, store:find_by_host('unknown'))
     end)
 
-    it('returns stale records', function()
+    it('returns stale records by default', function()
       local store = configuration.new()
       local service =  { id = '21', hosts = { 'example.com', 'localhost' } }
 
       store:add(service, -1)
 
       assert.same({ service }, store:find_by_host('example.com'))
+    end)
+
+
+    it('not returns stale records when disabled', function()
+      local store = configuration.new()
+      local service =  { id = '21', hosts = { 'example.com', 'localhost' } }
+
+      store:add(service, -1)
+
+      assert.same({ }, store:find_by_host('example.com', false))
     end)
   end)
 

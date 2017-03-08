@@ -55,6 +55,14 @@ describe('Proxy', function()
 
       assert.truthy(p:configured('example.com'))
     end)
+
+    it('returns false when configuration is stale', function()
+      local config = configuration_store.new()
+      config:add({ id = 42, hosts = { 'example.com' } }, -1)
+      local p = assert(proxy.new(config))
+
+      assert.falsy(p:configured('example.com'))
+    end)
   end)
 
 end)

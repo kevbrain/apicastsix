@@ -63,7 +63,7 @@ function _M:configured(host)
   local configuration = self.configuration
   if not configuration or not configuration.find_by_host then return nil, 'not initialized' end
 
-  local hosts = configuration:find_by_host(host)
+  local hosts = configuration:find_by_host(host, false)
 
   return #(hosts) > 0
 end

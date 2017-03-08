@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Removed
 
+## [3.0.0-beta2] - 2017-03-08
+
+### Fixed
+
+- Reloading of configuration with every request when cache is disabled [PR #287](https://github.com/3scale/apicast/pull/287)
+
 ## [3.0.0-beta1] - 2017-03-03
 
 ### Changed
@@ -81,3 +87,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
 [3.0.0-beta1]: https://github.com/3scale/apicast/compare/v3.0.0-alpha2...v3.0.0-beta1
+[3.0.0-beta2]: https://github.com/3scale/apicast/compare/v3.0.0-beta1...v3.0.0-beta2

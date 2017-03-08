@@ -24,7 +24,7 @@ env APICAST_MANAGEMENT_API=status;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('module').proxy:configure({ services = { { id = 42 } } })
+    require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -59,7 +59,7 @@ env APICAST_MANAGEMENT_API=status;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('module').proxy:configure({services = { }})
+    require('configuration_loader').global({services = { }})
   }
 --- config
   include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -95,7 +95,7 @@ env APICAST_MANAGEMENT_API=debug;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('module').proxy:configure({ services = { { id = 42 } } })
+    require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -159,7 +159,7 @@ env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-      require('module').proxy:configure({ services = { { id = 42 } } })
+      require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -183,7 +183,7 @@ env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-      require('module').proxy:configure({ services = { { id = 42 } } })
+      require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -305,7 +305,7 @@ env APICAST_MANAGEMENT_API=status;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('module').proxy:configure({ services = { { id = 42 } } })
+    require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;

@@ -370,7 +370,7 @@ So when booting it can be immediately known that some of them won't work.
 --- config
 location /t {
   content_by_lua_block {
-    require('module').proxy:configure({
+    require('configuration_loader').global({
       services = {
         { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
         { id = 2, proxy = { hosts = { 'foo', 'daz' } } },
@@ -397,7 +397,7 @@ Including it's host so it is easy to see that configuration was loaded.
 --- config
 location /t {
   content_by_lua_block {
-    require('module').proxy:configure({
+    require('configuration_loader').global({
       services = {
         { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
         { id = 2, proxy = { hosts = { 'baz', 'daz' } } },

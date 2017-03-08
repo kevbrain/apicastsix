@@ -41,28 +41,4 @@ describe('Proxy', function()
       assert.same(8080, get_upstream({ api_backend = 'http://example.com:8080' }).port)
     end)
   end)
-
-  describe('.configured', function()
-    it('returns false when not configured', function()
-      local p = assert(proxy.new({configuration = {} }))
-      assert.falsy(p:configured())
-    end)
-
-    it('returns true when configured', function()
-      local config = configuration_store.new()
-      config:add({ id = 42, hosts = { 'example.com' } })
-      local p = assert(proxy.new(config))
-
-      assert.truthy(p:configured('example.com'))
-    end)
-
-    it('returns false when configuration is stale', function()
-      local config = configuration_store.new()
-      config:add({ id = 42, hosts = { 'example.com' } }, -1)
-      local p = assert(proxy.new(config))
-
-      assert.falsy(p:configured('example.com'))
-    end)
-  end)
-
 end)

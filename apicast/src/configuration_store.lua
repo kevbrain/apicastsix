@@ -27,7 +27,9 @@ function _M.new(cache_size)
     --    { service1 },
     --    { service2 }
     --  }
-    cache = lrucache.new(cache_size or _M.cache_size)
+    cache = lrucache.new(cache_size or _M.cache_size),
+
+    cache_size = cache_size
 
   }, mt)
 end

@@ -1,7 +1,6 @@
 local cjson = require 'cjson'
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
-local configuration_parser = require 'configuration_parser'
 local configuration_store = require 'configuration_store'
 
 local oauth = require 'oauth'
@@ -34,38 +33,6 @@ function _M.new(configuration)
   return setmetatable({
     configuration = assert(configuration, 'missing proxy configuration')
   }, mt)
-end
-
-function _M:configure(contents)
-  local configuration = self.configuration
-  local ttl = tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10)
-
-  if not configuration then
-    return nil, 'not initialized'
-  end
-
-  local config, err = configuration_parser.parse(contents)
-
-  if err then
-    ngx.log(ngx.WARN, 'not configured: ', err)
-    ngx.log(ngx.DEBUG, 'config: ', contents)
-
-    return nil, err
-  end
-
-  if config then
-    return configuration:store(config, ttl)
-  end
-end
-
-function _M:configured(host)
-  if not self then return nil, 'not initialized' end
-  local configuration = self.configuration
-  if not configuration or not configuration.find_by_host then return nil, 'not initialized' end
-
-  local hosts = configuration:find_by_host(host, false)
-
-  return #(hosts) > 0
 end
 
 -- Error Codes

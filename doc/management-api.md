@@ -4,6 +4,14 @@ Management API is a simple API that allows updating or retrieving the configurat
 
 This is mean to be used for **debugging purposes only**. Offers no authentication or synchronization between several instances.
 
+It can be exposed via `APICAST_MANAGEMENT_API` environment variable with following options:
+
+* **debug**: full API with access to everything
+* **status**: just the `/status` endpoints
+* **disabled**: completely disabled
+
+The default value is **status**.
+
 Available endpoints:
 
 - `GET /config`
@@ -52,6 +60,25 @@ Available endpoints:
      {"expires_in":139.0790002346,"value":{"1":{"address":"127.0.0.1","section":1,"type":1,"class":1,"name":"127.0.0.1.xip.io","ttl":250},"name":"127.0.0.1.xip.io","ttl":250}}
   }
   ```
+  
+- `GET /status/ready`
+  
+  Returns one of following responses:
+  
+  ```json
+  { "status": "error", "error": "not configured", "success": false }
+  ```
+  
+  ```json
+  { "status": "warning", "warning": "no services", "success": true }
+  ```
+  
+  ```json
+  { "status": "ready", "success": true }
+  ```
 
-  ​
-
+- `GET /status/live`
+  Returns:
+  ```json
+  { "status": "live", "success": true }
+  ```

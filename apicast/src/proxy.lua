@@ -311,10 +311,14 @@ function _M:access(service)
   if keycloak then
     local k = oauth.new()
     local jwt = k.parse_and_verify_token(credentials.access_token, k.config.public_key)
-    credentials.access_token = nil
 
-    local app_id = jwt.payload.aud
-    credentials.app_id = app_id
+    if jwt then
+      credentials.access_token = nil
+      local app_id = jwt.payload.aud
+      credentials.app_id = app_id
+    else
+      return error_authorization_failed(service)
+    end
   end
 
   if not credentials or #credentials == 0 then

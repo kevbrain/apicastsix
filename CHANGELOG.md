@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Ability to use Redis DB and password via `REDIS_URL` [PR #303](https://github.com/3scale/apicast/pull/303)
 - Ability to Authenticate against API using RHSSO and OpenID Connect [PR #283](https://github.com/3scale/apicast/pull/283)
 - Experimental option for true out of band reporting (`APICAST_REPORTING_WORKERS`) [PR #290](https://github.com/3scale/apicast/pull/290)
+- Experimental option for true out of band reporting (`APICAST_REPORTING_THREADS`) [PR #290](https://github.com/3scale/apicast/pull/290)
 - `/status/info` endpoint to the Management API [PR #290](https://github.com/3scale/apicast/pull/290)
 
 ### Fixed

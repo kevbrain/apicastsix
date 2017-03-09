@@ -58,6 +58,8 @@ objects:
             value: "${MANAGEMENT_API}"
           - name: OPENSSL_VERIFY
             value: "${OPENSSL_VERIFY}"
+          - name: APICAST_REPORTING_THREADS
+            value: "${REPORTING_THREADS}"
           image: "${IMAGE_NAME}"
           imagePullPolicy: Always
           name: "${APICAST_NAME}"
@@ -162,3 +164,7 @@ parameters:
   description: "Turn on/off the OpenSSL peer verification. Can be set to true/false."
   required: true
   value: "false"
+- name: REPORTING_THREADS
+  description: "Number of asynchronous reporting threads. Experimental feature."
+  required: false
+  value: "0"

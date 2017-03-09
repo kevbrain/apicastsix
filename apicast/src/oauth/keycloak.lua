@@ -34,6 +34,18 @@ function _M.init(endpoint)
   end
 end
 
+-- Formats the realm public key string into Public Key File (PKCS#8) format
+local function format_public_key(key)
+  local formatted_key = "-----BEGIN PUBLIC KEY-----\n"
+  local key_len = len(key)
+  for i=1,key_len,64 do
+    formatted_key = formatted_key..string.sub(key, i, i+63).."\n"
+  end
+  formatted_key = formatted_key.."-----END PUBLIC KEY-----"
+  return formatted_key
+end
+
+
 local function get_public_key(http_client, endpoint)
   if not http_client then
     return nil, 'not initialized'
@@ -50,12 +62,7 @@ local function get_public_key(http_client, endpoint)
     return nil, 'missing key'
   end
 
-  local formatted_key = "-----BEGIN PUBLIC KEY-----\n"
-  local key_len = len(key)
-  for i=1,key_len,64 do
-    formatted_key = formatted_key..string.sub(key, i, i+63).."\n"
-  end
-  formatted_key = formatted_key.."-----END PUBLIC KEY-----"
+  local formatted_key = format_public_key(key)
   return formatted_key
 end
 
@@ -112,12 +119,13 @@ function _M.respond_with_error(status, message)
   local headers = {
     ['Content-Type'] = 'application/json;charset=UTF-8'
   }
-  local body = '{"error":"'..message..'"}"'
+  local err_msg = { error = message }
+  local body = cjson.encode(err_msg)
   _M.respond_and_exit(status, body, headers)
 end
 
 function _M.authorize_check_params(params)
-  local response_type = params['response_type']
+  local response_type = params.response_type
   local required_params = _M.params.response_type
   if not response_type then return false, 'invalid_request' end
   if not required_params[response_type] then return false, 'unsupported_response_type' end
@@ -132,7 +140,7 @@ function _M.authorize_check_params(params)
 end
 
 function _M.token_check_params(params)
-  local grant_type = params['grant_type']
+  local grant_type = params.grant_type
   local required_params = _M.params.grant_type
   if not grant_type then return false, 'invalid_request' end
   if not required_params[grant_type] then return false, 'unsupported_grant_type' end
@@ -151,7 +159,8 @@ end
 function _M.parse_and_verify_token(jwt_token, public_key)
   local jwt_obj = jwt:verify(public_key, jwt_token)
   if not jwt_obj.verified then
-    ngx.log(ngx.INFO, "[jwt] failed verification for token: "..jwt_token)
+    ngx.log(ngx.INFO, "[jwt] failed verification for token: ", jwt_token)
+    return nil
   end
   return jwt_obj
 end

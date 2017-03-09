@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Use per request configuration when cache is disabled [PR #289](https://github.com/3scale/apicast/pull/289)
 - Automatically expose all environment variables starting with `APICAST_` or `THREESCALE_` to nginx [PR #292](https://github.com/3scale/apicast/pull/292)
 - Error log to show why downloading configuration failed [PR #306](https://github.com/3scale/apicast/pull/306)
+- Increased number of background timers and connections in the cosocket pool [PR #290](https://github.com/3scale/apicast/pull/290)
 
 ### Added
 

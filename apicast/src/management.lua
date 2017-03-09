@@ -113,6 +113,20 @@ function _M.disabled()
   ngx.exit(ngx.HTTP_FORBIDDEN)
 end
 
+function _M.info()
+  return json_response({
+    timers = {
+      pending = ngx.timer.pending_count(),
+      running = ngx.timer.running_count()
+    },
+    worker = {
+      exiting = ngx.worker.exiting(),
+      count = ngx.worker.count(),
+      id = ngx.worker.id()
+    }
+  })
+end
+
 local routes = {}
 
 function routes.disabled(r)
@@ -120,6 +134,7 @@ function routes.disabled(r)
 end
 
 function routes.status(r)
+  r:get('/status/info', _M.info)
   r:get('/status/ready', _M.ready)
   r:get('/status/live', _M.live)
 end

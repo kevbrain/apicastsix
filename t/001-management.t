@@ -349,3 +349,19 @@ POST /config
 --- error_code: 406
 --- no_error_log
 [error]
+
+=== TEST 16: status information
+Has information about timers and time.
+--- main_config
+env APICAST_MANAGEMENT_API=status;
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+include $TEST_NGINX_MANAGEMENT_CONFIG;
+--- request
+GET /status/info
+--- response_body
+{"timers":{"pending":0,"running":0},"worker":{"count":1,"exiting":false,"id":0}}
+--- error_code: 200
+--- no_error_log
+[error]

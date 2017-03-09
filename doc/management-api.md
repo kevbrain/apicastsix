@@ -82,3 +82,13 @@ Available endpoints:
   ```json
   { "status": "live", "success": true }
   ```
+
+- `GET /status/info`
+  Returns internal information about timers and workers.
+
+  ```json
+  {
+    "timers": { "pending": 0, "running": 0 },
+    "worker": { "count":1, "exiting": false, "id": 0 }
+  }
+  ```

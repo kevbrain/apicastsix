@@ -8,7 +8,7 @@ warn("PR is classed as Work in Progress") if github.pr_title.include? "[WIP]"
 # Warn when there is a big PR
 warn("Big PR") if git.lines_of_code > 500
 
-has_app_changes = git.modified_files.grep(%{apicast/}).any?
+has_app_changes = git.modified_files.grep(%r{apicast/}).any?
 markdown_files = git.modified_files.grep(/\.md$/)
 
 if !git.modified_files.include?("CHANGELOG.md") && has_app_changes

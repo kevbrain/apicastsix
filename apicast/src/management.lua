@@ -1,7 +1,7 @@
 local _M = {}
 
 local cjson = require('cjson')
-local proxy = require('module').proxy
+local module = require('module')
 local router = require('router')
 local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')
@@ -30,11 +30,11 @@ function _M.live()
   ngx.say(live)
 end
 
-function _M.status(p)
-  p = p or proxy
+function _M.status(config)
+  local configuration = config or module.configuration
   -- TODO: this should be fixed for multi-tenant deployment
-  local has_configuration = p.configuration.configured
-  local has_services = #(p.configuration:all()) > 0
+  local has_configuration = configuration.configured
+  local has_services = #(configuration:all()) > 0
 
   if not has_configuration then
     return { status = 'error', error = 'not configured',  success = false }
@@ -46,7 +46,7 @@ function _M.status(p)
 end
 
 function _M.config()
-  local config = proxy.configuration
+  local config = module.configuration
   local contents = cjson.encode(config.configured and { services = config:all() } or nil)
 
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -68,7 +68,7 @@ function _M.update_config()
   local config, err = configuration_parser.decode(data)
 
   if config then
-    local configured, error = proxy:configure(config)
+    local configured, error = configuration_loader.configure(module.configuration, config)
     -- TODO: respond with proper 304 Not Modified when config is the same
     if configured and #(configured.services) > 0 then
       json_response({ status = 'ok', config = config, services = #(configured.services)})
@@ -83,7 +83,7 @@ end
 function _M.delete_config()
   ngx.log(ngx.DEBUG, 'management config delete')
 
-  proxy.configuration:reset()
+  module.configuration:reset()
   -- TODO: respond with proper 304 Not Modified when config is the same
   local response = cjson.encode({ status = 'ok', config = cjson.null })
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -99,7 +99,7 @@ function _M.boot()
 
   ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(data))
 
-  proxy:configure(config)
+  configuration_loader.configure(module.configuration, config)
 
   ngx.say(response)
 end

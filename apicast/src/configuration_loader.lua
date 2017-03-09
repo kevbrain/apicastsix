@@ -1,3 +1,5 @@
+local configuration_store = require('configuration_store')
+local configuration_parser = require 'configuration_parser'
 local mock_loader = require 'configuration_loader.mock'
 local file_loader = require 'configuration_loader.file'
 local remote_loader_v1 = require 'configuration_loader.remote_v1'
@@ -13,7 +15,7 @@ local assert = assert
 local pcall = pcall
 local tonumber = tonumber
 
-local noop = function() end
+local noop = function(...) return ... end
 
 local _M = {
   _VERSION = '0.1'
@@ -24,6 +26,43 @@ function _M.boot(host)
 end
 
 _M.mock = mock_loader.save
+
+local function ttl()
+  return tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10)
+end
+
+function _M.global(contents)
+  local module = require('module')
+
+  return _M.configure(module.configuration, contents)
+end
+
+function _M.configure(configuration, contents)
+  if not configuration then
+    return nil, 'not initialized'
+  end
+
+  local config, err = configuration_parser.parse(contents)
+
+  if err then
+    ngx.log(ngx.WARN, 'not configured: ', err)
+    ngx.log(ngx.DEBUG, 'config: ', contents)
+
+    return nil, err
+  end
+
+  if config then
+    return configuration:store(config, ttl())
+  end
+end
+
+function _M.configured(configuration, host)
+  if not configuration or not configuration.find_by_host then return nil, 'not initialized' end
+
+  local hosts = configuration:find_by_host(host, false)
+
+  return #hosts > 0
+end
 
 -- Cosocket API is not available in the init_by_lua* context (see more here: https://github.com/openresty/lua-nginx-module#cosockets-not-available-everywhere)
 -- For this reason a new process needs to be started to download the configuration through 3scale API
@@ -52,9 +91,9 @@ local boot = {
   ttl = function() return tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10) end
 }
 
-function boot.init(proxy)
+function boot.init(configuration)
   local config, err = _M.init()
-  local init, conferr = proxy:configure(config)
+  local init, conferr = _M.configure(configuration, config)
 
   if config and init then
     ngx.log(ngx.DEBUG, 'downloaded configuration: ', config)
@@ -63,15 +102,15 @@ function boot.init(proxy)
     os.exit(1)
   end
 
-  if boot.ttl() == 0 then
+  if ttl() == 0 then
     ngx.log(ngx.EMERG, 'cache is off, cannot store configuration, exiting')
     os.exit(0)
   end
 end
 
-local function refresh_configuration(proxy)
+local function refresh_configuration(configuration)
   local config = _M.boot()
-  local init, err = proxy:configure(config)
+  local init, err = _M.configure(configuration, config)
 
   if init then
     ngx.log(ngx.DEBUG, 'updated configuration via timer: ', config)
@@ -80,8 +119,8 @@ local function refresh_configuration(proxy)
   end
 end
 
-function boot.init_worker(proxy)
-  local interval = boot.ttl() or 0
+function boot.init_worker(configuration)
+  local interval = ttl() or 0
 
   local function schedule(...)
     local ok, err = ngx.timer.at(...)
@@ -111,25 +150,29 @@ function boot.init_worker(proxy)
   end
 
   if interval > 0 then
-    schedule(interval, handler, proxy)
+    schedule(interval, handler, configuration)
   end
 end
 
 local lazy = { init_worker = noop }
 
-function lazy.init(proxy)
-  proxy.configuration.configured = true
+function lazy.init(configuration)
+  configuration.configured = true
 end
 
-function lazy.rewrite(proxy, host)
+function lazy.rewrite(configuration, host)
   local sema = synchronization:acquire(host)
+
+  if ttl() == 0 then
+    configuration = configuration_store.new(configuration.cache_size)
+  end
 
   local ok, err = sema:wait(15)
 
-  if ok and not proxy:configured(host) then
+  if ok and not _M.configured(configuration, host) then
     ngx.log(ngx.INFO, 'lazy loading configuration for: ', host)
     local config = _M.boot(host)
-    proxy:configure(config)
+    _M.configure(configuration, config)
   end
 
   if ok then
@@ -138,6 +181,8 @@ function lazy.rewrite(proxy, host)
   else
     ngx.log(ngx.WARN, 'failed to acquire lock to lazy load: ', host, ' error: ', err)
   end
+
+  return configuration
 end
 
 local modes = {

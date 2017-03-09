@@ -12,10 +12,21 @@ local _M = {
 
 local getenv = os.getenv
 
-local function fetch(name)
-  local value = getenv(name)
+local cached = {}
 
-  _M.env[name] = value
+local function fetch(name)
+  local value
+
+  if cached[name] then
+    value = _M.env[name]
+  else
+    value = getenv(name)
+
+    ngx.log(ngx.DEBUG, 'env: ', name, ' = ', value)
+    _M.env[name] = value
+
+    cached[name] = true
+  end
 
   return value
 end
@@ -73,6 +84,7 @@ end
 --- Reset local cache.
 function _M.reset()
   _M.env = {}
+  cached = {}
   return _M
 end
 

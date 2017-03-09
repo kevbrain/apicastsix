@@ -7,6 +7,12 @@ local resty_balancer = require 'resty.balancer'
 
 local _M = {} -- public interface
 
+local redis_conf = {
+  timeout   = 3000,  -- 3 seconds
+  keepalive = 10000, -- milliseconds
+  poolsize  = 1000   -- # connections
+}
+
 -- private
 -- Logging Helpers
 function _M.show_table(t)
@@ -115,6 +121,8 @@ function _M.connect_redis(host, port)
   local p = port or env.get('REDIS_PORT') or 6379
   local red = redis:new()
 
+  red:set_timeout(redis_conf.timeout)
+
   local ok, err = red:connect(_M.resolve(h, p))
   if not ok then
     return nil, _M.error("failed to connect to redis on " .. h .. ":" .. p .. ":", err)
@@ -122,8 +130,14 @@ function _M.connect_redis(host, port)
   return red
 end
 
+-- return ownership of this connection to the pool
+function _M.release_redis(red)
+  red:set_keepalive(redis_conf.keepalive, redis_conf.poolsize)
+end
+
 -- error and exist
 function _M.error(...)
+  ngx.log(0, ...)
   ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
   ngx.say(...)
   ngx.exit(ngx.status)

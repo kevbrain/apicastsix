@@ -1,11 +1,11 @@
 local _M = {}
 
-local redis_pool = require 'client_registrations/redis_pool'
 local lom = require 'lxp.lom'
 local xpath = require 'luaxpath'
 local cjson = require 'cjson'
 local router = require('router')
 local http_ng = require "resty.http_ng"
+local ts = require 'threescale_utils'
 
 local initial_access_token = "CHANGE_ME_INITIAL_ACCESS_TOKEN"
 
@@ -19,22 +19,25 @@ local function update_access_token(response_payload)
   local access_token = json_body.registrationAccessToken
   local redis_key = access_token_prefix..client_id
 
-  local redis, ok = redis_pool.acquire()
-  if ok then
+  local redis = ts.connect_redis()
+
+  if redis then
     redis:set(redis_key, access_token)
+    ts.release_redis(redis)
   end
-  redis_pool.release(redis)
 end
 
 -- get registration access token from Redis
 local function get_access_token(client_id)
   local access_token
   local redis_key = access_token_prefix..client_id
-  local redis, ok = redis_pool.acquire()
-  if ok then
+  local redis = ts.connect_redis()
+
+  if redis then
     access_token = redis:get(redis_key)
+    ts.release_redis(redis)
   end
-  redis_pool.release(redis)
+
   return access_token
 end
 

@@ -1,9 +1,11 @@
-local redis_pool = require 'client-registrations/redis_pool'
+local _M = {}
+
+local redis_pool = require 'client_registrations/redis_pool'
 local lom = require 'lxp.lom'
 local xpath = require 'luaxpath'
 local cjson = require 'cjson'
-
-local _M = {}
+local router = require('router')
+local http_ng = require "resty.http_ng"
 
 local initial_access_token = "CHANGE_ME_INITIAL_ACCESS_TOKEN"
 
@@ -36,22 +38,33 @@ local function get_access_token(client_id)
   return access_token
 end
 
-local function client_registration_request(method, client_details)
-  local body = { 
-    clientId = client_details.client_id, 
+local function client_registration_request(method, client_details, url, access_token)
+  local body = {
+    clientId = client_details.client_id,
     secret = client_details.client_secret,
     name = client_details.name,
     description = client_details.description,
     consentRequired = true -- we want the user to give consent
   }
-  if client_details.redirect_url then 
+
+  if client_details.redirect_url then
     body.redirectUris = { client_details.redirect_url }
   end
 
-  local res = ngx.location.capture("/register_client", { 
-      method = method,
-      body = cjson.encode(body),
-      copy_all_vars = true })
+  local req_body = cjson.encode(body)
+
+  local http_client = http_ng.new()
+  local opts = { headers = { ['Content-Type'] = "application/json",
+                  ['Accept'] = "application/json",
+                  ['Authorization'] = "Bearer "..access_token
+       }, ssl = { verify = false }}
+  local res
+
+  if method == ngx.HTTP_PUT then
+    res = http_client.put(url, req_body, opts)
+  else
+    res = http_client.post(url, req_body, opts)
+  end
 
   if res.status >= 200 and res.status < 300 then
     update_access_token(res.body)
@@ -61,18 +74,18 @@ local function client_registration_request(method, client_details)
 end
 
 local function register_client(client_details)
-  ngx.var.access_token = initial_access_token
-  ngx.var.registration_url = ngx.var.rhsso_endpoint.."/clients-registrations/default" 
+  local access_token = initial_access_token
+  local url = ngx.var.rhsso_endpoint.."/clients-registrations/default"
   local method = ngx.HTTP_POST
-  client_registration_request(method, client_details)
+  client_registration_request(method, client_details, url, access_token)
 end
 
 local function update_client(client_details)
   local client_id = client_details.client_id
-  ngx.var.access_token = get_access_token(client_id)
-  ngx.var.registration_url = ngx.var.rhsso_endpoint..'/clients-registrations/default/'..client_id
+  local access_token = get_access_token(client_id)
+  local url = ngx.var.rhsso_endpoint..'/clients-registrations/default/'..client_id
   local method = ngx.HTTP_PUT
-  client_registration_request(method, client_details)
+  client_registration_request(method, client_details, url, access_token)
 end
 
 function _M.handle()
@@ -85,7 +98,7 @@ function _M.handle()
     local t = xpath.selectNodes(root, '/event/type/text()')[1]
     if (t == 'application' and (action == 'updated' or action == 'created')) then
 
-      local client_details = { 
+      local client_details = {
         client_id = xpath.selectNodes(root, '/event/object/application/application_id/text()')[1],
         client_secret = xpath.selectNodes(root, '/event/object/application/keys/key/text()')[1],
         redirect_url = xpath.selectNodes(root, '/event/object/application/redirect_url/text()')[1],
@@ -97,8 +110,32 @@ function _M.handle()
         register_client(client_details)
       elseif action == 'updated' then
         update_client(client_details)
-      end      
+      end
     end
+  end
+end
+
+function _M.router()
+  local r = router.new()
+
+  r:post('/webhooks', _M.handle)
+
+  return r
+end
+
+function _M.call(method, uri, ...)
+  local r = _M.router()
+
+  local ok, err = r:execute(method or ngx.req.get_method(),
+                                 uri or ngx.var.uri,
+                                 unpack(... or {}))
+
+  if not ok then
+    ngx.status = 404
+  end
+
+  if err then
+    ngx.say(err)
   end
 end
 

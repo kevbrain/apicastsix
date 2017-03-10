@@ -1,20 +1,20 @@
 local env = require 'resty.env'
 local router = require 'router'
-local oauth
+local apicast_oauth = require 'oauth.apicast_oauth'
+local keycloak = require 'oauth.keycloak'
 
 local _M = {
   _VERSION = '0.0.2'
 }
 
 function _M.new()
-  local keycloak = env.get('RHSSO_ENDPOINT')
-  if keycloak then
-    oauth = require 'oauth.keycloak'
-    oauth.init(keycloak)
+  local oauth
+  if keycloak.configured then
+    oauth = keycloak.new()
   else
-    oauth = require 'oauth.apicast_oauth'
+    oauth = apicast_oauth.new()
   end
-  return oauth.new()
+  return oauth
 end
 
 function _M.router()

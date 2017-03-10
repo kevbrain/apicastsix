@@ -91,7 +91,7 @@ function _M.new(config)
     endpoint = configuration.endpoint,
     authorize_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/auth'),
     token_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/token'),
-    public_key = get_public_key(http_client, configuration.endpoint)
+    public_key = configuration.public_key or get_public_key(http_client, configuration.endpoint)
   }
 
   return setmetatable({

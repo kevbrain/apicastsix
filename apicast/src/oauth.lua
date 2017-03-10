@@ -1,25 +1,29 @@
+local env = require 'resty.env'
 local router = require 'router'
 local apicast_oauth = require 'oauth.apicast_oauth'
 local keycloak = require 'oauth.keycloak'
+
+local oauth
 
 local _M = {
   _VERSION = '0.0.2'
 }
 
 function _M.new()
-  local oauth
-  if keycloak.configured then
-    oauth = keycloak.new()
+  local keycloak_configured = env.get('RHSSO_ENDPOINT')
+  if keycloak_configured then
+    oauth = keycloak
+    oauth.init(keycloak_configured)
   else
-    oauth = apicast_oauth.new()
+    oauth = apicast_oauth
   end
-  return oauth
+  return oauth.new()
 end
 
 function _M.router()
   -- TODO: use configuration to customize urls
   local r = router:new()
-  local oauth = _M.new()
+  oauth = _M.new()
   r:get('/authorize', function() oauth:authorize() end)
   r:post('/authorize', function() oauth:authorize() end)
 

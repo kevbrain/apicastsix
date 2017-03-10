@@ -1,4 +1,3 @@
-local env = require 'resty.env'
 local router = require 'router'
 local apicast_oauth = require 'oauth.apicast_oauth'
 local keycloak = require 'oauth.keycloak'
@@ -20,7 +19,7 @@ end
 function _M.router()
   -- TODO: use configuration to customize urls
   local r = router:new()
-  oauth = _M.new()
+  local oauth = _M.new()
   r:get('/authorize', function() oauth:authorize() end)
   r:post('/authorize', function() oauth:authorize() end)
 

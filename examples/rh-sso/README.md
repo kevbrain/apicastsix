@@ -6,7 +6,7 @@ This example shows you how to use Red Hat Single Sign-On to verify the identity 
 
 - 3scale account - You can sign up for a Free Trial [here](https://www.3scale.net/signup/)
 - Red Hat SSO instance - [Installation](https://access.redhat.com/documentation/en-us/red_hat_single_sign-on/7.0/html-single/server_installation_and_configuration_guide/) and [Configuration](https://access.redhat.com/documentation/en-us/red_hat_single_sign-on/7.0/html/getting_started_guide/) instructions
-- API - You can use the 3scale [echo API](https://echo-api.3scale.net:443)
+- API - You can use the 3scale echo API: `https://echo-api.3scale.net:443`
 - Client Application to consume the API - You can use a client such as [Postman](https://www.getpostman.com/)
 - APIcast instance
 
@@ -98,8 +98,8 @@ Once you have APIcast and RHSSO configured and up and running you can create a n
 
 1. Under "Authorization", select "OAuth 2.0" 
 2. Click "Get New Access Token" and fill in the following details: 
-    1. Auth URL: 
-    2. Access Token URL:
+    1. Auth URL e.g `http://{your-apicast-host}:{port}/authorize`
+    2. Access Token URL e.g `http://{your-apicast-host}:{port}/oauth/token`
     3. Client ID
     4. Client Secret
     5. Grant Type: "Authorization Code"

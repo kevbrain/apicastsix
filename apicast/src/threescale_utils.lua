@@ -137,7 +137,6 @@ end
 
 -- error and exist
 function _M.error(...)
-  ngx.log(0, ...)
   ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
   ngx.say(...)
   ngx.exit(ngx.status)

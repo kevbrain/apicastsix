@@ -5,7 +5,8 @@ dependencies = {
   'luacheck >= 0',
   'busted  >= 0',
   'lua-cjson >= 0',
-  'ldoc >= 0'
+  'ldoc >= 0',
+  'lua-resty-repl >= 0',
 }
 build = {
   type = "builtin",

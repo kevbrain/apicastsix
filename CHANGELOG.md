@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Backend HTTP client that uses cosockets [PR #295](https://github.com/3scale/apicast/pull/295)
+- Ability to customize main section of nginx configuration (and expose more env variables) [PR #292](https://github.com/3scale/apicast/pull/292)
 
 ### Removed
 

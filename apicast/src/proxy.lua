@@ -280,7 +280,7 @@ function _M:call(host)
   self:set_backend_upstream(service)
 
   if service.backend_version == 'oauth' then
-    local f, params = oauth.call()
+    local f, params = oauth.call(_, _, service)
 
     if f then
       ngx.log(ngx.DEBUG, 'apicast oauth flow')

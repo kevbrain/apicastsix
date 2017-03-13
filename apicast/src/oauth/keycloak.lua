@@ -72,7 +72,7 @@ local function validate_config(configuration)
   return configuration.endpoint
 end
 
-function _M.new(config)
+function _M.new(config, service)
   local configuration = config or _M.configuration
 
   local is_valid = validate_config(configuration)
@@ -98,7 +98,8 @@ function _M.new(config)
 
   return setmetatable({
     config = keycloak_config,
-    http_client = http_client
+    http_client = http_client,
+    service = service
     }, mt)
 end
 
@@ -167,22 +168,34 @@ function _M.parse_and_verify_token(self, jwt_token)
   return jwt_obj
 end
 
-function _M.check_credentials(params)
-  local http = {
-    get = function(url, args)
-      local backend_upstream = ngx.ctx.backend_upstream
-      local res = ngx.location.capture(assert(url), { args = args, share_all_vars = true, ctx = { backend_upstream = backend_upstream } })
-      return res
-    end
-  }
+function _M.check_credentials(self, params)
+  local http_client = self.http_client
+
+  if not http_client then
+    return nil, 'not initialized'
+  end
 
   local args = {
-        app_id = params.client_id,
-        app_key = params.client_secret,
-        redirect_uri = params.redirect_uri
-      }
+      app_id = params.client_id,
+      app_key = params.client_secret,
+      redirect_uri = params.redirect_uri
+    }
+  local credentials = ngx.encode_args(args)
 
-  local res = http.get("/_threescale/check_credentials", args)
+  local service = self.service
+  local service_args = ngx.encode_args({ [service.backend_authentication.type or ''] = service.backend_authentication.value, service_id = service.id })
+  local endpoint = service.backend.endpoint
+
+  if not endpoint then
+    ngx.log(ngx.WARN, 'service ', service.id, ' does not have backend endpoint configured')
+    return
+  end
+
+  local url = resty_url.join(endpoint, '/transactions/oauth_authorize.xml', "?", service_args, "&", credentials)
+
+  local res = http_client.get(url)
+
+  ngx.log(ngx.DEBUG, '[backend]: request: ', url, ' response status: ', res.status, ' body: ', res.body)
 
   return res.status == 200
 end
@@ -203,7 +216,7 @@ function _M.authorize(self)
     return
   end
 
-  ok = _M.check_credentials(params)
+  ok = _M.check_credentials(self, params)
   if not ok then
     _M.respond_with_error(401, 'invalid_client')
     return
@@ -233,7 +246,7 @@ function _M.get_token(self)
     return
   end
 
-  ok = _M.check_credentials(req_body)
+  ok = _M.check_credentials(self, req_body)
   if not ok then
     _M.respond_with_error(401, 'invalid_client')
     return

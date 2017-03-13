@@ -9,7 +9,7 @@ local _M = {
   _VERSION = '0.0.2'
 }
 
-function _M.new()
+function _M.new(service)
   local keycloak_configured = env.get('RHSSO_ENDPOINT')
   if keycloak_configured then
     oauth = keycloak
@@ -17,13 +17,13 @@ function _M.new()
   else
     oauth = apicast_oauth
   end
-  return oauth.new()
+  return oauth.new(_, service)
 end
 
-function _M.router()
+function _M.router(service)
   -- TODO: use configuration to customize urls
   local r = router:new()
-  oauth = _M.new()
+  oauth = _M.new(service)
   r:get('/authorize', function() oauth:authorize() end)
   r:post('/authorize', function() oauth:authorize() end)
 
@@ -36,8 +36,8 @@ function _M.router()
   return r
 end
 
-function _M.call(method, uri, ...)
-  local r = _M.router()
+function _M.call(method, uri, service,...)
+  local r = _M.router(service)
 
   local f, params = r:resolve(method or ngx.req.get_method(),
     uri or ngx.var.uri,

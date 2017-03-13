@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Use per request configuration when cache is disabled [PR #289](https://github.com/3scale/apicast/pull/289)
+- Automatically expose all environment variables starting with `APICAST_` or `THREESCALE_` to nginx [PR #292](https://github.com/3scale/apicast/pull/292)
 
 ### Added
 

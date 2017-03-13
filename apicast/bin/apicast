@@ -110,6 +110,7 @@ done
 
 main+=("daemon ${daemon};")
 main+=("worker_processes ${worker_processes};")
+main+=$(printenv | awk '$1 ~ /^(APICAST|THREESCALE)_/ {split($0,env,"="); print "env", env[1] ";"}')
 
 function join_by { local IFS="$1"; shift; echo "$*"; }
 args=$(join_by '' "${args[@]}")

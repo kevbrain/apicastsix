@@ -10,7 +10,7 @@ local gsub = string.gsub
 local select = select
 
 local http_authorization = require 'resty.http_authorization'
-
+local keycloak = require('oauth.keycloak')
 
 local _M = { }
 local mt = { __index = _M  }
@@ -137,12 +137,24 @@ function backend_version_credentials.version_oauth(config)
   -- Resource servers MUST support this method. [Bearer]
   access_token = access_token or authorization.token
 
-  ------
-  -- oauth credentials.
-  -- @field 1 Access Token
-  -- @field access_token Access Token
-  -- @table credentials_oauth
-  return { access_token, access_token = access_token }
+  if keycloak.configured then
+    local k = keycloak.new()
+    local jwt_obj = k:parse_and_verify_token(access_token)
+    local app_id = jwt_obj.payload.aud
+    ------
+    -- oauth credentials for keycloak
+    -- @field 1 Client id
+    -- @field app_id Client id
+    -- @table credentials_oauth
+    return { app_id, app_id = app_id }
+  else
+    ------
+    -- oauth credentials.
+    -- @field 1 Access Token
+    -- @field access_token Access Token
+    -- @table credentials_oauth
+    return { access_token, access_token = access_token }
+  end
 end
 
 -- This table can be used with `table.concat` to serialize

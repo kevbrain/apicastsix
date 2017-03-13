@@ -308,19 +308,6 @@ function _M:access(service)
 
   local credentials, err = service:extract_credentials()
 
-  if backend_version == 'oauth' and keycloak then
-    local k = oauth.new()
-    local jwt = k.parse_and_verify_token(credentials.access_token, k.config.public_key)
-
-    if jwt then
-      credentials.access_token = nil
-      local app_id = jwt.payload.aud
-      credentials.app_id = app_id
-    else
-      return error_authorization_failed(service)
-    end
-  end
-
   if not credentials or #credentials == 0 then
     if err then
       ngx.log(ngx.WARN, "cannot get credentials: ", err)

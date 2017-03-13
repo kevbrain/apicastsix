@@ -156,8 +156,8 @@ end
 -- Parses the token - in this case we assume it's a JWT token
 -- Here we can extract authenticated user's claims or other information returned in the access_token
 -- or id_token by RH SSO
-function _M.parse_and_verify_token(jwt_token, public_key)
-  local jwt_obj = jwt:verify(public_key, jwt_token)
+function _M.parse_and_verify_token(self, jwt_token)
+  local jwt_obj = jwt:verify(self.config.public_key, jwt_token)
   if not jwt_obj.verified then
     ngx.log(ngx.INFO, "[jwt] failed verification for token: ", jwt_token)
     return nil

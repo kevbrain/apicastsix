@@ -126,3 +126,9 @@ URI that overrides backend endpoint from the configuration. Useful when deployin
 
 The [Management API](./management-api.md) is powerful and can control the APIcast configuration.
 You should enable the debug level only for debugging.
+
+### `APICAST_SERVICE_${ID}_CONFIGURATION_VERSION`
+
+Replace `${ID}` with the actual Service ID. The value should be the configuration version you can see in the configuration history on the Admin Portal.
+
+Setting it to particual version will make it not auto-update and always use that version.

@@ -111,7 +111,13 @@ function _M:config(service, environment, version)
   if not environment then return nil, 'missing environment' end
   if not version then return nil, 'missing version' end
 
-  local url = resty_url.join(self.endpoint, '/admin/api/services/', id , '/proxy/configs/', environment, '/', format('%s.json', version))
+  local version_override = resty_env.get(format('APICAST_SERVICE_%s_CONFIGURATION_VERSION', id))
+
+  local url = resty_url.join(
+    self.endpoint,
+    '/admin/api/services/', id , '/proxy/configs/', environment, '/',
+    format('%s.json', version_override or version)
+  )
 
   local res, err = http_client.get(url)
 

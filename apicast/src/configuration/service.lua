@@ -140,6 +140,12 @@ function backend_version_credentials.version_oauth(config)
   if keycloak.configured then
     local k = keycloak.new()
     local jwt_obj = k:parse_and_verify_token(access_token)
+
+    if not jwt_obj then
+      ngx.log(ngx.INFO, "[jwt] failed verification for token: ", access_token)
+      return { "jwt_verification_failed", app_id = "jwt_verification_failed" }
+    end
+
     local app_id = jwt_obj.payload.aud
     ------
     -- oauth credentials for keycloak

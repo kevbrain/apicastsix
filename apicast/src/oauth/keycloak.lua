@@ -52,6 +52,8 @@ local function get_public_key(http_client, endpoint)
   end
 
   local res = http_client.get(endpoint)
+  ngx.log(ngx.DEBUG, '[rh-sso]: request: ', endpoint, ' response status: ', res.status, ' body: ', res.body)
+
   local key
   if res.status == 200 then
     local json = cjson.decode(res.body)

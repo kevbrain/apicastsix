@@ -12,11 +12,12 @@ AUTHORIZE_ENDPOINT = "http://#{GATEWAY}/authorize"
 TOKEN_ENDPOINT = "http://#{GATEWAY}/oauth/token"
 
 get("/") do
+  @state = SecureRandom.uuid
+  session[:state] = @state
 	erb :root
 end
 
 get("/callback") do
-	@code = session[:code] = params[:state] == session[:state] ? params[:code] : "error: state does not match"
-
+	@code = params[:state] == session[:state] ? params[:code] : "error: state does not match"
 	erb :root
 end

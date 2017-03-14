@@ -169,7 +169,7 @@ local function oauth_authrep(service)
       error_authorization_failed(service)
     else
       ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key)
-      access_tokens:set(ngx.var.cached_key,200)
+      access_tokens:set(cached_key,200)
     end
 
     ngx.var.cached_key = nil

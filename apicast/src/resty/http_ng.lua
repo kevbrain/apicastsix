@@ -1,3 +1,11 @@
+------------
+--- HTTP NG module
+-- Implements HTTP client.
+-- @module http_ng
+
+--- HTTP Client
+-- @type HTTP
+
 local type = type
 local unpack = unpack
 local assert = assert
@@ -11,13 +19,6 @@ local next = next
 local pairs = pairs
 local concat = table.concat
 
-------------
---- HTTP
--- HTTP client
--- @module middleware
-
---- HTTP
--- @type HTTP
 
 local resty_backend = require 'resty.http_ng.backend.resty'
 local json = require 'cjson'

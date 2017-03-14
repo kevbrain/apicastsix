@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Backend HTTP client that uses cosockets [PR #295](https://github.com/3scale/apicast/pull/295)
+
 ### Removed
 
 ## [3.0.0-beta2] - 2017-03-08

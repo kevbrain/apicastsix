@@ -159,6 +159,7 @@ local function oauth_authrep(service)
     ngx.log(ngx.DEBUG, 'apicast cache hit key: ', cached_key)
     ngx.var.cached_key = cached_key
   else
+    ngx.log(ngx.INFO, 'apicast cache miss key: ', cached_key)
     local res = http.get("/threescale_oauth_authrep")
 
     if res.status ~= 200   then
@@ -167,6 +168,7 @@ local function oauth_authrep(service)
       ngx.header.content_type = "application/json"
       error_authorization_failed(service)
     else
+      ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key)
       access_tokens:set(ngx.var.cached_key,200)
     end
 

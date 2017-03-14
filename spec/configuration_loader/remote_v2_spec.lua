@@ -2,6 +2,7 @@ local _M = require 'configuration_loader.remote_v2'
 local test_backend_client = require 'resty.http_ng.backend.test'
 local cjson = require 'cjson'
 local user_agent = require 'user_agent'
+local env = require 'resty.env'
 
 describe('Configuration Rmote Loader V2', function()
 
@@ -62,6 +63,28 @@ describe('Configuration Rmote Loader V2', function()
       assert.truthy(config)
       assert.equal('table', type(config.content))
       assert.equal(13, config.version)
+      assert.equal('sandbox', config.environment)
+    end)
+
+    it('takes version from the environment', function()
+      test_backend.expect{ url = 'http://example.com/admin/api/services/42/proxy/configs/sandbox/2.json' }.
+      respond_with{ status = 200, body = cjson.encode(
+        {
+          proxy_config = {
+            version = 2,
+            environment = 'sandbox',
+            content = { id = 42, backend_version = 1 }
+          }
+        }
+      ) }
+      local service = { id = 42 }
+
+      env.set('APICAST_SERVICE_42_CONFIGURATION_VERSION', '2')
+      local config = loader:config(service, 'sandbox', 'latest')
+
+      assert.truthy(config)
+      assert.equal('table', type(config.content))
+      assert.equal(2, config.version)
       assert.equal('sandbox', config.environment)
     end)
   end)

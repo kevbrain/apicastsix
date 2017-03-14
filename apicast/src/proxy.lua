@@ -328,6 +328,10 @@ function _M:access(service)
     credentials[i] = nil
   end
 
+  -- save those tables in context so they can be used in the backend client
+  ngx.ctx.usage = params
+  ngx.ctx.credentials = credentials
+
   credentials = encode_args(credentials)
 
   ngx.var.credentials = credentials

@@ -21,7 +21,7 @@ describe('backend client', function()
         url = 'http://example.com/transactions/authrep.xml?service_id=42&auth=val',
         headers = { host = 'example.com' }
       }.respond_with{ status = 200 }
-      local backend_client = assert(_M.new(service, test_backend))
+      local backend_client = assert(_M:new(service, test_backend))
 
       local res = backend_client:authrep()
 
@@ -39,7 +39,7 @@ describe('backend client', function()
       test_backend.expect{
         url = 'http://example.com/transactions/authrep.xml?service_id=42&auth=val&usage%5Bhits%5D=1&user_key=foobar'
       }.respond_with{ status = 200 }
-      local backend_client = assert(_M.new(service, test_backend))
+      local backend_client = assert(_M:new(service, test_backend))
 
       local res = backend_client:authrep({ ['usage[hits]'] = 1 }, { user_key = 'foobar' })
 
@@ -57,7 +57,7 @@ describe('backend client', function()
         url = 'http://example.com/transactions/authrep.xml?service_id=42',
         headers = { host = 'foo.example.com' }
       }.respond_with{ status = 200 }
-      local backend_client = assert(_M.new(service, test_backend))
+      local backend_client = assert(_M:new(service, test_backend))
 
       local res = backend_client:authrep()
 
@@ -74,7 +74,7 @@ describe('backend client', function()
       test_backend.expect{
         url = 'http://example.com/transactions/oauth_authrep.xml?service_id=42'
       }.respond_with{ status = 200 }
-      local backend_client = assert(_M.new(service, test_backend))
+      local backend_client = assert(_M:new(service, test_backend))
 
       local res = backend_client:authrep()
 
@@ -95,7 +95,7 @@ describe('backend client', function()
         url = 'http://example.com/transactions/authorize.xml?service_id=42&auth=val',
         headers = { host = 'example.com' }
       }.respond_with{ status = 200 }
-      local backend_client = assert(_M.new(service, test_backend))
+      local backend_client = assert(_M:new(service, test_backend))
 
       local res = backend_client:authorize()
 
@@ -113,7 +113,7 @@ describe('backend client', function()
       test_backend.expect{
         url = 'http://example.com/transactions/authorize.xml?service_id=42&auth=val&usage%5Bhits%5D=1&user_key=foobar'
       }.respond_with{ status = 200 }
-      local backend_client = assert(_M.new(service, test_backend))
+      local backend_client = assert(_M:new(service, test_backend))
 
       local res = backend_client:authorize({ ['usage[hits]'] = 1 }, { user_key = 'foobar' })
 
@@ -131,7 +131,7 @@ describe('backend client', function()
         url = 'http://example.com/transactions/authorize.xml?service_id=42',
         headers = { host = 'foo.example.com' }
       }.respond_with{ status = 200 }
-      local backend_client = assert(_M.new(service, test_backend))
+      local backend_client = assert(_M:new(service, test_backend))
 
       local res = backend_client:authorize()
 
@@ -148,7 +148,7 @@ describe('backend client', function()
       test_backend.expect{
         url = 'http://example.com/transactions/oauth_authorize.xml?service_id=42'
       }.respond_with{ status = 200 }
-      local backend_client = assert(_M.new(service, test_backend))
+      local backend_client = assert(_M:new(service, test_backend))
 
       local res = backend_client:authorize()
 

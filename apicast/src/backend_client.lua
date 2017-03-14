@@ -1,3 +1,14 @@
+------------
+-- Backend Client
+-- HTTP client using @{http_ng.HTTP} to call 3scale backend.
+--
+-- @module backend_client
+-- @author mikz
+-- @license Apache License Version 2.0
+
+--- Backend Client
+-- @type backend_client
+
 local setmetatable = setmetatable
 local concat = table.concat
 
@@ -11,7 +22,11 @@ local _M = {
 
 local mt = { __index = _M }
 
-function _M.new(service, http_client)
+--- Return new instance of backend client
+-- @tparam Service service object with service definition
+-- @tparam http_ng.backend http_client async/test/custom http backend
+-- @treturn backend_client
+function _M.new(_, service, http_client)
   local endpoint = service.backend.endpoint or ngx.var.backend_endpoint
   local service_id = service.id
 
@@ -81,6 +96,9 @@ local function call_backend_transaction(self, path, ...)
   return res
 end
 
+--- Call authrep (oauth_authrep) on backend.
+-- @tparam ?{table,...} query list of query parameters
+-- @treturn http_ng.response http response
 function _M:authrep(...)
   if not self then
     return nil, 'not initialized'
@@ -90,6 +108,9 @@ function _M:authrep(...)
   return call_backend_transaction(self, auth_uri, ...)
 end
 
+--- Call authorize (oauth_authorize) on backend.
+-- @tparam ?{table,...} query list of query parameters
+-- @treturn http_ng.response http response
 function _M:authorize(...)
   if not self then
     return nil, 'not initialized'

@@ -2,7 +2,6 @@ local proxy = require('proxy')
 local balancer = require('balancer')
 local math = math
 local setmetatable = setmetatable
-local env = require('resty.env')
 
 local configuration_loader = require('configuration_loader').new()
 local configuration_store = require('configuration_store')
@@ -14,8 +13,6 @@ local _M = {
   _VERSION = '3.0.0-pre',
   _NAME = 'APIcast'
 }
-
-local request_logs = env.enabled('APICAST_REQUEST_LOGS')
 
 local mt = {
   __index = _M
@@ -82,25 +79,8 @@ function _M.access()
   return fun()
 end
 
-if request_logs then
-  ngx.log(ngx.WARN, 'ENABLED REQUEST LOGS')
-
-  function _M.body_filter()
-    ngx.ctx.buffered = (ngx.ctx.buffered or "") .. string.sub(ngx.arg[1], 1, 1000)
-
-    if ngx.arg[2] then
-      ngx.var.resp_body = ngx.ctx.buffered
-    end
-  end
-
-  function _M.header_filter()
-
-    ngx.var.resp_headers = require('cjson').encode(ngx.resp.get_headers())
-  end
-else
-  _M.body_filter = noop
-  _M.header_filter = noop
-end
+_M.body_filter = noop
+_M.header_filter = noop
 
 _M.balancer = balancer.call
 

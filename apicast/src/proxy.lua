@@ -1,4 +1,3 @@
-local cjson = require 'cjson'
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local configuration_store = require 'configuration_store'
@@ -21,7 +20,6 @@ local resty_resolver = require 'resty.resolver'
 local empty = {}
 
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
-local request_logs = env.enabled('APICAST_REQUEST_LOGS')
 
 local _M = { }
 
@@ -355,28 +353,18 @@ function _M:access(service)
 end
 
 
-local function request_logs_encoded_data()
-  local request_log = {}
+local function response_codes_encoded_data()
+  local params = {}
 
-  if not request_logs and not response_codes then
+  if not response_codes then
     return ''
   end
 
-  if request_logs then
-    local method, path, headers = ngx.req.get_method(), ngx.var.request_uri, ngx.req.get_headers()
-
-    local req = cjson.encode{ method=method, path=path, headers=headers }
-    local resp = cjson.encode{ body = ngx.var.resp_body, headers = cjson.decode(ngx.var.resp_headers) }
-
-    request_log["log[request]"] = req
-    request_log["log[response]"] = resp
-  end
-
   if response_codes then
-    request_log["log[code]"] = ngx.var.status
+    params["log[code]"] = ngx.var.status
   end
 
-  return ngx.escape_uri(ngx.encode_args(request_log))
+  return ngx.escape_uri(ngx.encode_args(params))
 end
 
 function _M:post_action()
@@ -391,7 +379,7 @@ function _M:post_action()
     self:set_backend_upstream(service)
 
     local auth_uri = service.backend_version == 'oauth' and 'threescale_oauth_authrep' or 'threescale_authrep'
-    local res = http.get("/".. auth_uri .."?log=" .. request_logs_encoded_data())
+    local res = http.get("/".. auth_uri .."?log=" .. response_codes_encoded_data())
 
     if res.status ~= 200 then
       local api_keys = ngx.shared.api_keys

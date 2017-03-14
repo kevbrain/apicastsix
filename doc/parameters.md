@@ -46,17 +46,6 @@ Specifies the name of the main Lua module that implements the API gateway logic.
 
 When this parameter is set to _true_, the gateway will use path-based routing instead of the default host-based routing.
 
-### `APICAST_REQUEST_LOGS`
-
-**Values:**
-- `true` or `1` for _true_
-- `false`, `0` or empty for _false_
-
-**Default:** \<empty\> (_false_)
-
-When set to _true_, APIcast will log the details about the API request (method, path and headers) and response (body and headers) in 3scale. In some plans this information can later be consulted from the 3scale admin portal.
-Find more information about the Request Logs feature on the [3scale support site](https://support.3scale.net/docs/analytics/response-codes-tracking).
-
 ### `APICAST_RESPONSE_CODES`
 
 **Values:**

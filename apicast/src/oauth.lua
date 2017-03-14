@@ -46,13 +46,4 @@ function _M.call(service, method, uri, ...)
   return f, params
 end
 
-function _M.credentials(access_token)
-  if keycloak_configured then
-    oauth = keycloak
-  else
-    oauth = apicast_oauth
-  end
-  return oauth.credentials(access_token)
-end
-
 return _M

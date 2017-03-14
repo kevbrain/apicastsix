@@ -13,7 +13,7 @@ This example shows you how to use Red Hat Single Sign-On to verify the identity 
 ## Red Hat Single Sign-On Configuration for APIcast
 
 1. [Create a new realm](https://access.redhat.com/documentation/en-us/red_hat_single_sign-on/7.0/html/getting_started_guide/create_a_realm_and_user#create-realm) (different from Master)
-2. Set up Tokens Policies (Realm Settings > Tokens) - e.g to configure access token ttl
+2. Set up Tokens Policies (Realm Settings > Tokens) - e.g to configure access token TTL
 3. Set up [Initial Access Tokens](https://access.redhat.com/documentation/en-us/red_hat_single_sign-on/7.0/html/securing_applications_and_services_guide/client_registration). This is necessary to synchronise client registrations between 3scale and Red Hat Single Sign-On.
     - Define Expiration - This will determine how long the access token used to register clients from APIcas will be valid for, so make sure to choose a long lived value unless you want to be changing this token often.
     - Define Count - This will determine how many clients can be registered using this access token, make sure to choose a large value unless you want to be changing this token often.

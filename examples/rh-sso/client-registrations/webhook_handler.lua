@@ -6,8 +6,8 @@ local cjson = require 'cjson'
 local router = require('router')
 local http_ng = require "resty.http_ng"
 local ts = require 'threescale_utils'
+local env = require 'resty.env'
 
-local initial_access_token = "CHANGE_ME_INITIAL_ACCESS_TOKEN"
 
 -- this will be the prepended to the keys for storing in Redis the registration access token
 local access_token_prefix = "access-token#"
@@ -77,7 +77,7 @@ local function client_registration_request(method, client_details, url, access_t
 end
 
 local function register_client(client_details)
-  local access_token = initial_access_token
+  local access_token = env.get('RHSSO_INITIAL_TOKEN')
   local url = ngx.var.rhsso_endpoint.."/clients-registrations/default"
   local method = ngx.HTTP_POST
   client_registration_request(method, client_details, url, access_token)

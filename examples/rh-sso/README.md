@@ -49,10 +49,10 @@ Additionally we need to add some additional code to deal with client registratio
 Altogether these 2 files would be included into APIcast as follows, e.g for docker 
 
 ```shell
-docker run --publish 8080:8080 --volume $(pwd)/rh-sso.conf:/opt/app/sites.d/rh-sso.conf --volume $(pwd)/client-registrations:/opt/app/src/client-registrations --env RHSSO_ENDPOINT=https://{rh-sso-host}:{port}/auth/realms/{your-realm} --env REDIS_HOST={redis-host} --env THREESCALE_PORTAL_ENDPOINT=http://portal.example.com quay.io/3scale/apicast:master
+docker run --publish 8080:8080 --volume $(pwd)/rh-sso.conf:/opt/app/sites.d/rh-sso.conf --volume $(pwd)/main.d:/opt/app/main.d --volume $(pwd)/client-registrations:/opt/app/src/client-registrations --env RHSSO_ENDPOINT=https://{rh-sso-host}:{port}/auth/realms/{your-realm} --env REDIS_HOST={redis-host} --env RHSSO_INITIAL_TOKEN={rhsso-initial-token} --env THREESCALE_PORTAL_ENDPOINT=http://portal.example.com quay.io/3scale/apicast:master
 ```
 
-If you're running natively, you can just add these files directly into `apicast/sites.d` and `apicast/src` respectively.
+If you're running natively, you can just add these files directly into `apicast/sites.d`, `apicast/main.d` and `apicast/src`.
 
 ### 3scale Configuration
 

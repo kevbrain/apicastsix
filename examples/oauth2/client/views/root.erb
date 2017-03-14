@@ -6,7 +6,7 @@
 
 <form method="get" action="<%= AUTHORIZE_ENDPOINT %>">
   <div class="form-group">
-    <input type="hidden" name="state" value="<%= SecureRandom.uuid %>" />
+    <input type="hidden" name="state" value="<%= @state %>" />
     <input type="hidden" name="response_type" value="code" />
   </div>
   <div class="form-group">  

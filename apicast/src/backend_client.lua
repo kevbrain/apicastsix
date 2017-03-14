@@ -51,7 +51,7 @@ function _M.new(service, http_client)
   }, mt)
 end
 
-function _M:authrep(...)
+local function call_backend_transaction(self, path, ...)
   local version = self.version
   local http_client = self.http_client
 
@@ -65,7 +65,6 @@ function _M:authrep(...)
     return nil, 'missing endpoint'
   end
 
-  local auth_uri = version == 'oauth' and 'oauth_authrep.xml' or 'authrep.xml'
 
   local args = { self.authentication, ... }
 
@@ -73,13 +72,31 @@ function _M:authrep(...)
     args[i] = ngx.encode_args(args[i])
   end
 
-  local url = resty_url.join(endpoint, '/transactions/', auth_uri, '?', concat(args, '&'))
+  local url = resty_url.join(endpoint, '/transactions/', path, '?', concat(args, '&'))
 
   local res = http_client.get(url)
 
   ngx.log(ngx.INFO, 'backend client uri: ', url, ' ok: ', res.ok, ' status: ', res.status, ' body: ', res.body)
 
   return res
+end
+
+function _M:authrep(...)
+  if not self then
+    return nil, 'not initialized'
+  end
+
+  local auth_uri = self.version == 'oauth' and 'oauth_authrep.xml' or 'authrep.xml'
+  return call_backend_transaction(self, auth_uri, ...)
+end
+
+function _M:authorize(...)
+  if not self then
+    return nil, 'not initialized'
+  end
+
+  local auth_uri = self.version == 'oauth' and 'oauth_authorize.xml' or 'authorize.xml'
+  return call_backend_transaction(self, auth_uri, ...)
 end
 
 return _M

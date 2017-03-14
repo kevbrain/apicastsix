@@ -4,6 +4,7 @@ local http_ng = require "resty.http_ng"
 local resty_url = require 'resty.url'
 local jwt = require 'resty.jwt'
 local cjson = require 'cjson'
+local backend_client = require ('backend_client')
 
 local _M = {
   _VERSION = '0.1'
@@ -195,33 +196,15 @@ function _M.credentials(self, access_token)
 end
 
 function _M.check_credentials(self, params)
-  local http_client = self.http_client
-
-  if not http_client then
-    return nil, 'not initialized'
-  end
+  local backend = backend_client:new(self.service)
 
   local args = {
       app_id = params.client_id,
       app_key = params.client_secret,
       redirect_uri = params.redirect_uri
     }
-  local credentials = ngx.encode_args(args)
 
-  local service = self.service
-  local service_args = ngx.encode_args({ [service.backend_authentication.type or ''] = service.backend_authentication.value, service_id = service.id })
-  local endpoint = service.backend.endpoint
-
-  if not endpoint then
-    ngx.log(ngx.WARN, 'service ', service.id, ' does not have backend endpoint configured')
-    return
-  end
-
-  local url = resty_url.join(endpoint, '/transactions/oauth_authorize.xml', "?", service_args, "&", credentials)
-
-  local res = http_client.get(url)
-
-  ngx.log(ngx.DEBUG, '[backend]: request: ', url, ' response status: ', res.status, ' body: ', res.body)
+  local res = backend:authorize(args)
 
   return res.status == 200
 end

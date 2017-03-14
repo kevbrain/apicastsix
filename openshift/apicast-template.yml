@@ -51,8 +51,6 @@ objects:
             value: "${PATH_ROUTING}"
           - name: APICAST_RESPONSE_CODES
             value: "${RESPONSE_CODES}"
-          - name: APICAST_REQUEST_LOGS
-            value: "${REQUEST_LOGS}"
           - name: APICAST_CONFIGURATION_CACHE
             value: "${CONFIGURATION_CACHE}"
           - name: REDIS_HOST
@@ -141,10 +139,6 @@ parameters:
   name: PATH_ROUTING
   required: false
   value: "false"
-- description: "Enable traffic logging to 3scale. Includes whole request and response."
-  value: "false"
-  name: REQUEST_LOGS
-  required: false
 - description: "Enable logging response codes to 3scale."
   value: "false"
   name: RESPONSE_CODES

@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Removed
 
+- Removed support for sending Request logs [PR #296](https://github.com/3scale/apicast/pull/296)
+
 ## [3.0.0-beta2] - 2017-03-08
 
 ### Fixed

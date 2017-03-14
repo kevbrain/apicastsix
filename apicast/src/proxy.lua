@@ -308,11 +308,14 @@ function _M:access(service)
 
   local credentials, err = service:extract_credentials()
 
-  if not credentials or #credentials == 0 then
-    if err then
+  if err then 
+    if not credentials or #credentials == 0 then
       ngx.log(ngx.WARN, "cannot get credentials: ", err)
+      return error_no_credentials(service)
+    else
+      ngx.log(ngx.WARN, "authorization failed: ", err)
+      return error_authorization_failed(service)
     end
-    return error_no_credentials(service)
   end
 
   insert(credentials, 1, service.id)

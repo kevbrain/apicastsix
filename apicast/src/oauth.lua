@@ -3,6 +3,7 @@ local router = require 'router'
 local apicast_oauth = require 'oauth.apicast_oauth'
 local keycloak = require 'oauth.keycloak'
 
+local keycloak_configured = env.get('RHSSO_ENDPOINT')
 local oauth
 
 local _M = {
@@ -10,7 +11,6 @@ local _M = {
 }
 
 function _M.new(service)
-  local keycloak_configured = env.get('RHSSO_ENDPOINT')
   if keycloak_configured then
     oauth = keycloak
     oauth.init(keycloak_configured)
@@ -44,6 +44,15 @@ function _M.call(method, uri, service,...)
     unpack(... or {}))
 
   return f, params
+end
+
+function _M.credentials(access_token)
+  if keycloak_configured then
+    oauth = keycloak
+  else
+    oauth = apicast_oauth
+  end
+  return oauth.credentials(access_token)
 end
 
 return _M

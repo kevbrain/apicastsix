@@ -52,13 +52,14 @@ local function get_public_key(http_client, endpoint)
   end
 
   local res = http_client.get(endpoint)
-  ngx.log(ngx.DEBUG, '[rh-sso]: request: ', endpoint, ' response status: ', res.status, ' body: ', res.body)
 
   local key
   if res.status == 200 then
     local json = cjson.decode(res.body)
     key = json.public_key
   end
+
+  ngx.log(ngx.DEBUG, '[rh-sso]: request: ', endpoint, ' response status: ', res.status, ' body: ', res.body)
 
   if not key then
     return nil, 'missing key'
@@ -159,13 +160,38 @@ end
 -- Parses the token - in this case we assume it's a JWT token
 -- Here we can extract authenticated user's claims or other information returned in the access_token
 -- or id_token by RH SSO
-function _M.parse_and_verify_token(self, jwt_token)
+local function parse_and_verify_token(self, jwt_token)
   local jwt_obj = jwt:verify(self.config.public_key, jwt_token)
+
   if not jwt_obj.verified then
-    ngx.log(ngx.INFO, "[jwt] failed verification for token: ", jwt_token)
-    return nil
+    local err = "[jwt] failed verification for token: "..jwt_token.." reason: "..jwt_obj.reason
+    ngx.log(ngx.INFO, err)
+    return jwt_obj, err
   end
   return jwt_obj
+end
+
+function _M.credentials(self, access_token)
+  local jwt_obj, err = parse_and_verify_token(self, access_token)
+
+  if not jwt_obj then
+    local err = "[jwt] failed to parse token: "..access_token
+    return nil, err
+  else
+    if jwt_obj.payload then
+      local app_id = jwt_obj.payload.aud
+      
+      ------
+      -- oauth credentials for keycloak
+      -- @field 1 Client id
+      -- @field app_id Client id
+      -- @table credentials_oauth
+      return { app_id, app_id = app_id }, err
+    else
+      local err = "[jwt] failed to parse token: "..jwt_obj.reason
+      return nil, err
+    end
+  end
 end
 
 function _M.check_credentials(self, params)

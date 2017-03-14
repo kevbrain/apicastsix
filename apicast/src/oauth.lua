@@ -17,7 +17,7 @@ function _M.new(service)
   else
     oauth = apicast_oauth
   end
-  return oauth.new(_, service)
+  return oauth.new(service)
 end
 
 function _M.router(service)
@@ -36,7 +36,7 @@ function _M.router(service)
   return r
 end
 
-function _M.call(method, uri, service,...)
+function _M.call(service, method, uri, ...)
   local r = _M.router(service)
 
   local f, params = r:resolve(method or ngx.req.get_method(),

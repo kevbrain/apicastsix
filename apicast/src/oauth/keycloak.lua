@@ -73,7 +73,7 @@ local function validate_config(configuration)
   return configuration.endpoint
 end
 
-function _M.new(config, service)
+function _M.new(service, config)
   local configuration = config or _M.configuration
 
   local is_valid = validate_config(configuration)
@@ -175,12 +175,12 @@ function _M.credentials(self, access_token)
   local jwt_obj, err = parse_and_verify_token(self, access_token)
 
   if not jwt_obj then
-    local err = "[jwt] failed to parse token: "..access_token
+    err = "[jwt] failed to parse token: "..access_token
     return nil, err
   else
     if jwt_obj.payload then
       local app_id = jwt_obj.payload.aud
-      
+
       ------
       -- oauth credentials for keycloak
       -- @field 1 Client id
@@ -188,7 +188,7 @@ function _M.credentials(self, access_token)
       -- @table credentials_oauth
       return { app_id, app_id = app_id }, err
     else
-      local err = "[jwt] failed to parse token: "..jwt_obj.reason
+      err = "[jwt] failed to parse token: "..jwt_obj.reason
       return nil, err
     end
   end

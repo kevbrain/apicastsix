@@ -137,7 +137,7 @@ function backend_version_credentials.version_oauth(config)
   -- Resource servers MUST support this method. [Bearer]
   access_token = access_token or authorization.token
 
-  local o = oauth.new(self)
+  local o = oauth.new(_M)
   return o:credentials(access_token)
 end
 

@@ -280,7 +280,7 @@ function _M:call(host)
   self:set_backend_upstream(service)
 
   if service.backend_version == 'oauth' then
-    local f, params = oauth.call(_, _, service)
+    local f, params = oauth.call(service)
 
     if f then
       ngx.log(ngx.DEBUG, 'apicast oauth flow')
@@ -308,7 +308,7 @@ function _M:access(service)
 
   local credentials, err = service:extract_credentials()
 
-  if err then 
+  if err then
     if not credentials or #credentials == 0 then
       ngx.log(ngx.WARN, "cannot get credentials: ", err)
       return error_no_credentials(service)

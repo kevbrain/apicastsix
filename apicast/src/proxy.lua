@@ -20,7 +20,6 @@ local resty_resolver = require 'resty.resolver'
 local empty = {}
 
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
-local keycloak = env.get('RHSSO_ENDPOINT')
 
 local _M = { }
 

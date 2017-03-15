@@ -10,7 +10,7 @@ local gsub = string.gsub
 local select = select
 
 local http_authorization = require 'resty.http_authorization'
-local oauth = require 'oauth'
+
 
 local _M = { }
 local mt = { __index = _M  }
@@ -137,8 +137,12 @@ function backend_version_credentials.version_oauth(config)
   -- Resource servers MUST support this method. [Bearer]
   access_token = access_token or authorization.token
 
-  local o = oauth.new(self)
-  return o:credentials(access_token)
+  ------
+  -- oauth credentials.
+  -- @field 1 Access Token
+  -- @field access_token Access Token
+  -- @table credentials_oauth
+  return { access_token, access_token = access_token }
 end
 
 -- This table can be used with `table.concat` to serialize

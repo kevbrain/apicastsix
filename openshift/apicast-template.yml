@@ -62,17 +62,21 @@ objects:
           livenessProbe:
             httpGet:
               path: /status/live
-              port: 8090
+              port: management
             initialDelaySeconds: 10
             timeoutSeconds: 1
           readinessProbe:
             httpGet:
               path: /status/ready
-              port: 8090
+              port: management
             initialDelaySeconds: 15
             timeoutSeconds: 1
           ports:
-          - containerPort: 8080
+          - name: proxy
+            containerPort: 8080
+            protocol: TCP
+          - name: management
+            containerPort: 8090
             protocol: TCP
     triggers:
     - type: ConfigChange
@@ -83,10 +87,14 @@ objects:
     name: "${APICAST_NAME}"
   spec:
     ports:
-    - name: 8080-tcp
+    - name: proxy
       port: 8080
       protocol: TCP
       targetPort: 8080
+    - name: management
+      port: 8090
+      protocol: TCP
+      targetPort: 8090
     selector:
       deploymentconfig: "${APICAST_NAME}"
 

@@ -33,12 +33,23 @@ __DATA__
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
+
+  location /backend/transactions/oauth_authorize.xml {
+    content_by_lua_block {
+      ngx.log(ngx.WARN, 'called oauth_authorize.xml')
+      ngx.exit(403)
+    }
+  }
 --- request
 GET /authorize
 --- error_code: 302
 --- response_headers
 Location: http://example.com/redirect?error=invalid_client
-
+--- error_log
+called oauth_authorize.xml
+--- no_error_log
+[error]
 
 === TEST 2: calling /authorize works (Authorization Code)
 [Section 1.3.1 of RFC 6749](https://tools.ietf.org/html/rfc6749#section-1.3.1)
@@ -135,11 +146,23 @@ Location: http://example.com/redirect\?scope=whatever&response_type=token&error=
   }
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
+set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
+
+location /backend/transactions/oauth_authorize.xml {
+  content_by_lua_block {
+    ngx.log(ngx.WARN, 'called oauth_authorize.xml')
+    ngx.exit(403)
+  }
+}
 --- request
 POST /oauth/token
 --- response_body chomp
 {"error":"invalid_client"}
 --- error_code: 401
+--- no_error_log
+[error]
+--- error_log
+called oauth_authorize.xml
 
 === TEST 5: calling /oauth/token returns correct error message on invalid parameters
 --- http_config
@@ -153,11 +176,23 @@ POST /oauth/token
   }
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
+set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
+
+location /backend/transactions/oauth_authorize.xml {
+  content_by_lua_block {
+    ngx.log(ngx.WARN, 'called oauth_authorize.xml')
+    ngx.exit(403)
+  }
+}
 --- request
 POST /oauth/token?grant_type=authorization_code&client_id=client_id&redirect_uri=redirect_uri&client_secret=client_secret&code=code
 --- response_body chomp
 {"error":"invalid_client"}
 --- error_code: 401
+--- no_error_log
+[error]
+--- error_log
+called oauth_authorize.xml
 
 === TEST 6: calling /callback without params returns correct erro message
 --- http_config
@@ -176,6 +211,8 @@ GET /callback
 --- response_body chomp
 {"error":"missing redirect_uri"}
 --- error_code: 400
+--- no_error_log
+[error]
 
 === TEST 7: calling /callback redirects to correct error when state is missing
 --- http_config
@@ -196,6 +233,8 @@ include $TEST_NGINX_APICAST_CONFIG;
 "Location: http://127.0.0.1:$ENV{TEST_NGINX_SERVER_PORT}/redirect_uri#error=invalid_request&error_description=missing_state"
 --- response_body_like chomp
 ^<html>
+--- no_error_log
+[error]
 
 === TEST 8: calling /callback redirects to correct error when state is missing
 --- main_config
@@ -217,6 +256,8 @@ include $TEST_NGINX_APICAST_CONFIG;
 --- error_code: 302
 --- response_headers eval
 "Location: http://127.0.0.1:$ENV{TEST_NGINX_SERVER_PORT}/redirect_uri#error=invalid_request&error_description=invalid_or_expired_state&state=foo"
+--- no_error_log
+[error]
 
 === TEST 9: calling /callback works
 Not part of the RFC. This is the Gateway API to create access tokens and redirect back to the Client.
@@ -252,6 +293,8 @@ Not part of the RFC. This is the Gateway API to create access tokens and redirec
 --- request
 GET /fake-authorize
 --- error_code: 302
+--- no_error_log
+[error]
 --- response_body_like chomp
 ^<html>
 --- response_headers_like
@@ -323,7 +366,8 @@ GET /t
 --- response_body_like
 {"token_type":"bearer","expires_in":604800,"access_token":"\w+"}
 --- error_code: 200
-
+--- no_error_log
+[error]
 
 === TEST 11: calling with correct access_token in query proxies to the api upstream
 --- http_config
@@ -367,6 +411,8 @@ GET /?access_token=foobar
 --- error_code: 200
 --- response_body
 yay, upstream
+--- no_error_log
+[error]
 
 === TEST 12: calling /authorize with state returns same value back on redirect_uri
 --- main_config
@@ -402,6 +448,8 @@ GET /fake-authorize?client_id=id&redirect_uri=http://example.com/redirect&respon
 ^<html>
 --- response_headers_like 
 Location: http://example.com/redirect\?code=\w+&state=12345
+--- no_error_log
+[error]
 
 === TEST 13: calling with correct access_token in Authorization header proxies to the api upstream
 --- http_config
@@ -446,6 +494,8 @@ Authorization: Bearer foobar
 --- error_code: 200
 --- response_body
 yay, upstream
+--- no_error_log
+[error]
 
 === TEST 14: calling with access_token in query when credentials location is 'headers' fails with 'auth missing'
 --- http_config
@@ -477,6 +527,8 @@ GET /?access_token=foobar
 --- error_code: 401
 --- response_body chomp
 credentials missing!
+--- no_error_log
+[error]
 
 === TEST 15: calling with access_token in header when the type is not 'Bearer' (case-sensitive) fails with 'auth missing'
 --- http_config
@@ -510,3 +562,6 @@ Authorization: bearer foobar
 --- error_code: 401
 --- response_body chomp
 credentials missing!
+--- no_error_log
+[error]
+

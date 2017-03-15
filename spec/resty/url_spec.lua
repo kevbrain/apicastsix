@@ -40,6 +40,10 @@ describe('resty.url', function()
     it('removes the trailing slash', function()
       assert.same({'http', false, false, 'api.twitter.com', false }, split('http://api.twitter.com/'))
     end)
+
+    it('works with redis DSN', function()
+      assert.same({'redis', 'user', 'pass', 'localhost', '6379', '/42' }, split('redis://user:pass@localhost:6379/42', 'redis'))
+    end)
   end)
 
 

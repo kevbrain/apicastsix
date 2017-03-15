@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+exec resty -I apicast/src script/redis.lua "$@"

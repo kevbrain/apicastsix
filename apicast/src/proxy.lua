@@ -150,14 +150,9 @@ local http = {
   end
 }
 
-function _M.authorize(backend_version, service)
-  local internal_location
-  if backend_version == 'oauth' then
-    internal_location = '/threescale_oauth_authrep'
-  else
-    internal_location = '/threescale_authrep'
-  end
-
+function _M.authorize(service)
+  local internal_location = (service.backend_version == 'oauth' and '/threescale_oauth_authrep')
+                                                         or '/threescale_authrep'
   -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local api_keys = ngx.shared.api_keys
@@ -269,7 +264,6 @@ function _M:call(host)
 end
 
 function _M:access(service)
-  local backend_version = service.backend_version
 
   if ngx.status == 403  then
     ngx.say("Throttling due to too many requests")
@@ -324,7 +318,7 @@ function _M:access(service)
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
 
-  self.authorize(backend_version, service)
+  self.authorize(service)
 end
 
 

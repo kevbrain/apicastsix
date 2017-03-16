@@ -19,7 +19,7 @@ function _M.new(service)
     }, mt)
 end
 
-function _M.transform_credentials( credentials )
+function _M:transform_credentials( credentials )
     return credentials
 end
 

@@ -154,7 +154,12 @@ local function parse_and_verify_token(self, jwt_token)
 end
 
 function _M:transform_credentials(credentials)
-  local jwt_obj = parse_and_verify_token(self, credentials.access_token)
+  local jwt_obj, err = parse_and_verify_token(self, credentials.access_token)
+
+    if err then
+      ngx.log(ngx.INFO, err)
+      return nil, err
+    end
 
     if jwt_obj.payload then
       local app_id = jwt_obj.payload.aud
@@ -164,9 +169,6 @@ function _M:transform_credentials(credentials)
       -- @field app_id Client id
       -- @table credentials_oauth
       return { app_id = app_id }
-    else
-      ngx.log(ngx.INFO, "[jwt] failed verification for token, reason: ", jwt_obj.reason)
-      return nil, "Failed to parse JWT"
     end
 end
 

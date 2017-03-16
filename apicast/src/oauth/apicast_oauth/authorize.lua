@@ -93,6 +93,8 @@ local function check_client_credentials(params)
       ctx = ngx.ctx
     })
 
+  ngx.log(ngx.INFO, "[oauth] Checking client credentials, status: ", res.status, " body: ", res.body)
+
   if res.status == 200 then
     return { ["status"] = res.status, ["body"] = res.body }
   else

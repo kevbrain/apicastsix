@@ -264,7 +264,14 @@ local function debug_headers(service, usage, credentials)
 end
 
 local function auth_oauth(proxy, service, params, auth)
-  local credentials = encode_args(proxy.oauth:transform_credentials(auth))
+  local credentials, err = proxy.oauth:transform_credentials(auth)
+
+  if err then
+    return error_authorization_failed(service)
+  end
+
+  credentials = encode_args(credentials)
+
   local usage = encode_args(params)
 
   debug_headers(service, usage, credentials)

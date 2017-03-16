@@ -10,12 +10,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Use per request configuration when cache is disabled [PR #289](https://github.com/3scale/apicast/pull/289)
 - Automatically expose all environment variables starting with `APICAST_` or `THREESCALE_` to nginx [PR #292](https://github.com/3scale/apicast/pull/292)
+- Error log to show why downloading configuration failed [PR #306](https://github.com/3scale/apicast/pull/306)
 
 ### Added
 
 - Backend HTTP client that uses cosockets [PR #295](https://github.com/3scale/apicast/pull/295)
 - Ability to customize main section of nginx configuration (and expose more env variables) [PR #292](https://github.com/3scale/apicast/pull/292)
 - Ability to lock service to specific configuration version [PR #293](https://github.com/3scale/apicast/pull/292)
+- Ability to use Redis DB and password via `REDIS_URL` [PR #303](https://github.com/3scale/apicast/pull/303)
 
 ### Removed
 
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Reloading of configuration with every request when cache is disabled [PR #287](https://github.com/3scale/apicast/pull/287)
+- Auth caching is not used when OAuth method is used [PR #304](https://github.com/3scale/apicast/pull/304)
 
 ## [3.0.0-beta1] - 2017-03-03
 

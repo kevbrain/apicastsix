@@ -14,12 +14,16 @@ function _M.default_port(scheme)
   end
 end
 
-function _M.split(url)
+function _M.split(url, protocol)
   if not url then
     return nil, 'missing endpoint'
   end
 
-  local m = re_match(url, "^(https?):\\/\\/(?:(.+)@)?([^\\/\\s]+?)(?::(\\d+))?(\\/.*)?$", 'oj')
+  if not protocol then
+    protocol = 'https?'
+  end
+
+  local m = re_match(url, "^(" .. protocol .. "):\\/\\/(?:(.+)@)?([^\\/\\s]+?)(?::(\\d+))?(\\/.*)?$", 'oj')
 
   if not m then
     return nil, 'invalid endpoint' -- TODO: maybe improve the error message?

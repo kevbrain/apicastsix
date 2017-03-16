@@ -150,31 +150,8 @@ local http = {
   end
 }
 
-local function oauth_authrep(service)
-  local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
-  local access_tokens = assert(ngx.shared.api_keys, 'missing shared dictionary: api_keys')
-  local is_known = access_tokens:get(cached_key)
-
-  if is_known == 200 then
-    ngx.log(ngx.DEBUG, 'apicast cache hit key: ', cached_key)
-    ngx.var.cached_key = cached_key
-  else
-    local res = http.get("/threescale_oauth_authrep")
-
-    if res.status ~= 200   then
-      access_tokens:delete(ngx.var.cached_key)
-      ngx.status = res.status
-      ngx.header.content_type = "application/json"
-      error_authorization_failed(service)
-    else
-      access_tokens:set(ngx.var.cached_key,200)
-    end
-
-    ngx.var.cached_key = nil
-  end
-end
-
-local function authrep(service)
+function _M:authorize(service)
+  local internal_location = (self.oauth and '/threescale_oauth_authrep') or '/threescale_authrep'
   -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local api_keys = ngx.shared.api_keys
@@ -185,7 +162,7 @@ local function authrep(service)
     ngx.var.cached_key = cached_key
   else
     ngx.log(ngx.INFO, 'apicast cache miss key: ', cached_key)
-    local res = http.get("/threescale_authrep")
+    local res = http.get(internal_location)
 
     ngx.log(ngx.DEBUG, '[backend] response status: ', res.status, ' body: ', res.body)
 
@@ -286,22 +263,22 @@ local function debug_headers(service, usage, credentials)
   end
 end
 
-local function auth_key(self, service, params, auth)
+local function auth_oauth(proxy, service, params, auth)
+  local credentials = encode_args(proxy.oauth:transform_credentials(auth))
+  local usage = encode_args(params)
+
+  debug_headers(service, usage, credentials)
+
+  return proxy:authorize(service)
+end
+
+local function auth_key(proxy, service, params, auth)
   local credentials = encode_args(auth)
   local usage = encode_args(params)
 
   debug_headers(service, usage, credentials)
 
-  authrep(service)
-end
-
-local function auth_oauth(self, service, params, auth)
-  local credentials = encode_args(self.oauth:transform_credentials(auth))
-  local usage = encode_args(params)
-
-  debug_headers(service, usage, credentials)
-
-  oauth_authrep(service)
+  return proxy:authorize(service)
 end
 
 function _M:call(host)
@@ -310,13 +287,13 @@ function _M:call(host)
 
   self:set_backend_upstream(service)
 
-  self.authorize = auth_key
+  local authorize = auth_key
 
   if service.backend_version == 'oauth' then
     local o = oauth.new(self.configuration)
     local f, params = oauth.call(o, service)
 
-    self.authorize = auth_oauth
+    authorize = auth_oauth
     self.oauth = o
 
     if f then
@@ -327,16 +304,11 @@ function _M:call(host)
 
   return function()
     -- call access phase
-    return self:access(service)
+    return self:access(service, authorize)
   end
 end
 
-function _M:access(service, authorization)
-  if ngx.status == 403  then
-    ngx.say("Throttling due to too many requests")
-    ngx.exit(403)
-  end
-
+function _M:access(service, authorize)
   local request = ngx.var.request -- NYI: return to lower frame
 
   ngx.var.secret_token = service.secret_token
@@ -368,7 +340,7 @@ function _M:access(service, authorization)
   ctx.credentials = credentials
   ctx.matched_patterns = matched_patterns
 
-  return self:authorize(service, params, credentials)
+  return authorize(self, service, params, credentials)
 end
 
 

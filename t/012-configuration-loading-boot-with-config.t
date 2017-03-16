@@ -16,7 +16,7 @@ env_to_nginx(
     'THREESCALE_CONFIG_FILE'
 );
 
-log_level('error');
+log_level('warn');
 repeat_each(2);
 no_root_location();
 run_tests();
@@ -47,7 +47,7 @@ should exit when the file has invalid json
 --- request
 GET
 --- error_log
-failed to load configuration, exiting: Expected value but found invalid token at character 1
+Expected value but found invalid token at character 1
 --- user_files
 >>> config.json
 not valid json

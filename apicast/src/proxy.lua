@@ -267,10 +267,7 @@ function _M:set_backend_upstream(service)
   ngx.var.backend_host = backend.host or server or ngx.var.backend_host
 end
 
-local function auth_key(self, service, params, auth)
-  local credentials = encode_args(auth)
-  local usage = encode_args(params)
-
+local function debug_headers(service, usage, credentials)
   ngx.var.credentials = credentials
   ngx.var.usage = usage
   ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
@@ -282,11 +279,18 @@ local function auth_key(self, service, params, auth)
   end
 
   if get_debug_value(service) then
-    ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_rules
+    ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_patterns
     ngx.header["X-3scale-credentials"]   = credentials
     ngx.header["X-3scale-usage"]         = usage
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
+end
+
+local function auth_key(self, service, params, auth)
+  local credentials = encode_args(auth)
+  local usage = encode_args(params)
+
+  debug_headers(service, usage, credentials)
 
   authrep(service)
 end
@@ -295,22 +299,7 @@ local function auth_oauth(self, service, params, auth)
   local credentials = encode_args(self.oauth:transform_credentials(auth))
   local usage = encode_args(params)
 
-  ngx.var.credentials = credentials
-  ngx.var.usage = usage
-  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
-
-  -- WHAT TO DO IF NO USAGE CAN BE DERIVED FROM THE REQUEST.
-  if ngx.var.usage == '' then
-    ngx.header["X-3scale-matched-rules"] = ''
-    return error_no_match(service)
-  end
-
-  if get_debug_value(service) then
-    ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_rules
-    ngx.header["X-3scale-credentials"]   = credentials
-    ngx.header["X-3scale-usage"]         = usage
-    ngx.header["X-3scale-hostname"]      = ngx.var.hostname
-  end
+  debug_headers(service, usage, credentials)
 
   oauth_authrep(service)
 end

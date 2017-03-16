@@ -53,6 +53,7 @@ local function error_authorization_failed(service)
 end
 
 local function error_no_match(service)
+  ngx.header.x_3scale_matched_rules = ''
   ngx.log(ngx.INFO, 'no rules matched for service ', service.id)
   ngx.var.cached_key = nil
   ngx.status = service.no_match_status
@@ -150,10 +151,31 @@ local http = {
   end
 }
 
-function _M:authorize(service)
+local function output_debug_headers(service, usage, credentials)
+  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
+
+  if get_debug_value(service) then
+    ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_patterns
+    ngx.header["X-3scale-credentials"]   = credentials
+    ngx.header["X-3scale-usage"]         = usage
+    ngx.header["X-3scale-hostname"]      = ngx.var.hostname
+  end
+end
+
+function _M:authorize(service, usage, credentials)
+  if usage == '' then
+    return error_no_match(service)
+  end
+
+  output_debug_headers(service, usage, credentials)
+
   local internal_location = (self.oauth and '/threescale_oauth_authrep') or '/threescale_authrep'
+
+  -- usage and credentials are expected by the internal endpoints
+  ngx.var.usage = usage
+  ngx.var.credentials = credentials
   -- NYI: return to lower frame
-  local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
+  local cached_key = ngx.var.cached_key .. ":" .. usage
   local api_keys = ngx.shared.api_keys
   local is_known = api_keys and api_keys:get(cached_key)
 
@@ -244,26 +266,8 @@ function _M:set_backend_upstream(service)
   ngx.var.backend_host = backend.host or server or ngx.var.backend_host
 end
 
-local function debug_headers(service, usage, credentials)
-  ngx.var.credentials = credentials
-  ngx.var.usage = usage
-  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
 
-  -- WHAT TO DO IF NO USAGE CAN BE DERIVED FROM THE REQUEST.
-  if ngx.var.usage == '' then
-    ngx.header["X-3scale-matched-rules"] = ''
-    return error_no_match(service)
-  end
-
-  if get_debug_value(service) then
-    ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_patterns
-    ngx.header["X-3scale-credentials"]   = credentials
-    ngx.header["X-3scale-usage"]         = usage
-    ngx.header["X-3scale-hostname"]      = ngx.var.hostname
-  end
-end
-
-local function auth_oauth(proxy, service, params, auth)
+local function auth_oauth(proxy, service, usage, auth)
   local credentials, err = proxy.oauth:transform_credentials(auth)
 
   if err then
@@ -272,20 +276,13 @@ local function auth_oauth(proxy, service, params, auth)
 
   credentials = encode_args(credentials)
 
-  local usage = encode_args(params)
-
-  debug_headers(service, usage, credentials)
-
-  return proxy:authorize(service)
+  return proxy:authorize(service, usage, credentials)
 end
 
-local function auth_key(proxy, service, params, auth)
+local function auth_key(proxy, service, usage, auth)
   local credentials = encode_args(auth)
-  local usage = encode_args(params)
 
-  debug_headers(service, usage, credentials)
-
-  return proxy:authorize(service)
+  return proxy:authorize(service, usage, credentials)
 end
 
 function _M:call(host)
@@ -330,9 +327,11 @@ function _M:access(service, authorize)
   end
 
   insert(credentials, 1, service.id)
-  ngx.var.cached_key = concat(credentials, ':')
 
   local _, matched_patterns, params = service:extract_usage(request)
+  local usage = encode_args(params)
+
+  ngx.var.cached_key = concat(credentials, ':')
 
   -- remove integer keys for serialization
   -- as ngx.encode_args can't serialize integer keys
@@ -347,7 +346,7 @@ function _M:access(service, authorize)
   ctx.credentials = credentials
   ctx.matched_patterns = matched_patterns
 
-  return authorize(self, service, params, credentials)
+  return authorize(self, service, usage, credentials)
 end
 
 

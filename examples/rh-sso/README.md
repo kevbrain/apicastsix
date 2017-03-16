@@ -44,16 +44,19 @@ Otherwise, please follow the instructions on the [3scale support site](https://s
 
 When it comes to running APIcast, we will use the same approach as in the [Custom Configuration](../custom-config) example to add an additional server block to handle the client registration in Red Hat Single Sign-On. In this case, clients will be created in 3scale first and imported into Red Hat Single Sign-On, e.g the way to do this is in docker would be by mounting a volume inside `sites.d` folder in the container.
 
-Additionally we need to add some additional code to deal with client registration webhooks. This is included in `webhook-handler.lua`. Before you use this file, you will need to fill in the "Initial Access Token" value. Simply find `CHANGE_ME_INITIAL_ACCESS_TOKEN` in `webhook_handler.lua` and replace with the initial access token value for your realm. You can read more about this initial access token in the [Red Hat Single Sign-On documentation](https://access.redhat.com/documentation/en-us/red_hat_single_sign-on/7.0/html/securing_applications_and_services_guide/client_registration#initial_access_token).
+Additionally we need to add some additional code to deal with client registration webhooks, this is all included in `webhook-handler.lua`. We also need to define an additional environment variable `RHSSO_INITIAL_TOKEN` which allows APIcast to create clients on Red Hat Single Sign-On based on the webhooks sent by 3scale. You can read more about this initial access token in the [Red Hat Single Sign-On documentation](https://access.redhat.com/documentation/en-us/red_hat_single_sign-on/7.0/html/securing_applications_and_services_guide/client_registration#initial_access_token).
 
-Altogether these 2 files would be included into APIcast as follows, e.g for docker 
+Putting it all together, you would run APIcast with the environment variables defined for this integration: `RHSSO_ENDPOINT` and `RHSSO_INITIAL_TOKEN` and these three new files: `sites.d/rh-sso.conf`, `main.d/env.conf` and `client_registrations/webhook_handler.lua` would be included into APIcast as follows, e.g for docker 
 
 ```shell
-docker run --publish 8080:8080 --volume $(pwd)/rh-sso.conf:/opt/app/sites.d/rh-sso.conf --volume $(pwd)/main.d:/opt/app/main.d --volume $(pwd)/client-registrations:/opt/app/src/client-registrations --env RHSSO_ENDPOINT=https://{rh-sso-host}:{port}/auth/realms/{your-realm} --env REDIS_HOST={redis-host} --env RHSSO_INITIAL_TOKEN={rhsso-initial-token} --env THREESCALE_PORTAL_ENDPOINT=http://portal.example.com quay.io/3scale/apicast:master
+docker run --publish 8080:8080 --volume $(pwd)/sites.d:/opt/app/sites.d --volume $(pwd)/main.d:/opt/app/main.d --volume $(pwd)/client_registrations:/opt/app/src/client_registrations --env RHSSO_ENDPOINT=https://{rh-sso-host}:{port}/auth/realms/{your-realm} --env REDIS_HOST={redis-host} --env RHSSO_INITIAL_TOKEN={rhsso-initial-token} --env THREESCALE_PORTAL_ENDPOINT=http://portal.example.com quay.io/3scale/apicast:master
 ```
 
-If you're running natively, you can just add these files directly into `apicast/sites.d`, `apicast/main.d` and `apicast/src`.
+If you're running natively, you can just add these files directly into `apicast/sites.d`, `apicast/main.d` and `apicast/src/client_registrations` (you will need to create the client_registrations directory first) and call APIcast as follows:
 
+```shell 
+RHSSO_ENDPOINT=https://{rh-sso-host}:{port}/auth/realms/{your-realm} REDIS_HOST={redis-host} RHSSO_INITIAL_TOKEN={rhsso-initial-token} THREESCALE_PORTAL_ENDPOINT=http://portal.example.com bin/apicast
+```
 ### 3scale Configuration
 
 #### Webhooks
@@ -75,7 +78,7 @@ Once the webhooks are configured, you will want to create an application in 3sca
 3. Select an Application Plan under the API service you have configured for Red Hat Single Sign-On and OpenID Connect 
 4. Enter name and description and click on "Create Application"
 
-This will generate a set of credentials for your new application. You will then need to add the redirect url for your client. For Postman, this will be: `https://www.getpostman.com/oauth2/callback` 
+This will generate a set of credentials for your new application. You will then need to add the redirect url for your client. We're going to be using Postman as our client so, in this case, this would be: `https://www.getpostman.com/oauth2/callback` 
 
 At the same time, in the background, 3scale sends a webhook to APIcast, which in turn makes a request to Red Hat Single Sign-On to create a Client with the same credentials. 
 
@@ -86,9 +89,9 @@ To get this working with a 3scale instance the following conditions should be me
 1. Self-managed deployment type and OAuth authentication method should be selected
 2. *OAuth Authorization Endpoint* should be left blank as this is already defined by the Red Hat Single Sign-On settings.
 3. Set the *Public Base URL* in the Production section of the Integration page to the gateway host e.g `http://localhost:8080`
-4. An application created in 3scale configured with its **Redirect URL** to point to Postman (if that's what you're using as your client), e.g `https://www.getpostman.com/oauth2/callback` 
+4. An application created in 3scale configured with its **Redirect URL** to point to your client, e.g for Postman this would be `https://www.getpostman.com/oauth2/callback` 
 
-Once you have Integrated your API as above (and you're not using APIcast for client registrations) you can run APIcast with Red Hat Single Sign-On and OpenID Connect support as follows, e.g if running APIcast self-managed
+Once you have Integrated your API as above, and you're not using APIcast for client registrations, you can run APIcast with Red Hat Single Sign-On and OpenID Connect support as follows, e.g if running APIcast self-managed
 
 `RHSSO_ENDPOINT=https://{your-rh-sso-host}:{port}/auth/realms/{your-realm} THREESCALE_PORTAL_ENDPOINT=https://{3scale-access_token}@{3scale-domain}-admin.3scale.net bin/apicast`
 
@@ -104,6 +107,4 @@ Once you have APIcast and Red Hat Single Sign-On configured and up and running y
     4. Client Secret
     5. Grant Type: "Authorization Code"
 to request an access token. 
-3. You can now use the newly created access token to make a request to your API. 
-
-
+3. You can now use the newly created access token to make a request to your API.

@@ -266,38 +266,15 @@ function _M:set_backend_upstream(service)
   ngx.var.backend_host = backend.host or server or ngx.var.backend_host
 end
 
-
-local function auth_oauth(proxy, service, usage, auth)
-  local credentials, err = proxy.oauth:transform_credentials(auth)
-
-  if err then
-    return error_authorization_failed(service)
-  end
-
-  credentials = encode_args(credentials)
-
-  return proxy:authorize(service, usage, credentials)
-end
-
-local function auth_key(proxy, service, usage, auth)
-  local credentials = encode_args(auth)
-
-  return proxy:authorize(service, usage, credentials)
-end
-
 function _M:call(host)
   host = host or ngx.var.host
   local service = ngx.ctx.service or self:set_service(host)
 
   self:set_backend_upstream(service)
 
-  local authorize = auth_key
-
   if service.backend_version == 'oauth' then
     local o = oauth.new(self.configuration)
     local f, params = oauth.call(o, service)
-
-    authorize = auth_oauth
     self.oauth = o
 
     if f then
@@ -308,11 +285,11 @@ function _M:call(host)
 
   return function()
     -- call access phase
-    return self:access(service, authorize)
+    return self:access(service)
   end
 end
 
-function _M:access(service, authorize)
+function _M:access(service)
   local request = ngx.var.request -- NYI: return to lower frame
 
   ngx.var.secret_token = service.secret_token
@@ -328,8 +305,7 @@ function _M:access(service, authorize)
 
   insert(credentials, 1, service.id)
 
-  local _, matched_patterns, params = service:extract_usage(request)
-  local usage = encode_args(params)
+  local _, matched_patterns, usage_params = service:extract_usage(request)
 
   ngx.var.cached_key = concat(credentials, ':')
 
@@ -342,11 +318,22 @@ function _M:access(service, authorize)
   local ctx = ngx.ctx
 
   -- save those tables in context so they can be used in the backend client
-  ctx.usage = params
+  ctx.usage = usage_params
   ctx.credentials = credentials
   ctx.matched_patterns = matched_patterns
 
-  return authorize(self, service, usage, credentials)
+  if self.oauth then
+    credentials, err = self.oauth:transform_credentials(credentials)
+
+    if err then
+      return error_authorization_failed(service)
+    end
+  end
+
+  credentials = encode_args(credentials)
+  local usage = encode_args(usage_params)
+
+  return self:authorize(service, usage, credentials)
 end
 
 

@@ -1,43 +1,36 @@
-local env = require 'resty.env'
 local router = require 'router'
 local apicast_oauth = require 'oauth.apicast_oauth'
 local keycloak = require 'oauth.keycloak'
-
-local keycloak_configured = env.get('RHSSO_ENDPOINT')
-local oauth
 
 local _M = {
   _VERSION = '0.0.2'
 }
 
-function _M.new(service)
-  if keycloak_configured then
-    oauth = keycloak
-    oauth.init(keycloak_configured)
+function _M.new(configuration)
+  if configuration.keycloak then
+    ngx.log(ngx.INFO, "keycloak configured")
+    return keycloak.new(configuration.keycloak)
   else
-    oauth = apicast_oauth
+    return apicast_oauth.new()
   end
-  return oauth.new(service)
 end
 
-function _M.router(service)
-  -- TODO: use configuration to customize urls
+function _M.router(oauth, service)
   local r = router:new()
-  oauth = _M.new(service)
-  r:get('/authorize', function() oauth:authorize() end)
-  r:post('/authorize', function() oauth:authorize() end)
+  r:get('/authorize', function() oauth:authorize(service) end)
+  r:post('/authorize', function() oauth:authorize(service) end)
 
   -- TODO: only applies to apicast oauth...
   r:post('/callback', function() oauth:callback() end)
   r:get('/callback', function() oauth:callback() end)
 
-  r:post('/oauth/token', function() oauth:get_token() end)
+  r:post('/oauth/token', function() oauth:get_token(service) end)
 
   return r
 end
 
-function _M.call(service, method, uri, ...)
-  local r = _M.router(service)
+function _M.call(oauth, service, method, uri, ...)
+  local r = _M.router(oauth, service)
 
   local f, params = r:resolve(method or ngx.req.get_method(),
     uri or ngx.var.uri,

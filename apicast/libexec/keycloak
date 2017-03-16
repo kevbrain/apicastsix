@@ -1,0 +1,11 @@
+#!/usr/bin/env resty
+
+pcall(require, 'luarocks.loader')
+package.path = package.path .. ";./src/?.lua"
+
+local keycloak = require 'oauth.keycloak'
+local cjson = require 'cjson'
+
+local config = keycloak.load_configuration()
+
+ngx.say(cjson.encode(config))

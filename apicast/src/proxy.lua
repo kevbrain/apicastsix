@@ -279,7 +279,8 @@ function _M:call(host)
   self:set_backend_upstream(service)
 
   if service.backend_version == 'oauth' then
-    local f, params = oauth.call(service)
+    local o = oauth.new(self.configuration)
+    local f, params = oauth.call(o, service)
 
     if f then
       ngx.log(ngx.DEBUG, 'apicast oauth flow')
@@ -291,6 +292,42 @@ function _M:call(host)
     -- call access phase
     return self:access(service)
   end
+end
+
+local function authorize_oauth()
+
+end
+
+local function authorize_keycloak()
+
+end
+
+local function authorize(oauth, service, usage, credentials)
+  -- save those tables in context so they can be used in the backend client
+  local credentials = oauth:transform_credentials(credentials)
+  ngx.ctx.usage = params
+  ngx.ctx.credentials = credentials
+
+  credentials = encode_args(credentials)
+
+  ngx.var.credentials = credentials
+  ngx.var.usage = usage
+  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
+
+  -- WHAT TO DO IF NO USAGE CAN BE DERIVED FROM THE REQUEST.
+  if ngx.var.usage == '' then
+    ngx.header["X-3scale-matched-rules"] = ''
+    return error_no_match(service)
+  end
+
+  if get_debug_value(service) then
+    ngx.header["X-3scale-matched-rules"] = matched_patterns
+    ngx.header["X-3scale-credentials"]   = ngx.var.credentials
+    ngx.header["X-3scale-usage"]         = ngx.var.usage
+    ngx.header["X-3scale-hostname"]      = ngx.var.hostname
+  end
+
+  self.authorize(backend_version, service)
 end
 
 function _M:access(service)
@@ -307,14 +344,11 @@ function _M:access(service)
 
   local credentials, err = service:extract_credentials()
 
-  if err then
-    if not credentials or #credentials == 0 then
+  if not credentials or #credentials == 0 then
+    if err then
       ngx.log(ngx.WARN, "cannot get credentials: ", err)
-      return error_no_credentials(service)
-    else
-      ngx.log(ngx.WARN, "authorization failed: ", err)
-      return error_authorization_failed(service)
     end
+    return error_no_credentials(service)
   end
 
   insert(credentials, 1, service.id)
@@ -328,8 +362,9 @@ function _M:access(service)
   for i=1,#credentials do
     credentials[i] = nil
   end
-
-  -- save those tables in context so they can be used in the backend client
+  
+  --return authorize(service, usage, credentials)
+    local credentials = oauth:transform_credentials(credentials)
   ngx.ctx.usage = params
   ngx.ctx.credentials = credentials
 

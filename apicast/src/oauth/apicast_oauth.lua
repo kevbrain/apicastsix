@@ -19,13 +19,8 @@ function _M.new(service)
     }, mt)
 end
 
-function _M.credentials( access_token )
-    ------
-    -- oauth credentials.
-    -- @field 1 Access Token
-    -- @field access_token Access Token
-    -- @table credentials_oauth
-    return { access_token, access_token = access_token }
+function _M.transform_credentials( credentials )
+    return credentials
 end
 
 return _M

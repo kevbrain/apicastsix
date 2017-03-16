@@ -5,6 +5,7 @@ local resty_url = require 'resty.url'
 local jwt = require 'resty.jwt'
 local cjson = require 'cjson'
 local backend_client = require ('backend_client')
+local env = require 'resty.env'
 
 local _M = {
   _VERSION = '0.1'
@@ -26,15 +27,6 @@ _M.params = {
   }
 }
 
-function _M.init(endpoint)
-  _M.configured = endpoint
-
-  local config = { endpoint = endpoint}
-  if _M.configured then
-    _M.configuration = config
-  end
-end
-
 -- Formats the realm public key string into Public Key File (PKCS#8) format
 local function format_public_key(key)
   local formatted_key = "-----BEGIN PUBLIC KEY-----\n"
@@ -48,10 +40,6 @@ end
 
 
 local function get_public_key(http_client, endpoint)
-  if not http_client then
-    return nil, 'not initialized'
-  end
-
   local res = http_client.get(endpoint)
 
   local key
@@ -66,42 +54,31 @@ local function get_public_key(http_client, endpoint)
     return nil, 'missing key'
   end
 
-  local formatted_key = format_public_key(key)
-  return formatted_key
+  return format_public_key(key)
 end
 
-local function validate_config(configuration)
-  return configuration.endpoint
-end
-
-function _M.new(service, config)
-  local configuration = config or _M.configuration
-
-  local is_valid = validate_config(configuration)
-
-  if not is_valid then
-    ngx.log(ngx.ERR,'Keycloak is not configured')
-    return error('missing keycloak configuration')
-  end
+function _M.load_configuration(client)
+  local endpoint = env.get('RHSSO_ENDPOINT')
 
   local http_client = http_ng.new{
-    backend = configuration.client,
+    backend = client,
     options = {
       ssl = { verify = false }
     }
   }
 
   local keycloak_config = {
-    endpoint = configuration.endpoint,
-    authorize_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/auth'),
-    token_url = resty_url.join(configuration.endpoint,'/protocol/openid-connect/token'),
-    public_key = configuration.public_key or get_public_key(http_client, configuration.endpoint)
+    endpoint = endpoint,
+    authorize_url = resty_url.join(endpoint,'/protocol/openid-connect/auth'),
+    token_url = resty_url.join(endpoint,'/protocol/openid-connect/token'),
+    public_key = get_public_key(http_client, endpoint)
   }
+  return keycloak_config
+end
 
+function _M.new(configuration)
   return setmetatable({
-    config = keycloak_config,
-    http_client = http_client,
-    service = service
+    config = configuration
     }, mt)
 end
 
@@ -165,38 +142,32 @@ local function parse_and_verify_token(self, jwt_token)
   local jwt_obj = jwt:verify(self.config.public_key, jwt_token)
 
   if not jwt_obj.verified then
-    local err = "[jwt] failed verification for token: "..jwt_token.." reason: "..jwt_obj.reason
-    ngx.log(ngx.INFO, err)
-    return jwt_obj, err
+    ngx.log(ngx.INFO, "[jwt] failed verification for token, reason: ", jwt_obj.reason)
+    return jwt_obj, "JWT not verified"
   end
+
   return jwt_obj
 end
 
-function _M.credentials(self, access_token)
-  local jwt_obj, err = parse_and_verify_token(self, access_token)
+function _M:transform_credentials(credentials)
+  local jwt_obj = parse_and_verify_token(self, credentials.access_token)
 
-  if not jwt_obj then
-    err = "[jwt] failed to parse token: "..access_token
-    return nil, err
-  else
     if jwt_obj.payload then
       local app_id = jwt_obj.payload.aud
 
       ------
       -- oauth credentials for keycloak
-      -- @field 1 Client id
       -- @field app_id Client id
       -- @table credentials_oauth
-      return { app_id, app_id = app_id }, err
+      return { app_id = app_id }
     else
-      err = "[jwt] failed to parse token: "..jwt_obj.reason
-      return nil, err
+      ngx.log(ngx.INFO, "[jwt] failed verification for token, reason: ", jwt_obj.reason)
+      return nil, "Failed to parse JWT"
     end
-  end
 end
 
-function _M.check_credentials(self, params)
-  local backend = backend_client:new(self.service)
+function _M.check_credentials(service, params)
+  local backend = backend_client:new(service)
 
   local args = {
       app_id = params.client_id,
@@ -209,13 +180,15 @@ function _M.check_credentials(self, params)
   return res.status == 200
 end
 
-function _M.authorize(self)
+function _M:authorize(service, client)
   local ok, err
-  local http_client = self.http_client
 
-  if not http_client then
-    return nil, 'not initialized'
-  end
+  local http_client = http_ng.new{
+    backend = client,
+    options = {
+      ssl = { verify = false }
+    }
+  }
 
   local params = ngx.req.get_uri_args()
 
@@ -225,7 +198,7 @@ function _M.authorize(self)
     return
   end
 
-  ok = _M.check_credentials(self, params)
+  ok = _M.check_credentials(service, params)
   if not ok then
     _M.respond_with_error(401, 'invalid_client')
     return
@@ -237,13 +210,15 @@ function _M.authorize(self)
   _M.respond_and_exit(res.status, res.body, res.headers)
 end
 
-function _M.get_token(self)
+function _M:get_token(service, client)
   local ok, err
-  local http_client = self.http_client
 
-  if not http_client then
-    return nil, 'not initialized'
-  end
+  local http_client = http_ng.new{
+    backend = client,
+    options = {
+      ssl = { verify = false }
+    }
+  }
 
   -- TODO: maybe use the same method the original request uses
   ngx.req.read_body()
@@ -255,7 +230,7 @@ function _M.get_token(self)
     return
   end
 
-  ok = _M.check_credentials(self, req_body)
+  ok = _M.check_credentials(service, req_body)
   if not ok then
     _M.respond_with_error(401, 'invalid_client')
     return

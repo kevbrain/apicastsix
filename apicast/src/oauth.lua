@@ -8,7 +8,6 @@ local _M = {
 
 function _M.new(configuration)
   if configuration.keycloak then
-    ngx.log(ngx.INFO, "keycloak configured")
     return keycloak.new(configuration.keycloak)
   else
     return apicast_oauth.new()

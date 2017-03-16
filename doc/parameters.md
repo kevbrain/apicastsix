@@ -138,3 +138,9 @@ You should enable the debug level only for debugging.
 Replace `${ID}` with the actual Service ID. The value should be the configuration version you can see in the configuration history on the Admin Portal.
 
 Setting it to particual version will make it not auto-update and always use that version.
+
+### `RHSSO_ENDPOINT`
+
+URI that points to the realm configured on Red Hat Single Sign-On instance for 3scale Applications (a.k.a. clients in Red Hat Single Sign-On.) 
+
+**Example**: `https://rh-sso.example.com:8443/auth/realms/3scale`.

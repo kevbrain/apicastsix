@@ -1,30 +1,35 @@
-local get_token = require 'get_token'
-local callback = require 'authorized_callback'
-local authorize = require 'authorize'
-
 local router = require 'router'
+local apicast_oauth = require 'oauth.apicast_oauth'
+local keycloak = require 'oauth.keycloak'
 
 local _M = {
-  version = '0.0.1'
+  _VERSION = '0.0.2'
 }
 
-function _M.router()
-  -- TODO: use configuration to customize urls
+function _M.new(configuration)
+  if configuration.keycloak then
+    return keycloak.new(configuration.keycloak)
+  else
+    return apicast_oauth.new()
+  end
+end
+
+function _M.router(oauth, service)
   local r = router:new()
+  r:get('/authorize', function() oauth:authorize(service) end)
+  r:post('/authorize', function() oauth:authorize(service) end)
 
-  r:get('/authorize', authorize.call)
-  r:post('/authorize', authorize.call)
+  -- TODO: only applies to apicast oauth...
+  r:post('/callback', function() oauth:callback() end)
+  r:get('/callback', function() oauth:callback() end)
 
-  r:post('/callback', callback.call)
-  r:get('/callback', callback.call)
-
-  r:post('/oauth/token', get_token.call)
+  r:post('/oauth/token', function() oauth:get_token(service) end)
 
   return r
 end
 
-function _M.call(method, uri, ...)
-  local r = _M.router()
+function _M.call(oauth, service, method, uri, ...)
+  local r = _M.router(oauth, service)
 
   local f, params = r:resolve(method or ngx.req.get_method(),
     uri or ngx.var.uri,
@@ -34,5 +39,3 @@ function _M.call(method, uri, ...)
 end
 
 return _M
-
-

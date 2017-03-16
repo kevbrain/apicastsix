@@ -11,6 +11,12 @@ local resty_url = require 'resty.url'
 
 local _M = {} -- public interface
 
+local redis_conf = {
+  timeout   = 3000,  -- 3 seconds
+  keepalive = 10000, -- milliseconds
+  poolsize  = 1000   -- # connections
+}
+
 -- private
 -- Logging Helpers
 function _M.show_table(t)
@@ -135,10 +141,14 @@ function _M.connect_redis(options)
     opts.password = options.password
   end
 
+  opts.timeout = options and options.timeout or redis_conf.timeout
+
   local host = opts.host or env.get('REDIS_HOST') or "127.0.0.1"
   local port = opts.prot or env.get('REDIS_PORT') or 6379
 
   local red = redis:new()
+
+  red:set_timeout(opts.timeout)
 
   local ok, err = red:connect(_M.resolve(host, port))
   if not ok then
@@ -162,6 +172,11 @@ function _M.connect_redis(options)
   end
 
   return red
+end
+
+-- return ownership of this connection to the pool
+function _M.release_redis(red)
+  red:set_keepalive(redis_conf.keepalive, redis_conf.poolsize)
 end
 
 -- error and exist

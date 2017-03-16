@@ -53,6 +53,7 @@ local function error_authorization_failed(service)
 end
 
 local function error_no_match(service)
+  ngx.header.x_3scale_matched_rules = ''
   ngx.log(ngx.INFO, 'no rules matched for service ', service.id)
   ngx.var.cached_key = nil
   ngx.status = service.no_match_status
@@ -150,11 +151,31 @@ local http = {
   end
 }
 
-function _M.authorize(service)
-  local internal_location = (service.backend_version == 'oauth' and '/threescale_oauth_authrep')
-                                                         or '/threescale_authrep'
+local function output_debug_headers(service, usage, credentials)
+  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
+
+  if get_debug_value(service) then
+    ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_patterns
+    ngx.header["X-3scale-credentials"]   = credentials
+    ngx.header["X-3scale-usage"]         = usage
+    ngx.header["X-3scale-hostname"]      = ngx.var.hostname
+  end
+end
+
+function _M:authorize(service, usage, credentials)
+  if usage == '' then
+    return error_no_match(service)
+  end
+
+  output_debug_headers(service, usage, credentials)
+
+  local internal_location = (self.oauth and '/threescale_oauth_authrep') or '/threescale_authrep'
+
+  -- usage and credentials are expected by the internal endpoints
+  ngx.var.usage = usage
+  ngx.var.credentials = credentials
   -- NYI: return to lower frame
-  local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
+  local cached_key = ngx.var.cached_key .. ":" .. usage
   local api_keys = ngx.shared.api_keys
   local is_known = api_keys and api_keys:get(cached_key)
 
@@ -225,12 +246,15 @@ end
 function _M:set_backend_upstream(service)
   service = service or ngx.ctx.service
 
-  ngx.var.backend_authentication_type = service.backend_authentication.type
-  ngx.var.backend_authentication_value = service.backend_authentication.value
+  local backend_authentication = service.backend_authentication or {}
+  local backend = service.backend or {}
+
+  ngx.var.backend_authentication_type = backend_authentication.type
+  ngx.var.backend_authentication_value = backend_authentication.value
   ngx.var.version = self.configuration.version
 
   -- set backend
-  local url = resty_url.split(service.backend.endpoint or ngx.var.backend_endpoint)
+  local url = resty_url.split(backend.endpoint or ngx.var.backend_endpoint)
   local scheme, _, _, server, port, path =
     url[1], url[2], url[3], url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
 
@@ -239,7 +263,26 @@ function _M:set_backend_upstream(service)
   ngx.ctx.backend_upstream = backend_upstream
 
   ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. path
-  ngx.var.backend_host = service.backend.host or server or ngx.var.backend_host
+  ngx.var.backend_host = backend.host or server or ngx.var.backend_host
+end
+
+
+local function auth_oauth(proxy, service, usage, auth)
+  local credentials, err = proxy.oauth:transform_credentials(auth)
+
+  if err then
+    return error_authorization_failed(service)
+  end
+
+  credentials = encode_args(credentials)
+
+  return proxy:authorize(service, usage, credentials)
+end
+
+local function auth_key(proxy, service, usage, auth)
+  local credentials = encode_args(auth)
+
+  return proxy:authorize(service, usage, credentials)
 end
 
 function _M:call(host)
@@ -248,8 +291,14 @@ function _M:call(host)
 
   self:set_backend_upstream(service)
 
+  local authorize = auth_key
+
   if service.backend_version == 'oauth' then
-    local f, params = oauth.call()
+    local o = oauth.new(self.configuration)
+    local f, params = oauth.call(o, service)
+
+    authorize = auth_oauth
+    self.oauth = o
 
     if f then
       ngx.log(ngx.DEBUG, 'apicast oauth flow')
@@ -259,17 +308,11 @@ function _M:call(host)
 
   return function()
     -- call access phase
-    return self:access(service)
+    return self:access(service, authorize)
   end
 end
 
-function _M:access(service)
-
-  if ngx.status == 403  then
-    ngx.say("Throttling due to too many requests")
-    ngx.exit(403)
-  end
-
+function _M:access(service, authorize)
   local request = ngx.var.request -- NYI: return to lower frame
 
   ngx.var.secret_token = service.secret_token
@@ -284,10 +327,11 @@ function _M:access(service)
   end
 
   insert(credentials, 1, service.id)
-  ngx.var.cached_key = concat(credentials, ':')
 
   local _, matched_patterns, params = service:extract_usage(request)
   local usage = encode_args(params)
+
+  ngx.var.cached_key = concat(credentials, ':')
 
   -- remove integer keys for serialization
   -- as ngx.encode_args can't serialize integer keys
@@ -295,30 +339,14 @@ function _M:access(service)
     credentials[i] = nil
   end
 
+  local ctx = ngx.ctx
+
   -- save those tables in context so they can be used in the backend client
-  ngx.ctx.usage = params
-  ngx.ctx.credentials = credentials
+  ctx.usage = params
+  ctx.credentials = credentials
+  ctx.matched_patterns = matched_patterns
 
-  credentials = encode_args(credentials)
-
-  ngx.var.credentials = credentials
-  ngx.var.usage = usage
-  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
-
-  -- WHAT TO DO IF NO USAGE CAN BE DERIVED FROM THE REQUEST.
-  if ngx.var.usage == '' then
-    ngx.header["X-3scale-matched-rules"] = ''
-    return error_no_match(service)
-  end
-
-  if get_debug_value(service) then
-    ngx.header["X-3scale-matched-rules"] = matched_patterns
-    ngx.header["X-3scale-credentials"]   = ngx.var.credentials
-    ngx.header["X-3scale-usage"]         = ngx.var.usage
-    ngx.header["X-3scale-hostname"]      = ngx.var.hostname
-  end
-
-  self.authorize(service)
+  return authorize(self, service, usage, credentials)
 end
 
 

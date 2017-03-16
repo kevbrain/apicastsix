@@ -15,11 +15,18 @@ insulate('Configuration object', function()
   describe('.init', function()
     local configuration = require 'configuration_loader'
 
-    it('runs', function()
-      local config, err = configuration.init('apicast')
+    it('runs boot', function()
+      local config, err = configuration.run_external_command('boot', 'apicast')
 
       assert.falsy(config)
       assert.match('missing configuration', err)
+    end)
+
+    it('runs keycloak', function()
+      local config, err = configuration.run_external_command('keycloak', 'apicast')
+
+      assert.falsy(config)
+      assert.match('failed to download keycloak configuration', err)
     end)
   end)
 

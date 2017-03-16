@@ -13,7 +13,12 @@ describe('Proxy', function()
     assert.same('function', type(proxy.access))
   end)
 
-  it('has authorize function', function()
+  it('has authorize function after call', function()
+    ngx.var = { backend_endpoint = 'http://localhost:1853' }
+    configuration:add({ id = 42, hosts = { 'localhost' }})
+
+    proxy:call('localhost')
+
     assert.truthy(proxy.authorize)
     assert.same('function', type(proxy.authorize))
   end)

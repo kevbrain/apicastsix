@@ -18,10 +18,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Ability to customize main section of nginx configuration (and expose more env variables) [PR #292](https://github.com/3scale/apicast/pull/292)
 - Ability to lock service to specific configuration version [PR #293](https://github.com/3scale/apicast/pull/292)
 - Ability to use Redis DB and password via `REDIS_URL` [PR #303](https://github.com/3scale/apicast/pull/303)
+- Ability to Authenticate against API using RHSSO and OpenID Connect [PR #283](https://github.com/3scale/apicast/pull/283)
 
 ### Removed
 
 - Removed support for sending Request logs [PR #296](https://github.com/3scale/apicast/pull/296)
+
+### Known Issues
+
+- JWT expiry not taken into account in authorization response cache [PR #283](https://github.com/3scale/apicast/pull/283) / [Issue #309](https://github.com/3scale/apicast/issues/309)
 
 ## [3.0.0-beta2] - 2017-03-08
 

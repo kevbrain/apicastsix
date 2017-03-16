@@ -55,6 +55,7 @@ function _M:call(environment)
   local res, err = self:services()
 
   if not res and err then
+    ngx.log(ngx.WARN, 'failed to get list of services: ', err)
     return nil, err
   end
 
@@ -88,8 +89,11 @@ function _M:services()
   local res, err = http_client.get(url)
 
   if not res and err then
+    ngx.log(ngx.DEBUG, 'services get error: ', err, ' url: ', url)
     return nil, err
   end
+
+  ngx.log(ngx.DEBUG, 'services get status: ', res.status, ' url: ', url)
 
   if res.status == 200 then
     local json = cjson.decode(res.body)
@@ -122,8 +126,11 @@ function _M:config(service, environment, version)
   local res, err = http_client.get(url)
 
   if not res and err then
+    ngx.log(ngx.DEBUG, 'services get error: ', err, ' url: ', url)
     return nil, err
   end
+
+  ngx.log(ngx.DEBUG, 'services get status: ', res.status, ' url: ', url)
 
   if res.status == 200 then
     local json = cjson.decode(res.body)

@@ -8,7 +8,6 @@ local util = require 'util'
 local env = require('resty.env')
 local synchronization = require('resty.synchronization').new(1)
 
-local tostring = tostring
 local error = error
 local len = string.len
 local assert = assert
@@ -77,10 +76,10 @@ function _M.init(cwd)
     return config
   elseif err then
     if code then
-      ngx.log(ngx.ERR, 'boot could not get configuration, ' .. tostring(err) .. ': '.. tostring(code))
+      ngx.log(ngx.ERR, 'boot could not get configuration (exit ', code, ')\n',  err)
       return nil, err
     else
-      ngx.log(ngx.ERR, 'boot failed read: '.. tostring(err))
+      ngx.log(ngx.ERR, 'boot failed read: ', err)
       return nil, err
     end
   end
@@ -92,13 +91,13 @@ local boot = {
 }
 
 function boot.init(configuration)
-  local config, err = _M.init()
-  local init, conferr = _M.configure(configuration, config)
+  local config = _M.init()
+  local init = _M.configure(configuration, config)
 
   if config and init then
     ngx.log(ngx.DEBUG, 'downloaded configuration: ', config)
   else
-    ngx.log(ngx.EMERG, 'failed to load configuration, exiting: ', err or conferr)
+    ngx.log(ngx.EMERG, 'failed to load configuration, exiting')
     os.exit(1)
   end
 

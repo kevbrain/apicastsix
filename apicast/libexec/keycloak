@@ -8,4 +8,9 @@ local cjson = require 'cjson'
 
 local config = keycloak.load_configuration()
 
-ngx.say(cjson.encode(config))
+if config then
+  ngx.say(cjson.encode(config))
+else
+  io.stderr:write('failed to download keycloak configuration\n')
+  os.exit(1)
+end

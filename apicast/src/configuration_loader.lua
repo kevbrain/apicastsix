@@ -67,7 +67,7 @@ end
 
 -- Cosocket API is not available in the init_by_lua* context (see more here: https://github.com/openresty/lua-nginx-module#cosockets-not-available-everywhere)
 -- For this reason a new process needs to be started to download the configuration through 3scale API
-function _M.init(cwd, cmd)
+function _M.run_external_command(cmd, cwd)
   cwd = cwd or env.get('TEST_NGINX_APICAST_PATH') or ngx.config.prefix()
   local config, err, code = util.system("cd '" .. cwd .."' && libexec/"..(cmd or "boot"))
 
@@ -78,10 +78,9 @@ function _M.init(cwd, cmd)
     return config
   elseif err then
     if code then
-      ngx.log(ngx.ERR, 'boot could not get configuration (exit ', code, ')\n',  err)
-      return nil, err
+      return nil, err, code
     else
-      ngx.log(ngx.ERR, 'boot failed read: ', err)
+      ngx.log(ngx.ERR, 'failed to read output from command ', cmd, ' err: ', err)
       return nil, err
     end
   end
@@ -93,13 +92,13 @@ local boot = {
 }
 
 function boot.init(configuration)
-  local config = _M.init()
+  local config, err, code = _M.run_external_command()
   local init = _M.configure(configuration, config)
 
   if config and init then
     ngx.log(ngx.DEBUG, 'downloaded configuration: ', config)
   else
-    ngx.log(ngx.EMERG, 'failed to load configuration, exiting')
+    ngx.log(ngx.EMERG, 'failed to load configuration, exiting (code ', code, ')\n',  err)
     os.exit(1)
   end
 
@@ -108,7 +107,7 @@ function boot.init(configuration)
     os.exit(0)
   end
 
-  local keycloak_config = _M.init(nil, "keycloak")
+  local keycloak_config = _M.run_external_command("keycloak")
 
   if keycloak_config then
     configuration.keycloak = cjson.decode(keycloak_config)
@@ -166,7 +165,7 @@ end
 local lazy = { init_worker = noop }
 
 function lazy.init(configuration)
-  local keycloak_config = _M.init(nil, "keycloak")
+  local keycloak_config = _M.run_external_command("keycloak")
 
   if keycloak_config then
     configuration.keycloak = cjson.decode(keycloak_config)

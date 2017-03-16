@@ -157,7 +157,6 @@ function _M:transform_credentials(credentials)
   local jwt_obj, err = parse_and_verify_token(self, credentials.access_token)
 
     if err then
-      ngx.log(ngx.INFO, err)
       return nil, err
     end
 

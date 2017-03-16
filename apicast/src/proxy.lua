@@ -272,12 +272,23 @@ function _M:set_backend_upstream(service)
   ngx.var.backend_host = service.backend.host or server or ngx.var.backend_host
 end
 
-local function auth_key()
+local function auth_key(service, params, credentials)
+  insert(credentials, 1, service.id)
+  ngx.var.cached_key = concat(credentials, ':')
+
+  local _, matched_patterns, params = service:extract_usage(request)
+
+  -- remove integer keys for serialization
+  -- as ngx.encode_args can't serialize integer keys
+  for i=1,#credentials do
+    credentials[i] = nil
+  end
 -- save those tables in context so they can be used in the backend client
-  local credentials = oauth:transform_credentials(credentials)
+
   ngx.ctx.usage = params
   ngx.ctx.credentials = credentials
 
+  local usage = encode_args(params)
   credentials = encode_args(credentials)
 
   ngx.var.credentials = credentials
@@ -300,14 +311,26 @@ local function auth_key()
   self.authorize(backend_version, service)
 end
 
-local function auth_oauth()
+local function auth_oauth(service, params, credentials)
+  insert(credentials, 1, service.id)
+  ngx.var.cached_key = concat(credentials, ':')
+
+  local _, matched_patterns, params = service:extract_usage(request)
+
+    local usage = encode_args(params)
+
+  -- remove integer keys for serialization
+  -- as ngx.encode_args can't serialize integer keys
+  for i=1,#credentials do
+    credentials[i] = nil
+  end
 -- save those tables in context so they can be used in the backend client
   local credentials = oauth:transform_credentials(credentials)
   ngx.ctx.usage = params
   ngx.ctx.credentials = credentials
 
   local credentials = oauth:transform_credentials(credentials)
-  
+
   usage = encode_args(params)
   credentials = encode_args(credentials)
 
@@ -377,19 +400,7 @@ function _M:access(service, authorization)
     return error_no_credentials(service)
   end
 
-  insert(credentials, 1, service.id)
-  ngx.var.cached_key = concat(credentials, ':')
-
-  local _, matched_patterns, params = service:extract_usage(request)
-  local usage = encode_args(params)
-
-  -- remove integer keys for serialization
-  -- as ngx.encode_args can't serialize integer keys
-  for i=1,#credentials do
-    credentials[i] = nil
-  end
-
-  return authorization
+  return authorization(service, params, credentials)
 end
 
 

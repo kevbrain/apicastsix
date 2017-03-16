@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Known Issues
 
-- JWT expiry not taken into account in authorization response cache [PR #283](https://github.com/3scale/apicast/pull/283)
+- JWT expiry not taken into account in authorization response cache [PR #283](https://github.com/3scale/apicast/pull/283) / [Issue #309](https://github.com/3scale/apicast/issues/309)
 
 ## [3.0.0-beta2] - 2017-03-08
 

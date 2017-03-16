@@ -272,38 +272,8 @@ function _M:set_backend_upstream(service)
   ngx.var.backend_host = service.backend.host or server or ngx.var.backend_host
 end
 
-function _M:call(host)
-  host = host or ngx.var.host
-  local service = ngx.ctx.service or self:set_service(host)
-
-  self:set_backend_upstream(service)
-
-  if service.backend_version == 'oauth' then
-    local o = oauth.new(self.configuration)
-    local f, params = oauth.call(o, service)
-
-    if f then
-      ngx.log(ngx.DEBUG, 'apicast oauth flow')
-      return function() return f(params) end
-    end
-  end
-
-  return function()
-    -- call access phase
-    return self:access(service)
-  end
-end
-
-local function authorize_oauth()
-
-end
-
-local function authorize_keycloak()
-
-end
-
-local function authorize(oauth, service, usage, credentials)
-  -- save those tables in context so they can be used in the backend client
+local function auth_key()
+-- save those tables in context so they can be used in the backend client
   local credentials = oauth:transform_credentials(credentials)
   ngx.ctx.usage = params
   ngx.ctx.credentials = credentials
@@ -330,7 +300,63 @@ local function authorize(oauth, service, usage, credentials)
   self.authorize(backend_version, service)
 end
 
-function _M:access(service)
+local function auth_oauth()
+-- save those tables in context so they can be used in the backend client
+  local credentials = oauth:transform_credentials(credentials)
+  ngx.ctx.usage = params
+  ngx.ctx.credentials = credentials
+
+  local credentials = oauth:transform_credentials(credentials)
+  
+  usage = encode_args(params)
+  credentials = encode_args(credentials)
+
+  ngx.var.credentials = credentials
+  ngx.var.usage = usage
+  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
+
+  -- WHAT TO DO IF NO USAGE CAN BE DERIVED FROM THE REQUEST.
+  if ngx.var.usage == '' then
+    ngx.header["X-3scale-matched-rules"] = ''
+    return error_no_match(service)
+  end
+
+  if get_debug_value(service) then
+    ngx.header["X-3scale-matched-rules"] = matched_patterns
+    ngx.header["X-3scale-credentials"]   = ngx.var.credentials
+    ngx.header["X-3scale-usage"]         = ngx.var.usage
+    ngx.header["X-3scale-hostname"]      = ngx.var.hostname
+  end
+
+  self.authorize(backend_version, service)
+end
+
+function _M:call(host)
+  host = host or ngx.var.host
+  local service = ngx.ctx.service or self:set_service(host)
+
+  self:set_backend_upstream(service)
+
+  local authorization = auth_key
+
+  if service.backend_version == 'oauth' then
+    authorization = auth_oauth
+    local o = oauth.new(self.configuration)
+    local f, params = oauth.call(o, service)
+
+    if f then
+      ngx.log(ngx.DEBUG, 'apicast oauth flow')
+      return function() return f(params) end
+    end
+  end
+
+  return function()
+    -- call access phase
+    return self:access(service, authorization)
+  end
+end
+
+function _M:access(service, authorization)
   local backend_version = service.backend_version
 
   if ngx.status == 403  then
@@ -362,32 +388,8 @@ function _M:access(service)
   for i=1,#credentials do
     credentials[i] = nil
   end
-  
-  --return authorize(service, usage, credentials)
-    local credentials = oauth:transform_credentials(credentials)
-  ngx.ctx.usage = params
-  ngx.ctx.credentials = credentials
 
-  credentials = encode_args(credentials)
-
-  ngx.var.credentials = credentials
-  ngx.var.usage = usage
-  ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
-
-  -- WHAT TO DO IF NO USAGE CAN BE DERIVED FROM THE REQUEST.
-  if ngx.var.usage == '' then
-    ngx.header["X-3scale-matched-rules"] = ''
-    return error_no_match(service)
-  end
-
-  if get_debug_value(service) then
-    ngx.header["X-3scale-matched-rules"] = matched_patterns
-    ngx.header["X-3scale-credentials"]   = ngx.var.credentials
-    ngx.header["X-3scale-usage"]         = ngx.var.usage
-    ngx.header["X-3scale-hostname"]      = ngx.var.hostname
-  end
-
-  self.authorize(backend_version, service)
+  return authorization
 end
 
 

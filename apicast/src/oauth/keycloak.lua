@@ -60,6 +60,10 @@ end
 function _M.load_configuration(client)
   local endpoint = env.get('RHSSO_ENDPOINT')
 
+  if not endpoint then
+    return nil, 'missing endpoint configuration'
+  end
+
   local http_client = http_ng.new{
     backend = client,
     options = {

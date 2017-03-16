@@ -150,31 +150,9 @@ local http = {
   end
 }
 
-local function oauth_authrep(service)
-  local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
-  local access_tokens = assert(ngx.shared.api_keys, 'missing shared dictionary: api_keys')
-  local is_known = access_tokens:get(cached_key)
-
-  if is_known == 200 then
-    ngx.log(ngx.DEBUG, 'apicast cache hit key: ', cached_key)
-    ngx.var.cached_key = cached_key
-  else
-    local res = http.get("/threescale_oauth_authrep")
-
-    if res.status ~= 200   then
-      access_tokens:delete(ngx.var.cached_key)
-      ngx.status = res.status
-      ngx.header.content_type = "application/json"
-      error_authorization_failed(service)
-    else
-      access_tokens:set(ngx.var.cached_key,200)
-    end
-
-    ngx.var.cached_key = nil
-  end
-end
-
-local function authrep(service)
+function _M.authorize(service)
+  local internal_location = (service.backend_version == 'oauth' and '/threescale_oauth_authrep')
+                                                         or '/threescale_authrep'
   -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. ngx.var.usage
   local api_keys = ngx.shared.api_keys
@@ -185,7 +163,7 @@ local function authrep(service)
     ngx.var.cached_key = cached_key
   else
     ngx.log(ngx.INFO, 'apicast cache miss key: ', cached_key)
-    local res = http.get("/threescale_authrep")
+    local res = http.get(internal_location)
 
     ngx.log(ngx.DEBUG, '[backend] response status: ', res.status, ' body: ', res.body)
 
@@ -203,14 +181,6 @@ local function authrep(service)
     end
     -- set this request_to_3scale_backend to nil to avoid doing the out of band authrep -%>
     ngx.var.cached_key = nil
-  end
-end
-
-function _M.authorize(backend_version, service)
-  if backend_version == 'oauth' then
-    oauth_authrep(service)
-  else
-    authrep(service)
   end
 end
 
@@ -294,7 +264,6 @@ function _M:call(host)
 end
 
 function _M:access(service)
-  local backend_version = service.backend_version
 
   if ngx.status == 403  then
     ngx.say("Throttling due to too many requests")
@@ -349,7 +318,7 @@ function _M:access(service)
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
 
-  self.authorize(backend_version, service)
+  self.authorize(service)
 end
 
 

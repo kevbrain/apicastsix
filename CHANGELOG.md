@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Reloading of configuration with every request when cache is disabled [PR #287](https://github.com/3scale/apicast/pull/287)
+- Auth caching is not used when OAuth method is used [PR #304](https://github.com/3scale/apicast/pull/304)
 
 ## [3.0.0-beta1] - 2017-03-03
 

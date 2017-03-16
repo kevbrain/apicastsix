@@ -206,14 +206,6 @@ local function authrep(service)
   end
 end
 
-function _M.authorize(backend_version, service)
-  if backend_version == 'oauth' then
-    oauth_authrep(service)
-  else
-    authrep(service)
-  end
-end
-
 function _M:set_service(host)
   host = host or ngx.var.host
   local service = self:find_service(host)
@@ -255,12 +247,15 @@ end
 function _M:set_backend_upstream(service)
   service = service or ngx.ctx.service
 
-  ngx.var.backend_authentication_type = service.backend_authentication.type
-  ngx.var.backend_authentication_value = service.backend_authentication.value
+  local backend_authentication = service.backend_authentication or {}
+  local backend = service.backend or {}
+
+  ngx.var.backend_authentication_type = backend_authentication.type
+  ngx.var.backend_authentication_value = backend_authentication.value
   ngx.var.version = self.configuration.version
 
   -- set backend
-  local url = resty_url.split(service.backend.endpoint or ngx.var.backend_endpoint)
+  local url = resty_url.split(backend.endpoint or ngx.var.backend_endpoint)
   local scheme, _, _, server, port, path =
     url[1], url[2], url[3], url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
 
@@ -269,27 +264,12 @@ function _M:set_backend_upstream(service)
   ngx.ctx.backend_upstream = backend_upstream
 
   ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. path
-  ngx.var.backend_host = service.backend.host or server or ngx.var.backend_host
+  ngx.var.backend_host = backend.host or server or ngx.var.backend_host
 end
 
-local function auth_key(service, params, credentials)
-  insert(credentials, 1, service.id)
-  ngx.var.cached_key = concat(credentials, ':')
-
-  local _, matched_patterns, params = service:extract_usage(request)
-
-  -- remove integer keys for serialization
-  -- as ngx.encode_args can't serialize integer keys
-  for i=1,#credentials do
-    credentials[i] = nil
-  end
--- save those tables in context so they can be used in the backend client
-
-  ngx.ctx.usage = params
-  ngx.ctx.credentials = credentials
-
+local function auth_key(self, service, params, auth)
+  local credentials = encode_args(auth)
   local usage = encode_args(params)
-  credentials = encode_args(credentials)
 
   ngx.var.credentials = credentials
   ngx.var.usage = usage
@@ -302,37 +282,18 @@ local function auth_key(service, params, credentials)
   end
 
   if get_debug_value(service) then
-    ngx.header["X-3scale-matched-rules"] = matched_patterns
-    ngx.header["X-3scale-credentials"]   = ngx.var.credentials
-    ngx.header["X-3scale-usage"]         = ngx.var.usage
+    ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_rules
+    ngx.header["X-3scale-credentials"]   = credentials
+    ngx.header["X-3scale-usage"]         = usage
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
 
-  self.authorize(backend_version, service)
+  authrep(service)
 end
 
-local function auth_oauth(service, params, credentials)
-  insert(credentials, 1, service.id)
-  ngx.var.cached_key = concat(credentials, ':')
-
-  local _, matched_patterns, params = service:extract_usage(request)
-
-    local usage = encode_args(params)
-
-  -- remove integer keys for serialization
-  -- as ngx.encode_args can't serialize integer keys
-  for i=1,#credentials do
-    credentials[i] = nil
-  end
--- save those tables in context so they can be used in the backend client
-  local credentials = oauth:transform_credentials(credentials)
-  ngx.ctx.usage = params
-  ngx.ctx.credentials = credentials
-
-  local credentials = oauth:transform_credentials(credentials)
-
-  usage = encode_args(params)
-  credentials = encode_args(credentials)
+local function auth_oauth(self, service, params, auth)
+  local credentials = encode_args(self.oauth:transform_credentials(auth))
+  local usage = encode_args(params)
 
   ngx.var.credentials = credentials
   ngx.var.usage = usage
@@ -345,13 +306,13 @@ local function auth_oauth(service, params, credentials)
   end
 
   if get_debug_value(service) then
-    ngx.header["X-3scale-matched-rules"] = matched_patterns
-    ngx.header["X-3scale-credentials"]   = ngx.var.credentials
-    ngx.header["X-3scale-usage"]         = ngx.var.usage
+    ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_rules
+    ngx.header["X-3scale-credentials"]   = credentials
+    ngx.header["X-3scale-usage"]         = usage
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
 
-  self.authorize(backend_version, service)
+  oauth_authrep(service)
 end
 
 function _M:call(host)
@@ -360,12 +321,14 @@ function _M:call(host)
 
   self:set_backend_upstream(service)
 
-  local authorization = auth_key
+  self.authorize = auth_key
 
   if service.backend_version == 'oauth' then
-    authorization = auth_oauth
     local o = oauth.new(self.configuration)
     local f, params = oauth.call(o, service)
+
+    self.authorize = auth_oauth
+    self.oauth = o
 
     if f then
       ngx.log(ngx.DEBUG, 'apicast oauth flow')
@@ -375,13 +338,11 @@ function _M:call(host)
 
   return function()
     -- call access phase
-    return self:access(service, authorization)
+    return self:access(service)
   end
 end
 
 function _M:access(service, authorization)
-  local backend_version = service.backend_version
-
   if ngx.status == 403  then
     ngx.say("Throttling due to too many requests")
     ngx.exit(403)
@@ -400,7 +361,25 @@ function _M:access(service, authorization)
     return error_no_credentials(service)
   end
 
-  return authorization(service, params, credentials)
+  insert(credentials, 1, service.id)
+  ngx.var.cached_key = concat(credentials, ':')
+
+  local _, matched_patterns, params = service:extract_usage(request)
+
+  -- remove integer keys for serialization
+  -- as ngx.encode_args can't serialize integer keys
+  for i=1,#credentials do
+    credentials[i] = nil
+  end
+
+  local ctx = ngx.ctx
+
+  -- save those tables in context so they can be used in the backend client
+  ctx.usage = params
+  ctx.credentials = credentials
+  ctx.matched_patterns = matched_patterns
+
+  return self:authorize(service, params, credentials)
 end
 
 

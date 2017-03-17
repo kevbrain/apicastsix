@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 
 - Removed support for sending Request logs [PR #296](https://github.com/3scale/apicast/pull/296)
+- Support for parallel DNS query [PR #311](https://github.com/3scale/apicast/pull/311)
 
 ### Known Issues
 

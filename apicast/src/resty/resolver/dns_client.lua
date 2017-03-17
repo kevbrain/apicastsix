@@ -2,10 +2,6 @@ local resty_resolver = require 'resty.dns.resolver'
 
 local setmetatable = setmetatable
 local insert = table.insert
-local th_spawn = ngx.thread.spawn
-local th_wait = ngx.thread.wait
-local th_kill = ngx.thread.kill
-local unpack = unpack
 
 local _M = {
   _VERSION = '0.1'
@@ -62,37 +58,6 @@ local function query(resolver, qname, opts, nameserver)
   return resolver:query(qname, opts)
 end
 
-local function parallel_query(resolvers, qname, opts)
-  local threads = {}
-  local n = #resolvers
-
-  if n < 1 then
-    return nil, 'no resolvers'
-  end
-
-  for i=1, n do
-    insert(threads, th_spawn(query, resolvers[i].resolver, qname, opts, resolvers[i].nameserver))
-  end
-
-  local answers, err
-
-  do
-    local found, ok
-    local i=1
-    repeat
-      ok, answers, err = th_wait(unpack(threads))
-      i = i + 1
-      found = ok and answers and not answers.errcode and not err
-    until found or i > n
-  end
-
-  for i=1, n do
-    th_kill(threads[i])
-  end
-
-  return answers, err
-end
-
 local function serial_query(resolvers, qname, opts)
   local answers, err
 
@@ -114,8 +79,7 @@ function _M.query(self, qname, opts)
     resolvers = self:init_resolvers()
   end
 
-  -- this is here so you can try the other one when suspicous something is wrong
-  return (parallel_query or serial_query)(resolvers, qname, opts)
+  return serial_query(resolvers, qname, opts)
 end
 
 return _M

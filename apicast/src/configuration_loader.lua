@@ -128,12 +128,6 @@ end
 function boot.init_worker(configuration)
   local interval = ttl() or 0
 
-  local keycloak_config = _M.run_external_command("keycloak")
-
-  if keycloak_config then
-    configuration.keycloak = cjson.decode(keycloak_config)
-  end
-
   local function schedule(...)
     local ok, err = ngx.timer.at(...)
 

@@ -86,7 +86,7 @@ APIcast requires a running Redis instance for OAuth 2.0 flow. `REDIS_PORT` param
 
 **Default:** no value
 
-APIcast requires a running Redis instance for OAuth 2.0 flow. `REDIS_URL` parameter can be used to set the full URI as DSN format like: `redis://PASSWORD@HOST:PORT/DB`. Takes precedence over `REDIS_PORT` and `REDIS_URL`.
+APIcast requires a running Redis instance for OAuth 2.0 flow. `REDIS_URL` parameter can be used to set the full URI as DSN format like: `redis://PASSWORD@HOST:PORT/DB`. Takes precedence over `REDIS_PORT` and `REDIS_HOST`.
 
 ### `RESOLVER`
 

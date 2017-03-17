@@ -107,10 +107,16 @@ function boot.init(configuration)
     os.exit(0)
   end
 
-  local keycloak_config = _M.run_external_command("keycloak")
-
-  if keycloak_config then
-    configuration.keycloak = cjson.decode(keycloak_config)
+  if keycloak.enabled() then
+    local keycloak_config
+    keycloak_config, err, code = _M.run_external_command("keycloak")
+    if keycloak_config then
+      ngx.log(ngx.DEBUG, 'downloaded keycloak configuration: ', keycloak_config)
+      configuration.keycloak = cjson.decode(keycloak_config)
+    else
+      -- TODO: consider exiting if there is problem with keycloak configuration
+      ngx.log(ngx.WARN, 'failed to load keycloak configuration, exiting (code ', code, ')\n',  err)
+    end
   end
 end
 

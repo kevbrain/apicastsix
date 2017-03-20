@@ -91,7 +91,7 @@ local function find_service_strict(self, host)
     if found then break end
   end
 
-  return found or ngx.log(ngx.ERR, 'service not found for host ', host)
+  return found or ngx.log(ngx.WARN, 'service not found for host ', host)
 end
 
 local function find_service_cascade(self, host)

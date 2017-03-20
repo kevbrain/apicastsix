@@ -57,6 +57,10 @@ local function get_public_key(http_client, endpoint)
   return format_public_key(key)
 end
 
+function _M.enabled()
+  return env.get('RHSSO_ENDPOINT')
+end
+
 function _M.load_configuration(client)
   local endpoint = env.get('RHSSO_ENDPOINT')
 

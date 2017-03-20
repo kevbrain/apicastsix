@@ -52,6 +52,26 @@ local function merge(...)
   return res
 end
 
+local function get_request_params(method, client, url, options)
+  local opts = {}
+  local scheme, user, pass, host, port, path = unpack(assert(resty_url.split(url)))
+  if port then host = concat({host, port}, ':') end
+
+  opts.headers = { ['Host'] = host }
+
+  if user or pass then
+    opts.headers.Authorization = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
+  end
+
+  return {
+    url         = concat({ scheme, '://', host, path or DEFAULT_PATH }, ''),
+    method      = method,
+    options     = merge(opts, rawget(client, 'options'), options),
+    client      = client,
+    serializer  = client.serializer or http.serializers.default
+  }
+end
+
 http.method = function(method, client)
   assert(method)
   assert(client)
@@ -64,23 +84,8 @@ http.method = function(method, client)
 
     assert(url, 'url as first parameter is required')
 
-    local opts = {}
-    local scheme, user, pass, host, port, path = unpack(assert(resty_url.split(url)))
-    if port then host = concat({host, port}, ':') end
-
-    opts.headers = { ['Host'] = host }
-
-    if user or pass then
-      opts.headers.Authorization = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
-    end
-
-    local req = http.request.new({
-      url         = concat({ scheme, '://', host, path or DEFAULT_PATH }, ''),
-      method      = method,
-      options     = merge(opts, rawget(client, 'options'), options),
-      client      = client,
-      serializer  = client.serializer or http.serializers.default
-    })
+    local req_params = get_request_params(method, client, url, options)
+    local req = http.request.new(req_params)
 
     return client.backend.send(req)
   end
@@ -99,9 +104,10 @@ http.method_with_body = function(method, client)
     assert(url, 'url as first parameter is required')
     assert(body, 'body as second parameter is required')
 
-    local req = http.request.new{ url = url, method = method, body = body,
-                                  options = options, client = client,
-                                  serializer = client.serializer or http.serializers.default  }
+    local req_params = get_request_params(method, client, url, options)
+    req_params.body = body
+    local req = http.request.new(req_params)
+
     return client.backend.send(req)
   end
 end

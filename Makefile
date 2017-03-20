@@ -113,7 +113,7 @@ doc: dependencies ## Generate documentation
 	ldoc -c doc/config.ld .
 
 node_modules/.bin/markdown-link-check:
-	npm install markdown-link-check@3.0.3 2>/dev/null
+	yarn install
 
 test-doc: node_modules/.bin/markdown-link-check
 	@find . \( -name node_modules -o -name .git -o -name t \) -prune -o -name "*.md" -print0 | xargs -0 -n1  -I % sh -c 'echo; echo ====================; echo Checking: %; node_modules/.bin/markdown-link-check  %' \;

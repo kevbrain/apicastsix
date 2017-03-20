@@ -22,8 +22,12 @@ local _M = {
   _VERSION = '0.1'
 }
 
+function _M.load(host)
+  return mock_loader.call() or file_loader.call() or remote_loader_v2.call() or remote_loader_v1.call(host)
+end
+
 function _M.boot(host)
-  return mock_loader.call() or file_loader.call() or remote_loader_v2.call() or remote_loader_v1.call(host) or error('missing configuration')
+  return _M.load(host) or error('missing configuration')
 end
 
 _M.mock = mock_loader.save
@@ -121,7 +125,7 @@ function boot.init(configuration)
 end
 
 local function refresh_configuration(configuration)
-  local config = _M.boot()
+  local config = _M.load()
   local init, err = _M.configure(configuration, config)
 
   if init then
@@ -179,6 +183,10 @@ function lazy.init(configuration)
 end
 
 function lazy.rewrite(configuration, host)
+  if not host then
+    return nil, 'missing host'
+  end
+
   local sema = synchronization:acquire(host)
 
   if ttl() == 0 then
@@ -189,7 +197,7 @@ function lazy.rewrite(configuration, host)
 
   if ok and not _M.configured(configuration, host) then
     ngx.log(ngx.INFO, 'lazy loading configuration for: ', host)
-    local config = _M.boot(host)
+    local config = _M.load(host)
     _M.configure(configuration, config)
   end
 

@@ -59,10 +59,7 @@ env THREESCALE_PORTAL_ENDPOINT=http://127.0.0.1:$TEST_NGINX_SERVER_PORT;
   }
 --- request
 GET /t
---- error_code: 500
---- error_log
-missing configuration
-
+--- error_code: 404
 
 === TEST 2: load valid configuration
 should correctly route the request

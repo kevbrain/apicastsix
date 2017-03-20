@@ -70,7 +70,7 @@ GET /?user_key=value
 no mapping rules!
 --- error_code: 412
 --- error_log
-skipping after action, no cached key
+could not find proxy for request
 
 === TEST 3: authentication credentials invalid
 The message is configurable and default status is 403.
@@ -515,5 +515,17 @@ all ok
 --- udp_listen: 1953
 --- udp_reply eval
 $::dns->("localhost.example.com", "127.0.0.1")
+--- no_error_log
+[error]
+
+=== TEST 15: invalid service
+The message is configurable and default status is 403.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+--- request
+GET /?user_key=value
+--- error_code: 404
 --- no_error_log
 [error]

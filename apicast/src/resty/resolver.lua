@@ -49,6 +49,18 @@ local function read_resolv_conf(path)
   return output or "", err
 end
 
+local nameserver = {
+  mt = {
+    __tostring = function(t)
+      return concat(t, ':')
+    end
+  }
+}
+
+function nameserver.new(host, port)
+  return setmetatable({ host, port or default_resolver_port }, nameserver.mt)
+end
+
 function _M.parse_nameservers(path)
   local resolv_conf, err = read_resolv_conf(path)
 
@@ -71,26 +83,27 @@ function _M.parse_nameservers(path)
 
   if resolver then
     local m = re.split(resolver, ':', 'oj')
-    insert(nameservers, { m[1] , m[2] or default_resolver_port })
-    return nameservers
+    insert(nameservers, nameserver.new(m[1], m[2]))
+    -- we are going to use all resolvers, because we can't trust dnsmasq
+    -- see https://github.com/3scale/apicast/issues/321 for more details
   end
 
-  for nameserver in gmatch(resolv_conf, 'nameserver%s+([^%s]+)') do
+  for server in gmatch(resolv_conf, 'nameserver%s+([^%s]+)') do
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
-    if nameserver ~= resolver then
-      insert(nameservers, { nameserver, default_resolver_port } )
+    if server ~= resolver then
+      insert(nameservers, nameserver.new(server))
     end
   end
 
   return nameservers
 end
 
-function _M.init_nameservers()
-  local nameservers = _M.parse_nameservers() or {}
+function _M.init_nameservers(path)
+  local nameservers = _M.parse_nameservers(path) or {}
   local search = nameservers.search or {}
 
   for i=1, #nameservers do
-    ngx.log(ngx.INFO, 'adding ', nameservers[i][1],':', nameservers[i][2], ' as default nameserver')
+    ngx.log(ngx.INFO, 'adding ', nameservers[i], ' as default nameserver')
     insert(_M._nameservers, nameservers[i])
   end
 
@@ -114,8 +127,8 @@ function _M.nameservers()
   return _M._nameservers
 end
 
-function _M.init()
-  _M.init_nameservers()
+function _M.init(path)
+  _M.init_nameservers(path)
 end
 
 function _M.new(dns, opts)

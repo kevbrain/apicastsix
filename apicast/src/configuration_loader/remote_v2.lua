@@ -86,14 +86,12 @@ function _M:index(host)
 end
 
 function _M:call(environment)
-  if self == _M then
+  if self == _M and environment then
     local host = environment
     local index = _M.new():index(host)
 
     if index then return index end
-  end
-
-  if not self then
+  elseif self == _M or not self then
     return _M.new():call()
   end
 
@@ -155,7 +153,7 @@ function _M:services()
   if res.status == 200 then
     local json = cjson.decode(res.body)
 
-    return json.services
+    return json.services or {}
   else
     return nil, 'invalid status'
   end

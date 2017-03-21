@@ -2,6 +2,7 @@ local setmetatable = setmetatable
 local format = string.format
 local ipairs = ipairs
 local insert = table.insert
+local encode_args = ngx.encode_args
 
 local resty_url = require 'resty.url'
 local http_ng = require "resty.http_ng"
@@ -28,14 +29,70 @@ function _M.new(url, options)
     }
   }
 
+  local path = resty_url.split(endpoint or '')
+
   return setmetatable({
     endpoint = endpoint,
+    path = path and path[6],
     options = opts,
     http_client = http_client
   }, mt)
 end
 
+function _M:index(host)
+  local http_client = self.http_client
+
+  if not http_client then
+    return nil, 'not initialized'
+  end
+
+  local path = self.path
+
+  if not path then
+    return nil, 'wrong endpoint url'
+  end
+
+  local env = resty_env.get('THREESCALE_DEPLOYMENT_ENV')
+
+  if not env then
+    return nil, 'missing environment'
+  end
+
+  local url = resty_url.join(self.endpoint, '/', env, '.json?', encode_args({ host = host }))
+  local res, err = http_client.get(url)
+
+  if not res and err then
+    ngx.log(ngx.DEBUG, 'index get error: ', err, ' url: ', url)
+    return nil, err
+  end
+
+  ngx.log(ngx.DEBUG, 'index get status: ', res.status, ' url: ', url)
+
+  if res.status == 200 then
+    local json = cjson.decode(res.body)
+
+    local configs = {}
+
+    local proxy_configs = json.proxy_configs or {}
+
+    for i=1, #proxy_configs do
+      configs[i] = proxy_configs[i].proxy_config.content
+    end
+
+    return cjson.encode({ services = configs })
+  else
+    return nil, 'invalid status'
+  end
+end
+
 function _M:call(environment)
+  if self == _M then
+    local host = environment
+    local index = _M.new():index(host)
+
+    if index then return index end
+  end
+
   if not self then
     return _M.new():call()
   end

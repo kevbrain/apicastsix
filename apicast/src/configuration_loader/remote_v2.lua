@@ -86,13 +86,16 @@ function _M:index(host)
 end
 
 function _M:call(environment)
-  if self == _M and environment then
+  if self == _M  or not self then
     local host = environment
-    local index = _M.new():index(host)
+    local m = _M.new()
+    local ret, err = m:index(host)
 
-    if index then return index end
-  elseif self == _M or not self then
-    return _M.new():call()
+    if not ret then
+      return m:call()
+    else
+      return ret, err
+    end
   end
 
   local http_client = self.http_client

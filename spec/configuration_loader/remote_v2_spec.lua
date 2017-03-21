@@ -165,6 +165,34 @@ describe('Configuration Rmote Loader V2', function()
     end)
   end)
 
+
+  describe(':index', function()
+    before_each(function()
+      loader = _M.new('http://example.com/something/with/path', { client = test_backend })
+    end)
+
+    it('returns configuration for all services', function()
+      env.set('THREESCALE_DEPLOYMENT_ENV', 'production')
+      test_backend.expect{ url = 'http://example.com/something/with/path/production.json?host=foobar.example.com' }.
+        respond_with{ status = 200, body = cjson.encode({ proxy_configs = {
+          {
+            proxy_config = {
+              version = 42,
+              environment = 'staging',
+              content = { id = 2, backend_version = 2 }
+            }
+          }
+        }})}
+
+      local config = assert(loader:index('foobar.example.com'))
+
+      assert.truthy(config)
+      assert.equals('string', type(config))
+
+      assert.equals(1, #(cjson.decode(config).services))
+    end)
+  end)
+
   describe('.call', function()
     it('gets environment from ENV', function()
       local _, err = loader.call()

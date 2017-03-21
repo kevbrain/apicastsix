@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Support for loading configration from custom URL [PR #323](https://github.com/3scale/apicast/pull/323)
+
 ## [3.0.0-beta3] - 2017-03-20
 
 ### Changed

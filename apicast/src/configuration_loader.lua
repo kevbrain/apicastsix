@@ -23,7 +23,7 @@ local _M = {
 }
 
 function _M.load(host)
-  return mock_loader.call() or file_loader.call() or remote_loader_v2.call() or remote_loader_v1.call(host)
+  return mock_loader.call() or file_loader.call() or remote_loader_v2:call(host) or remote_loader_v1.call(host)
 end
 
 function _M.boot(host)

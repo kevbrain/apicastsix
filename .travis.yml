@@ -64,8 +64,8 @@ script:
 - make test-doc
 - make danger
 after_success:
-- if [ "${TRAVIS_BRANCH}" = "master" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+- if [ "$TRAVIS_BRANCH" = "master" -a "${TRAVIS_PULL_REQUEST}" = "false" ] || [ -n "${TRAVIS_TAG}" ]; then
   docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" quay.io;
-  make runtime-image;
-  make push;
+  make runtime-image push IMAGE_NAME="apicast:${TRAVIS_TAG:-${TRAVIS_BRANCH}}";
+  make builder-image push IMAGE_NAME="apicast:${TRAVIS_TAG:-${TRAVIS_BRANCH}}-builder";
   fi

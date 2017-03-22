@@ -17,7 +17,6 @@ if !git.modified_files.include?("CHANGELOG.md") && has_app_changes
 end
 
 ENV['LANG'] = 'en_US.utf8'
-prose.lint_files markdown_files - %w(CHANGELOG.md)
 
 # Look for spelling issues
 prose.ignored_words = %w(

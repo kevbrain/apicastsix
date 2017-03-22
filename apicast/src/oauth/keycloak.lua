@@ -71,7 +71,7 @@ function _M.load_configuration(client)
   local http_client = http_ng.new{
     backend = client,
     options = {
-      ssl = { verify = false }
+      ssl = { verify = env.enabled('OPENSSL_VERIFY') }
     }
   }
 
@@ -195,7 +195,7 @@ function _M:authorize(service, client)
   local http_client = http_ng.new{
     backend = client,
     options = {
-      ssl = { verify = false }
+      ssl = { verify = env.enabled('OPENSSL_VERIFY') }
     }
   }
 
@@ -225,7 +225,7 @@ function _M:get_token(service, client)
   local http_client = http_ng.new{
     backend = client,
     options = {
-      ssl = { verify = false }
+      ssl = { verify = env.enabled('OPENSSL_VERIFY') }
     }
   }
 

@@ -25,7 +25,7 @@ function _M.new(url, options)
     backend = opts.client,
     options = {
       headers = { ['User-Agent'] = user_agent() },
-      ssl = { verify = false }
+      ssl = { verify = resty_env.enabled('OPENSSL_VERIFY') }
     }
   }
 

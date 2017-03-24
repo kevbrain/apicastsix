@@ -1,2 +1,3 @@
 .s2i
 conf/ca-bundle.crt
+apicast.d/proxy_ssl.conf

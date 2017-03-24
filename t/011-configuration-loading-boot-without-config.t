@@ -5,7 +5,7 @@ my $pwd = cwd();
 my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/*.conf";
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/init.conf";
 $ENV{TEST_NGINX_APICAST_PATH} = $apicast;
 $ENV{APICAST_CONFIGURATION_LOADER} = 'boot';
 

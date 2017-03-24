@@ -5,7 +5,8 @@ my $pwd = cwd();
 my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/*.conf";
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/init.conf";
+$ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_PATH} = $apicast;
@@ -55,18 +56,19 @@ env THREESCALE_PORTAL_ENDPOINT=http://127.0.0.1:$TEST_NGINX_SERVER_PORT;
   include $TEST_NGINX_APICAST_CONFIG;
 
   location = /admin/api/nginx/spec.json {
-   echo "";
+    echo "";
   }
 --- request
 GET /t
 --- error_code: 404
 
-=== TEST 2: load valid configuration
+=== TEST 3: load valid configuration
 should correctly route the request
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://127.0.0.1:$TEST_NGINX_SERVER_PORT;
 --- http_config
   include $TEST_NGINX_HTTP_CONFIG;
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config
   include $TEST_NGINX_APICAST_CONFIG;

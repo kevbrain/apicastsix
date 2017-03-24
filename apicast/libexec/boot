@@ -1,10 +1,8 @@
-#!/usr/bin/env resty
+#!/usr/bin/env sh
 
-pcall(require, 'luarocks.loader')
-package.path = package.path .. ";./src/?.lua"
+ssl=$(mktemp -q)
 
-local configuration = require 'configuration_loader'
+echo "lua_ssl_verify_depth 5;" >> "${ssl}"
+echo "lua_ssl_trusted_certificate \"$(pwd)/conf/ca-bundle.crt\";" >> "${ssl}"
 
-local config = configuration.boot()
-
-ngx.say(config)
+exec resty --http-include "${ssl}" libexec/boot.lua

@@ -49,7 +49,6 @@ describe('Keycloak', function()
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'get_uri_args', function() return { response_type = 'code', client_id = 'foo', redirect_uri = 'bar' } end)
 
-
       test_backend.expect{ url = 'http://www.example.com:80/auth/realms/test/protocol/openid-connect/auth?client_id=foo' }
         .respond_with{ status = 200 , body = 'foo', headers = {} }
 
@@ -95,6 +94,7 @@ describe('Keycloak', function()
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'read_body', function() return { } end)
       stub(ngx.req, 'get_post_args', function() return { grant_type = 'authorization_code', client_id = 'foo', redirect_uri = 'bar', code = 'baz'} end)
+      stub(ngx.req, 'get_headers', function() return { } end)
 
       test_backend.expect{ url = 'http://www.example.com:80/auth/realms/test/protocol/openid-connect/token'}
         .respond_with{ status = 200 , body = 'foo', headers = {} }
@@ -110,6 +110,7 @@ describe('Keycloak', function()
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'read_body', function() return { } end)
       stub(ngx.req, 'get_post_args', function() return { client_id = 'foo', redirect_uri = 'bar', code = 'baz'} end)
+      stub(ngx.req, 'get_headers', function() return { } end)
 
       stub(_M, 'respond_with_error')
       keycloak:get_token()
@@ -122,6 +123,7 @@ describe('Keycloak', function()
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'read_body', function() return { } end)
       stub(ngx.req, 'get_post_args', function() return { grant_type = 'foo' } end)
+      stub(ngx.req, 'get_headers', function() return { } end)
 
       stub(_M, 'respond_with_error')
       keycloak:get_token()
@@ -134,6 +136,7 @@ describe('Keycloak', function()
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'read_body', function() return { } end)
       stub(ngx.req, 'get_post_args', function() return { grant_type = 'authorization_code' } end)
+      stub(ngx.req, 'get_headers', function() return { } end)
 
       stub(_M, 'respond_with_error')
       keycloak:get_token()
@@ -148,20 +151,89 @@ describe('Keycloak', function()
       ngx.var = { is_args = "?", args = "client_id=foo" }
       stub(ngx.req, 'read_body', function() return { } end)
       stub(ngx.req, 'get_post_args', function() return { grant_type = 'authorization_code', client_id = 'foo', redirect_uri = 'bar', code = 'baz'} end)
+      stub(ngx.req, 'get_headers', function() return { } end)
 
       stub(_M, 'respond_with_error')
       keycloak:get_token()
       assert.spy(_M.respond_with_error).was.called_with(401, 'invalid_client')
     end)
+
+    it('accepts client credentials in request body', function()
+      local keycloak = _M.new(configuration)
+      ngx.var = {}
+
+      stub(ngx.location, 'capture', function () return { status = 200 } end )
+      stub(_M, 'respond_and_exit')
+      stub(_M, 'check_credentials', function () return true end)
+      stub(ngx.req, 'read_body', function() return { } end)
+      stub(ngx.req, 'get_post_args', function() return { grant_type = 'client_credentials', client_id = 'foo', client_secret = 'bar'} end)
+      stub(ngx.req, 'get_headers', function() return { } end)
+
+      test_backend.expect{ url = 'http://www.example.com:80/auth/realms/test/protocol/openid-connect/token'}
+        .respond_with{ status = 200 , body = 'foo', headers = {} }
+
+      keycloak:get_token({}, test_backend)
+
+      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', {})
+    end)
+
+    it('accepts client credentials in Authorization header', function()
+      local keycloak = _M.new(configuration)
+      local auth = 'Basic Y2xpZW50X2lkOmNsaWVudF9zZWNyZXQ='
+      ngx.var = { http_authorization = auth }
+
+      stub(ngx.location, 'capture', function () return { status = 200 } end )
+
+      stub(_M, 'respond_and_exit')
+      stub(_M, 'check_credentials', function () return true end)
+      stub(ngx.req, 'read_body', function() return { } end)
+      stub(ngx.req, 'get_post_args', function() return { grant_type = 'client_credentials' } end)
+      stub(ngx.req, 'get_headers', function() return { authorization = auth } end)
+
+      test_backend.expect{
+        url = 'http://www.example.com:80/auth/realms/test/protocol/openid-connect/token',
+        headers =  { authorization = auth }
+      }.respond_with{ status = 200 , body = 'foo', headers = {} }
+
+      keycloak:get_token({}, test_backend)
+
+      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', {})
+    end)
+
   end)
 
   describe('.enabled', function()
-    it('is falsy if there is no RHSSO_ENDPOINT enviroment varialbe set', function()
+    it('is falsy if there is no RHSSO_ENDPOINT environment variable set', function()
       assert.is.falsy(_M.enabled())
     end)
-    it('if truty a non-nil value if RHSSO_ENDPOINT enviroment varialbe set', function()
+    it('is truthy if a non-nil value is set in RHSSO_ENDPOINT environment variable', function()
       env.set('RHSSO_ENDPOINT', 'http://www.example.com:80/auth/realms/test')
       assert.is.truthy(_M.enabled())
     end)
+  end)
+
+  describe('.token_get_headers', function()
+    it('returns the Authorization header sent in the original request', function()
+      local auth = 'Basic Y2xpZW50X2lkOmNsaWVudF9zZWNyZXQ='
+      ngx.var = { http_authorization = auth }
+      stub(ngx.req, 'get_headers', function() return { authorization = auth } end)
+
+      assert.equals(auth, _M.token_get_headers()['Authorization'])
+    end)
+    it('returns an empty table if no Authorization header in the request', function()
+      ngx.var = { }
+      stub(ngx.req, 'get_headers', function() return end)
+
+      assert.are.same({}, _M.token_get_headers())
+    end)
+
+    it('does not include any other request headers', function()
+      local auth = 'Basic Y2xpZW50X2lkOmNsaWVudF9zZWNyZXQ='
+      ngx.var = { http_authorization = auth, http_foo = 'bar' }
+      stub(ngx.req, 'get_headers', function() return { authorization = auth, foo = 'bar' } end)
+
+      assert.is.falsy(_M.token_get_headers()['foo'])
+    end)
+
   end)
 end)

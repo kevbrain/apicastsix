@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Support for loading configration from custom URL [PR #323](https://github.com/3scale/apicast/pull/323)
+- Turn on SSL/TLS validation by `OPENSSL_VERIFY` environment variable [PR #332](https://github.com/3scale/apicast/pull/332)
+- Load trusted CA chain certificates [PR #332](https://github.com/3scale/apicast/pull/332)
 
 ### Changed
 

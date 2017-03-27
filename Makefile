@@ -9,7 +9,7 @@ SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
-OPENRESTY_VERSION ?= 1.11.2.2-4
+OPENRESTY_VERSION ?= 1.11.2.2-5
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
@@ -70,9 +70,9 @@ dev: ## Run APIcast inside the container mounted to local volume
 test-builder-image: export IMAGE_NAME = apicast-test
 test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p /opt/app -t
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p .
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p /opt/app
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test bash -c 'for i in {1..5}; do curl --fail http://gateway:8090/status/live && break || sleep 1; done'
 	$(DOCKER_COMPOSE) logs gateway

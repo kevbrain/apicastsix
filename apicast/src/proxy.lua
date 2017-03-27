@@ -259,7 +259,7 @@ function _M:set_backend_upstream(service)
     url[1], url[2], url[3], url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
 
   local backend_upstream = resty_resolver:instance():get_servers(server, { port = port or nil })
-  ngx.log(ngx.DEBUG, '[resolver] resolved backend upstream: ', #backend_upstream)
+  ngx.log(ngx.DEBUG, '[resolver] resolved backend upstream: ', backend_upstream)
   ngx.ctx.backend_upstream = backend_upstream
 
   ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. path

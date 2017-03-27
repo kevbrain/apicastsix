@@ -56,6 +56,8 @@ objects:
             value: "${REDIS_PORT}"
           - name: APICAST_MANAGEMENT_API
             value: "${MANAGEMENT_API}"
+          - name: OPENSSL_VERIFY
+            value: "${OPENSSL_VERIFY}"
           image: "${IMAGE_NAME}"
           imagePullPolicy: Always
           name: "${APICAST_NAME}"
@@ -156,3 +158,7 @@ parameters:
   description: "Scope of the Management API. Can be disabled, status or debug. At least status required for health checks."
   required: false
   value: "status"
+- name: OPENSSL_VERIFY
+  description: "Turn on/off the OpenSSL peer verification. Can be set to true/false."
+  required: true
+  value: "false"

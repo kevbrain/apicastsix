@@ -4,6 +4,8 @@ local open = io.open
 local gmatch = string.gmatch
 local match = string.match
 local format = string.format
+local rep = string.rep
+local unpack = unpack
 local insert = table.insert
 local getenv = os.getenv
 local concat = table.concat
@@ -159,16 +161,22 @@ function _M:instance()
   return resolver
 end
 
+local server_mt = {
+  __tostring = function(t)
+    return format('%s:%s', t.address, t.port)
+  end
+}
+
 local function new_server(answer, port)
   if not answer then return nil, 'missing answer' end
   local address = answer.address
   if not address then return nil, 'server missing address' end
 
-  return {
+  return setmetatable({
     address = answer.address,
     ttl = answer.ttl,
     port = answer.port or port
-  }
+  }, server_mt)
 end
 
 local function new_answer(address, port)
@@ -189,6 +197,12 @@ local function is_ip(address)
   end
 end
 
+local servers_mt = {
+  __tostring = function(t)
+    return format(rep('%s', #t, ' '), unpack(t))
+  end
+}
+
 local function convert_answers(answers, port)
   local servers = {}
 
@@ -198,7 +212,7 @@ local function convert_answers(answers, port)
 
   servers.answers = answers
 
-  return servers
+  return setmetatable(servers, servers_mt)
 end
 
 local empty = {}

@@ -15,6 +15,7 @@ local concat = table.concat
 local http_ng = require('resty.http_ng')
 local user_agent = require('user_agent')
 local resty_url = require('resty.url')
+local resty_env = require('resty.env')
 
 local _M = {
 
@@ -53,7 +54,7 @@ function _M.new(_, service, http_client)
         user_agent = user_agent(),
         host = service.backend.host or backend[4]
       },
-      ssl = { verify = false }
+      ssl = { verify = resty_env.enabled('OPENSSL_VERIFY') }
     }
   }
 

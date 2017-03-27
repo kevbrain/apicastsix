@@ -1,5 +1,3 @@
-#!/usr/bin/env resty
-
 pcall(require, 'luarocks.loader')
 package.path = package.path .. ";./src/?.lua"
 

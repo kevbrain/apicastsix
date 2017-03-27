@@ -71,6 +71,10 @@ function _M.find_by_host(self, host, stale)
 
   local services, expired = cache:get(host)
 
+  if expired and stale then
+    ngx.log(ngx.INFO, 'using stale configuration for host ', host)
+  end
+
   return services or (stale and expired) or { }
 end
 

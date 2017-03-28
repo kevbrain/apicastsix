@@ -2,6 +2,7 @@ local setmetatable = setmetatable
 local format = string.format
 local ipairs = ipairs
 local insert = table.insert
+local rawset = rawset
 local encode_args = ngx.encode_args
 
 local resty_url = require 'resty.url'
@@ -37,6 +38,33 @@ function _M.new(url, options)
     options = opts,
     http_client = http_client
   }, mt)
+end
+
+local status_code_errors = setmetatable({
+  [403] = 'invalid status: 403 (Forbidden)',
+  [404] = 'invalid status: 404 (Not Found)'
+}, {
+  __index = function(t,k)
+    local msg = format('invalid status: %s', k)
+    rawset(t,k,msg)
+    return msg
+  end
+})
+
+local status_error_mt = {
+  __tostring = function(t)
+    return t.error
+  end,
+  __index = function(t,k)
+    return t.response[k] or t.response.request[k]
+  end
+}
+
+local function status_code_error(response)
+  return setmetatable({
+    error = status_code_errors[response.status],
+    response = response
+  }, status_error_mt)
 end
 
 function _M:index(host)
@@ -113,7 +141,7 @@ function _M:call(environment)
   local res, err = self:services()
 
   if not res and err then
-    ngx.log(ngx.WARN, 'failed to get list of services: ', err)
+    ngx.log(ngx.WARN, 'failed to get list of services: ', err, ' url: ', err.url)
     return nil, err
   end
 
@@ -158,7 +186,7 @@ function _M:services()
 
     return json.services or {}
   else
-    return nil, 'invalid status'
+    return nil, status_code_error(res)
   end
 end
 
@@ -188,14 +216,14 @@ function _M:config(service, environment, version)
     return nil, err
   end
 
-  ngx.log(ngx.DEBUG, 'services get status: ', res.status, ' url: ', url)
+  ngx.log(ngx.DEBUG, 'services get status: ', res.status, ' url: ', url, ' body: ', res.body)
 
   if res.status == 200 then
     local json = cjson.decode(res.body)
 
     return json.proxy_config
   else
-    return nil, 'invalid status'
+    return nil, status_code_error(res)
   end
 end
 

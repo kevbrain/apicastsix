@@ -14,6 +14,7 @@ describe('test backend',function()
       local response = backend.send(req)
 
       assert.truthy(response)
+      assert.truthy(response.request)
     end)
 
     it('can verify outstanding requests', function()

@@ -133,7 +133,17 @@ describe('Configuration Rmote Loader V2', function()
       local config, err = loader:call('staging')
 
       assert.falsy(config)
-      assert.equal('invalid status', err)
+      assert.equal('invalid status: 404 (Not Found)', tostring(err))
+    end)
+
+    it('returns simple message on undefined errors', function()
+      test_backend.expect{ url = 'http://example.com/admin/api/services.json' }.
+      respond_with{ status = 412 }
+
+      local config, err = loader:call('staging')
+
+      assert.falsy(config)
+      assert.equal('invalid status: 412', tostring(err))
     end)
 
     it('returns configuration even when some services are missing', function()

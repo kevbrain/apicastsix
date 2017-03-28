@@ -83,7 +83,7 @@ local function find_service_strict(self, host)
     local hosts = service.hosts or {}
 
     for h=1, #hosts do
-      if hosts[h] == host then
+      if hosts[h] == host and service == self.configuration:find_by_id(service.id) then
         found = service
         break
       end

@@ -97,6 +97,15 @@ describe('Configuration Store', function()
 
       assert.same({ }, store:find_by_host('example.com', false))
     end)
+
+    it('normalizes hosts to lowercase', function()
+      local store = configuration.new()
+      local service =  { id = '21', hosts = { 'EXAMPLE.com' } }
+
+      store:add(service)
+
+      assert.same({ service }, store:find_by_host('example.com'))
+    end)
   end)
 
   describe('.reset', function()

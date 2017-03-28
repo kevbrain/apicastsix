@@ -3,6 +3,7 @@ local pairs = pairs
 local insert = table.insert
 local concat = table.concat
 local rawset = rawset
+local lower = string.lower
 
 local env = require 'resty.env'
 local lrucache = require 'resty.lrucache'
@@ -102,12 +103,13 @@ function _M.store(self, config, ttl)
       ngx.log(ngx.INFO, 'added service ', id, ' configuration with hosts: ', concat(hosts, ', '), ' ttl: ', ttl)
 
       for j=1, #hosts do
-        local h = by_host[hosts[j]]
+        local host = lower(hosts[j])
+        local h = by_host[host]
 
         if #(h) == 0 or _M.path_routing then
           insert(h, services[i])
         else
-          ngx.log(ngx.WARN, 'skipping host ', hosts[j], ' for service ', id, ' already defined by service ', h[1].id)
+          ngx.log(ngx.WARN, 'skipping host ', host, ' for service ', id, ' already defined by service ', h[1].id)
         end
       end
 

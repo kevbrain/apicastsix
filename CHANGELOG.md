@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Do not return stale service configuration when new one is available [PR #333](https://github.com/3scale/apicast/pull/333)
+- Memory leak in every request [PR #339](https://github.com/3scale/apicast/pull/339)
 
 ## [3.0.0-beta3] - 2017-03-20
 

@@ -69,6 +69,8 @@ function _M.post_action()
   local request_id = ngx.var.original_request_id
   local p = ngx.ctx.proxy or post_action_proxy[request_id]
 
+  post_action_proxy[request_id] = nil
+
   if p then
     p:post_action()
   else

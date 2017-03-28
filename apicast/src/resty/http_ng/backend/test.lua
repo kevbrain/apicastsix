@@ -6,6 +6,7 @@ local insert = table.insert
 local remove = table.remove
 local error = error
 local format = string.format
+local response = require 'resty.http_ng.response'
 
 local _M = {}
 
@@ -35,7 +36,11 @@ _M.expectation.new = function(request)
   local expectation = { request = request }
 
   -- chain function to add a response to expectation
-  local mt = { respond_with = function(response) expectation.response = response end }
+  local mt = {
+    respond_with = function(res)
+      expectation.response = res
+    end
+   }
 
   return setmetatable(expectation, {__index = mt})
 end
@@ -64,7 +69,9 @@ _M.new = function()
 
     insert(requests, request)
 
-    return expectation.response
+    local res = expectation.response
+
+    return response.new(request, res.status, res.headers, res.body or '')
   end
 
   backend.verify_no_outstanding_expectations = function()

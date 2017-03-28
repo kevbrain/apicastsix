@@ -22,7 +22,7 @@ backend.send = function(request)
   })
 
   if res then
-    return response.new(res.status, res.headers, res.body)
+    return response.new(request, res.status, res.headers, res.body)
   else
     return response.error(err)
   end

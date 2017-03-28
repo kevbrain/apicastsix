@@ -15,42 +15,42 @@ local _M = {}
 local response = require 'resty.http_ng.response'
 local http = require 'resty.resolver.http'
 
-_M.async = function(req)
+_M.async = function(request)
   local httpc = http.new()
 
-  local parsed_uri = assert(httpc:parse_uri(req.url))
+  local parsed_uri = assert(httpc:parse_uri(request.url))
 
   local scheme, host, port, path = unpack(parsed_uri)
-  if not req.path then req.path = path end
+  if not request.path then request.path = path end
 
-  if #req.path == 0 then req.path = '/' end
+  if #request.path == 0 then request.path = '/' end
 
   local ok, err = httpc:connect(host, port)
 
   if not ok then
     print('error connecting ', host, ':', port, ' : ', err)
-    return response.error(err, req)
+    return response.error(err, request)
   end
 
   if scheme == 'https' then
-    local verify = req.options and req.options.ssl and req.options.ssl.verify
+    local verify = request.options and request.options.ssl and request.options.ssl.verify
     if type(verify) == 'nil' then verify = true end
 
     local session
     session, err = httpc:ssl_handshake(false, host, verify)
 
     if not session then
-      return response.error(err, req)
+      return response.error(err, request)
     end
   end
 
   local res
-  res, err = httpc:request(req)
+  res, err = httpc:request(request)
 
   if res then
-    return response.new(res.status, res.headers, function() return (res:read_body()) end)
+    return response.new(request, res.status, res.headers, function() return (res:read_body()) end)
   else
-    return response.error(err, req)
+    return response.error(err, request)
   end
 end
 

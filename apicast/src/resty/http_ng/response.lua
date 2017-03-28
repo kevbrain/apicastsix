@@ -21,7 +21,7 @@ local response = {}
 response.headers = require 'resty.http_ng.headers'
 
 
-function response.new(status, headers, body)
+function response.new(request, status, headers, body)
   assert(status)
   assert(body)
 
@@ -37,7 +37,8 @@ function response.new(status, headers, body)
   local res = {
     status = status,
     headers = response.headers.new(headers),
-    ok = true
+    ok = true,
+    request = request
   }
 
   if type(body) == 'string' then

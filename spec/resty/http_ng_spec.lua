@@ -17,6 +17,7 @@ describe('http_ng', function()
       assert.truthy(response)
       assert.equal(method:upper(), last_request.method)
       assert.equal('http://example.com', last_request.url)
+      assert.equal(last_request, response.request)
     end)
   end
 

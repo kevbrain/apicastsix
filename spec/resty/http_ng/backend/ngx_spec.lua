@@ -13,6 +13,7 @@ describe('ngx backend',function()
       end
       local response = backend.send{method = method, url = 'http://localhost:8081' }
       assert.truthy(response)
+      assert.truthy(response.request)
     end)
 
     it('sends headers', function()
@@ -24,6 +25,7 @@ describe('ngx backend',function()
       end
       local response = backend.send{method = method, url = 'http://localhost:8081/path', headers = {Host = 'fake.example.com'} }
       assert.truthy(response)
+      assert.truthy(response.request)
     end)
   end)
 

@@ -30,7 +30,7 @@ backend.send = function(request)
     -- Do what? what error message it should say?
   -- end
 
-  return response.new(res.status, res.header, res.body)
+  return response.new(request, res.status, res.header, res.body)
 end
 
 return backend

@@ -6,7 +6,7 @@ function fake_backend.new()
   backend.send = function(request)
     backend.requests[#backend.requests + 1] = request
     backend.last_request = request
-    return { status = 200 }
+    return { request = request, status = 200 }
   end
 
   return backend

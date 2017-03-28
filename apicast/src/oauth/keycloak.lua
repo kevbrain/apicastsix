@@ -28,6 +28,12 @@ _M.params = {
   }
 }
 
+local function timestamp_to_seconds_from_now(expiry)
+  local time_now = ngx.now()
+  local ttl = expiry and (expiry - time_now) or nil
+  return ttl
+end
+
 -- Formats the realm public key string into Public Key File (PKCS#8) format
 local function format_public_key(key)
   local formatted_key = "-----BEGIN PUBLIC KEY-----\n"
@@ -177,17 +183,18 @@ function _M:transform_credentials(credentials)
   local jwt_obj, err = parse_and_verify_token(self, credentials.access_token)
 
     if err then
-      return nil, err
+      return nil, nil, err
     end
 
     if jwt_obj.payload then
       local app_id = jwt_obj.payload.aud
+      local ttl = timestamp_to_seconds_from_now(jwt_obj.payload.exp)
 
       ------
       -- oauth credentials for keycloak
       -- @field app_id Client id
       -- @table credentials_oauth
-      return { app_id = app_id }
+      return { app_id = app_id }, ttl
     end
 end
 

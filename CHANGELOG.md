@@ -19,12 +19,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve error logging when failing to download configuration [PR #335](https://github.com/3scale/apicast/pull/325)
 - Service hostnames are normalized to lower case [PR #336](https://github.com/3scale/apicast/pull/326)
 - Don't attempt to perform post\_action when request was handled without authentication [PR #343](https://github.com/3scale/apicast/pull/343)
+- Store authorization responses with a ttl, if sent [PR #341](https://github.com/3scale/apicast/pull/341)
 
 ### Fixed
 
 - Do not return stale service configuration when new one is available [PR #333](https://github.com/3scale/apicast/pull/333)
 - Memory leak in every request [PR #339](https://github.com/3scale/apicast/pull/339)
 - Remove unnecessary code and comments [PR #344](https://github.com/3scale/apicast/pull/344)
+- JWT expiry not taken into account in authorization response cache [PR #283](https://github.com/3scale/apicast/pull/283) / [Issue #309](https://github.com/3scale/apicast/issues/309) / Fixed by [PR #341](https://github.com/3scale/apicast/pull/341)
 
 ## [3.0.0-beta3] - 2017-03-20
 

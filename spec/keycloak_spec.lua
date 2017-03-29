@@ -1,6 +1,7 @@
 local env = require 'resty.env'
 local _M = require 'oauth.keycloak'
 local test_backend_client = require 'resty.http_ng.backend.test'
+local jwt = require 'resty.jwt'
 
 describe('Keycloak', function()
     local test_backend
@@ -235,5 +236,34 @@ describe('Keycloak', function()
       assert.is.falsy(_M.token_get_headers()['foo'])
     end)
 
+  end)
+
+  describe('.transform_credentials', function()
+
+    it('returns ttl if exp', function()
+      local keycloak = _M.new(configuration)
+      local jwt_obj = { payload = { aud = "f8c6069e", exp = 1490705281 }, verified = true }
+
+      stub(jwt, 'verify', function() return jwt_obj end)
+      stub(ngx, 'now', function() return 1490705200 end)
+
+      local creds, ttl = keycloak:transform_credentials("foo")
+
+      assert.are.same({ app_id = 'f8c6069e' }, creds)
+      assert.equals(81, ttl )
+    end)
+
+     it('returns nil if no exp', function()
+      local keycloak = _M.new(configuration)
+      local jwt_obj = { payload = { aud = "f8c6069e" }, verified = true }
+
+      stub(jwt, 'verify', function() return jwt_obj end)
+      stub(ngx, 'now', function() return 1490705200 end)
+
+      local creds, ttl = keycloak:transform_credentials("foo")
+
+      assert.are.same({ app_id = 'f8c6069e' }, creds)
+      assert.equals(nil, ttl )
+    end)
   end)
 end)

@@ -170,7 +170,7 @@ local function output_debug_headers(service, usage, credentials)
   end
 end
 
-function _M:authorize(service, usage, credentials)
+function _M:authorize(service, usage, credentials, ttl)
   if usage == '' then
     return error_no_match(service)
   end
@@ -198,8 +198,8 @@ function _M:authorize(service, usage, credentials)
 
     if res.status == 200 then
       if api_keys then
-        ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key)
-        api_keys:set(cached_key, 200)
+        ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ', ttl: ', ttl )
+        api_keys:set(cached_key, 200, ttl or 0)
       end
     else -- TODO: proper error handling
       if api_keys then api_keys:delete(cached_key) end
@@ -333,8 +333,10 @@ function _M:access(service)
   ctx.credentials = credentials
   ctx.matched_patterns = matched_patterns
 
+  local ttl
+
   if self.oauth then
-    credentials, err = self.oauth:transform_credentials(credentials)
+    credentials, ttl, err = self.oauth:transform_credentials(credentials)
 
     if err then
       return error_authorization_failed(service)
@@ -344,7 +346,7 @@ function _M:access(service)
   credentials = encode_args(credentials)
   local usage = encode_args(usage_params)
 
-  return self:authorize(service, usage, credentials)
+  return self:authorize(service, usage, credentials, ttl)
 end
 
 

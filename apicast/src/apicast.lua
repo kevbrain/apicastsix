@@ -80,9 +80,10 @@ function _M:post_action()
   post_action_proxy[request_id] = nil
 
   if p then
-    p:post_action()
+    return p:post_action()
   else
     ngx.log(ngx.INFO, 'could not find proxy for request id: ', request_id)
+    return nil, 'no proxy for request'
   end
 end
 
@@ -94,10 +95,17 @@ function _M:access()
     return nil, 'not initialized'
   end
 
-  local fun = p:call() -- proxy:access() or oauth handler
-  local ok, err = fun()
+  local access, handler = p:call() -- proxy:access() or oauth handler
 
-  post_action_proxy[ngx.var.original_request_id] = p
+  local ok, err
+
+  if access then
+    ok, err = access()
+    post_action_proxy[ngx.var.original_request_id] = p
+  elseif handler then
+    ok, err = handler()
+    -- no proxy because that would trigger post action
+  end
 
   return ok, err
 end

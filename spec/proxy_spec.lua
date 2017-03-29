@@ -13,14 +13,36 @@ describe('Proxy', function()
     assert.same('function', type(proxy.access))
   end)
 
-  it('has authorize function after call', function()
-    ngx.var = { backend_endpoint = 'http://localhost:1853' }
-    configuration:add({ id = 42, hosts = { 'localhost' }})
+  describe(':call', function()
+    before_each(function()
+      ngx.var = { backend_endpoint = 'http://localhost:1853' }
+      configuration:add({ id = 42, hosts = { 'localhost' }})
+    end)
 
-    proxy:call('localhost')
+    it('has authorize function after call', function()
+      proxy:call('localhost')
 
-    assert.truthy(proxy.authorize)
-    assert.same('function', type(proxy.authorize))
+      assert.truthy(proxy.authorize)
+      assert.same('function', type(proxy.authorize))
+    end)
+
+    it('returns access function', function()
+      local access = proxy:call('localhost')
+
+      assert.same('function', type(access))
+    end)
+
+    it('returns oauth handler when matches oauth route', function()
+      local service = configuration:find_by_id(42)
+      service.backend_version = 'oauth'
+      stub(ngx.req, 'get_method', function() return 'GET' end)
+      ngx.var.uri = '/authorize'
+
+      local access, handler = proxy:call('localhost')
+
+      assert.equal(nil, access)
+      assert.same('function', type(handler))
+    end)
   end)
 
   it('has post_action function', function()

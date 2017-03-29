@@ -6,6 +6,7 @@ local jwt = require 'resty.jwt'
 local cjson = require 'cjson'
 local backend_client = require ('backend_client')
 local env = require 'resty.env'
+local http_authorization = require 'resty.http_authorization'
 
 local _M = {
   _VERSION = '0.1'
@@ -143,6 +144,12 @@ function _M.token_check_params(params)
   return true
 end
 
+-- Get the headers which will be passed to Keycloak on the token request,
+-- currently only passing the Authorization header used for the client authentication
+function _M.token_get_headers()
+  return { ['Authorization'] = ngx.var.http_authorization }
+end
+
 -- Parses the token - in this case we assume it's a JWT token
 -- Here we can extract authenticated user's claims or other information returned in the access_token
 -- or id_token by RH SSO
@@ -155,6 +162,15 @@ local function parse_and_verify_token(self, jwt_token)
   end
 
   return jwt_obj
+end
+
+function _M.get_client_credentials(req_body)
+  local auth = http_authorization.new(ngx.var.http_authorization)
+  local params = {
+    client_id = auth.userid or req_body.client_id,
+    client_secret = auth.password or req_body.client_secret
+  }
+  return params
 end
 
 function _M:transform_credentials(credentials)
@@ -229,17 +245,21 @@ function _M:get_token(service, client)
     }
   }
 
-  -- TODO: maybe use the same method the original request uses
   ngx.req.read_body()
-  local req_body = ngx.req.get_post_args()
+  local params = ngx.req.get_post_args()
 
-  ok, err = _M.token_check_params(req_body)
+  local creds = _M.get_client_credentials(params)
+
+  params.client_id = creds.client_id
+  params.client_secret = creds.client_secret
+
+  ok, err = _M.token_check_params(params)
   if not ok then
     _M.respond_with_error(400, err)
     return
   end
 
-  ok = _M.check_credentials(service, req_body)
+  ok = _M.check_credentials(service, params)
   if not ok then
     _M.respond_with_error(401, 'invalid_client')
     return
@@ -248,7 +268,7 @@ function _M:get_token(service, client)
   -- call Keycloak authorize
   local url = self.config.token_url
 
-  local res = http_client.post(url, req_body)
+  local res = http_client.post(url, ngx.req.get_post_args(), { headers = _M.token_get_headers() })
 
   _M.respond_and_exit(res.status, res.body, res.headers)
 end

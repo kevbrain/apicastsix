@@ -1,4 +1,5 @@
 file = {
+  '../apicast/src/proxy.lua',
   '../apicast/src/configuration/service.lua',
   '../apicast/src/resty/env.lua',
   '../apicast/src/resty/http_ng.lua',

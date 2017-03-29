@@ -18,15 +18,17 @@ local mt = {
   __index = _M
 }
 
--- So there is no way to use ngx.ctx between request and post_action.
--- We somehow need to share the instance of the proxy between those.
--- This table is used to store the proxy object with unique reqeust id key
--- and removed in the post_action.
-local post_action_proxy = {}
-
 --- This is called when APIcast boots the master process.
 function _M.new()
-  return setmetatable({ configuration = configuration_store.new() }, mt)
+  return setmetatable({
+    configuration = configuration_store.new(),
+    -- So there is no way to use ngx.ctx between request and post_action.
+    -- We somehow need to share the instance of the proxy between those.
+    -- This table is used to store the proxy object with unique reqeust id key
+    -- and removed in the post_action. Because it there is just one instance
+    -- of this module in each worker.
+    post_action_proxy = {}
+  }, mt)
 end
 
 function _M:init()
@@ -65,26 +67,45 @@ function _M:rewrite()
   ngx.ctx.proxy = p
 end
 
-function _M.post_action()
+function _M:post_action()
   local request_id = ngx.var.original_request_id
+  local post_action_proxy = self.post_action_proxy
+
+  if not post_action_proxy then
+    return nil, 'not initialized'
+  end
+
   local p = ngx.ctx.proxy or post_action_proxy[request_id]
 
   post_action_proxy[request_id] = nil
 
   if p then
-    p:post_action()
+    return p:post_action()
   else
     ngx.log(ngx.INFO, 'could not find proxy for request id: ', request_id)
+    return nil, 'no proxy for request'
   end
 end
 
-function _M.access()
+function _M:access()
   local p = ngx.ctx.proxy
-  local fun = p:call() -- proxy:access() or oauth handler
+  local post_action_proxy = self.post_action_proxy
 
-  local ok, err = fun()
+  if not post_action_proxy then
+    return nil, 'not initialized'
+  end
 
-  post_action_proxy[ngx.var.original_request_id] = p
+  local access, handler = p:call() -- proxy:access() or oauth handler
+
+  local ok, err
+
+  if access then
+    ok, err = access()
+    post_action_proxy[ngx.var.original_request_id] = p
+  elseif handler then
+    ok, err = handler()
+    -- no proxy because that would trigger post action
+  end
 
   return ok, err
 end

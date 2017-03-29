@@ -1,3 +1,11 @@
+------------
+-- Proxy
+-- Module that handles the request authentication and proxying upstream.
+--
+-- @module proxy
+-- @author mikz
+-- @license Apache License Version 2.0
+
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local configuration_store = require 'configuration_store'
@@ -266,6 +274,12 @@ function _M:set_backend_upstream(service)
   ngx.var.backend_host = backend.host or server or ngx.var.backend_host
 end
 
+-----
+-- call the proxy and return a handler function
+-- that will perform an action based on the path and backend version
+-- @string host optional hostname, uses `ngx.var.host` otherwise
+-- @treturn nil|function access function (when the request needs to be authenticated with this)
+-- @treturn nil|function handler function (when the request is not authenticated and has some own action)
 function _M:call(host)
   host = host or ngx.var.host
   local service = ngx.ctx.service or self:set_service(host)
@@ -279,7 +293,7 @@ function _M:call(host)
 
     if f then
       ngx.log(ngx.DEBUG, 'apicast oauth flow')
-      return function() return f(params) end
+      return nil, function() return f(params) end
     end
   end
 

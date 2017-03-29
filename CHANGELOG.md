@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Use `RESOLVER` before falling back to `resolv.conf` [PR #324](https://github.com/3scale/apicast/pull/324)
 - Improve error logging when failing to download configuration [PR #335](https://github.com/3scale/apicast/pull/325)
 - Service hostnames are normalized to lower case [PR #336](https://github.com/3scale/apicast/pull/326)
+- Don't attempt to perform post\_action when request was handled without authentication [PR #343](https://github.com/3scale/apicast/pull/343)
 
 ### Fixed
 

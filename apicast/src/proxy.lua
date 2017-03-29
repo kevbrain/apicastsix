@@ -199,7 +199,7 @@ function _M:authorize(service, usage, credentials, ttl)
     if res.status == 200 then
       if api_keys then
         ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ', ttl: ', ttl )
-        api_keys:set(cached_key, 200, ttl)
+        api_keys:set(cached_key, 200, ttl or 0)
       end
     else -- TODO: proper error handling
       if api_keys then api_keys:delete(cached_key) end

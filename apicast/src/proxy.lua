@@ -203,12 +203,9 @@ function _M:authorize(service, usage, credentials)
       end
     else -- TODO: proper error handling
       if api_keys then api_keys:delete(cached_key) end
-      ngx.status = res.status
-      ngx.header.content_type = "application/json"
-      -- error_authorization_failed is an early return, so we have to reset cached_key to nil before -%>
       error_authorization_failed(service)
     end
-    -- set this request_to_3scale_backend to nil to avoid doing the out of band authrep -%>
+    -- set cached_key to nil to avoid doing the authrep in post_action
     ngx.var.cached_key = nil
   end
 end

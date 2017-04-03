@@ -9,12 +9,16 @@ local prequire = function(file)
   local ok, ret = pcall(require, file)
 
   if not ok and ret then
-    -- dofile can load absolue paths, require can't
+    -- dofile can load absolute paths, require can't
     ok, ret = pcall(dofile, file)
   end
 
-  if type(ret) == 'userdata' then
-    ngx.log(ngx.WARN, 'cyclic require detected: ', debug.traceback())
+  if not ok and ret then
+    if type(ret) == 'userdata' then
+      ngx.log(ngx.WARN, 'cyclic require detected: ', debug.traceback())
+    elseif type(ret) == 'string' then
+      ngx.log(ngx.WARN, ret, ', ', debug.traceback())
+    end
     return false, ret
   end
 

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Turn on SSL/TLS validation by `OPENSSL_VERIFY` environment variable [PR #332](https://github.com/3scale/apicast/pull/332)
 - Load trusted CA chain certificates [PR #332](https://github.com/3scale/apicast/pull/332)
 - Support HTTP Basic authentication for client credentials when authorizing with RH-SSO [PR #336](https://github.com/3scale/apicast/pull/336)
+- Show more information about the error when the module load fails [PR #348](https://github.com/3scale/apicast/pull/348)
 
 ### Changed
 

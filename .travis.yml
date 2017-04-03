@@ -52,7 +52,6 @@ install:
 before_script:
 - mkdir -p $(dirname ${TEST_NGINX_ERROR_LOG})
 script:
-- make check
 - make busted
 - make prove
 - make builder-image

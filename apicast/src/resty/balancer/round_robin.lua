@@ -3,24 +3,25 @@ local min = math.min
 local random = math.random
 
 local balancer = require 'resty.balancer'
-local semaphore = require 'ngx.semaphore'
 local balancer_random = require 'resty.balancer.random'
+local lrucache = require 'resty.lrucache'
 
 local _M = {
-  _VERSION = '0.1'
+  _VERSION = '0.1',
+  cache_size = 1000
 }
 
-local call = semaphore.new(1)
-
-local cursor = {}
+local cursor
 
 function _M.new()
   return balancer.new(_M.call)
 end
 
 function _M.reset()
-  cursor = {}
+  cursor = lrucache.new(_M.cache_size)
 end
+
+_M.reset()
 
 function _M.call(peers)
   if #peers == 0 then
@@ -33,15 +34,14 @@ function _M.call(peers)
     return balancer_random.call(peers)
   end
 
-  local ok, _ = call:wait(0)
-
+  -- This looks like there might be a race condition but I think it is not.
+  -- The VM will not schedule another thread until there is IO and in this case there is no IO.
+  -- So this block stays the only one being executed and no one can access the same cursor value.
   local n = #peers
-  local i = min(max(cursor[hash] or peers.cur or random(1, n), 0), n)
+  local i = min(max(cursor:get(hash) or peers.cur or random(1, n), 0), n)
   local peer = peers[i]
 
-  cursor[hash] = (i % n) + 1
-
-  if ok then call:post(1) end
+  cursor:set(hash, (i % n) + 1)
 
   return peer, i
 end

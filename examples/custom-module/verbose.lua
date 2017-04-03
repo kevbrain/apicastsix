@@ -1,7 +1,6 @@
 local apicast = require('apicast')
 
 local _M = { _VERSION = '0.0' }
-local mt = { __index = apicast }
 
 function _M.new()
   return setmetatable(_M, { __index = apicast.new() })

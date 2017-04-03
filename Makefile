@@ -15,6 +15,7 @@ RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
 lua_files = $(shell find apicast/src -type f -name '*.lua')
 spec_files = $(shell find spec -type f -name '*.lua')
+example_files = $(shell find examples -type f -name '*.lua')
 
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
@@ -29,7 +30,7 @@ busted: dependencies ## Test Lua.
 	@- luacov
 
 check: dependencies ## Run luacheck to lint lua files
-	luacheck $(lua_files) $(spec_files)
+	luacheck $(lua_files) $(spec_files) $(example_files)
 
 nginx:
 	@ ($(NGINX) -V 2>&1 | grep -e '--with-ipv6' > /dev/null) || (>&2 echo "$(NGINX) `$(NGINX) -v 2>&1` does not have ipv6 support" && exit 1)

@@ -3,7 +3,6 @@ local rawset = rawset
 local pairs = pairs
 local unpack = unpack
 local assert = assert
-local print = print
 local type = type
 local rawlen = rawlen
 local next = next
@@ -18,18 +17,33 @@ local http = require 'resty.resolver.http'
 _M.async = function(request)
   local httpc = http.new()
 
-  local parsed_uri = assert(httpc:parse_uri(request.url))
+  local parsed_uri = assert(httpc:parse_uri(assert(request.url, 'missing url')))
 
   local scheme, host, port, path = unpack(parsed_uri)
   if not request.path then request.path = path end
 
   if #request.path == 0 then request.path = '/' end
 
+  local timeout = request.timeout or (request.options and request.options.timeout)
+
+  if type(timeout) == 'number' then
+    httpc:set_timeout(timeout)
+  elseif type(timeout) == 'table' then
+    local connect_timeout = timeout.connect
+    local send_timeout = timeout.send
+    local read_timeout = timeout.read
+
+    if httpc.set_timeouts then -- lua-resty-http >= 0.10
+      httpc:set_timeouts(connect_timeout, send_timeout, read_timeout)
+    else
+      httpc.sock:settimeouts(connect_timeout, send_timeout, read_timeout)
+    end
+  end
+
   local ok, err = httpc:connect(host, port)
 
   if not ok then
-    print('error connecting ', host, ':', port, ' : ', err)
-    return response.error(err, request)
+    return response.error(request, err)
   end
 
   if scheme == 'https' then
@@ -40,7 +54,7 @@ _M.async = function(request)
     session, err = httpc:ssl_handshake(false, host, verify)
 
     if not session then
-      return response.error(err, request)
+      return response.error(request, err)
     end
   end
 
@@ -50,11 +64,11 @@ _M.async = function(request)
   if res then
     return response.new(request, res.status, res.headers, function() return (res:read_body()) end)
   else
-    return response.error(err, request)
+    return response.error(request, err)
   end
 end
 
-local function future(thread)
+local function future(thread, request)
   local ok, res
 
   local function load(table)
@@ -63,7 +77,7 @@ local function future(thread)
 
       rawset(table, 'ok', ok)
 
-      if not ok then res = response.error(res) end
+      if not ok then res = response.error(request, res or 'failed to create async request') end
 
       for k,v in pairs(res) do
         if k == 'headers' then
@@ -94,7 +108,7 @@ end
 
 _M.send = function(request)
   local thread = spawn(_M.async, request)
-  return future(thread)
+  return future(thread, request)
 end
 
 return _M

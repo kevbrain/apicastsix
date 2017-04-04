@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Remove unnecessary code and comments [PR #344](https://github.com/3scale/apicast/pull/344)
 - JWT expiry not taken into account in authorization response cache [PR #283](https://github.com/3scale/apicast/pull/283) / [Issue #309](https://github.com/3scale/apicast/issues/309) / Fixed by [PR #341](https://github.com/3scale/apicast/pull/341)
 - Memory leak in round robin balancer [PR #345](https://github.com/3scale/apicast/pull/345)
+- Error when trying to determine status of failed request when downloading configuration [PR #350](https://github.com/3scale/apicast/pull/350)
 
 ## [3.0.0-beta3] - 2017-03-20
 

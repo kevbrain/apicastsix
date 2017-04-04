@@ -26,5 +26,15 @@ describe('resty backend', function()
       assert.truthy(response.request)
       assert(response.headers.location:match('^https://'))
     end)
+
+    it('returns error', function()
+      local req = { method = method, url = 'http://0.0.0.0:0/' }
+      local response, err = backend.send(req)
+
+      assert.falsy(err)
+      assert.truthy(response.error)
+      assert.falsy(response.ok)
+      assert.same(req, response.request)
+    end)
   end)
 end)

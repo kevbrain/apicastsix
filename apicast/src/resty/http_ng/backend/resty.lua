@@ -24,7 +24,7 @@ backend.send = function(request)
   if res then
     return response.new(request, res.status, res.headers, res.body)
   else
-    return response.error(err)
+    return response.error(request, err)
   end
 end
 

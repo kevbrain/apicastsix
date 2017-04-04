@@ -29,6 +29,50 @@ describe('resty backend', function()
       assert.equal('string', type(response.body))
       assert.truthy(response.request)
     end)
+
+    it('returns proper error on connect timeout', function()
+      local req = { method = method, url = 'http://example.com:81/', timeout = { connect = 1 } }
+
+      local response = backend.send(req)
+
+      assert.truthy(response)
+      assert.equal('timeout', response.error)
+      assert.equal(req, response.request)
+      assert.falsy(response.ok)
+    end)
+
+    it('returns proper error on read timeout', function()
+      local req = { method = method, url = 'http://example.com/', timeout = { read = 1 } }
+
+      local response = backend.send(req)
+
+      assert.truthy(response)
+      assert.equal('timeout', response.error)
+      assert.equal(req, response.request)
+      assert.falsy(response.ok)
+    end)
+
+    it('returns proper error on invalid ssl', function()
+      local req = { method = method, url = 'https://untrusted-root.badssl.com/', options = { ssl = { verify = true } } }
+
+      local response = backend.send(req)
+
+      assert.truthy(response)
+      assert.match('unable to get local issuer certificate', response.error)
+      assert.equal(req, response.request)
+      assert.falsy(response.ok)
+    end)
+
+    it('returns proper error on invalid request', function()
+      local req = { method = method }
+
+      local response = backend.send(req)
+
+      assert.truthy(response)
+      assert.match('failed to create async request', response.error)
+      assert.equal(req, response.request)
+      assert.falsy(response.ok)
+    end)
   end)
 
   describe('when there is no error', function()

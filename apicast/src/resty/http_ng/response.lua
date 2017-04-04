@@ -50,7 +50,9 @@ function response.new(request, status, headers, body)
   return setmetatable(res, mt)
 end
 
-function response.error(message, request)
+function response.error(request, message)
+  assert(request, 'missing request')
+  assert(message, 'missing message')
   return { ok = false, error = message, request = request, status = 0, headers = {} }
 end
 

@@ -106,7 +106,7 @@ local function future(thread, request)
   })
 end
 
-_M.send = function(request)
+_M.send = function(_, request)
   local thread = spawn(_M.async, request)
   return future(thread, request)
 end

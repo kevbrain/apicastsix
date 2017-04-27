@@ -14,7 +14,7 @@ local METHODS = {
 local PROXY_LOCATION = '/___http_call'
 
 backend.capture = ngx.location.capture
-backend.send = function(request)
+backend.send = function(_, request)
   local res = backend.capture(PROXY_LOCATION, {
     method = METHODS[request.method],
     body = request.body,

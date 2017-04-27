@@ -60,7 +60,7 @@ _M.new = function()
     return expectation
   end
 
-  backend.send = function(request)
+  backend.send = function(_, request)
     local expectation = remove(expectations, 1)
 
     if not expectation then error('no expectation') end

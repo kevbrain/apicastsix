@@ -6,7 +6,7 @@ describe('resty backend', function()
     local method = 'GET'
 
     it('accesses the url', function()
-      local response = backend.send{method = method, url = 'http://example.com/'}
+      local response = backend:send{method = method, url = 'http://example.com/'}
       assert.truthy(response)
       assert.falsy(response.error)
       assert.truthy(response.ok)
@@ -16,7 +16,7 @@ describe('resty backend', function()
     end)
 
     it('works with ssl', function()
-      local response, err = backend.send{
+      local response, err = backend:send{
         method = method, url = 'https://google.com/',
         -- This is needed because of https://groups.google.com/forum/#!topic/openresty-en/SuqORBK9ys0
         -- So far OpenResty can't use system certificated on demand.
@@ -33,7 +33,7 @@ describe('resty backend', function()
     it('returns proper error on connect timeout', function()
       local req = { method = method, url = 'http://example.com:81/', timeout = { connect = 1 } }
 
-      local response = backend.send(req)
+      local response = backend:send(req)
 
       assert.truthy(response)
       assert.equal('timeout', response.error)
@@ -44,7 +44,7 @@ describe('resty backend', function()
     it('returns proper error on read timeout', function()
       local req = { method = method, url = 'http://example.com/', timeout = { read = 1 } }
 
-      local response = backend.send(req)
+      local response = backend:send(req)
 
       assert.truthy(response)
       assert.equal('timeout', response.error)
@@ -55,7 +55,7 @@ describe('resty backend', function()
     it('returns proper error on invalid ssl', function()
       local req = { method = method, url = 'https://untrusted-root.badssl.com/', options = { ssl = { verify = true } } }
 
-      local response = backend.send(req)
+      local response = backend:send(req)
 
       assert.truthy(response)
       assert.match('unable to get local issuer certificate', response.error)
@@ -66,7 +66,7 @@ describe('resty backend', function()
     it('returns proper error on invalid request', function()
       local req = { method = method }
 
-      local response = backend.send(req)
+      local response = backend:send(req)
 
       assert.truthy(response)
       assert.match('failed to create async request', response.error)
@@ -78,7 +78,7 @@ describe('resty backend', function()
   describe('when there is no error', function()
     local response
     before_each(function()
-      response = backend.send{ method = 'GET', url = 'http://127.0.0.1:1984' }
+      response = backend:send{ method = 'GET', url = 'http://127.0.0.1:1984' }
     end)
 
     it('is ok', function()
@@ -93,7 +93,7 @@ describe('resty backend', function()
   describe('when there is error', function()
     local response
     before_each(function()
-      response = backend.send{ method = 'GET', url = 'http://127.0.0.1:1' }
+      response = backend:send{ method = 'GET', url = 'http://127.0.0.1:1' }
     end)
 
     it('is not ok', function()

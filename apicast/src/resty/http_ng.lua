@@ -90,7 +90,7 @@ http.method = function(method, client)
     local req_params = get_request_params(method, client, url, options)
     local req = http.request.new(req_params)
 
-    return client.backend.send(req)
+    return client.backend:send(req)
   end
 end
 
@@ -111,7 +111,7 @@ http.method_with_body = function(method, client)
     req_params.body = body
     local req = http.request.new(req_params)
 
-    return client.backend.send(req)
+    return client.backend:send(req)
   end
 end
 

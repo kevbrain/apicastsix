@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Experimental caching proxy to the http client [PR #357](https://github.com/3scale/apicast/pull/357)
 
+### Changed
+
+- Print better errors when module loading fails [PR #360](https://github.com/3scale/apicast/pull/360)
+
 ## [3.0.0-rc1] - 2017-04-04
 
 ### Added

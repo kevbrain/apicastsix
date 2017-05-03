@@ -11,6 +11,7 @@ local unpack = unpack
 local assert = assert
 local tostring = tostring
 local setmetatable = setmetatable
+local getmetatable = getmetatable
 local rawset = rawset
 local upper = string.upper
 local rawget = rawget
@@ -24,6 +25,7 @@ local resty_backend = require 'resty.http_ng.backend.resty'
 local json = require 'cjson'
 local request = require 'resty.http_ng.request'
 local resty_url = require 'resty.url'
+local http_headers = require 'resty.http_ng.headers'
 
 local DEFAULT_PATH = ''
 
@@ -40,7 +42,7 @@ local function merge(...)
     local t = all[i]
 
     if type(t) == 'table' then
-      res = res or {}
+      res = res or setmetatable({}, getmetatable(t))
       for k,v in pairs(t) do
         res[k] = merge(res[k], v)
       end
@@ -57,10 +59,11 @@ local function get_request_params(method, client, url, options)
   local scheme, user, pass, host, port, path = unpack(assert(resty_url.split(url)))
   if port then host = concat({host, port}, ':') end
 
-  opts.headers = { ['Host'] = host }
+  opts.headers = http_headers.new()
+  opts.headers.host = host
 
   if user or pass then
-    opts.headers.Authorization = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
+    opts.headers.authorization = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
   end
 
   return {

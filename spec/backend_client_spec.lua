@@ -18,7 +18,8 @@ describe('backend client', function()
         backend_authentication_type = 'auth', backend_authentication_value = 'val'
       })
       test_backend.expect{
-        url = 'http://example.com/transactions/authrep.xml?service_id=42&auth=val',
+        url = 'http://example.com/transactions/authrep.xml?' ..
+            ngx.encode_args({ auth = service.backend_authentication.value, service_id = service.id }),
         headers = { host = 'example.com' }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
@@ -37,7 +38,9 @@ describe('backend client', function()
         backend_authentication_type = 'auth', backend_authentication_value = 'val'
       })
       test_backend.expect{
-        url = 'http://example.com/transactions/authrep.xml?service_id=42&auth=val&usage%5Bhits%5D=1&user_key=foobar'
+        url = 'http://example.com/transactions/authrep.xml?' ..
+            ngx.encode_args({ auth = service.backend_authentication.value, service_id = service.id }) ..
+            '&usage%5Bhits%5D=1&user_key=foobar'
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 
@@ -92,7 +95,8 @@ describe('backend client', function()
         backend_authentication_type = 'auth', backend_authentication_value = 'val'
       })
       test_backend.expect{
-        url = 'http://example.com/transactions/authorize.xml?service_id=42&auth=val',
+        url = 'http://example.com/transactions/authorize.xml?' ..
+            ngx.encode_args({ auth = service.backend_authentication.value, service_id = service.id }),
         headers = { host = 'example.com' }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
@@ -111,7 +115,9 @@ describe('backend client', function()
         backend_authentication_type = 'auth', backend_authentication_value = 'val'
       })
       test_backend.expect{
-        url = 'http://example.com/transactions/authorize.xml?service_id=42&auth=val&usage%5Bhits%5D=1&user_key=foobar'
+        url = 'http://example.com/transactions/authorize.xml?' ..
+            ngx.encode_args({ auth = service.backend_authentication.value, service_id = service.id }) ..
+            '&usage%5Bhits%5D=1&user_key=foobar'
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 

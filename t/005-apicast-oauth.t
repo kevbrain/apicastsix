@@ -78,10 +78,11 @@ called oauth_authorize.xml
 
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
-      expected = "provider_key=fookey&service_id=42&redirect_uri=otheruri&app_id=id"
+      local expected = "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri"
       if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
         ngx.exit(200)
       else
+        ngx.log(ngx.ERR, expected, ' does not match ', ngx.var.args)
         ngx.exit(403)
       end
     }
@@ -90,7 +91,7 @@ called oauth_authorize.xml
 GET /authorize?client_id=id&redirect_uri=otheruri&response_type=code&scope=whatever&state=123456
 --- error_code: 302
 --- response_headers_like
-Location: http://example.com/redirect\?scope=whatever&response_type=code&state=[a-z0-9]{40}&tok=\w+&redirect_uri=otheruri&client_id=id
+Location: http://example.com/redirect\?response_type=code&client_id=id&state=[a-z0-9]{40}&scope=whatever&tok=\w+&redirect_uri=otheruri
 --- no_error_log
 [error]
 
@@ -119,9 +120,10 @@ Location: http://example.com/redirect\?scope=whatever&response_type=code&state=[
 
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
-      if ngx.var.args == "provider_key=fookey&service_id=42&redirect_uri=otheruri&app_id=id" and ngx.var.host == ngx.var.backend_host then
+      if ngx.var.args == "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri" and ngx.var.host == ngx.var.backend_host then
         ngx.exit(200)
       else
+        ngx.log(ngx.ERR, expected, ' does not match ', ngx.var.args)
         ngx.exit(403)
       end
     }
@@ -130,7 +132,7 @@ Location: http://example.com/redirect\?scope=whatever&response_type=code&state=[
 GET /authorize?client_id=id&redirect_uri=otheruri&response_type=token&scope=whatever
 --- error_code: 302
 --- response_headers_like
-Location: http://example.com/redirect\?scope=whatever&response_type=token&error=unsupported_response_type&redirect_uri=otheruri&client_id=id
+Location: http://example.com/redirect\?response_type=token&client_id=id&scope=whatever&redirect_uri=otheruri&error=unsupported_response_type
 --- no_error_log
 [error]
 
@@ -346,7 +348,7 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
 
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
-        expected = "provider_key=fookey&service_id=42&app_key=client_secret&redirect_uri=redirect_uri&app_id=client_id"
+        expected = "provider_key=fookey&service_id=42&app_key=client_secret&app_id=client_id&redirect_uri=redirect_uri"
         if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
           ngx.exit(200)
         else

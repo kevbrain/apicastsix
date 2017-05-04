@@ -11,7 +11,7 @@ local max = math.max
 local pairs = pairs
 local floor = math.floor
 
-local _M = { default_size = 1000 }
+local _M = { default_size = 100 }
 
 local mt = { __index = _M }
 

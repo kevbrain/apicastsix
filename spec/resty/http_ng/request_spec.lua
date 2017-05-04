@@ -28,4 +28,10 @@ describe('request', function()
 
     assert.equal('example.com',req.headers.Host)
   end)
+
+  it('has version', function()
+    local req = request.new{url = 'http://example.com/path', method = 'GET' }
+
+    assert.equal(1.1, req.version)
+  end)
 end)

@@ -1,5 +1,3 @@
-local type = type
-
 local fake_backend = {}
 
 function fake_backend.new(response)

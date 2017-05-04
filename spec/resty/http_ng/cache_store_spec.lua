@@ -28,7 +28,7 @@ describe('HTTP cache store', function()
         store.set = spy.new(function(self, cache_key, res)
           assert.equal(store, self)
           assert.equal('GET:http://example.com/api/foo.json', cache_key)
-          assert.same(cache:entry(response), res)
+          assert.same(cache.entry(response), res)
         end)
 
         assert(cache:set(response))

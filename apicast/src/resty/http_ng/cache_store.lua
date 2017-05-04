@@ -6,10 +6,9 @@ local setmetatable = setmetatable
 local gsub = string.gsub
 local lower = string.lower
 local format = string.format
-local insert = table.insert
 local tonumber = tonumber
 local max = math.max
-local ipairs = ipairs
+local pairs = pairs
 local floor = math.floor
 
 local _M = { default_size = 1000 }
@@ -42,13 +41,13 @@ local function parse_cache_control(value)
   local t = {}
 
   for i=1, #res do
-    local res, err = ngx_re.split(res[i], '=', 'oj', nil, 2, t)
+    local r, e = ngx_re.split(res[i], '=', 'oj', nil, 2, t)
 
-    if err then
-      ngx.log(ngx.WARN, err)
+    if e then
+      ngx.log(ngx.WARN, e)
     else
       -- TODO: selectively handle quoted strings per the RFC: https://tools.ietf.org/html/rfc7234#section-5.2
-      cache_control[gsub(lower(res[1]), '-', '_')] = tonumber(res[2]) or res[2] or true
+      cache_control[gsub(lower(r[1]), '-', '_')] = tonumber(r[2]) or r[2] or true
     end
   end
 
@@ -78,14 +77,10 @@ local function reuse_stored_response(request)
   return request.version > 1.0 and not no_cache(request)
 end
 
-function _M:trace(message, object)
-  -- trace events
-end
-
 -- Invalidation https://tools.ietf.org/html/rfc7234#section-4.4
-function _M:delete(response)
-  -- TODO: implement invalidation (Section 4.4)
-end
+--function _M:delete(response)
+--  -- TODO: implement invalidation (Section 4.4)
+--end
 
 --- Section 4.2.1. Calculating Freshness Lifetime
 -- https://tools.ietf.org/html/rfc7234#section-4.2.1
@@ -198,6 +193,8 @@ local function serve_stale_response(response)
   --  explicit in-protocol directive (e.g., by a "no-store" or "no-cache"
   --  cache directive, a "must-revalidate" cache-response-directive, or an
   --  applicable "s-maxage" or "proxy-revalidate" cache-response-directive; see Section 5.2.2).
+
+  return TODO(not response)
 end
 
 function _M:get(request)
@@ -213,7 +210,6 @@ function _M:get(request)
   request.headers.via['1.1 APIcast'] = true
 
   if not reuse_stored_response(request) then
-    self:trace('not reusing stored response', request)
     return nil, 'not reusing stored response'
   end
 
@@ -313,7 +309,7 @@ local function cacheable_response(response)
   )
 end
 
-function _M:entry(response)
+function _M.entry(response)
   return {
     body = response.body,
     headers = http_headers.new(response.headers),
@@ -336,18 +332,18 @@ end
 
 
 function _M:send(backend, request)
-  local response, err = self:get(request)
+  local response, error = self:get(request)
 
-  if response and err then
-    response, err = self:revalidate(response, backend, request)
-  elseif err then
-    ngx.log(ngx.WARN, 'http cache store: ', err) -- FIXME: for debuging
+  if response and error then
+    response, error = self:revalidate(response, backend, request)
+  elseif error then
+    ngx.log(ngx.WARN, 'http cache store: ', error) -- FIXME: for debuging
   end
 
   if not response then
-    response, err = send(backend, request)
+    response, error = send(backend, request)
 
-    if response and not err then
+    if response and not error then
       response.headers.x_cache_status = 'MISS'
 
       local ok, err = self:set(response)
@@ -358,7 +354,7 @@ function _M:send(backend, request)
     end
   end
 
-  return response, err
+  return response, error
 end
 
 local function freshen_stored_response(stored, response)
@@ -413,8 +409,7 @@ local function freshen_stored_response(stored, response)
     --  response to replace all instances of the corresponding header
     --  fields in the stored response.
 
-    for name, value in ipairs(response.headers) do
-      puts('updating name ', name , 'to ', value)
+    for name, value in pairs(response.headers) do
       if update.headers[name] then
         update.headers[name] = value
       end
@@ -497,7 +492,7 @@ function _M:set(response)
   local ttl = response_ttl(response)
 
   if ttl then
-    local res = self:entry(response)
+    local res = _M.entry(response)
 
     cache:set(cache_key, res)
 

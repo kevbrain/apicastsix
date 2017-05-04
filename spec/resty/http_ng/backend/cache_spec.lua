@@ -5,8 +5,6 @@ local cache_store = require 'resty.http_ng.cache_store'
 local http_response = require 'resty.http_ng.response'
 local http_request = require 'resty.http_ng.request'
 
-local inspect = require 'inspect'
-
 describe('cache backend', function()
   describe('GET method', function()
     local function cache(res, options)

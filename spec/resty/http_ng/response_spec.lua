@@ -20,4 +20,12 @@ describe('http_ng response', function()
       assert.equal('error message', error.error)
     end)
   end)
+
+  describe('response without date', function()
+    it('creates default date', function()
+      local res = _M.new(nil, 200, {}, '')
+
+      assert.truthy(ngx.parse_http_time(res.headers.date))
+    end)
+  end)
 end)

@@ -344,8 +344,6 @@ function _M:send(backend, request)
     response, error = send(backend, request)
 
     if response and not error then
-      response.headers.x_cache_status = 'MISS'
-
       local ok, err = self:set(response)
 
       if not ok and err then
@@ -480,6 +478,8 @@ function _M:set(response)
   if not cache then
     return nil, 'not initialized'
   end
+
+  response.headers.x_cache_status = 'MISS'
 
   if not cacheable_response(response) then
     return nil, 'not cacheable response'

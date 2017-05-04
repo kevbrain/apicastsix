@@ -4,8 +4,13 @@ local spy = require 'luassert.spy'
 local cache_store = require 'resty.http_ng.cache_store'
 local http_response = require 'resty.http_ng.response'
 local http_request = require 'resty.http_ng.request'
+local test_backend_client = require 'resty.http_ng.backend.test'
 
 describe('cache backend', function()
+  local test_backend
+  before_each(function() test_backend = test_backend_client.new() end)
+  after_each(function() test_backend.verify_no_outstanding_expectations() end)
+
   describe('GET method', function()
     local function cache(res, options)
       local fake = fake_backend.new(res)
@@ -27,24 +32,18 @@ describe('cache backend', function()
     end)
 
     it('works with etag and must-revalidate', function()
-      local res = spy.new(function(req)
-        local headers = {
-          ETag = 'etag-value', ['Cache-Control'] = 'max-age=0, private, must-revalidate', Vary = 'Accept-Encoding'
-        }
-        assert.equal('1.1 APIcast', tostring(req.headers.via))
-        if req.headers.if_none_match == 'etag-value' then
-          return http_response.new(req, 304, headers, '')
-        else
-          return http_response.new(req, 200, headers, 'ok')
-        end
-      end)
       local request = http_request.new{method = 'GET', url = 'http://example.com/test' }
-      local backend = cache(res)
+      local backend = _M.new(test_backend, { cache_store = cache_store.new() })
+
+      local headers = {
+        ETag = 'etag-value', ['Cache-Control'] = 'max-age=0, private, must-revalidate', Vary = 'Accept-Encoding'
+      }
+      test_backend.expect{ url = 'http://example.com/test', headers = { via = '1.1 APIcast'} }.respond_with{ status = 200, body = 'ok', headers = headers }
+      test_backend.expect{ url = 'http://example.com/test', headers = { if_none_match = 'etag-value', via = '1.1 APIcast' } }
+        .respond_with{ status = 304, headers = headers }
 
       local miss_response = assert(backend:send(request))
       local hit_response = assert(backend:send(request))
-
-      assert.spy(res).was.called(2)
 
       assert.equal('MISS', miss_response.headers.x_cache_status)
       assert.equal('REVALIDATED', hit_response.headers.x_cache_status)
@@ -53,7 +52,48 @@ describe('cache backend', function()
       assert.equal('ok', hit_response.body)
     end)
 
-    it('accesses caches the call #TEST', function()
+    it('works with etag and must-revalidate and backend responds something else', function()
+      local request = http_request.new{method = 'GET', url = 'http://example.com/test' }
+      local backend = _M.new(test_backend, { cache_store = cache_store.new() })
+
+      local headers = {
+        ETag = 'etag-value', ['Cache-Control'] = 'max-age=0, private, must-revalidate', Vary = 'Accept-Encoding'
+      }
+      test_backend.expect{ url = 'http://example.com/test', headers = { via = '1.1 APIcast'} }.respond_with{ status = 200, body = 'ok', headers = headers }
+      test_backend.expect{ url = 'http://example.com/test', headers = { if_none_match = 'etag-value', via = '1.1 APIcast' } }
+        .respond_with{ status = 200, body = 'foo' }
+
+      local miss_response = assert(backend:send(request))
+      local hit_response = assert(backend:send(request))
+
+      assert.equal('MISS', miss_response.headers.x_cache_status)
+      assert.equal('MISS', hit_response.headers.x_cache_status)
+
+      assert.equal('ok', miss_response.body)
+      assert.equal('foo', hit_response.body)
+    end)
+
+    it('works with max-age', function()
+      local request = http_request.new{method = 'GET', url = 'http://example.com/test' }
+      local backend = _M.new(test_backend, { cache_store = cache_store.new() })
+
+      local headers = {
+        ['Cache-Control'] = 'max-age=0, private'
+      }
+      test_backend.expect{ url = 'http://example.com/test', headers = { via = '1.1 APIcast'} }.respond_with{ status = 200, body = 'ok', headers = headers }
+      test_backend.expect{ url = 'http://example.com/test', headers = { via = '1.1 APIcast' } }.respond_with{ status = 200, body = 'foo' }
+
+      local miss_response = assert(backend:send(request))
+      local hit_response = assert(backend:send(request))
+
+      assert.equal('MISS', miss_response.headers.x_cache_status)
+      assert.equal('MISS', hit_response.headers.x_cache_status)
+
+      assert.equal('ok', miss_response.body)
+      assert.equal('foo', hit_response.body)
+    end)
+
+    it('accesses caches the call', function()
       local server = spy.new(function(req)
         assert.match('1.1 APIcast', req.headers.via)
         return http_response.new(req, 200, {

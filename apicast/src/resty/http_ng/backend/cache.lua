@@ -23,21 +23,15 @@ function _M:send(request)
   local cache_store = self.cache_store
   local backend = self.backend
 
+  local response, err
+
   if cache_store then
-     local res, err = cache_store:get(request)
-
-     if not res then
-
-       res, err = backend:send(request)
-       if res and not err then
-         cache_store:set(res)
-       end
-     end
-
-     return res, err
+    response, err = cache_store:send(backend, request)
   else
-    return backend:send(request)
+    response, err = backend:send(request)
   end
+
+  return response, err
 end
 
 return _M

@@ -51,11 +51,11 @@ describe('Keycloak', function()
       stub(ngx.req, 'get_uri_args', function() return { response_type = 'code', client_id = 'foo', redirect_uri = 'bar' } end)
 
       test_backend.expect{ url = 'http://www.example.com:80/auth/realms/test/protocol/openid-connect/auth?client_id=foo' }
-        .respond_with{ status = 200 , body = 'foo', headers = {} }
+        .respond_with{ status = 200 , body = 'foo', headers = { Date = "Thu, 18 Nov 2010 11:27:35 GMT" } }
 
       stub(_M, 'respond_and_exit')
       keycloak:authorize({}, test_backend)
-      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', {})
+      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', { Date = "Thu, 18 Nov 2010 11:27:35 GMT" })
     end)
 
     it('returns error when response_type missing', function()
@@ -98,11 +98,11 @@ describe('Keycloak', function()
       stub(ngx.req, 'get_headers', function() return { } end)
 
       test_backend.expect{ url = 'http://www.example.com:80/auth/realms/test/protocol/openid-connect/token'}
-        .respond_with{ status = 200 , body = 'foo', headers = {} }
+        .respond_with{ status = 200 , body = 'foo', headers = { Date = "Thu, 18 Nov 2010 11:27:35 GMT" } }
 
       keycloak:get_token({}, test_backend)
 
-      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', {})
+      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', { Date = "Thu, 18 Nov 2010 11:27:35 GMT" })
     end)
 
     it('returns "invalid_request" when grant_type missing', function ()
@@ -171,11 +171,11 @@ describe('Keycloak', function()
       stub(ngx.req, 'get_headers', function() return { } end)
 
       test_backend.expect{ url = 'http://www.example.com:80/auth/realms/test/protocol/openid-connect/token'}
-        .respond_with{ status = 200 , body = 'foo', headers = {} }
+        .respond_with{ status = 200 , body = 'foo', headers = { Date = "Thu, 18 Nov 2010 11:27:35 GMT" } }
 
       keycloak:get_token({}, test_backend)
 
-      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', {})
+      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', { Date = "Thu, 18 Nov 2010 11:27:35 GMT" })
     end)
 
     it('accepts client credentials in Authorization header', function()
@@ -194,11 +194,11 @@ describe('Keycloak', function()
       test_backend.expect{
         url = 'http://www.example.com:80/auth/realms/test/protocol/openid-connect/token',
         headers =  { authorization = auth }
-      }.respond_with{ status = 200 , body = 'foo', headers = {} }
+      }.respond_with{ status = 200 , body = 'foo', headers = { Date = "Thu, 18 Nov 2010 11:27:35 GMT" } }
 
       keycloak:get_token({}, test_backend)
 
-      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', {})
+      assert.spy(_M.respond_and_exit).was.called_with(200, 'foo', { Date = "Thu, 18 Nov 2010 11:27:35 GMT" })
     end)
 
   end)

@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Print better errors when module loading fails [PR #360](https://github.com/3scale/apicast/pull/360)
 
-## [3.0.0-rc1] - 2017-04-04
+## [3.0.0] - 2017-04-04
 
 ### Added
 
@@ -155,4 +155,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.0.0-beta1]: https://github.com/3scale/apicast/compare/v3.0.0-alpha2...v3.0.0-beta1
 [3.0.0-beta2]: https://github.com/3scale/apicast/compare/v3.0.0-beta1...v3.0.0-beta2
 [3.0.0-beta3]: https://github.com/3scale/apicast/compare/v3.0.0-beta2...v3.0.0-beta3
-[3.0.0-rc1]: https://github.com/3scale/apicast/compare/v3.0.0-beta3...v3.0.0-rc1
+[3.0.0]: https://github.com/3scale/apicast/compare/v3.0.0-beta3...v3.0.0

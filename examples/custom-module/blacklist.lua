@@ -1,6 +1,6 @@
 local apicast = require('apicast').new()
 local iputils = require("resty.iputils")
-local default_balancer = require('resty.balancer.round_robin').call
+local default_balancer = require('balancer').default_balancer
 local resty_balancer = require('resty.balancer')
 
 local _M = { _VERSION = '0.0' }
@@ -33,13 +33,13 @@ function _M.new()
   }, mt)
 end
 
-function _M:init()
+function _M.init()
   iputils.enable_lrucache()
   apicast:init()
 end
 
 local balancer_with_blacklist = resty_balancer.new(function(peers)
-  local peer, i = default_balancer(peers)
+  local peer, i = default_balancer.mode(peers)
 
   local ip = peer[1]
   local blacklisted, err = iputils.ip_in_cidrs(ip, blacklist)
@@ -53,18 +53,8 @@ local balancer_with_blacklist = resty_balancer.new(function(peers)
   end
 end)
 
-function _M:balancer()
-  local balancer = balancer_with_blacklist
-  local host = ngx.var.proxy_host -- NYI: return to lower frame
-  local peers = balancer:peers(ngx.ctx[host])
-
-  local peer, err = balancer:set_peer(peers)
-
-  if not peer then
-    ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
-    ngx.log(ngx.ERR, "failed to set current backend peer: ", err)
-    ngx.exit(ngx.status)
-  end
+function _M.balancer()
+  return apicast:balancer(balancer_with_blacklist)
 end
 
 return _M

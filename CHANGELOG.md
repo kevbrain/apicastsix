@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Bump OpenResty version to [1.11.2.3](https://github.com/3scale/s2i-openresty/releases/tag/1.11.2.3-1) [PR #359](https://github.com/3scale/apicast/pull/359) 
 
+### Added
+
+- Experimental caching proxy to the http client [PR #357](https://github.com/3scale/apicast/pull/357)
+
 ## [3.0.0-rc1] - 2017-04-04
 
 ### Added

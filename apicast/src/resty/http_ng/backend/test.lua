@@ -2,6 +2,7 @@ local pairs = pairs
 local type = type
 local assert = assert
 local setmetatable = setmetatable
+local getmetatable = getmetatable
 local insert = table.insert
 local remove = table.remove
 local error = error
@@ -13,7 +14,15 @@ local _M = {}
 local function contains(expected, actual)
   if actual == expected then return true end
   local t1,t2 = type(actual), type(expected)
-  if t1 ~= t2 then return false, format("can't compare %q with %q", t1, t2) end
+
+  if t1 ~= t2 then
+    local mt = getmetatable(actual) or {}
+    if t2 == 'string' and mt.__tostring then
+      return mt.__tostring(actual) == expected
+    else
+      return false, format("can't compare %q with %q", t1, t2)
+    end
+  end
 
   if t1 == 'table' then
     for k,v in pairs(expected) do
@@ -60,7 +69,7 @@ _M.new = function()
     return expectation
   end
 
-  backend.send = function(request)
+  backend.send = function(_, request)
     local expectation = remove(expectations, 1)
 
     if not expectation then error('no expectation') end

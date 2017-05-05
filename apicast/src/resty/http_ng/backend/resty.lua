@@ -10,7 +10,7 @@ local http = require 'resty.resolver.http'
 --- Send request and return the response
 -- @tparam http_ng.request request
 -- @treturn http_ng.response
-backend.send = function(request)
+backend.send = function(_, request)
   local httpc = http.new()
   local ssl_verify = request.options and request.options.ssl and request.options.ssl.verify
 

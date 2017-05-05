@@ -37,6 +37,7 @@ function request.new(req)
   assert(req.url)
   assert(req.method)
 
+  req.version = req.version or 1.1
   req.options = req.options or {}
   req.client = req.client or {}
 

@@ -26,3 +26,40 @@ And see in the apicast output:
 ```
 2016/11/16 16:52:00 [warn] 98009#0: *5 [lua] verbose.lua:7: call(): upstream response time: 0.001 upstream connect time: 0.000 while logging request, client: 127.0.0.1, server: _, request: "GET /?user_key=foo HTTP/1.1", upstream: "http://127.0.0.1:8081/?user_key=foo", host: "echo"
 ```
+
+## Writing own module
+
+There is example module of IP blacklist in [`blacklist.lua`](blacklist.lua).
+
+To honour the module inheritance, but still be able to override some methods from the `apicast` module, you'll
+need some clever use of metatables. Here is a recommended skeleton of the module inheritance:
+
+```lua
+-- load and initialize the parent module
+local apicast = require('apicast').new()
+
+-- _NAME and _VERSION are used in User-Agent when connecting to the Service Management API
+local _M = { _VERSION = '0.0', _NAME = 'Example Module' }
+-- define a table, that is going to be this module metatable
+-- if your table does not define a property, __index is going to get used
+-- and so on until there are no metatables to check
+-- so in this case the inheritance works like local instance created with _M.new() -> _M -> apicast`
+local mt = { __index = setmetatable(_M, { __index = apicast }) }
+
+function _M.new()
+  -- this method is going to get called after this file is required
+  -- so create new table for internal state (global) and set the metatable for inheritance
+  return setmetatable({}, mt)
+end
+
+-- to run some custom code in log phase lets override the method
+function _M.log()
+  ngx.log(ngx.WARN,
+    'upstream response time: ', ngx.var.upstream_response_time, ' ',
+    'upstream connect time: ', ngx.var.upstream_connect_time)
+  -- and the original apicast method should be executed too
+  return apicast:log()
+end
+
+return _M
+```

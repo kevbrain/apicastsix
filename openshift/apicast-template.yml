@@ -46,14 +46,10 @@ objects:
             value: "${PATH_ROUTING}"
           - name: APICAST_RESPONSE_CODES
             value: "${RESPONSE_CODES}"
-          - name: APICAST_REQUEST_LOGS
-            value: "${REQUEST_LOGS}"
           - name: APICAST_CONFIGURATION_CACHE
             value: "${CONFIGURATION_CACHE}"
-          - name: REDIS_HOST
-            value: "${REDIS_HOST}"
-          - name: REDIS_PORT
-            value: "${REDIS_PORT}"
+          - name: REDIS_URL
+            value: "${REDIS_URL}"
           - name: APICAST_MANAGEMENT_API
             value: "${MANAGEMENT_API}"
           - name: OPENSSL_VERIFY
@@ -149,13 +145,9 @@ parameters:
   description: "For how long to cache the downloaded configuration in seconds. Can be left empty, 0 or greater than 60."
   value: ""
   required: false
-- description: "Redis host. Required for OAuth2 integration."
-  name: REDIS_HOST
+- description: "Redis URL. Required for OAuth2 integration. ex: redis://PASSWORD@127.0.0.1:6379/0"
+  name: REDIS_URL
   required: false
-- description: "Redis port. Required for OAuth2 integration."
-  name: REDIS_PORT
-  required: false
-  value: "6379"
 - name: MANAGEMENT_API
   description: "Scope of the Management API. Can be disabled, status or debug. At least status required for health checks."
   required: false

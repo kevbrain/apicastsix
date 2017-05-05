@@ -11,7 +11,7 @@ describe('test backend',function()
       backend.expect{method = 'GET'}.respond_with{status = 301 }
 
       local req = request.new{method = 'GET', url = 'http://example.com' }
-      local response = backend.send(req)
+      local response = backend:send(req)
 
       assert.truthy(response)
       assert.truthy(response.request)
@@ -25,13 +25,13 @@ describe('test backend',function()
 
     it('expects a request', function()
       local req = request.new{method = 'GET', url = 'http://example.com' }
-      assert.has.error(function() backend.send(req) end, 'no expectation')
+      assert.has.error(function() backend:send(req) end, 'no expectation')
     end)
 
     it('matches expectation', function()
       backend.expect{method = 'POST'}
       local req = request.new{method = 'GET', url = 'http://example.com' }
-      assert.has.error(function() backend.send(req) end, 'expectation does not match: ["method"] "GET" does not match "POST"')
+      assert.has.error(function() backend:send(req) end, 'expectation does not match: ["method"] "GET" does not match "POST"')
     end)
   end)
 end)

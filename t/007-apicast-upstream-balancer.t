@@ -47,7 +47,7 @@ $::dns->("localhost", "127.0.0.1")
 --- request
 GET /t
 --- response_body
-[{"address":"127.0.0.1","ttl":0}]
+[{"ttl":0,"address":"127.0.0.1"}]
 --- error_code: 200
 
 

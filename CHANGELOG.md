@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [Unreleased]
+
+### Changed
+
+- Bump OpenResty version to [1.11.2.3](https://github.com/3scale/s2i-openresty/releases/tag/1.11.2.3-1) [PR #359](https://github.com/3scale/apicast/pull/359) 
+
+### Added
+
+- Experimental caching proxy to the http client [PR #357](https://github.com/3scale/apicast/pull/357)
+
+## [3.0.0-rc1] - 2017-04-04
 
 ### Added
 
@@ -12,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Turn on SSL/TLS validation by `OPENSSL_VERIFY` environment variable [PR #332](https://github.com/3scale/apicast/pull/332)
 - Load trusted CA chain certificates [PR #332](https://github.com/3scale/apicast/pull/332)
 - Support HTTP Basic authentication for client credentials when authorizing with RH-SSO [PR #336](https://github.com/3scale/apicast/pull/336)
+- Show more information about the error when the module load fails [PR #348](https://github.com/3scale/apicast/pull/348)
 
 ### Changed
 
@@ -19,12 +30,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Improve error logging when failing to download configuration [PR #335](https://github.com/3scale/apicast/pull/325)
 - Service hostnames are normalized to lower case [PR #336](https://github.com/3scale/apicast/pull/326)
 - Don't attempt to perform post\_action when request was handled without authentication [PR #343](https://github.com/3scale/apicast/pull/343)
+- Store authorization responses with a ttl, if sent [PR #341](https://github.com/3scale/apicast/pull/341)
 
 ### Fixed
 
 - Do not return stale service configuration when new one is available [PR #333](https://github.com/3scale/apicast/pull/333)
 - Memory leak in every request [PR #339](https://github.com/3scale/apicast/pull/339)
 - Remove unnecessary code and comments [PR #344](https://github.com/3scale/apicast/pull/344)
+- JWT expiry not taken into account in authorization response cache [PR #283](https://github.com/3scale/apicast/pull/283) / [Issue #309](https://github.com/3scale/apicast/issues/309) / Fixed by [PR #341](https://github.com/3scale/apicast/pull/341)
+- Memory leak in round robin balancer [PR #345](https://github.com/3scale/apicast/pull/345)
+- Error when trying to determine status of failed request when downloading configuration [PR #350](https://github.com/3scale/apicast/pull/350)
 
 ## [3.0.0-beta3] - 2017-03-20
 
@@ -132,10 +147,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.0.0-rc1...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
 [3.0.0-beta1]: https://github.com/3scale/apicast/compare/v3.0.0-alpha2...v3.0.0-beta1
 [3.0.0-beta2]: https://github.com/3scale/apicast/compare/v3.0.0-beta1...v3.0.0-beta2
 [3.0.0-beta3]: https://github.com/3scale/apicast/compare/v3.0.0-beta2...v3.0.0-beta3
+[3.0.0-rc1]: https://github.com/3scale/apicast/compare/v3.0.0-beta3...v3.0.0-rc1

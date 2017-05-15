@@ -10,7 +10,6 @@ local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local configuration_store = require 'configuration_store'
 
-local oauth = require 'oauth'
 local resty_url = require 'resty.url'
 
 local assert = assert
@@ -283,10 +282,11 @@ function _M:call(host)
 
   self:set_backend_upstream(service)
 
-  if service.backend_version == 'oauth' then
-    local o = oauth.new(self.configuration)
-    local f, params = oauth.call(o, service)
-    self.oauth = o
+  self.oauth = service:oauth()
+
+  -- means that OAuth integration has own router
+  if self.oauth and self.oauth.call then
+    local f, params = self.oauth:call(service)
 
     if f then
       ngx.log(ngx.DEBUG, 'apicast oauth flow')
@@ -339,6 +339,7 @@ function _M:access(service)
     credentials, ttl, err = self.oauth:transform_credentials(credentials)
 
     if err then
+      ngx.log(ngx.DEBUG, 'oauth failed with ', err)
       return error_authorization_failed(service)
     end
   end

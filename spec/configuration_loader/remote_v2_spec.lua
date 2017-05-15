@@ -97,6 +97,55 @@ describe('Configuration Remote Loader V2', function()
       assert.equal(2, config.version)
       assert.equal('sandbox', config.environment)
     end)
+
+    it('includes OIDC configuration', function()
+      test_backend.expect{ url = 'http://example.com/admin/api/services/42/proxy/configs/staging/latest.json' }.
+      respond_with{ status = 200, body = cjson.encode(
+        {
+          proxy_config = {
+            version = 2,
+            environment = 'sandbox',
+            content = {
+              id = 42, backend_version = 1,
+              proxy = { oidc_issuer_endpoint = 'http://idp.example.com/auth/realms/foo/' }
+            }
+          }
+        }
+      ) }
+
+      test_backend.expect{ url = "http://idp.example.com/auth/realms/foo/.well-known/openid-configuration" }.
+        respond_with{
+          status = 200,
+          headers = { content_type = 'application/json' },
+          body = [[
+            {
+              "issuer": "https://idp.example.com/auth/realms/foo",
+              "id_token_signing_alg_values_supported": [ "RS256" ]
+            }
+          ]]
+      }
+      test_backend.expect{ url = "https://idp.example.com/auth/realms/foo" }.
+        respond_with{
+          status = 200,
+          headers = { content_type = 'application/json' },
+          body =  [[
+            { "public_key": "foobar" }
+          ]]
+      }
+
+      local config = assert(loader:config({ id = 42 }, 'staging', 'latest'))
+
+      assert.same({
+        config = {
+          openid = {
+            id_token_signing_alg_values_supported = { 'RS256' },
+            issuer = 'https://idp.example.com/auth/realms/foo',
+          },
+          public_key = "foobar",
+        },
+        issuer = 'https://idp.example.com/auth/realms/foo',
+      }, config.oidc)
+    end)
   end)
 
   describe(':call', function()

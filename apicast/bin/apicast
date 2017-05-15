@@ -13,7 +13,7 @@ else
 fi
 
 bin_dir=$(dirname "${path}")
-apicast_dir="$( cd "${bin_dir}/.." && pwd )"
+apicast_dir=${APICAST_DIR:-"$( cd "${bin_dir}/.." && pwd )"}
 
 pick_openresty() {
   for cmd in "$@"

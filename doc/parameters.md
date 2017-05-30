@@ -94,7 +94,12 @@ Allows to specify a custom DNS resolver that will be used by OpenResty. If the `
 
 ### `THREESCALE_DEPLOYMENT_ENV`
 
-The value of this environment variable will be used in the header `X-3scale-User-Agent` in the authorize/report requests made to 3scale Service Management API. It is used by 3scale just for statistics.
+**Values:** sandbox | production  
+**Default:** no value
+
+The value of this environment variable will be used to define the environment for which the configuration will be downloaded from 3scale (Staging or Production), when using new APIcast.
+
+The value will also be used in the header `X-3scale-User-Agent` in the authorize/report requests made to 3scale Service Management API. It is used by 3scale just for statistics.
 
 ### `THREESCALE_PORTAL_ENDPOINT`
 

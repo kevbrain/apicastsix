@@ -1,0 +1,231 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: 3scale-gateway
+  annotations:
+    description: "3scale API Gateway"
+    iconClass: "icon-load-balancer"
+    tags: "api,gateway,3scale"
+objects:
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: "${APICAST_NAME}"
+  spec:
+    replicas: 2
+    selector:
+      deploymentconfig: "${APICAST_NAME}"
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          deploymentconfig: "${APICAST_NAME}"
+      spec:
+        containers:
+        - env:
+          - name: THREESCALE_PORTAL_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: "${CONFIGURATION_URL_SECRET}"
+                key: password
+          - name: THREESCALE_CONFIG_FILE
+            value: "${CONFIGURATION_FILE_PATH}"
+          - name: THREESCALE_DEPLOYMENT_ENV
+            value: "${DEPLOYMENT_ENVIRONMENT}"
+          - name: RESOLVER
+            value: "${RESOLVER}"
+          - name: APICAST_SERVICES
+            value: "${SERVICES_LIST}"
+          - name: APICAST_CONFIGURATION_LOADER
+            value: "${CONFIGURATION_LOADER}"
+          - name: APICAST_LOG_LEVEL
+            value: "${LOG_LEVEL}"
+          - name: APICAST_PATH_ROUTING_ENABLED
+            value: "${PATH_ROUTING}"
+          - name: APICAST_RESPONSE_CODES
+            value: "${RESPONSE_CODES}"
+          - name: APICAST_CONFIGURATION_CACHE
+            value: "${CONFIGURATION_CACHE}"
+          - name: REDIS_URL
+            value: "${REDIS_URL}"
+          - name: APICAST_MANAGEMENT_API
+            value: "${MANAGEMENT_API}"
+          - name: OPENSSL_VERIFY
+            value: "${OPENSSL_VERIFY}"
+          image: "${IMAGE_NAME}"
+          imagePullPolicy: Always
+          name: "${APICAST_NAME}"
+          livenessProbe:
+            httpGet:
+              path: /status/live
+              port: management
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /status/ready
+              port: management
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+          ports:
+          - name: proxy
+            containerPort: 8080
+            protocol: TCP
+          - name: management
+            containerPort: 8090
+            protocol: TCP
+          volumeMounts:
+            - name: apicast-cors
+              mountPath: /opt/app-root/src/src/apicast_cors.lua
+              subPath: apicast_cors.lua
+              readOnly: true
+            - name: cors-conf
+              mountPath: /opt/app-root/src/apicast.d/cors.conf
+              subPath: cors.conf
+              readOnly: true
+        volumes:
+        - name: apicast-cors
+          configMap:
+            name: apicast-cors
+            items:
+            - key: apicast_cors.lua
+              path: apicast_cors.lua
+        - name: cors-conf
+          configMap:
+            name: cors-conf
+            items:
+            - key: cors.conf
+              path: cors.conf
+    triggers:
+    - type: ConfigChange
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: "${APICAST_NAME}"
+  spec:
+    ports:
+    - name: proxy
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: management
+      port: 8090
+      protocol: TCP
+      targetPort: 8090
+    selector:
+      deploymentconfig: "${APICAST_NAME}"
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: apicast-cors
+  data:
+    apicast_cors.lua: |-
+      local apicast = require('apicast').new()
+
+      local _M = { _VERSION = '3.0.0', _NAME = 'APIcast with CORS' }
+
+      local mt = { __index = setmetatable(_M, { __index = apicast }) }
+
+      function _M.new()
+        return setmetatable({}, mt)
+      end
+
+      local function set_cors_headers()
+        ngx.header['Access-Control-Allow-Headers'] = ngx.var.http_access_control_request_headers
+        ngx.header['Access-Control-Allow-Methods'] = ngx.var.http_access_control_request_method
+        ngx.header['Access-Control-Allow-Origin'] = ngx.var.http_origin
+        ngx.header['Access-Control-Allow-Credentials'] = 'true'
+      end
+
+      local function cors_preflight_response()
+        local cors_preflight = ngx.var.request_method == 'OPTIONS' and 
+                                ngx.var.http_origin and ngx.var.http_access_control_request_method
+
+        -- for CORS preflight sent by the browser, return a 204 status code
+        if cors_preflight then
+          set_cors_headers()
+          ngx.status = 204
+          return ngx.exit(ngx.status)
+        end
+      end
+
+      function _M:rewrite()
+        cors_preflight_response()
+        return apicast:rewrite()
+      end
+
+      return _M
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: cors-conf
+  data:
+    cors.conf: |-
+      more_set_headers 'Access-Control-Allow-Origin: $http_origin';
+      more_set_headers 'Access-Control-Allow-Credentials: true';
+      more_set_headers 'Access-Control-Allow-Headers: $http_access_control_request_headers';
+      more_set_headers 'Access-Control-Allow-Methods: $http_access_control_request_method';
+  
+parameters:
+- description: "Name of the secret containing the THREESCALE_PORTAL_ENDPOINT with the access-token or provider key"
+  value: apicast-configuration-url-secret
+  name: CONFIGURATION_URL_SECRET
+  required: true
+- description: "Path to saved JSON file with configuration for the gateway. Has to be injected to the docker image as read only volume."
+  value:
+  name: CONFIGURATION_FILE_PATH
+  required: false
+- description: "Docker image to use."
+  value: 'quay.io/3scale/apicast:master'
+  name: IMAGE_NAME
+- description: "Deployment environment. Can be sandbox or production."
+  value: production
+  name: DEPLOYMENT_ENVIRONMENT
+  required: true
+- description: "Name for the 3scale API Gateway"
+  value: apicast
+  name: APICAST_NAME
+  required: true
+- description: "DNS Resolver for openresty, if empty it will be autodiscovered"
+  value:
+  name: RESOLVER
+  required: false
+- description: "Subset of services to run. Use comma separated list of service ids (eg. 42,1337)"
+  value:
+  name: SERVICES_LIST
+  required: false
+- name: CONFIGURATION_LOADER
+  description: "When to load configuration. If on gateway start or incoming request. Allowed values are: lazy, boot."
+  value: boot
+  required: false
+- description: "Log level. One of the following: debug, info, notice, warn, error, crit, alert, or emerg."
+  name: LOG_LEVEL
+  required: false
+- description: "Enable path routing. Experimental feature."
+  name: PATH_ROUTING
+  required: false
+  value: "false"
+- description: "Enable logging response codes to 3scale."
+  value: "false"
+  name: RESPONSE_CODES
+  required: false
+- name: CONFIGURATION_CACHE
+  description: "For how long to cache the downloaded configuration in seconds. Can be left empty, 0 or greater than 60."
+  value: ""
+  required: false
+- description: "Redis URL. Required for OAuth2 integration. ex: redis://PASSWORD@127.0.0.1:6379/0"
+  name: REDIS_URL
+  required: false
+- name: MANAGEMENT_API
+  description: "Scope of the Management API. Can be disabled, status or debug. At least status required for health checks."
+  required: false
+  value: "status"
+- name: OPENSSL_VERIFY
+  description: "Turn on/off the OpenSSL peer verification. Can be set to true/false."
+  required: true
+  value: "false"

@@ -60,24 +60,39 @@ Set the environment variable `APICAST_MODULE`:
 oc env dc/apicast APICAST_MODULE=apicast_cors
 ```
 
-Alternatively, you can add the above Dockerfile to your own fork of the `apicast` Git repository, and have OpenShift do the build:
+Alternatively, you can add the above Dockerfile to your own fork of the `apicast` Git repository, and have OpenShift do the build. For example:
 ```
-oc new-build https://github.com/example/apicast --strategy=docker
+oc new-build https://github.com/<YOUR_USERNAME>/apicast --strategy=docker
 ```
-
 
 #### Use ConfigMaps
 
-You can add the customized files as ConfigMaps and mount them as volumes. You can use the template `apicast-cors.yml` provided in this example to deploy APIcast with CORS:
+You can add the customized files as ConfigMaps and mount them as volumes to an existing APIcast instance.
+
+1. Deploy APIcast on OpenShift following the [APIcast on OpenShift guide](../../doc/openshift-guide.md).
+
+2. Create ConfigMaps from the provided files: 
 
 ```
-oc new-app -f $(pwd)/examples/cors/apicast-cors.yml
+oc create configmap apicast-cors --from-file=./examples/cors/apicast_cors.lua
+oc create configmap cors-conf --from-file=./examples/cors/cors.conf
 ```
 
-As in previous example, set the environment variable `APICAST_MODULE`:
+3. Create volumes for the container, and mount them to the appropriate paths:
+
+```
+oc set volume dc/apicast --add --name=apicast-cors --mount-path /opt/app-root/src/src/apicast_cors.lua --source='{"configMap":{"name":"apicast-cors","items":[{"key":"apicast_cors.lua","path":"apicast_cors.lua"}]}}'
+oc set volume dc/apicast --add --name=cors-conf --mount-path /opt/app-root/src/apicast.d/cors.conf --source='{"configMap":{"name":"cors-conf","items":[{"key":"cors.conf","path":"cors.conf"}]}}'
+```
+
+4. The `oc volume` command doesn't support adding subpaths, so a patch needs to be applied:
+
+```
+oc patch dc/apicast --type=json -p '[{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/0/subPath", "value":"apicast_cors.lua"},{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/1/subPath", "value":"cors.conf"}]'
+```
+
+5. As in previous example, set the environment variable `APICAST_MODULE`:
 
 ```
 oc env dc/apicast APICAST_MODULE=apicast_cors
 ```
-
-The change can also be applied to an existing APIcast instance by adding the ConfigMaps from the template, and modifying the APIcast deployment configuration following the example in the template.

@@ -144,7 +144,7 @@ function _M.connect_redis(options)
   opts.timeout = options and options.timeout or redis_conf.timeout
 
   local host = opts.host or env.get('REDIS_HOST') or "127.0.0.1"
-  local port = opts.prot or env.get('REDIS_PORT') or 6379
+  local port = opts.port or env.get('REDIS_PORT') or 6379
 
   local red = redis:new()
 

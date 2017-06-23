@@ -8,7 +8,7 @@ jobs:
       S2I_VERSION: "1.1.7-226afa1"
     steps:
       - checkout
-      - run: apk update && apk add wget make
+      - run: apk update && apk add wget make bash
       - run: travis/install-s2i.sh
       - setup_remote_docker
       - run: export PATH="/root/bin:${PATH}"

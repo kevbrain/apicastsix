@@ -18,7 +18,7 @@ test: ## Run all tests
 
 danger: TEMPFILE := $(shell mktemp)
 danger:
-	env | grep -E 'TRAVIS|DANGER|SEAL' > $(TEMPFILE)
+	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
 	docker run --rm -v $(PWD):/src/ -w /src/ --env-file=$(TEMPFILE) -u $(shell id -u) quay.io/3scale/danger danger
 
 busted: dependencies ## Test Lua.

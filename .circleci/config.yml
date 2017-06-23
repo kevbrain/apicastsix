@@ -11,7 +11,7 @@ jobs:
       - run: apk update && apk add wget make bash
       - run: travis/install-s2i.sh
       - setup_remote_docker
-      - run: export PATH="/root/bin:${PATH}"
+      - run: env; export PATH="/root/bin:${PATH}"
       - run: make builder-image
       - run: make test-builder-image gateway-logs --keep-going
       - run: make prove-docker

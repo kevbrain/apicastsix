@@ -6,11 +6,17 @@ jobs:
     working_directory: /opt/app-root/apicast
     environment:
       S2I_VERSION: "1.1.7-226afa1"
+      DOCKER_COMPOSE_VERSION: "1.14.0"
     steps:
       - checkout
-      - run: apk update && apk add wget make bash
+      - run: apk update && apk add wget make bash curl py-pip
       - run: travis/install-s2i.sh /usr/local/bin
-      - setup_remote_docker
+      - run: |
+          pip install "docker-compose==${DOCKER_COMPOSE_VERSION}"
+          docker-compose version
+      - setup_remote_docker:
+          reusable: true
+          exclusive: false
       - run: make builder-image
       - run: make test-builder-image gateway-logs --keep-going
       - run: make prove-docker

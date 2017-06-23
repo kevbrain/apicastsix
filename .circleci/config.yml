@@ -1,12 +1,30 @@
 version: 2
 jobs:
+  s2i:
+    docker:
+      - image: docker:stable
+    working_directory: /opt/app-root/apicast
+    environment:
+      S2I_VERSION: "1.1.7-226afa1"
+    steps:
+      - checkout
+      - run: apk update && apk add wget make
+      - run: travis/install-s2i.sh
+      - setup_remote_docker
+      - run: export PATH="/root/bin:${PATH}"
+      - run: make builder-image
+      - run: make test-builder-image gateway-logs --keep-going
+      - run: make prove-docker
+      - run: make runtime-image
+      - run: make test-runtime-image gateway-logs --keep-going
+      # - run: make test-doc # TODO: extract this into a docker container or some node container
+      - run: make danger
   build:
     docker:
       - image: quay.io/3scale/s2i-openresty-centos7:luarocks-build
         environment:
           TEST_NGINX_BINARY: openresty
       - image: redis:3.2.8-alpine
-      - image: docker:17.03.1-ce-dind
     working_directory: /opt/app-root/apicast
     steps:
       - checkout
@@ -36,12 +54,13 @@ jobs:
             - /usr/local/openresty/luajit/lib/lua/5.1
       - run: make busted
       - run: prove # no carton on centos
-      - setup_remote_docker
-      - run: make builder-image
-      - run: make test-builder-image gateway-logs --keep-going
-      - run: make prove-docker
-      - run: make runtime-image
-      - run: make test-runtime-image gateway-logs --keep-going
       - run: make doc
-      # - run: make test-doc # TODO: extract this into a docker container or some node container
-      - run: make danger
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+  s2i:
+    jobs:
+      - s2i

@@ -4,7 +4,7 @@ local cjson = require 'cjson'
 local user_agent = require 'user_agent'
 local env = require 'resty.env'
 
-describe('Configuration Rmote Loader V2', function()
+describe('Configuration Remote Loader V2', function()
 
   local test_backend
   local loader

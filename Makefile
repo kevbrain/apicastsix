@@ -42,7 +42,7 @@ prove: carton nginx ## Test nginx
 
 prove-docker: export IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
-	$(DOCKER_COMPOSE) run --rm prove
+	$(DOCKER_COMPOSE) run --rm prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
 builder-image: ## Build builder image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --copy --incremental

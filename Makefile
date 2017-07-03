@@ -13,13 +13,18 @@ OPENRESTY_VERSION ?= 1.11.2.2-5
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
+DANGER_IMAGE ?= quay.io/3scale/danger
+
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
 
 danger: TEMPFILE := $(shell mktemp)
 danger:
 	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
-	docker run --rm -v $(PWD):/src/ -w /src/ --env-file=$(TEMPFILE) -u $(shell id -u) quay.io/3scale/danger danger
+	docker ps -a
+	docker create --rm -v /src --name apicast-source $(DANGER_IMAGE) /bin/true
+	docker cp . apicast-source:/src
+	docker run --rm  -w /src/ --volumes-from=apicast-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
 busted: dependencies ## Test Lua.
 	@bin/busted

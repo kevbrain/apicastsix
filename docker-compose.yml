@@ -45,7 +45,7 @@ services:
       - example.com
     depends_on:
       - redis
-    volumes:
-            - ./t:/opt/app/t
+    volumes_from:
+    - container:apicast-source
   redis:
     image: redis

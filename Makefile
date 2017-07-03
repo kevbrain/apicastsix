@@ -18,13 +18,17 @@ DANGER_IMAGE ?= quay.io/3scale/danger
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
 
+apicast-source: export IMAGE_NAME = apicast-test
+apicast-source: ## Create Docker Volume container with APIcast source code
+	- docker rm -v -f apicast-source
+	docker create --rm -v /opt/app --name apicast-source $(IMAGE_NAME) /bin/true
+	docker cp . apicast-source:/opt/app
+
+danger: apicast-source
 danger: TEMPFILE := $(shell mktemp)
 danger:
 	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
-	docker ps -a
-	docker create --rm -v /src --name apicast-source $(DANGER_IMAGE) /bin/true
-	docker cp . apicast-source:/src
-	docker run --rm  -w /src/ --volumes-from=apicast-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
+	docker run --rm  -w /opt/app/ --volumes-from=apicast-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
 busted: dependencies ## Test Lua.
 	@bin/busted
@@ -40,6 +44,7 @@ carton:
 prove: carton nginx ## Test nginx
 	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
+prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
@@ -102,7 +107,7 @@ dependencies:
 	luarocks make apicast/*.rockspec
 	luarocks make rockspec
 
-clean-containers:
+clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes --remove-orphans
 
 clean: clean-containers ## Remove all running docker containers and images

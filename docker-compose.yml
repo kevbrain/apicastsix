@@ -4,9 +4,6 @@ services:
     image: ${IMAGE_NAME}
     depends_on:
     - redis
-    ports:
-      - "8080:8080"
-      - "8090:8090"
     env_file: .env
   dev:
     image: ${IMAGE_NAME}
@@ -47,6 +44,6 @@ services:
     depends_on:
       - redis
     volumes_from:
-    - container:apicast-source
+    - container:${COMPOSE_PROJECT_NAME}-source
   redis:
     image: redis

@@ -13,6 +13,12 @@ OPENRESTY_VERSION ?= 1.11.2.3-1
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
+CIRCLE_NODE_INDEX ?= 0
+CIRCLE_STAGE ?= build
+COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
+
+export COMPOSE_PROJECT_NAME
+
 DANGER_IMAGE ?= quay.io/3scale/danger
 
 test: ## Run all tests
@@ -20,15 +26,15 @@ test: ## Run all tests
 
 apicast-source: export IMAGE_NAME = apicast-test
 apicast-source: ## Create Docker Volume container with APIcast source code
-	- docker rm -v -f apicast-source
-	docker create --rm -v /opt/app --name apicast-source $(IMAGE_NAME) /bin/true
-	docker cp . apicast-source:/opt/app
+	- docker rm -v -f $(COMPOSE_PROJECT_NAME)-source
+	docker create --rm -v /opt/app --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
+	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app
 
 danger: apicast-source
 danger: TEMPFILE := $(shell mktemp)
 danger:
 	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
-	docker run --rm  -w /opt/app/ --volumes-from=apicast-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
+	docker run --rm  -w /opt/app/ --volumes-from=$(COMPOSE_PROJECT_NAME)-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
 busted: dependencies ## Test Lua.
 	@bin/busted
@@ -47,7 +53,7 @@ prove: carton nginx ## Test nginx
 prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
-	$(DOCKER_COMPOSE) run --rm prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
+	$(DOCKER_COMPOSE) run --rm -T prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
 builder-image: ## Build builder image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --copy --incremental
@@ -108,7 +114,7 @@ dependencies:
 	luarocks make rockspec
 
 clean-containers: apicast-source
-	$(DOCKER_COMPOSE) down --volumes --remove-orphans
+	$(DOCKER_COMPOSE) down --volumes
 
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force

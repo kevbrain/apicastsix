@@ -70,6 +70,10 @@ local function status_code_error(response)
   }, status_error_mt)
 end
 
+local function array()
+  return setmetatable({}, cjson.empty_array_mt)
+end
+
 function _M:index(host)
   local http_client = self.http_client
 
@@ -102,7 +106,7 @@ function _M:index(host)
   if res.status == 200 then
     local json = cjson.decode(res.body)
 
-    local config = { services = {}, oidc = {}}
+    local config = { services = array(), oidc = array() }
 
     local proxy_configs = json.proxy_configs or {}
 
@@ -147,7 +151,7 @@ function _M:call(environment)
     return nil, 'missing environment'
   end
 
-  local configs = { services = {}, oidc = {} }
+  local configs = { services = array(), oidc = array() }
 
   local res, err = self:services()
 
@@ -214,7 +218,7 @@ function _M:services()
   if res.status == 200 then
     local json = cjson.decode(res.body)
 
-    return json.services or {}
+    return json.services or array()
   else
     return nil, status_code_error(res)
   end

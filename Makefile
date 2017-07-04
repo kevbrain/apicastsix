@@ -47,7 +47,6 @@ prove: carton nginx ## Test nginx
 prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
-	$(DOCKER_COMPOSE) run --rm prove openresty -V
 	$(DOCKER_COMPOSE) run --rm prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
 builder-image: ## Build builder image

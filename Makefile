@@ -24,7 +24,7 @@ DANGER_IMAGE ?= quay.io/3scale/danger
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
 
-apicast-source: export IMAGE_NAME = apicast-test
+apicast-source: export IMAGE_NAME ?= apicast-test
 apicast-source: ## Create Docker Volume container with APIcast source code
 	- docker rm -v -f $(COMPOSE_PROJECT_NAME)-source
 	docker create --rm -v /opt/app --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true

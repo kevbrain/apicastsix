@@ -19,8 +19,6 @@ jobs:
           exclusive: false
       - run: make runtime-image
       - run: make test-runtime-image gateway-logs --keep-going
-      # - run: make test-doc # TODO: extract this into a docker container or some node container
-      - run: make danger
   s2i-builder:
     <<: *S2i
     steps:

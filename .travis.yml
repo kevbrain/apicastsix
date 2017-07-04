@@ -34,6 +34,7 @@ before_install:
 - export PATH="${PATH}:${HOME}/openresty/bin:${HOME}/openresty/luajit/bin:${HOME}/openresty/nginx/sbin:${HOME}/bin:${HOME}/.luarocks/bin"
 script:
 - make builder-image danger
+- make test-doc
 after_success:
 - if [ "$TRAVIS_BRANCH" = "master" -a "${TRAVIS_PULL_REQUEST}" = "false" ] || [ -n "${TRAVIS_TAG}" ]; then
   docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" quay.io;

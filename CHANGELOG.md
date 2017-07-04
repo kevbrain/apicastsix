@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - APIcast module `balancer` method now accepts optional balancer [PR #362](https://github.com/3scale/apicast/pull/362)
 - Extracted lua-resty-url [PR #384](https://github.com/3scale/apicast/pull/384)
+- Extracted lua-resty-env [PR #386](https://github.com/3scale/apicast/pull/386)
 
 ### Added
 

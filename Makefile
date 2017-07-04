@@ -9,17 +9,32 @@ SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
-OPENRESTY_VERSION ?= 1.11.2.2-5
+OPENRESTY_VERSION ?= 1.11.2.3-1
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
+
+CIRCLE_NODE_INDEX ?= 0
+CIRCLE_STAGE ?= build
+COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
+
+export COMPOSE_PROJECT_NAME
+
+DANGER_IMAGE ?= quay.io/3scale/danger
 
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
 
+apicast-source: export IMAGE_NAME = apicast-test
+apicast-source: ## Create Docker Volume container with APIcast source code
+	- docker rm -v -f $(COMPOSE_PROJECT_NAME)-source
+	docker create --rm -v /opt/app --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
+	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app
+
+danger: apicast-source
 danger: TEMPFILE := $(shell mktemp)
 danger:
-	env | grep -E 'TRAVIS|DANGER|SEAL' > $(TEMPFILE)
-	docker run --rm -v $(PWD):/src/ -w /src/ --env-file=$(TEMPFILE) -u $(shell id -u) quay.io/3scale/danger danger
+	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
+	docker run --rm  -w /opt/app/ --volumes-from=$(COMPOSE_PROJECT_NAME)-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
 busted: dependencies ## Test Lua.
 	@bin/busted
@@ -35,9 +50,10 @@ carton:
 prove: carton nginx ## Test nginx
 	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
+prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
-	$(DOCKER_COMPOSE) run --rm prove
+	$(DOCKER_COMPOSE) run --rm -T prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
 builder-image: ## Build builder image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --copy --incremental
@@ -97,8 +113,8 @@ dependencies:
 	luarocks make apicast/*.rockspec
 	luarocks make rockspec
 
-clean-containers:
-	$(DOCKER_COMPOSE) down --volumes --remove-orphans
+clean-containers: apicast-source
+	$(DOCKER_COMPOSE) down --volumes
 
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force

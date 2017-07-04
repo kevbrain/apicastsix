@@ -1,0 +1,60 @@
+version: 2
+jobs:
+  s2i-runtime: &S2i
+    docker:
+      - image: docker:stable
+    working_directory: /opt/app-root/apicast
+    environment:
+      S2I_VERSION: "1.1.7-226afa1"
+      DOCKER_COMPOSE_VERSION: "1.14.0"
+    steps:
+      - run: apk update && apk add wget make bash curl py-pip git openssh-client
+      - checkout
+      - run: travis/install-s2i.sh /usr/local/bin
+      - run: |
+          pip install "docker-compose==${DOCKER_COMPOSE_VERSION}"
+          docker-compose version
+      - setup_remote_docker:
+          reusable: true
+          exclusive: false
+      - run: make runtime-image
+      - run: make test-runtime-image gateway-logs --keep-going
+      # - run: make test-doc # TODO: extract this into a docker container or some node container
+      - run: make danger
+  s2i-builder:
+    <<: *S2i
+    steps:
+      - run: apk update && apk add wget make bash curl py-pip git openssh-client
+      - checkout
+      - run: travis/install-s2i.sh /usr/local/bin
+      - run: |
+          pip install "docker-compose==${DOCKER_COMPOSE_VERSION}"
+          docker-compose version
+      - setup_remote_docker:
+          reusable: true
+          exclusive: false
+      - run: make builder-image
+      - run: make test-builder-image gateway-logs --keep-going
+      - run: make prove-docker
+  build:
+    docker:
+      - image: quay.io/3scale/s2i-openresty-centos7:luarocks-build
+        environment:
+          TEST_NGINX_BINARY: openresty
+      - image: redis:3.2.8-alpine
+    working_directory: /opt/app-root/apicast
+    steps:
+      - checkout
+      - run: luarocks make apicast/*.rockspec
+      - run: luarocks make rockspec
+      - run: make busted
+      - run: prove # no carton on centos
+      - run: make doc
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+      - s2i-runtime
+      - s2i-builder

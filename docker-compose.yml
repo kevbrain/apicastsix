@@ -4,9 +4,6 @@ services:
     image: ${IMAGE_NAME}
     depends_on:
     - redis
-    ports:
-      - "8080:8080"
-      - "8090:8090"
     env_file: .env
   dev:
     image: ${IMAGE_NAME}
@@ -36,16 +33,17 @@ services:
   prove:
     image: ${IMAGE_NAME}
     user: root
+    entrypoint: "bash -ec"
     environment:
       TEST_NGINX_BINARY: openresty
       TEST_NGINX_APICAST_PATH: /opt/app
       TEST_NGINX_REDIS_HOST: redis
-    command: prove
+    command: "'$$TEST_NGINX_BINARY -V; prove; exit $$?'"
     dns_search:
       - example.com
     depends_on:
       - redis
-    volumes:
-            - ./t:/opt/app/t
+    volumes_from:
+    - container:${COMPOSE_PROJECT_NAME}-source
   redis:
     image: redis

@@ -6,6 +6,7 @@ local remote_loader_v1 = require 'configuration_loader.remote_v1'
 local remote_loader_v2 = require 'configuration_loader.remote_v2'
 local util = require 'util'
 local env = require('resty.env')
+local resty_url = require('resty.url')
 local synchronization = require('resty.synchronization').new(1)
 local keycloak = require 'oauth.keycloak'
 local cjson = require 'cjson'
@@ -23,6 +24,24 @@ local _M = {
 }
 
 function _M.load(host)
+  local configuration = env.get('APICAST_CONFIGURATION')
+  local uri = resty_url.parse(configuration)
+
+  if uri then
+    local scheme = uri.scheme
+
+    if scheme == 'file' then
+      env.set('THREESCALE_CONFIG_FILE', uri.path)
+    elseif scheme == 'http' or scheme == 'https' then
+      env.set('THREESCALE_PORTAL_ENDPOINT', uri)
+    else
+      ngx.log(ngx.WARN, 'unknown configuration URI: ', uri)
+    end
+  elseif configuration then
+    ngx.log(ngx.DEBUG, 'falling back to file system path for configuration')
+    env.set('THREESCALE_CONFIG_FILE', configuration)
+  end
+
   return mock_loader.call() or file_loader.call() or remote_loader_v2:call(host) or remote_loader_v1.call(host)
 end
 

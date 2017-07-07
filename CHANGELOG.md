@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - APIcast published to [luarocks.org](https://luarocks.org/modules/3scale/apicast) [PR #366](https://github.com/3scale/apicast/pull/366)
 - Support for passing remote configuratio URL through the CLI [PR #389](https://github.com/3scale/apicast/pull/389)
+- CLI flag -b to load configuration on boot [PR #389](https://github.com/3scale/apicast/pull/389)
 
 ## [3.1.0-alpha1] - 2017-05-05
 

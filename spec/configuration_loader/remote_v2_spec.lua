@@ -42,6 +42,16 @@ describe('Configuration Remote Loader V2', function()
       assert.truthy(services)
       assert.equal(2, #services)
     end)
+
+    it('returns list of services when APICAST_SERVICES is set', function()
+      env.set('APICAST_SERVICES', '11,42')
+
+      local services = loader:services()
+
+      assert.truthy(services)
+      assert.equal(2, #services)
+      assert.same({ { service = { id = 11 } }, { service = { id = 42 } } }, services)
+    end)
   end)
 
   describe(':config', function()

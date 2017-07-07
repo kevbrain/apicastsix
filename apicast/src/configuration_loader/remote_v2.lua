@@ -4,12 +4,14 @@ local ipairs = ipairs
 local insert = table.insert
 local rawset = rawset
 local encode_args = ngx.encode_args
+local tonumber = tonumber
 
 local resty_url = require 'resty.url'
 local http_ng = require "resty.http_ng"
 local user_agent = require 'user_agent'
 local cjson = require 'cjson'
 local resty_env = require 'resty.env'
+local re = require 'ngx.re'
 
 local _M = {
   _VERSION = '0.1'
@@ -163,7 +165,24 @@ function _M:call(environment)
   return cjson.encode({ services = configs })
 end
 
+local services_subset = function()
+  local services = resty_env.get('APICAST_SERVICES')
+
+  if services then
+    local ids = re.split(services, ',', 'oj')
+    for i=1, #ids do
+      ids[i] = { service = { id = tonumber(ids[i]) } }
+    end
+    services = ids
+  end
+
+  return services
+end
+
 function _M:services()
+  local services = services_subset()
+  if services then return services end
+
   local http_client = self.http_client
 
   if not http_client then

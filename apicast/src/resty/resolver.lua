@@ -135,7 +135,7 @@ end
 
 function _M.new(dns, opts)
   opts = opts or {}
-  local cache = opts.cache or resolver_cache.new()
+  local cache = opts.cache or resolver_cache.shared()
   local search = opts.search or _M.search
 
   ngx.log(ngx.DEBUG, 'resolver search domains: ', concat(search, ' '))

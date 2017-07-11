@@ -72,7 +72,8 @@ describe('Proxy', function()
   end)
 
   describe('.get_upstream', function()
-    local get_upstream = proxy.get_upstream
+    local get_upstream
+    before_each(function() get_upstream = proxy.get_upstream end)
 
     it('sets correct upstream port', function()
       assert.same(443, get_upstream({ api_backend = 'https://example.com' }).port)
@@ -82,10 +83,14 @@ describe('Proxy', function()
   end)
 
   describe('.authorize', function()
-    local authorize = proxy.authorize
+    local authorize
     local service = { backend_authentication = { value = 'not_baz' } }
     local usage = 'foo'
     local credentials = 'client_id=blah'
+
+    before_each(function()
+      authorize = proxy.authorize
+    end)
 
     it('takes ttl value if sent', function()
       local ttl = 80

@@ -1,9 +1,11 @@
 return {
   _all = {
-    helper = 'spec/spec_helper.lua'
+    helper = 'spec/spec_helper.lua',
   },
   default = {
     verbose = true,
+    ['shuffle-tests'] = true,
+    ['shuffle-files'] = true,
     lpath = "./spec/?.lua;./apicast/src/?.lua;"
   },
 }

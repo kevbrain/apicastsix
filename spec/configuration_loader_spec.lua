@@ -96,12 +96,13 @@ insulate('Configuration object', function()
 
   describe('lazy loader', function()
     local _M = require('configuration_loader')
+    local configuration_store = require('configuration_store')
     local loader
 
     before_each(function() loader = _M.new('lazy') end)
 
     it('does not crash on rewrite', function()
-      local configuration = {}
+      local configuration = configuration_store.new()
       assert.same(configuration, loader.rewrite(configuration, 'example.com'))
     end)
   end)

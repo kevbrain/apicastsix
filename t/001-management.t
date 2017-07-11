@@ -262,7 +262,7 @@ env APICAST_MANAGEMENT_API=debug;
 lua_package_path "$TEST_NGINX_LUA_PATH";
 init_by_lua_block {
   ngx.now = function() return 0 end
-  local cache = require('resty.resolver.cache').new():save({ {
+  local cache = require('resty.resolver.cache').shared():save({ {
     address = "127.0.0.1",
     class = 1,
     name = "127.0.0.1.xip.io",

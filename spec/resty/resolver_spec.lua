@@ -1,4 +1,5 @@
 local resty_resolver = require 'resty.resolver'
+local resolver_cache = require 'resty.resolver.cache'
 
 describe('resty.resolver', function()
 
@@ -33,7 +34,7 @@ describe('resty.resolver', function()
           }
         end)
       }
-      resolver = resty_resolver.new(dns)
+      resolver = resty_resolver.new(dns, { cache = resolver_cache.new() })
     end)
 
     it('returns servers', function()

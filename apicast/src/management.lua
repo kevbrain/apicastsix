@@ -105,7 +105,7 @@ function _M.boot()
 end
 
 function _M.dns_cache()
-  local cache = resolver_cache.new()
+  local cache = resolver_cache.shared()
   return json_response(cache:all())
 end
 

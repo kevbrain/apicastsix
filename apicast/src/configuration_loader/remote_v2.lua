@@ -88,7 +88,7 @@ function _M:index(host)
     return nil, 'missing environment'
   end
 
-  local url = resty_url.join(self.endpoint, '/', env, '.json?', encode_args({ host = host }))
+  local url = resty_url.join(self.endpoint, env .. '.json?' .. encode_args({ host = host }))
   local res, err = http_client.get(url)
 
   if not res and err then

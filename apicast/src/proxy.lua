@@ -284,6 +284,8 @@ function _M:call(host)
 
   self.oauth = service:oauth()
 
+  ngx.log(ngx.DEBUG, 'using OAuth: ', self.oauth)
+
   -- means that OAuth integration has own router
   if self.oauth and self.oauth.call then
     local f, params = self.oauth:call(service)

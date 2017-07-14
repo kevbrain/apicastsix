@@ -24,6 +24,7 @@ describe('OIDC', function()
         header = { typ = 'JWT', alg = 'RS256' },
         payload = {
           iss = service.oidc.issuer,
+          aud = 'notused',
           azp = 'ce3b2e5e',
           nbf = 0,
           exp = ngx.now() + 10,
@@ -44,7 +45,7 @@ describe('OIDC', function()
         header = { typ = 'JWT', alg = 'RS256' },
         payload = {
           iss = service.oidc.issuer,
-          azp = 'ce3b2e5e',
+          aud = {'ce3b2e5e','notused'},
           nbf = 0,
           exp = ngx.now() + 10,
         },
@@ -68,7 +69,7 @@ describe('OIDC', function()
         header = { typ = 'JWT', alg = 'RS256' },
         payload = {
           iss = service.oidc.issuer,
-          azp = 'foobar',
+          aud = 'foobar',
           nbf = 0,
           exp = ngx.now() + 10,
         },
@@ -86,7 +87,7 @@ describe('OIDC', function()
         header = { typ = 'JWT', alg = 'RS256' },
         payload = {
           iss = service.oidc.issuer,
-          azp = 'foobar',
+          aud = 'foobar',
           nbf = 1,
           exp = ngx.now() + 10,
         },
@@ -104,7 +105,7 @@ describe('OIDC', function()
         header = { typ = 'JWT', alg = 'RS256' },
         payload = {
           iss = service.oidc.issuer,
-          azp = 'foobar',
+          aud = 'foobar',
           nbf = 0,
           exp = 1,
         },

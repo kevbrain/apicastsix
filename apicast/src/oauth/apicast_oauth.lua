@@ -9,7 +9,12 @@ local _M = {
   _VERSION = '0.1'
 }
 
-local mt = { __index = _M }
+local mt = {
+  __index = _M,
+  __tostring = function()
+    return 'APIcast OAuth 2.0'
+  end,
+}
 
 function _M.new(service)
   return setmetatable(

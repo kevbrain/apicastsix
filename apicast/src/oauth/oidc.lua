@@ -20,7 +20,10 @@ end
 _M.reset()
 
 local mt = {
-  __index = _M
+  __index = _M,
+  __tostring = function()
+    return 'OpenID Connect'
+  end
 }
 
 function _M.new(service)
@@ -37,6 +40,7 @@ function _M.new(service)
     jwt_claims = {
       nbf = jwt_validators.is_not_before(),
       exp = jwt_validators.is_not_expired(),
+      aud = jwt_validators.required(),
       iss = jwt_validators.equals_any_of({ issuer }),
     },
   }, mt)
@@ -116,8 +120,19 @@ function _M:transform_credentials(credentials)
     return nil, nil, jwt_obj and jwt_obj.reason or err
   end
 
-  local app_id = jwt_obj.payload.azp
-  local ttl = timestamp_to_seconds_from_now(jwt_obj.payload.exp)
+  local payload = jwt_obj.payload
+
+  local app_id = payload.azp or payload.aud
+  local ttl = timestamp_to_seconds_from_now(payload.exp)
+
+
+  --- http://openid.net/specs/openid-connect-core-1_0.html#CodeIDToken
+  -- It MAY also contain identifiers for other audiences.
+  -- In the general case, the aud value is an array of case sensitive strings.
+  -- In the common special case when there is one audience, the aud value MAY be a single case sensitive string.
+  if type(app_id) == 'table' then
+    app_id = app_id[1]
+  end
 
   ------
   -- OAuth2 credentials for OIDC

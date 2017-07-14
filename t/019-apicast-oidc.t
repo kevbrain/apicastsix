@@ -1,6 +1,6 @@
 use Test::Nginx::Socket::Lua 'no_plan';
 use Cwd qw(cwd);
-use Crypt::JWT qw(encode_jwt);
+use Crypt::OpenSSL::RSA;
 
 my $pwd = cwd();
 my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
@@ -13,7 +13,7 @@ $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 $ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
 $ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | head -1 | tr '\n' ' '`;
 
-our $rsa = Crypt::PK::RSA->new('t/fixtures/rsa.pem');
+our $rsa = `cat t/fixtures/rsa.pem`;
 
 log_level('debug');
 repeat_each(2);
@@ -74,9 +74,12 @@ __DATA__
 GET /test
 --- error_code: 200
 --- more_headers eval
-use Crypt::JWT qw(encode_jwt);
-my $payload = { aud => 'appid', nbf => 0, iss => 'https://example.com/auth/realms/apicast', exp => time + 10 };
-my $jwt = encode_jwt(payload=>$payload, alg=>'RS256', key=>$::rsa);
+use JSON::WebToken;
+my $jwt = JSON::WebToken->encode({
+  aud => 'appid',
+  nbf => 0,
+  iss => 'https://example.com/auth/realms/apicast',
+  exp => time + 10 }, $::rsa, 'RS256');
 "Authorization: Bearer $jwt"
 --- no_error_log
 [error]

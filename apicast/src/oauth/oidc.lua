@@ -117,6 +117,9 @@ function _M:transform_credentials(credentials)
   local jwt_obj, err = parse_and_verify_token(self, credentials.access_token)
 
   if err then
+    if ngx.config.debug then
+      ngx.log(ngx.DEBUG, 'JWT object: ', require('inspect')(jwt_obj))
+    end
     return nil, nil, jwt_obj and jwt_obj.reason or err
   end
 

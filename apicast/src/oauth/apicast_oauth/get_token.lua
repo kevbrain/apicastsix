@@ -55,7 +55,11 @@ local function check_client_credentials(params)
     { args = { app_id = params.client_id, app_key = params.client_secret, redirect_uri = params.redirect_uri },
       copy_all_vars = true, ctx = ngx.ctx })
 
-  if res.status == 200 then
+  ngx.log(ngx.INFO, "[oauth] Checking client credentials, status: ", res.status, " body: ", res.body)
+
+  if res.status == 200 and
+      ts.match_xml_element(res.body, 'key', params.client_secret) and
+      ts.match_xml_element(res.body, 'authorized', true) then
     return { ["status"] = res.status, ["body"] = res.body }
   else
     ngx.status = 401

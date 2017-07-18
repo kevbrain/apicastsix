@@ -8,8 +8,6 @@ local util = require 'util'
 local env = require('resty.env')
 local resty_url = require('resty.url')
 local synchronization = require('resty.synchronization').new(1)
-local keycloak = require 'oauth.keycloak'
-local cjson = require 'cjson'
 
 local error = error
 local len = string.len
@@ -115,7 +113,7 @@ local boot = {
 }
 
 function boot.init(configuration)
-  local config, err, code = _M.run_external_command()
+  local config, err, code = _M.run_external_command('boot')
   local init = _M.configure(configuration, config)
 
   if config and init then
@@ -128,18 +126,6 @@ function boot.init(configuration)
   if ttl() == 0 then
     ngx.log(ngx.EMERG, 'cache is off, cannot store configuration, exiting')
     os.exit(0)
-  end
-
-  if keycloak.enabled() then
-    local keycloak_config
-    keycloak_config, err, code = _M.run_external_command("keycloak")
-    if keycloak_config then
-      ngx.log(ngx.DEBUG, 'downloaded keycloak configuration: ', keycloak_config)
-      configuration.keycloak = cjson.decode(keycloak_config)
-    else
-      -- TODO: consider exiting if there is problem with keycloak configuration
-      ngx.log(ngx.WARN, 'failed to load keycloak configuration, exiting (code ', code, ')\n',  err)
-    end
   end
 end
 
@@ -192,12 +178,6 @@ end
 local lazy = { init_worker = noop }
 
 function lazy.init(configuration)
-  local keycloak_config = _M.run_external_command("keycloak")
-
-  if keycloak_config then
-    configuration.keycloak = cjson.decode(keycloak_config)
-  end
-
   configuration.configured = true
 end
 
@@ -219,8 +199,6 @@ function lazy.rewrite(configuration, host)
     local config = _M.load(host)
     _M.configure(configuration, config)
   end
-
-  configuration.keycloak = keycloak.load_configuration()
 
   if ok then
     synchronization:release(host)

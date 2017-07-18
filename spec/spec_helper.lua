@@ -5,6 +5,7 @@ require 'resty.hmac'
 
 require 'ngx_helper'
 require 'luassert_helper'
+require 'jwt_helper'
 
 local busted = require('busted')
 local env = require('resty.env')

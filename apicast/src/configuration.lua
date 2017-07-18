@@ -20,8 +20,9 @@ local inspect = require 'inspect'
 local re = require 'ngx.re'
 local env = require 'resty.env'
 local resty_url = require 'resty.url'
+local util = require 'util'
 
-local mt = { __index = _M }
+local mt = { __index = _M, __tostring = function() return 'Configuration' end }
 
 local function map(func, tbl)
   local newtbl = {}
@@ -155,6 +156,9 @@ function _M.parse_service(service)
         endpoint = backend_endpoint_override or backend.endpoint,
         host = backend_host_override or backend.host
       },
+      oidc = {
+        issuer_endpoint = proxy.oidc_issuer_endpoint
+      },
       credentials = {
         location = proxy.credentials_location or 'query',
         user_key = lower(proxy.auth_user_key or 'user_key'),
@@ -203,16 +207,6 @@ function _M.parse_service(service)
     })
 end
 
-local function to_hash(table)
-  local t = {}
-
-  for i = 1, #table do
-    t[table[i]] = true
-  end
-
-  return t
-end
-
 function _M.services_limit()
   local services = {}
   local subset = env.get('APICAST_SERVICES')
@@ -220,11 +214,11 @@ function _M.services_limit()
 
   local ids = re.split(subset, ',', 'oj')
 
-  return to_hash(ids)
+  return util.to_hash(ids)
 end
 
 function _M.filter_services(services, subset)
-  subset = subset and to_hash(subset) or _M.services_limit()
+  subset = subset and util.to_hash(subset) or _M.services_limit()
   if not subset or not next(subset) then return services end
 
   local s = {}
@@ -247,7 +241,8 @@ function _M.new(configuration)
 
   return setmetatable({
     version = configuration.timestamp,
-    services = _M.filter_services(map(_M.parse_service, services))
+    services = _M.filter_services(map(_M.parse_service, services)),
+    oidc = configuration.oidc or {}
   }, mt)
 end
 

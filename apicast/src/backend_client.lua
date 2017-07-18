@@ -88,7 +88,7 @@ local function call_backend_transaction(self, path, ...)
     args[i] = ngx.encode_args(args[i])
   end
 
-  local url = resty_url.join(endpoint, '/transactions/', path, '?', concat(args, '&'))
+  local url = resty_url.join(endpoint, '/transactions', path .. '?' .. concat(args, '&'))
 
   local res = http_client.get(url)
 

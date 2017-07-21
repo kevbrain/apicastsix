@@ -157,7 +157,7 @@ function _M.parse_service(service)
         host = backend_host_override or backend.host
       },
       oidc = {
-        issuer_endpoint = proxy.oidc_issuer_endpoint
+        issuer_endpoint = proxy.oidc_issuer_endpoint ~= ngx.null and proxy.oidc_issuer_endpoint
       },
       credentials = {
         location = proxy.credentials_location or 'query',

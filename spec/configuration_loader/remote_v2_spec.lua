@@ -62,7 +62,7 @@ describe('Configuration Remote Loader V2', function()
             proxy_config = {
               version = 13,
               environment = 'sandbox',
-              content = { id = 42, backend_version = 1 }
+              content = { id = 42, backend_version = 1, proxy = { oidc_issuer_endpoint = ngx.null } }
             }
           }
         ) }

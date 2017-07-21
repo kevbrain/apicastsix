@@ -237,7 +237,7 @@ function _M:oidc_issuer_configuration(service)
 
   local endpoint = service.oidc.issuer_endpoint
 
-  if not endpoint then
+  if not endpoint or endpoint == ngx.null then
     return nil, 'no OIDC endpoint'
   end
 

@@ -89,7 +89,7 @@ test-builder-image: builder-image clean-containers ## Smoke test the builder ima
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X PUT http://gateway:8090/config --data '{"services":[{"id":42}]}'
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=http://gateway:8090/config --user 100001 test bin/entrypoint -d
+	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=http://gateway:8090/config --user 100001 test /tmp/scripts/run -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail http://gateway:8090/status/ready
 	@echo -e $(SEPARATOR)

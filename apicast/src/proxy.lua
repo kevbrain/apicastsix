@@ -10,6 +10,8 @@ local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local configuration_store = require 'configuration_store'
 
+local backend_cache_handler = require('backend.cache_handler')
+
 local resty_url = require 'resty.url'
 
 local assert = assert
@@ -35,8 +37,15 @@ local mt = {
 }
 
 function _M.new(configuration)
+  local cache = ngx.shared.api_keys
+
+  if not cache then
+    ngx.log(ngx.WARN, 'apicast cache error missing shared memory zone api_keys')
+  end
+
   return setmetatable({
-    configuration = assert(configuration, 'missing proxy configuration')
+    configuration = assert(configuration, 'missing proxy configuration'),
+    cache = cache,
   }, mt)
 end
 
@@ -183,7 +192,7 @@ function _M:authorize(service, usage, credentials, ttl)
   ngx.var.credentials = credentials
   -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. usage
-  local api_keys = ngx.shared.api_keys
+  local api_keys = self.cache
   local is_known = api_keys and api_keys:get(cached_key)
 
   if is_known == 200 then
@@ -193,17 +202,10 @@ function _M:authorize(service, usage, credentials, ttl)
     ngx.log(ngx.INFO, 'apicast cache miss key: ', cached_key)
     local res = http.get(internal_location)
 
-    ngx.log(ngx.DEBUG, '[backend] response status: ', res.status, ' body: ', res.body)
-
-    if res.status == 200 then
-      if api_keys then
-        ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ', ttl: ', ttl )
-        api_keys:set(cached_key, 200, ttl or 0)
-      end
-    else -- TODO: proper error handling
-      if api_keys then api_keys:delete(cached_key) end
+    if not self:handle_backend_response(cached_key, res, ttl) then
       error_authorization_failed(service)
     end
+
     -- set cached_key to nil to avoid doing the authrep in post_action
     ngx.var.cached_key = nil
   end
@@ -381,21 +383,21 @@ function _M:post_action()
     local auth_uri = service.backend_version == 'oauth' and 'threescale_oauth_authrep' or 'threescale_authrep'
     local res = http.get("/".. auth_uri .."?log=" .. response_codes_encoded_data())
 
-    if res.status ~= 200 then
-      local api_keys = ngx.shared.api_keys
-
-      if api_keys then
-        ngx.log(ngx.NOTICE, 'apicast cache delete key: ', cached_key, ' cause status ', res.status)
-        api_keys:delete(cached_key)
-      else
-        ngx.log(ngx.ALERT, 'apicast cache error missing shared memory zone api_keys')
-      end
-    end
+    self:handle_backend_response(cached_key, res)
   else
     ngx.log(ngx.INFO, '[async] skipping after action, no cached key')
   end
 
   exit(ngx.HTTP_OK)
+end
+
+local backend_response_handler = backend_cache_handler.new(env.get('APICAST_BACKEND_CACHE_HANDLER') or 'strict')
+
+function _M:handle_backend_response(cached_key, response, ttl)
+  local cache = self.cache
+  ngx.log(ngx.DEBUG, '[backend] response status: ', response.status, ' body: ', response.body)
+
+  return backend_response_handler(cache, cached_key, response, ttl)
 end
 
 if custom_config then

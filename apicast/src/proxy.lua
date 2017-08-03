@@ -9,6 +9,7 @@
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local configuration_store = require 'configuration_store'
+local resty_lrucache = require('resty.lrucache')
 
 local backend_cache_handler = require('backend.cache_handler')
 
@@ -36,8 +37,12 @@ local mt = {
   __index = _M
 }
 
+function _M.shared_cache()
+  return ngx.shared.api_keys or resty_lrucache.new(1)
+end
+
 function _M.new(configuration)
-  local cache = ngx.shared.api_keys
+  local cache = _M.shared_cache() or error('missing cache store')
 
   if not cache then
     ngx.log(ngx.WARN, 'apicast cache error missing shared memory zone api_keys')
@@ -192,8 +197,8 @@ function _M:authorize(service, usage, credentials, ttl)
   ngx.var.credentials = credentials
   -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. usage
-  local api_keys = self.cache
-  local is_known = api_keys and api_keys:get(cached_key)
+  local cache = self.cache
+  local is_known = cache:get(cached_key)
 
   if is_known == 200 then
     ngx.log(ngx.DEBUG, 'apicast cache hit key: ', cached_key)

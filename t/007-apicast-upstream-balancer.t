@@ -5,7 +5,7 @@ my $pwd = cwd();
 my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
 
-require("t/dns.pl");
+require("$pwd/t/dns.pl");
 
 log_level('debug');
 repeat_each(2);

@@ -73,7 +73,6 @@ yay, api backend
 apicast cache miss key: 42:value:usage%5Bhits%5D=2
 apicast cache write key: 42:value:usage%5Bhits%5D=2
 apicast cache hit key: 42:value:usage%5Bhits%5D=2
-apicast cache write key: 42:value:usage%5Bhits%5D=2
 
 === TEST 6: multi service configuration
 Two services can exist together and are split by their hostname.
@@ -220,4 +219,3 @@ yay, api backend
 apicast cache miss key: 42:value:usage%5Bhits%5D=2
 apicast cache write key: 42:value:usage%5Bhits%5D=2
 apicast cache hit key: 42:value:usage%5Bhits%5D=2
-apicast cache write key: 42:value:usage%5Bhits%5D=2

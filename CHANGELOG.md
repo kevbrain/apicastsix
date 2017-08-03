@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Ability to configure how to cache backend authorizations [PR #396](https://github.com/3scale/apicast/pull/396)
+
 ## [3.1.0-beta1] - 2017-07-21
 
 ### Fixed

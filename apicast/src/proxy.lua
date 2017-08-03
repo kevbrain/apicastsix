@@ -48,9 +48,12 @@ function _M.new(configuration)
     ngx.log(ngx.WARN, 'apicast cache error missing shared memory zone api_keys')
   end
 
+  local cache_handler = backend_cache_handler.new(env.get('APICAST_BACKEND_CACHE_HANDLER'))
+
   return setmetatable({
     configuration = assert(configuration, 'missing proxy configuration'),
     cache = cache,
+    cache_handler = cache_handler,
   }, mt)
 end
 
@@ -204,15 +207,16 @@ function _M:authorize(service, usage, credentials, ttl)
     ngx.log(ngx.DEBUG, 'apicast cache hit key: ', cached_key)
     ngx.var.cached_key = cached_key
   else
-    ngx.log(ngx.INFO, 'apicast cache miss key: ', cached_key)
+    ngx.log(ngx.INFO, 'apicast cache miss key: ', cached_key, ' value: ', is_known)
+
+    -- set cached_key to nil to avoid doing the authrep in post_action
+    ngx.var.cached_key = nil
+
     local res = http.get(internal_location)
 
     if not self:handle_backend_response(cached_key, res, ttl) then
       error_authorization_failed(service)
     end
-
-    -- set cached_key to nil to avoid doing the authrep in post_action
-    ngx.var.cached_key = nil
   end
 end
 
@@ -396,13 +400,10 @@ function _M:post_action()
   exit(ngx.HTTP_OK)
 end
 
-local backend_response_handler = backend_cache_handler.new(env.get('APICAST_BACKEND_CACHE_HANDLER') or 'strict')
-
 function _M:handle_backend_response(cached_key, response, ttl)
-  local cache = self.cache
   ngx.log(ngx.DEBUG, '[backend] response status: ', response.status, ' body: ', response.body)
 
-  return backend_response_handler(cache, cached_key, response, ttl)
+  return self.cache_handler(self.cache, cached_key, response, ttl)
 end
 
 if custom_config then

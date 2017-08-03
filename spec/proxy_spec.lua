@@ -84,38 +84,37 @@ describe('Proxy', function()
   end)
 
   describe('.authorize', function()
-    local authorize
     local service = { backend_authentication = { value = 'not_baz' } }
     local usage = 'foo'
     local credentials = 'client_id=blah'
 
-    before_each(function()
-      authorize = proxy.authorize
-    end)
 
     it('takes ttl value if sent', function()
       local ttl = 80
       ngx.var = { cached_key = credentials, usage=usage, credentials=credentials, http_x_3scale_debug='baz', real_url='blah' }
       ngx.ctx = { backend_upstream = ''}
-      ngx.shared = { api_keys = { cached_key = 'client_id=blah:foo', get = function () return {} end } }
 
-      stub(ngx.shared.api_keys, 'set')
-      stub(ngx.location, 'capture', function() return { status = 200 } end)
+      local response = { status = 200 }
+      stub(ngx.location, 'capture', function() return response end)
 
-      authorize(proxy, service, usage, credentials, ttl)
-      assert.spy(ngx.shared.api_keys.set).was.called_with(ngx.shared.api_keys, 'client_id=blah:foo', 200, 80)
+      stub(proxy, 'cache_handler').returns(true)
+
+      proxy:authorize(service, usage, credentials, ttl)
+
+      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo', response, ttl)
     end)
 
     it('works with no ttl', function()
       ngx.var = { cached_key = "client_id=blah", usage=usage, credentials=credentials, http_x_3scale_debug='baz', real_url='blah' }
       ngx.ctx = { backend_upstream = ''}
-      ngx.shared = { api_keys = { cached_key = 'client_id=blah:foo', get = function () return {} end } }
 
-      stub(ngx.shared.api_keys, 'set')
-      stub(ngx.location, 'capture', function() return { status = 200 } end)
+      local response = { status = 200 }
+      stub(ngx.location, 'capture', function() return response end)
+      stub(proxy, 'cache_handler').returns(true)
 
-      authorize(proxy, service, usage, credentials)
-      assert.spy(ngx.shared.api_keys.set).was.called_with(ngx.shared.api_keys, 'client_id=blah:foo', 200, 0)
+      proxy:authorize(service, usage, credentials)
+
+      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo', response, nil)
     end)
   end)
 end)

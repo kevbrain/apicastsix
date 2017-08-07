@@ -7,7 +7,7 @@ my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
 $ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$apicast/conf.d/management.conf";
 
-require("t/dns.pl");
+require("$pwd/t/dns.pl");
 
 log_level('debug');
 repeat_each(2);

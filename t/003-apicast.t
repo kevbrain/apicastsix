@@ -9,7 +9,7 @@ $ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 
-require("t/dns.pl");
+require("$pwd/t/dns.pl");
 
 log_level('debug');
 repeat_each(2);

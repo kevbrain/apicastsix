@@ -7,7 +7,7 @@ my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 $ENV{TEST_NGINX_LUA_PATH} = "$pwd/t/servroot/html/?.lua;$apicast/src/?.lua;;";
 $ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/init.conf";
 $ENV{TEST_NGINX_APICAST_PATH} = $apicast;
-$ENV{APICAST_MODULE} = 'custom';
+$ENV{APICAST_MODULE} = 'customfoobar';
 
 env_to_nginx(
     'APICAST_MODULE'
@@ -30,7 +30,7 @@ __DATA__
 --- request
 GET
 --- error_log
-module 'custom' not found
+module 'customfoobar' not found
 
 
 === TEST 2: print error on syntax error
@@ -43,9 +43,9 @@ module 'custom' not found
 --- request
 GET
 --- error_log
-custom.lua:1: unexpected symbol near 'not'
+customfoobar.lua:1: unexpected symbol near 'not'
 --- user_files
->>> custom.lua
+>>> customfoobar.lua
 not valid lua
 
 === TEST 3: print error on empty file
@@ -57,7 +57,7 @@ not valid lua
 --- request
 GET
 --- error_log
-module custom did not return a table but: boolean
+module customfoobar did not return a table but: boolean
 --- must_die
 --- user_files
->>> custom.lua
+>>> customfoobar.lua

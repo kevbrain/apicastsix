@@ -32,6 +32,15 @@ Defines how to load the configuration.
 Boot will require configuration when the gateway starts.
 Lazy will load it on demand on incoming request.
 
+### `APICAST_BACKEND_CACHE_HANDLER`
+
+**Values:** strict | resilient
+**Default:** strict
+
+Defines how the authorization cache behaves when backend is unavailable.
+Strict will remove cached application when backend is unavailable.
+Resilient will do so only on getting authorization denied from backend.
+
 ### `APICAST_MODULE`
 
 **Default:** "apicast"

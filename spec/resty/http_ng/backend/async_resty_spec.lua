@@ -42,7 +42,7 @@ describe('resty backend', function()
     end)
 
     it('returns proper error on read timeout', function()
-      local req = { method = method, url = 'http://example.com/', timeout = { read = 1 } }
+      local req = { method = method, url = 'http://httpbin.org/delay/1', timeout = { read = 1 } }
 
       local response = backend:send(req)
 

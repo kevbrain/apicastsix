@@ -113,7 +113,7 @@ For developing and testing APIcast the following tools are needed:
  luarocks install busted
 ```
 
-- [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx-0.25/lib/Test/Nginx/Socket.pm) – used for integration testing.
+- [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx/lib/Test/Nginx/Socket.pm) – used for integration testing.
 ```shell
  cpan install Carton
  cpan install Test::Nginx

@@ -1,5 +1,6 @@
 local setmetatable = setmetatable
 local format = string.format
+local len = string.len
 local ipairs = ipairs
 local insert = table.insert
 local rawset = rawset
@@ -183,15 +184,13 @@ end
 local services_subset = function()
   local services = resty_env.get('APICAST_SERVICES')
 
-  if services then
+  if services and len(services) > 0 then
     local ids = re.split(services, ',', 'oj')
     for i=1, #ids do
       ids[i] = { service = { id = tonumber(ids[i]) } }
     end
-    services = ids
+    return ids
   end
-
-  return services
 end
 
 function _M:services()

@@ -52,6 +52,19 @@ describe('Configuration Remote Loader V2', function()
       assert.equal(2, #services)
       assert.same({ { service = { id = 11 } }, { service = { id = 42 } } }, services)
     end)
+
+    it('ignores APICAST_SERVICES when empty', function()
+      env.set('APICAST_SERVICES', '')
+
+      test_backend.expect{ url = "http://example.com/admin/api/services.json" }.
+        respond_with{ status = 200, body = cjson.encode({ services = { { service = { id = 1 }} }}) }
+
+      local services = loader:services()
+
+      assert.truthy(services)
+      assert.equal(1, #services)
+      assert.same({ { service = { id = 1 } } }, services)
+    end)
   end)
 
   describe(':config', function()

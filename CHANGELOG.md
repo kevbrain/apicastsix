@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Ability to configure how to cache backend authorizations [PR #396](https://github.com/3scale/apicast/pull/396)
 
+### Fixed
+
+- [THREESCALE-281](https://issues.jboss.org/browse/THREESCALE-281) Not loading services when APICAST\_SERVICES is empty [PR #401](https://github.com/3scale/apicast/pull/401)
+
 ## [3.1.0-beta1] - 2017-07-21
 
 ### Fixed

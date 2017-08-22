@@ -66,7 +66,7 @@ To submit a pull request :
 4. Push your changes to your fork (`git push origin feature_x`)
 5. Open a Pull Request and provide a description of the contents of it
 
-### Guideline Summary
+### Guideline Summary
 
 1. Seek feedback early
 2. Smaller PRs are better

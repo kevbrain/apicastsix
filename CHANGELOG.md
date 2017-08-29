@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `THREESCALE\_DEPLOYMENT\_ENV` defaults to `production` [PR #406](https://github.com/3scale/apicast/pull/406)
+
 ## [3.1.0-beta1] - 2017-07-21
 
 ### Added

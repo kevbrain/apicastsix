@@ -27,8 +27,9 @@ local mt = {
 }
 
 function _M.new(service)
-  local issuer = service.oidc.issuer
-  local config = service.oidc.config or {}
+  local oidc = service.oidc
+  local issuer = oidc.issuer or oidc.issuer_endpoint
+  local config = oidc.config or {}
   local openid = config.openid or {}
 
   return setmetatable({

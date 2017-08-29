@@ -32,6 +32,7 @@ __DATA__
         { id = 42,
           backend_version = 'oauth',
           proxy = {
+            authentication_method = 'oidc',
             oidc_issuer_endpoint = 'https://example.com/auth/realms/apicast',
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {

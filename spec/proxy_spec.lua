@@ -46,6 +46,21 @@ describe('Proxy', function()
     end)
   end)
 
+  describe(':access', function()
+    local service
+    before_each(function()
+      ngx.var = { backend_endpoint = 'http://localhost:1853' }
+      service = Service.new({ extract_usage = function() end })
+    end)
+
+    it('works with part of the credentials', function()
+      service.credentials = { location = 'headers' }
+      service.backend_version = 2
+      ngx.var.http_app_key = 'key'
+      assert.falsy(proxy:access(service))
+    end)
+  end)
+
   it('has post_action function', function()
     assert.truthy(proxy.post_action)
     assert.same('function', type(proxy.post_action))

@@ -50,6 +50,14 @@ local function read_http_header(name)
   return ngx.var['http_' .. normalized]
 end
 
+local function tuple_mt(size)
+  return { __len = function() return size end }
+end
+
+local credentials_v2_mt = tuple_mt(2)
+local credentials_v1_mt = tuple_mt(1)
+local credentials_oauth_mt = tuple_mt(1)
+
 local backend_version_credentials = { }
 
 function backend_version_credentials.version_1(config)
@@ -74,7 +82,7 @@ function backend_version_credentials.version_1(config)
   -- @field 1 User Key
   -- @field user_key User Key
   -- @table credentials_v1
-  return { user_key, user_key = user_key }
+  return setmetatable({ user_key, user_key = user_key }, credentials_v1_mt)
 end
 
 function backend_version_credentials.version_2(config)
@@ -113,7 +121,7 @@ function backend_version_credentials.version_2(config)
   -- @field app_id App ID
   -- @field app_key App Key
   -- @table credentials_v2
-  return { app_id, app_key, app_id = app_id, app_key = app_key }
+  return setmetatable({ app_id, app_key, app_id = app_id, app_key = app_key }, credentials_v2_mt)
 end
 
 function backend_version_credentials.version_oauth(config)
@@ -143,7 +151,7 @@ function backend_version_credentials.version_oauth(config)
   -- @field 1 Access Token
   -- @field access_token Access Token
   -- @table credentials_oauth
-  return { access_token, access_token = access_token }
+  return setmetatable({ access_token, access_token = access_token }, credentials_oauth_mt)
 end
 
 -- This table can be used with `table.concat` to serialize

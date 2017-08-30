@@ -19,7 +19,6 @@ local assert = assert
 local type = type
 local next = next
 local insert = table.insert
-
 local concat = table.concat
 local gsub = string.gsub
 local tonumber = tonumber
@@ -64,7 +63,7 @@ local function error_no_credentials(service)
   ngx.status = service.auth_missing_status
   ngx.header.content_type = service.auth_missing_headers
   ngx.print(service.error_auth_missing)
-  ngx.exit(ngx.HTTP_OK)
+  return ngx.exit(ngx.HTTP_OK)
 end
 
 local function error_authorization_failed(service)
@@ -73,7 +72,7 @@ local function error_authorization_failed(service)
   ngx.status = service.auth_failed_status
   ngx.header.content_type = service.auth_failed_headers
   ngx.print(service.error_auth_failed)
-  ngx.exit(ngx.HTTP_OK)
+  return ngx.exit(ngx.HTTP_OK)
 end
 
 local function error_no_match(service)
@@ -83,14 +82,14 @@ local function error_no_match(service)
   ngx.status = service.no_match_status
   ngx.header.content_type = service.no_match_headers
   ngx.print(service.error_no_match)
-  ngx.exit(ngx.HTTP_OK)
+  return ngx.exit(ngx.HTTP_OK)
 end
 
 local function error_service_not_found(host)
   ngx.status = 404
   ngx.print('')
   ngx.log(ngx.WARN, 'could not find service for host: ', host)
-  ngx.exit(ngx.status)
+  return ngx.exit(ngx.status)
 end
 -- End Error Codes
 
@@ -320,31 +319,37 @@ function _M:access(service)
 
   local credentials, err = service:extract_credentials()
 
-  if not credentials or #credentials == 0 then
-    if err then
-      ngx.log(ngx.WARN, "cannot get credentials: ", err)
-    end
+  if not credentials then
+    ngx.log(ngx.WARN, "cannot get credentials: ", err or 'unknown error')
     return error_no_credentials(service)
   end
 
-  insert(credentials, 1, service.id)
-
   local _, matched_patterns, usage_params = service:extract_usage(request)
-
-  ngx.var.cached_key = concat(credentials, ':')
+  local cached_key = { service.id }
 
   -- remove integer keys for serialization
   -- as ngx.encode_args can't serialize integer keys
+  -- and verify all the keys exist
   for i=1,#credentials do
-    credentials[i] = nil
+    local val = credentials[i]
+    if not val then
+      return error_no_credentials(service)
+    else
+      credentials[i] = nil
+    end
+
+    insert(cached_key, val)
   end
 
   local ctx = ngx.ctx
+  local var = ngx.var
 
   -- save those tables in context so they can be used in the backend client
   ctx.usage = usage_params
   ctx.credentials = credentials
   ctx.matched_patterns = matched_patterns
+
+  var.cached_key = concat(cached_key, ':')
 
   local ttl
 

@@ -44,6 +44,32 @@ GET /
 credentials missing!
 --- error_code: 401
 
+=== TEST 2: authentication (part of) credentials missing
+The message is configurable as well as the status.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 2,
+          proxy = {
+            error_auth_missing = 'credentials missing!',
+            error_status_auth_missing = 401
+          }
+        }
+      }
+    })
+  }
+--- config
+include $TEST_NGINX_BACKEND_CONFIG;
+include $TEST_NGINX_APICAST_CONFIG;
+--- request
+GET /?app_key=42
+--- response_body chomp
+credentials missing!
+--- error_code: 401
+
 === TEST 2: no mapping rules matched
 The message is configurable and status also.
 --- http_config

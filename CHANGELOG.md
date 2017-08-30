@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - `THREESCALE\_DEPLOYMENT\_ENV` defaults to `production` [PR #406](https://github.com/3scale/apicast/pull/406)
+- OIDC is now used based on settings on the API Manager [PR #405](https://github.com/3scale/apicast/pull/405)
 
-## [3.1.0-beta1] - 2017-07-21
+## [3.1.0-beta2] - 2017-08-21
 
 ### Added
 

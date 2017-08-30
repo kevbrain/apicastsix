@@ -163,7 +163,7 @@ describe('Service object', function()
   describe(':oauth()', function()
     describe('backend_version=oauth', function()
       it('returns OIDC object when there is OIDC config', function()
-        local service = Service.new({backend_version = 'oauth', oidc = { issuer = 'http://example.com' }})
+        local service = Service.new({authentication_method = 'oidc', oidc = { issuer = 'http://example.com' }})
 
         local oauth = service:oauth()
 

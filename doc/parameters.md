@@ -103,8 +103,8 @@ Allows to specify a custom DNS resolver that will be used by OpenResty. If the `
 
 ### `THREESCALE_DEPLOYMENT_ENV`
 
-**Values:** sandbox | production  
-**Default:** no value
+**Values:** staging | production
+**Default:** production
 
 The value of this environment variable will be used to define the environment for which the configuration will be downloaded from 3scale (Staging or Production), when using new APIcast.
 

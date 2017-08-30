@@ -88,7 +88,7 @@ function _M:index(host)
     return nil, 'wrong endpoint url'
   end
 
-  local env = resty_env.get('THREESCALE_DEPLOYMENT_ENV')
+  local env = resty_env.value('THREESCALE_DEPLOYMENT_ENV')
 
   if not env then
     return nil, 'missing environment'
@@ -147,7 +147,7 @@ function _M:call(environment)
     return nil, 'not initialized'
   end
 
-  local env = environment or resty_env.get('THREESCALE_DEPLOYMENT_ENV')
+  local env = environment or resty_env.value('THREESCALE_DEPLOYMENT_ENV')
   if not env then
     return nil, 'missing environment'
   end

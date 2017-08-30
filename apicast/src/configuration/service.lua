@@ -171,16 +171,14 @@ function _M:extract_credentials()
 end
 
 function _M:oauth()
-  if self.backend_version ~= 'oauth' then
-    return nil, 'not oauth'
-  end
+  local authentication = self.authentication_method or self.backend_version
 
-  local oidc = self.oidc
-
-  if oidc and oidc.issuer then
+  if authentication == 'oidc' then
     return oauth.oidc.new(self)
-  else
+  elseif authentication == 'oauth' then
     return oauth.apicast.new(self)
+  else
+    return nil, 'not oauth'
   end
 end
 

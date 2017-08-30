@@ -247,6 +247,13 @@ describe('Configuration Remote Loader V2', function()
     end)
   end)
 
+  describe(':oidc_issuer_configuration', function()
+    it('does not crash on empty issuer', function()
+      local service = { oidc = { issuer_endpoint = '' }}
+
+      assert.falsy(loader:oidc_issuer_configuration(service))
+    end)
+  end)
 
   describe(':index', function()
     before_each(function()

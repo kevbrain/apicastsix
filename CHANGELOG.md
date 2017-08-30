@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Support for extending APIcast location block with snippets of nginx configuration [PR #407][https://github.com/3scale/apicast/pull/407]
 
+### Fixes
+
+- Crash on empty OIDC Issuer endpoint [PR #408](https://github.com/3scale/apicast/pull/408)
+
 ### Changed
 
 - `THREESCALE\_DEPLOYMENT\_ENV` defaults to `production` [PR #406](https://github.com/3scale/apicast/pull/406)

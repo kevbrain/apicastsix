@@ -6,6 +6,7 @@ local insert = table.insert
 local rawset = rawset
 local encode_args = ngx.encode_args
 local tonumber = tonumber
+local type = type
 
 local resty_url = require 'resty.url'
 local http_ng = require "resty.http_ng"
@@ -224,7 +225,9 @@ function _M:services()
 end
 
 local function openid_configuration_url(endpoint)
-  return resty_url.join(endpoint, '.well-known/openid-configuration')
+  if endpoint and type(endpoint) == 'string' and len(endpoint) > 0 then
+    return resty_url.join(endpoint, '.well-known/openid-configuration')
+  end
 end
 
 function _M:oidc_issuer_configuration(service)
@@ -234,13 +237,12 @@ function _M:oidc_issuer_configuration(service)
     return nil, 'not initialized'
   end
 
-  local endpoint = service.oidc.issuer_endpoint
+  local uri = openid_configuration_url(service.oidc.issuer_endpoint)
 
-  if not endpoint or endpoint == ngx.null then
+  if not uri then
     return nil, 'no OIDC endpoint'
   end
 
-  local uri = openid_configuration_url(endpoint)
   local res = http_client.get(uri)
 
   if res.status ~= 200 then

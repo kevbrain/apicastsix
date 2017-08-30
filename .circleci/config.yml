@@ -76,3 +76,6 @@ workflows:
             - build
             - s2i-runtime
             - s2i-builder
+          filters:
+            tags:
+              only: /^v\d+.+/

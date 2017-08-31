@@ -6,14 +6,16 @@ local type = type
 local env = require 'resty.env'
 
 local function error_message(error)
-  ngx.log(ngx.WARN, error)
+  ngx.log(ngx.DEBUG, error)
   return error
 end
 
 local prequire = function(file)
   local ok, ret = xpcall(require, error_message, file)
+  local prev
 
   if not ok and ret then
+    prev = ret
     -- dofile can load absolute paths, require can't
     ok, ret = xpcall(dofile, error_message, file)
   end
@@ -21,6 +23,8 @@ local prequire = function(file)
   if not ok and ret then
     if type(ret) == 'userdata' then
       ngx.log(ngx.WARN, 'cyclic require detected: ', debug.traceback())
+    elseif prev then
+      ngx.log(ngx.WARN, prev)
     end
     return false, ret
   end

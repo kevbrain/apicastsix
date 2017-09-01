@@ -20,6 +20,18 @@
             "pattern": "/",
             "metric_system_name": "hits",
             "delta": 1
+          },
+          {
+            "http_method": "POST",
+            "pattern": "/",
+            "metric_system_name": "hits",
+            "delta": 1
+          },
+          {
+            "http_method": "PUT",
+            "pattern": "/",
+            "metric_system_name": "hits",
+            "delta": 1
           }
         ]
       }

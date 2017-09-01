@@ -6,7 +6,7 @@ This example shows how CORS ([Cross Origin Resource Sharing](https://developer.m
 
 There are two code snippets that do the following:
 
-1. `apicast_cors.lua` is a custom module (see [this example](https://github.com/3scale/apicast/tree/master/examples/custom-module) for more info) that overrides the default APIcast's rewrite phase handler to include the following logic:
+1. `cors.lua` is a custom module (see [this example](https://github.com/3scale/apicast/tree/master/examples/custom-module) for more info) that overrides the default APIcast's rewrite phase handler to include the following logic:
 
   when the request method is `OPTIONS`, and `Origin` and `Access-Control-Request-Method` headers are present, the request is considered to be CORS preflight request, and APIcast returns a `204` request with the response headers defined in `set_cors_headers()` method. In this case the request will not pass through 3scale access control.
 
@@ -18,10 +18,10 @@ There are two code snippets that do the following:
 
 ### Native APIcast
 
-Place `apicast_cors.lua` to `apicast/src`, and `cors.conf` to `apicast/apicast.d` and start APIcast:
+Place `cors.lua` to `apicast/src`, and `cors.conf` to `apicast/apicast.d` and start APIcast:
 
 ```
-THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net APICAST_MODULE=apicast_cors bin/apicast
+THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net APICAST_MODULE=cors bin/apicast
 ```
 
 ### Docker
@@ -29,7 +29,7 @@ THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net APICAST
 Attach the above files as volumes to the container and set `APICAST_MODULE` environment variable.
 
 ```
-docker run --name apicast --rm -p 8080:8080 -v $(pwd)/examples/cors/apicast_cors.lua:/opt/app-root/src/src/apicast_cors.lua:ro -v $(pwd)/examples/cors/cors.conf:/opt/app-root/src/apicast.d/cors.conf:ro -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net -e APICAST_MODULE=apicast_cors quay.io/3scale/apicast:master
+docker run --name apicast --rm -p 8080:8080 -v $(pwd)/examples/cors/cors.lua:/opt/app-root/src/src/cors.lua:ro -v $(pwd)/examples/cors/cors.conf:/opt/app-root/src/apicast.d/cors.conf:ro -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net -e APICAST_MODULE=cors quay.io/3scale/apicast:master
 ```
 
 ### OpenShift
@@ -44,7 +44,7 @@ A new image with the customization can be rebuild, using a simple `Dockerfile` (
 FROM quay.io/3scale/apicast:master
 
 # Copy customized source code to the appropriate directories
-COPY ./examples/cors/apicast_cors.lua /opt/app-root/src/src/
+COPY ./examples/cors/cors.lua /opt/app-root/src/src/
 COPY ./examples/cors/cors.conf /opt/app-root/src/apicast.d/
 ```
 
@@ -57,7 +57,7 @@ oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/
 Set the environment variable `APICAST_MODULE`:
 
 ```
-oc env dc/apicast APICAST_MODULE=apicast_cors
+oc env dc/apicast APICAST_MODULE=cors
 ```
 
 Alternatively, you can add the above Dockerfile to your own fork of the `apicast` Git repository, and have OpenShift do the build. For example:
@@ -74,25 +74,25 @@ You can add the customized files as ConfigMaps and mount them as volumes to an e
 2. Create ConfigMaps from the provided files: 
 
 ```
-oc create configmap apicast-cors --from-file=./examples/cors/apicast_cors.lua
+oc create configmap apicast-cors --from-file=./examples/cors/cors.lua
 oc create configmap cors-conf --from-file=./examples/cors/cors.conf
 ```
 
 3. Create volumes for the container, and mount them to the appropriate paths:
 
 ```
-oc set volume dc/apicast --add --name=apicast-cors --mount-path /opt/app-root/src/src/apicast_cors.lua --source='{"configMap":{"name":"apicast-cors","items":[{"key":"apicast_cors.lua","path":"apicast_cors.lua"}]}}'
+oc set volume dc/apicast --add --name=apicast-cors --mount-path /opt/app-root/src/src/cors.lua --source='{"configMap":{"name":"apicast-cors","items":[{"key":"cors.lua","path":"cors.lua"}]}}'
 oc set volume dc/apicast --add --name=cors-conf --mount-path /opt/app-root/src/apicast.d/cors.conf --source='{"configMap":{"name":"cors-conf","items":[{"key":"cors.conf","path":"cors.conf"}]}}'
 ```
 
 4. The `oc volume` command doesn't support adding subpaths, so a patch needs to be applied:
 
 ```
-oc patch dc/apicast --type=json -p '[{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/0/subPath", "value":"apicast_cors.lua"},{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/1/subPath", "value":"cors.conf"}]'
+oc patch dc/apicast --type=json -p '[{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/0/subPath", "value":"cors.lua"},{"op": "add", "path": "/spec/template/spec/containers/0/volumeMounts/1/subPath", "value":"cors.conf"}]'
 ```
 
 5. As in previous example, set the environment variable `APICAST_MODULE`:
 
 ```
-oc env dc/apicast APICAST_MODULE=apicast_cors
+oc env dc/apicast APICAST_MODULE=cors
 ```

@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `THREESCALE\_DEPLOYMENT\_ENV` defaults to `production` [PR #406](https://github.com/3scale/apicast/pull/406)
 - OIDC is now used based on settings on the API Manager [PR #405](https://github.com/3scale/apicast/pull/405)
 - No limit on body size from the client sent to the server [PR #410](https://github.com/3scale/apicast/pull/410)
+- Print module loading errors only when it failed to load [PR #415](https://github.com/3scale/apicast/pull/415)
 
 ## [3.1.0-beta2] - 2017-08-21
 

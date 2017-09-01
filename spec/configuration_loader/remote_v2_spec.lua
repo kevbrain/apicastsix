@@ -16,6 +16,18 @@ describe('Configuration Remote Loader V2', function()
 
   after_each(function() test_backend.verify_no_outstanding_expectations() end)
 
+  describe('loader without endpoint', function()
+    before_each(function() loader = _M.new() end)
+
+    it('wont crash when getting services', function()
+      assert.same({ nil, 'no endpoint' }, { loader:services() })
+    end)
+
+    it('wont crash when getting config', function()
+      assert.same({ nil, 'no endpoint' }, { loader:config() })
+    end)
+  end)
+
   describe('http_client #http', function()
     it('has correct user agent', function()
       test_backend.expect{ url = 'http://example.com/t', headers = { ['User-Agent'] = tostring(user_agent) } }

@@ -204,8 +204,13 @@ function _M:services()
     return nil, 'not initialized'
   end
 
-  local url = resty_url.join(self.endpoint, '/admin/api/services.json')
+  local endpoint = self.endpoint
 
+  if not endpoint then
+    return nil, 'no endpoint'
+  end
+
+  local url = resty_url.join(self.endpoint, '/admin/api/services.json')
   local res, err = http_client.get(url)
 
   if not res and err then
@@ -281,6 +286,9 @@ function _M:config(service, environment, version)
 
   if not http_client then return nil, 'not initialized' end
 
+  local endpoint = self.endpoint
+  if not endpoint then return nil, 'no endpoint' end
+
   local id = service and service.id
 
   if not id then return nil, 'invalid service, missing id' end
@@ -290,7 +298,7 @@ function _M:config(service, environment, version)
   local version_override = resty_env.get(format('APICAST_SERVICE_%s_CONFIGURATION_VERSION', id))
 
   local url = resty_url.join(
-    self.endpoint,
+    endpoint,
     '/admin/api/services/', id , '/proxy/configs/', environment, '/',
     format('%s.json', version_override or version)
   )

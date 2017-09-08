@@ -72,7 +72,7 @@ function _M.parse_nameservers(path)
 
   ngx.log(ngx.DEBUG, '/etc/resolv.conf:\n', resolv_conf)
 
-  local search = { '' }
+  local search = { }
   local nameservers = { search = search }
   local resolver = getenv('RESOLVER')
   local domains = match(resolv_conf, 'search%s+([^\n]+)')

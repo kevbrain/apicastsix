@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Crash on empty OIDC Issuer endpoint [PR #408](https://github.com/3scale/apicast/pull/408)
 - Handle partial credentials [PR #409](https://github.com/3scale/apicast/pull/409)
 - Crash when configuration endpoint was missing [PR #417](https://github.com/3scale/apicast/pull/417)
+- Fix double queries to not fully qualified domains [PR #419](https://github.com/3scale/apicast/pull/419)
 
 ### Changed
 

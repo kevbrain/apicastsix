@@ -118,6 +118,13 @@ describe('resty.resolver', function()
     end)
   end)
 
+  describe('.search', function()
+    it('contains empty scope', function ()
+
+      assert.same({''}, resty_resolver.search)
+    end)
+  end)
+
   describe('.parse_nameservers', function()
     local tmpname
 
@@ -140,8 +147,8 @@ describe('resty.resolver', function()
     it('returns search domains', function()
       local search = resty_resolver.parse_nameservers(tmpname).search
 
-      assert.equal(3, #search)
-      assert.same({ '', 'localdomain.example.com', 'local' },  search)
+      assert.equal(2, #search)
+      assert.same({ 'localdomain.example.com', 'local' },  search)
     end)
 
   end)

@@ -125,6 +125,10 @@ describe('resty.resolver', function()
     end)
   end)
 
+  describe(':lookup', function()
+    pending('does query when cached cname missing address')
+  end)
+
   describe('.parse_nameservers', function()
     local tmpname
 

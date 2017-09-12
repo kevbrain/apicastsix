@@ -153,7 +153,7 @@ Could not resolve GET /foobar - nil
 === TEST 8: boot
 exposes boot function
 --- main_config
-env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
+env THREESCALE_PORTAL_ENDPOINT=http://localhost.local:$TEST_NGINX_SERVER_PORT/config/;
 env RESOLVER=127.0.0.1:1953;
 env APICAST_MANAGEMENT_API=debug;
 --- http_config
@@ -170,14 +170,14 @@ POST /boot
 --- error_code: 200
 --- udp_listen: 1953
 --- udp_reply eval
-$::dns->("localhost", "127.0.0.1", 60)
+$::dns->("localhost.local", "127.0.0.1", 60)
 --- no_error_log
 [error]
 
 === TEST 9: boot called twice
 keeps the same configuration
 --- main_config
-env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
+env THREESCALE_PORTAL_ENDPOINT=http://localhost.local:$TEST_NGINX_SERVER_PORT/config/;
 env RESOLVER=127.0.0.1:1953;
 env APICAST_MANAGEMENT_API=debug;
 --- http_config
@@ -199,7 +199,7 @@ POST /test
 --- error_code: 200
 --- udp_listen: 1953
 --- udp_reply eval
-$::dns->("localhost", "127.0.0.1", 60)
+$::dns->("localhost.local", "127.0.0.1", 60)
 --- no_error_log
 [error]
 

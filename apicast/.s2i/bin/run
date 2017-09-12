@@ -34,7 +34,12 @@ else
   apicast=apicast
 fi
 
-dnsmasq --listen-address=127.0.0.1 --all-servers --no-host --no-hosts --log-facility=- --cache-size=1000 --port=5353 --no-negcache --server="${RESOLVER:-}"
+dnsmasq --listen-address=127.0.0.1 --port=5353 \
+  --all-servers --no-host --no-hosts \
+  --cache-size=1000 --no-negcache \
+  --server="${RESOLVER:-}" \
+  --log-facility=- ${DNSMASQ_OPTIONS:-} \
+
 export RESOLVER=127.0.0.1:5353
 
 exec "${apicast}" "$@"

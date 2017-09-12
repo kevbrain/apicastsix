@@ -36,7 +36,7 @@ fi
 
 dnsmasq --listen-address=127.0.0.1 --port=5353 \
   --all-servers --no-host --no-hosts \
-  --cache-size=1000 --no-negcache \
+  --cache-size=1000 --no-negcache --domain-needed \
   --server="${RESOLVER:-}" \
   --log-facility=- ${DNSMASQ_OPTIONS:-} \
 

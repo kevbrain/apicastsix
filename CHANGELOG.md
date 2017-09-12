@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - No limit on body size from the client sent to the server [PR #410](https://github.com/3scale/apicast/pull/410)
 - Print module loading errors only when it failed to load [PR #415](https://github.com/3scale/apicast/pull/415)
 - `bin/busted` rewritten to support different working directories [PR #418](https://github.com/3scale/apicast/pull/418)
+- dnsmasq started in docker will not forward queries without domain [PR #421](https://github.com/3scale/apicast/pull/421)
 
 ## [3.1.0-beta2] - 2017-08-21
 

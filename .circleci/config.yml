@@ -7,6 +7,7 @@ jobs:
     environment:
       S2I_VERSION: "1.1.7-226afa1"
       DOCKER_COMPOSE_VERSION: "1.16.1"
+      OPENRESTY_VERSION: "1.11.2.5-1"
     steps:
       - run: apk update && apk add wget make bash curl py-pip git openssh-client
       - run: |
@@ -36,9 +37,10 @@ jobs:
       - run: make prove-docker
   build:
     docker:
-      - image: quay.io/3scale/s2i-openresty-centos7:luarocks-build
+      - image: quay.io/3scale/s2i-openresty-centos7:1.11.2.5-1
         environment:
           TEST_NGINX_BINARY: openresty
+          LUA_BIN_PATH: /opt/app-root/bin
       - image: redis:3.2.8-alpine
     working_directory: /opt/app-root/apicast
     steps:

@@ -6,7 +6,7 @@ jobs:
     working_directory: /opt/app-root/apicast
     environment:
       S2I_VERSION: "1.1.7-226afa1"
-      DOCKER_COMPOSE_VERSION: "1.14.0"
+      DOCKER_COMPOSE_VERSION: "1.16.1"
     steps:
       - run: apk update && apk add wget make bash curl py-pip git openssh-client
       - run: |

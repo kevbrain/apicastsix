@@ -79,6 +79,7 @@ dev: ## Run APIcast inside the container mounted to local volume
 	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
 test-builder-image: export IMAGE_NAME = apicast-test
 test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
+	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p /opt/app -t
 	@echo -e $(SEPARATOR)

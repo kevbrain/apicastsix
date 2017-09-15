@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+ssl=$(mktemp -q)
+
+echo "lua_ssl_verify_depth 5;" >> "${ssl}"
+echo "lua_ssl_trusted_certificate \"$(pwd)/conf/ca-bundle.crt\";" >> "${ssl}"
+
+exec resty --http-include "${ssl}" "libexec/$(basename "$0").lua" "$@"

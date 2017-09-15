@@ -9,7 +9,6 @@ local len = string.len
 local open = io.open
 local execute = os.execute
 local tmpname = os.tmpname
-local getenv = os.getenv
 local unpack = unpack
 
 function _M.timer(name, fun, ...)
@@ -19,20 +18,6 @@ function _M.timer(name, fun, ...)
   local time = ngx_now() - start
   ngx.log(ngx.INFO, 'benchmark ' .. name .. ' took ' .. time)
   return unpack(ret)
-end
-
-
-function _M.env_enabled(name)
-  local val = getenv(name)
-  local mapping = {
-    ['true'] = true,
-    ['false'] = false,
-    ['1'] = true,
-    ['0'] = false,
-    [''] = false
-  }
-
-  return mapping[val]
 end
 
 local function read(file)
@@ -52,7 +37,7 @@ end
 function _M.system(command)
   local tmpout = tmpname()
   local tmperr = tmpname()
-  ngx.log(ngx.DEBUG, 'os execute ' .. command)
+  ngx.log(ngx.DEBUG, 'os execute ', command)
 
   local success, exit, code = execute('(' .. command .. ')' .. ' > ' .. tmpout .. ' 2> ' .. tmperr)
   local err
@@ -72,7 +57,7 @@ function _M.system(command)
   -- os.execute returns exit code as first return value on OSX
   -- even though the documentation says otherwise (true/false)
   if success == 0 or success == true then
-    if len(tmperr) then
+    if len(tmperr) > 0 then
       ngx.log(ngx.WARN, 'os execute stderr: \n', tmperr)
     end
 
@@ -80,6 +65,20 @@ function _M.system(command)
   else
     return tmpout, tmperr, code or exit or success
   end
+end
+
+function _M.to_hash(table)
+  local t = {}
+
+  if not table then
+    return t
+  end
+
+  for i = 1, #table do
+    t[table[i]] = true
+  end
+
+  return t
 end
 
 return _M

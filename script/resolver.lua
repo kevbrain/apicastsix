@@ -3,16 +3,8 @@
 local inspect = require 'inspect'
 
 local resty_resolver = require 'resty.resolver'
-local dns_resolver = require 'resty.dns.resolver'
 
-local dns, err = dns_resolver:new{ nameservers = { "8.8.8.8", "8.8.4.4" } }
-
-if err then
-  print('error: ', err)
-  os.exit(1)
-end
-
-local r = resty_resolver.new(dns)
+local r = resty_resolver:instance()
 
 local host = arg[1]
 

@@ -5,24 +5,24 @@ local _M = {
 local len = string.len
 local format = string.format
 local pairs = pairs
-local ipairs = ipairs
 local type = type
 local unpack = unpack
 local error = error
 local tostring = tostring
-local tonumber = tonumber
 local next = next
 local lower = string.lower
 local insert = table.insert
 local concat = table.concat
-local pcall = pcall
 local setmetatable = setmetatable
+local re_match = ngx.re.match
 
 local inspect = require 'inspect'
-local cjson = require 'cjson'
 local re = require 'ngx.re'
+local env = require 'resty.env'
+local resty_url = require 'resty.url'
+local util = require 'util'
 
-local mt = { __index = _M }
+local mt = { __index = _M, __tostring = function() return 'Configuration' end }
 
 local function map(func, tbl)
   local newtbl = {}
@@ -40,14 +40,15 @@ local function regexpify(path)
   return path:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
 end
 
-local function check_rule(req, rule, usage_t, matched_rules)
+local function check_rule(req, rule, usage_t, matched_rules, params)
   local pattern = rule.regexpified_pattern
-  local match = ngx.re.match(req.path, format("^%s", pattern), 'oj')
+  local match = re_match(req.path, format("^%s", pattern), 'oj')
 
   if match and req.method == rule.method then
     local args = req.args
 
     if rule.querystring_params(args) then -- may return an empty table
+      local system_name = rule.system_name
       -- FIXME: this had no effect, what is it supposed to do?
       -- when no querystringparams
       -- in the rule. it's fine
@@ -55,23 +56,13 @@ local function check_rule(req, rule, usage_t, matched_rules)
       --   param[p] = match[i]
       -- end
 
+      local value = set_or_inc(usage_t, system_name, rule.delta)
+
+      usage_t[system_name] = value
+      params['usage[' .. system_name .. ']'] = value
       insert(matched_rules, rule.pattern)
-      usage_t[rule.system_name] = set_or_inc(usage_t, rule.system_name, rule.delta)
     end
   end
-end
-
-
-local function first_values(a)
-  local r = {}
-  for k,v in pairs(a) do
-    if type(v) == "table" then
-      r[k] = v[1]
-    else
-      r[k] = v
-    end
-  end
-  return r
 end
 
 local function get_auth_params(method)
@@ -83,32 +74,52 @@ local function get_auth_params(method)
     ngx.req.read_body()
     params = ngx.req.get_post_args()
   end
-  return first_values(params)
+
+  return params
 end
 
 local regex_variable = '\\{[-\\w_]+\\}'
 
+local function hash_to_array(hash)
+  local array = {}
+  for k,v in pairs(hash or {}) do
+    insert(array, { k, v })
+  end
+  return array
+end
+
 local function check_querystring_params(params, args)
-  for param, expected in pairs(params) do
-    local m, err = ngx.re.match(expected, regex_variable, 'oj')
+  local match = true
+
+  for i=1, #params do
+    local param = params[i][1]
+    local expected = params[i][2]
+    local m, err = re_match(expected, regex_variable, 'oj')
     local value = args[param]
 
     if m then
       if not value then -- regex variable have to have some value
-        ngx.log(ngx.DEBUG, 'check query params ' .. param .. ' value missing ' .. tostring(expected))
-        return false
+        ngx.log(ngx.DEBUG, 'check query params ', param, ' value missing ', expected)
+        match = false
+        break
       end
     else
-      if err then ngx.log(ngx.ERR, 'check match error ' .. err) end
+      if err then ngx.log(ngx.ERR, 'check match error ', err) end
+
+      -- if many values were passed use the last one
+      if type(value) == 'table' then
+        value = value[#value]
+      end
 
       if value ~= expected then -- normal variables have to have exact value
-        ngx.log(ngx.DEBUG, 'check query params does not match ' .. param .. ' value ' .. tostring(value) .. ' == ' .. tostring(expected))
-        return false
+        ngx.log(ngx.DEBUG, 'check query params does not match ', param, ' value ' , value, ' == ', expected)
+        match = false
+        break
       end
     end
   end
 
-  return true
+  return match
 end
 
 local Service = require 'configuration.service'
@@ -117,10 +128,13 @@ function _M.parse_service(service)
   local backend_version = tostring(service.backend_version)
   local proxy = service.proxy or {}
   local backend = proxy.backend or {}
+  local backend_endpoint_override = env.get("BACKEND_ENDPOINT_OVERRIDE")
+  local _, _, _, backend_host_override = unpack(resty_url.split(backend_endpoint_override) or {})
 
   return Service.new({
-      id = service.id or 'default',
+      id = tostring(service.id or 'default'),
       backend_version = backend_version,
+      authentication_method = proxy.authentication_method or backend_version,
       hosts = proxy.hosts or { 'localhost' }, -- TODO: verify localhost is good default
       api_backend = proxy.api_backend,
       error_auth_failed = proxy.error_auth_failed,
@@ -140,8 +154,11 @@ function _M.parse_service(service)
         value = service.backend_authentication_value
       },
       backend = {
-        endpoint = backend.endpoint,
-        host = backend.host
+        endpoint = backend_endpoint_override or backend.endpoint,
+        host = backend_host_override or backend.host
+      },
+      oidc = {
+        issuer_endpoint = proxy.oidc_issuer_endpoint ~= ngx.null and proxy.oidc_issuer_endpoint
       },
       credentials = {
         location = proxy.credentials_location or 'query',
@@ -150,30 +167,35 @@ function _M.parse_service(service)
         app_key = lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
       },
       extract_usage = function (config, request, _)
-        local method, url = unpack(re.split(request, " ", 'oj'))
-        local path, _ = unpack(re.split(url, "\\?", 'oj'))
+        local req = re.split(request, " ", 'oj')
+        local method, url = req[1], req[2]
+        local path = re.split(url, "\\?", 'oj')[1]
         local usage_t =  {}
         local matched_rules = {}
+        local params = {}
+        local rules = config.rules
 
         local args = get_auth_params(method)
 
-        ngx.log(ngx.DEBUG, '[mapping] service ' .. config.id .. ' has ' .. #config.rules .. ' rules')
+        ngx.log(ngx.DEBUG, '[mapping] service ', config.id, ' has ', #config.rules, ' rules')
 
-        for _,r in ipairs(config.rules) do
-          check_rule({path=path, method=method, args=args}, r, usage_t, matched_rules)
+        for i = 1, #rules do
+          check_rule({path=path, method=method, args=args}, rules[i], usage_t, matched_rules, params)
         end
 
         -- if there was no match, usage is set to nil and it will respond a 404, this behavior can be changed
-        return usage_t, concat(matched_rules, ", ")
+        return usage_t, concat(matched_rules, ", "), params
       end,
       rules = map(function(proxy_rule)
+        local querystring_parameters = hash_to_array(proxy_rule.querystring_parameters)
+
         return {
           method = proxy_rule.http_method,
           pattern = proxy_rule.pattern,
           regexpified_pattern = regexpify(proxy_rule.pattern),
           parameters = proxy_rule.parameters,
           querystring_params = function(args)
-            return check_querystring_params(proxy_rule.querystring_parameters or {}, args)
+            return check_querystring_params(querystring_parameters, args)
           end,
           system_name = proxy_rule.metric_system_name or error('missing metric name of rule ' .. inspect(proxy_rule)),
           delta = proxy_rule.delta
@@ -186,78 +208,28 @@ function _M.parse_service(service)
     })
 end
 
-function _M.decode(contents, encoder)
-  if not contents then return nil end
-  if type(contents) == 'string' and len(contents) == 0 then return nil end
-  if type(contents) == 'table' then return contents end
-  if contents == '\n' then return nil end
-
-  encoder = encoder or cjson
-
-  local ok, ret = pcall(encoder.decode, contents)
-
-  if not ok then
-    return nil, ret
-  end
-
-  if ret == encoder.null then
-    return nil
-  end
-
-  return ret
-end
-
-function _M.encode(contents, encoder)
-  if type(contents) == 'string' then return contents end
-
-  encoder = encoder or cjson
-
-  return encoder.encode(contents)
-end
-
-function _M.parse(contents, encoder)
-  local config, err = _M.decode(contents, encoder)
-
-  if config then
-    return _M.new(config)
-  else
-    return nil, err
-  end
-end
-
-local function to_hash(table)
-  local t = {}
-
-  for _,id in ipairs(table) do
-    local n = tonumber(id)
-
-    if n then
-      t[n] = true
-    end
-  end
-
-  return t
-end
-
 function _M.services_limit()
   local services = {}
-  local subset = os.getenv('APICAST_SERVICES')
+  local subset = env.get('APICAST_SERVICES')
   if not subset or subset == '' then return services end
 
   local ids = re.split(subset, ',', 'oj')
 
-  return to_hash(ids)
+  return util.to_hash(ids)
 end
 
 function _M.filter_services(services, subset)
-  subset = subset and to_hash(subset) or _M.services_limit()
+  subset = subset and util.to_hash(subset) or _M.services_limit()
   if not subset or not next(subset) then return services end
 
   local s = {}
 
-  for _, service in ipairs(services) do
+  for i = 1, #services do
+    local service = services[i]
     if subset[service.id] then
-      s[#s+1] = service
+      insert(s, service)
+    else
+      ngx.log(ngx.WARN, 'filtering out service ', service.id)
     end
   end
 
@@ -271,7 +243,7 @@ function _M.new(configuration)
   return setmetatable({
     version = configuration.timestamp,
     services = _M.filter_services(map(_M.parse_service, services)),
-    debug_header = configuration.provider_key -- TODO: change this to something secure
+    oidc = configuration.oidc or {}
   }, mt)
 end
 

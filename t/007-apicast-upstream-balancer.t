@@ -5,7 +5,7 @@ my $pwd = cwd();
 my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
 
-require("t/dns.pl");
+require("$pwd/t/dns.pl");
 
 log_level('debug');
 repeat_each(2);
@@ -23,9 +23,9 @@ lua_package_path "$TEST_NGINX_LUA_PATH";
 location /t {
   rewrite_by_lua_block {
     local resty_resolver = require 'resty.resolver'
-    local dns_resolver = require 'resty.dns.resolver'
+    local dns_client = require 'resty.dns.resolver'
 
-    local dns = dns_resolver:new{ nameservers = { { "127.0.0.1", 1953 } } }
+    local dns = dns_client:new{ nameservers = { { "127.0.0.1", 1953 } } }
     local resolver = resty_resolver.new(dns)
 
     local servers = resolver:get_servers('3scale.net')
@@ -47,7 +47,7 @@ $::dns->("localhost", "127.0.0.1")
 --- request
 GET /t
 --- response_body
-[{"address":"127.0.0.1","ttl":0}]
+[{"ttl":0,"address":"127.0.0.1"}]
 --- error_code: 200
 
 
@@ -124,9 +124,9 @@ location /api {
 location /t {
   rewrite_by_lua_block {
     local resty_resolver = require 'resty.resolver'
-    local dns_resolver = require 'resty.dns.resolver'
+    local dns_client = require 'resty.dns.resolver'
 
-    local dns = dns_resolver:new{ nameservers = { { "127.0.0.1", 1953 } } }
+    local dns = dns_client:new{ nameservers = { { "127.0.0.1", 1953 } } }
     local resolver = resty_resolver.new(dns)
 
     ngx.ctx.upstream = resolver:get_servers('localhost', { port = $TEST_NGINX_SERVER_PORT })

@@ -148,7 +148,7 @@ For example, if you are deploying on an AWS EC2 instance, you should specify the
 oc cluster up --public-hostname=ec2-54-321-67-89.compute-1.amazonaws.com --routing-suffix=54.321.67.89.xip.io
 ```
 
-where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.321.67.89` is the IP of the instance. You will then be able to access the OpenShift web console at https://ec2-54-321-67-89.compute-1.amazonaws.com:8443.
+where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.321.67.89` is the IP of the instance. You will then be able to access the OpenShift web console at `https://ec2-54-321-67-89.compute-1.amazonaws.com:8443`.
 
 ## Tutorial Steps
 
@@ -158,7 +158,9 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  Otherwise login into OpenShift using the `oc` command from the OpenShift Client tools you downloaded and installed in the previous step. The default login credentials are _username = "developer"_ and _password = "developer"_:
 
- <pre><code>oc login https://OPENSHIFT-SERVER-IP:8443</code></pre>
+ ```shell
+ oc login https://OPENSHIFT-SERVER-IP:8443
+ ```
 
  **Warning**: You may get a security warning and asked whether you wish to continue with an insecure selection. Enter "yes" to proceed.
 
@@ -178,11 +180,11 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 3. Create a new Secret to reference your project by replacing *ACCESS_TOKEN* and *MYDOMAIN* with yours.
 
- <pre><code>oc secret new-basicauth threescale-portal-endpoint-secret --password=https://ACCESS_TOKEN@MYDOMAIN-admin.3scale.net</code></pre>
+ <pre><code>oc secret new-basicauth apicast-configuration-url-secret --password=https://ACCESS_TOKEN@MYDOMAIN-admin.3scale.net</code></pre>
 
  The response should look like this:
 
- <pre><code>secret/threescale-portal-endpoint-secret</code></pre>
+ <pre><code>secret/apicast-configuration-url-secret</code></pre>
 
 4. Create an application for your APIcast Gateway from the template, and start the deployment:
 
@@ -192,7 +194,7 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 ### Deploying APIcast Gateway
 
-1. Open the web console for your OpenShift cluster in your browser: https://OPENSHIFT-SERVER-IP:8443/console/
+1. Open the web console for your OpenShift cluster in your browser: `https://OPENSHIFT-SERVER-IP:8443/console/`
 
  You should see the login screen:
  <img src="https://support.3scale.net/images/screenshots/guides-openshift-login-screen.png" alt="OpenShift Login Screen">

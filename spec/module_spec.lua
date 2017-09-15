@@ -1,27 +1,36 @@
-local module = require 'module'
+local env = require 'resty.env'
 
+local function cleanup()
+  package.loaded['module'] = nil
+end
 
 describe('module', function()
-  describe('.new', function()
-    it ('accepts name', function()
-      local m = module.new('foobar')
+  after_each(cleanup)
+  before_each(cleanup)
 
-      assert.equal('foobar', m.name)
-    end)
-  end)
+  describe('require', function()
+    it ('takes module name from env', function()
+      env.set('APICAST_MODULE', 'foobar')
+      local foobar = { 'foobar' }
+      package.loaded['foobar'] = foobar
 
-  describe('.call', function()
-
-    it('returns', function()
-      package.loaded['foobar'] = { phase = function() return 'foobar' end }
-
-      local m = module.new('foobar')
-
-      local ok, err = m:call('phase')
-
-      assert.truthy(ok)
-      assert.falsy(err)
+      assert.equal(foobar, require('module'))
     end)
 
+    it('calls .new on the module', function()
+      env.set('APICAST_MODULE', 'foobar')
+      local foobar = { 'foobar' }
+      package.loaded['foobar'] = { new = function() return foobar end }
+
+      assert.equal(foobar, require('module'))
+    end)
+
+    it('defaults to apicast', function()
+      local apicast = require('apicast')
+      local module = require('module')
+
+      assert.truthy(module._NAME)
+      assert.same(apicast._NAME, module._NAME)
+    end)
   end)
 end)

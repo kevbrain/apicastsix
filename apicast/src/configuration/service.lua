@@ -5,17 +5,13 @@
 local setmetatable = setmetatable
 local tostring = tostring
 local rawget = rawget
-local next = next
 local lower = string.lower
 local gsub = string.gsub
-local insert = table.insert
-local sort = table.sort
-local pairs = pairs
 local select = select
-local type = type
 
 local http_authorization = require 'resty.http_authorization'
 
+local oauth = require('oauth')
 
 local _M = { }
 local mt = { __index = _M  }
@@ -54,18 +50,13 @@ local function read_http_header(name)
   return ngx.var['http_' .. normalized]
 end
 
-local credentials_mt = {
-  -- nipairs = only non integer pairs
-  __pairs = function (t)
-    return function(_, k)
-      local v
-      repeat
-        k, v = next(t, k)
-      until k == nil or type(k) ~= 'number'
-      return k, v
-    end, t, nil
-  end
-}
+local function tuple_mt(size)
+  return { __len = function() return size end }
+end
+
+local credentials_v2_mt = tuple_mt(2)
+local credentials_v1_mt = tuple_mt(1)
+local credentials_oauth_mt = tuple_mt(1)
 
 local backend_version_credentials = { }
 
@@ -91,7 +82,7 @@ function backend_version_credentials.version_1(config)
   -- @field 1 User Key
   -- @field user_key User Key
   -- @table credentials_v1
-  return { user_key = user_key }
+  return setmetatable({ user_key, user_key = user_key }, credentials_v1_mt)
 end
 
 function backend_version_credentials.version_2(config)
@@ -130,7 +121,7 @@ function backend_version_credentials.version_2(config)
   -- @field app_id App ID
   -- @field app_key App Key
   -- @table credentials_v2
-  return { app_id = app_id, app_key = app_key }
+  return setmetatable({ app_id, app_key, app_id = app_id, app_key = app_key }, credentials_v2_mt)
 end
 
 function backend_version_credentials.version_oauth(config)
@@ -160,25 +151,12 @@ function backend_version_credentials.version_oauth(config)
   -- @field 1 Access Token
   -- @field access_token Access Token
   -- @table credentials_oauth
-  return { access_token = access_token }
+  return setmetatable({ access_token, access_token = access_token }, credentials_oauth_mt)
 end
 
 -- This table can be used with `table.concat` to serialize
 -- just the numeric keys, but also with `pairs` to iterate
 -- over just the non numeric keys (for query building).
-
-local function to_hybrid_array_table(table)
-  local hybrid = {}
-
-  for k,v in pairs(table) do
-    hybrid[k] = v
-    insert(hybrid, v)
-  end
-
-  sort(hybrid)
-
-  return setmetatable(hybrid, credentials_mt)
-end
 
 --- extracts credentials from the current request
 -- @return @{credentials_v1}, @{credentials_v2}, or @{credentials_oauth}
@@ -197,12 +175,18 @@ function _M:extract_credentials()
    return nil, 'invalid backend version: ' .. backend_version
   end
 
-  local result, err = extractor(credentials)
+  return extractor(credentials)
+end
 
-  if result then
-    return to_hybrid_array_table(result)
+function _M:oauth()
+  local authentication = self.authentication_method or self.backend_version
+
+  if authentication == 'oidc' then
+    return oauth.oidc.new(self)
+  elseif authentication == 'oauth' then
+    return oauth.apicast.new(self)
   else
-    return nil, err
+    return nil, 'not oauth'
   end
 end
 

@@ -2,6 +2,7 @@
 set -eux
 
 PREFIX=${1:-$HOME/openresty}
+OPENRESTY_VERSION=$(echo "${OPENRESTY_VERSION}" | cut -f1 -d-)
 OPENRESTY_ARCHIVE="openresty-${OPENRESTY_VERSION}"
 OPENRESTY="${PREFIX}/bin/openresty"
 

@@ -9,8 +9,10 @@ $ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 
+require("$pwd/t/dns.pl");
+
 log_level('debug');
-repeat_each(1);
+repeat_each(2);
 no_root_location();
 run_tests();
 
@@ -21,7 +23,7 @@ The message is configurable as well as the status.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           backend_version = 1,
@@ -42,15 +44,41 @@ GET /
 credentials missing!
 --- error_code: 401
 
+=== TEST 2: authentication (part of) credentials missing
+The message is configurable as well as the status.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 2,
+          proxy = {
+            error_auth_missing = 'credentials missing!',
+            error_status_auth_missing = 401
+          }
+        }
+      }
+    })
+  }
+--- config
+include $TEST_NGINX_BACKEND_CONFIG;
+include $TEST_NGINX_APICAST_CONFIG;
+--- request
+GET /?app_key=42
+--- response_body chomp
+credentials missing!
+--- error_code: 401
 
 === TEST 2: no mapping rules matched
 The message is configurable and status also.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
+          id = 42,
           backend_version = 1,
           proxy = {
             error_no_match = 'no mapping rules!',
@@ -68,14 +96,14 @@ GET /?user_key=value
 no mapping rules!
 --- error_code: 412
 --- error_log
-skipping after action, no cached key
+could not find proxy for request
 
 === TEST 3: authentication credentials invalid
 The message is configurable and default status is 403.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           backend_version = 1,
@@ -116,7 +144,7 @@ It asks backend and then forwards the request to the api.
 
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -140,7 +168,7 @@ It asks backend and then forwards the request to the api.
 
   location /transactions/authrep.xml {
     content_by_lua_block {
-      local expected = "service_token=token-value&service_id=42&usage[hits]=2&user_key=value"
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
       local args = ngx.var.args
       if args == expected then
         ngx.exit(200)
@@ -160,140 +188,9 @@ GET /?user_key=value
 yay, api backend: 127.0.0.1
 --- error_code: 200
 --- error_log
-apicast cache miss key: 42:value:usage[hits]=2
+apicast cache miss key: 42:value:usage%5Bhits%5D=2
 --- no_error_log
 [error]
-
-=== TEST 5: call to backend is cached
-First call is done synchronously and the second out of band.
---- http_config
-  include $TEST_NGINX_UPSTREAM_CONFIG;
-  lua_package_path "$TEST_NGINX_LUA_PATH";
-  init_by_lua_block {
-    require('configuration_loader').save({
-      services = {
-        {
-          id = 42,
-          backend_version = 1,
-          proxy = {
-            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
-            proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
-            }
-          }
-        }
-      }
-    })
-  }
-  lua_shared_dict api_keys 10m;
---- config
-  include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-  set $backend_authentication_type 'service_token';
-  set $backend_authentication_value 'token-value';
-
-  location /transactions/authrep.xml {
-    content_by_lua_block { ngx.exit(200) }
-  }
-
-  location /api-backend/ {
-     echo 'yay, api backend';
-  }
-
-  location ~ /test/(.+) {
-    proxy_pass $scheme://127.0.0.1:$server_port/$1$is_args$args;
-    proxy_set_header Host localhost;
-  }
-
-  location = /t {
-    echo_subrequest GET /test/one -q user_key=value;
-    echo_subrequest GET /test/two -q user_key=value;
-  }
---- request
-GET /t
---- response_body
-yay, api backend
-yay, api backend
---- error_code: 200
---- grep_error_log eval: qr/apicast cache (?:hit|miss|write) key: [^,\s]+/
---- grep_error_log_out
-apicast cache miss key: 42:value:usage[hits]=2
-apicast cache write key: 42:value:usage[hits]=2
-apicast cache hit key: 42:value:usage[hits]=2
-
-=== TEST 6: multi service configuration
-Two services can exist together and are split by their hostname.
---- http_config
-  include $TEST_NGINX_UPSTREAM_CONFIG;
-  lua_package_path "$TEST_NGINX_LUA_PATH";
-  init_by_lua_block {
-    require('configuration_loader').save({
-      services = {
-        {
-          id = 42,
-          backend_version = 1,
-          proxy = {
-            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/one/",
-            hosts = { 'one' },
-            backend_authentication_type = 'service_token',
-            backend_authentication_value = 'service-one',
-            proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1 }
-            }
-          }
-        },
-        {
-          id = 21,
-          backend_version = 2,
-          proxy = {
-            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/two/",
-            hosts = { 'two' },
-            backend_authentication_type = 'service_token',
-            backend_authentication_value = 'service-two',
-            proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
-            }
-          }
-        }
-      }
-    })
-  }
-  lua_shared_dict api_keys 10m;
---- config
-  include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-
-  location /transactions/authrep.xml {
-    content_by_lua_block { ngx.exit(200) }
-  }
-
-  location ~ /api-backend(/.+) {
-     echo 'yay, api backend: $1';
-  }
-
-  location ~ /test/(.+) {
-    proxy_pass $scheme://127.0.0.1:$server_port/$1$is_args$args;
-    proxy_set_header Host $arg_host;
-  }
-
-  location = /t {
-    echo_subrequest GET /test/one -q user_key=one-key&host=one;
-    echo_subrequest GET /test/two -q app_id=two-id&app_key=two-key&host=two;
-  }
---- request
-GET /t
---- response_body
-yay, api backend: /one/
-yay, api backend: /two/
---- error_code: 200
---- grep_error_log eval: qr/apicast cache (?:hit|miss|write) key: [^,\s]+/
---- grep_error_log_out
-apicast cache miss key: 42:one-key:usage[hits]=1
-apicast cache write key: 42:one-key:usage[hits]=1
-apicast cache miss key: 21:two-id:two-key:usage[hits]=2
-apicast cache write key: 21:two-id:two-key:usage[hits]=2
 
 === TEST 7: mapping rule with fixed value is mandatory
 When mapping rule has a parameter with fixed value it has to be matched.
@@ -301,7 +198,7 @@ When mapping rule has a parameter with fixed value it has to be matched.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -339,7 +236,7 @@ When mapping rule has a parameter with fixed value it has to be matched.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -384,7 +281,7 @@ When mapping rule has a parameter with variable value it has to exist.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -420,7 +317,7 @@ api response
 --- error_code: 200
 --- response_headers
 X-3scale-matched-rules: /foo?bar={baz}
-X-3scale-usage: usage[bar]=3
+X-3scale-usage: usage%5Bbar%5D=3
 
 
 === TEST 10: https api backend works
@@ -429,7 +326,7 @@ X-3scale-usage: usage[bar]=3
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').save({
+    require('configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -499,10 +396,11 @@ So when booting it can be immediately known that some of them won't work.
 --- config
 location /t {
   content_by_lua_block {
-    require('provider').configure({
+    require('configuration_loader').global({
       services = {
         { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
         { id = 2, proxy = { hosts = { 'foo', 'daz' } } },
+        { id = 1, proxy = { hosts = { 'foo', 'fee' } } },
       }
     })
     ngx.say('all ok')
@@ -514,5 +412,146 @@ GET /t
 all ok
 --- log_level: warn
 --- error_code: 200
---- error_log
+--- grep_error_log eval: qr/host .+? for service .? already defined by service [^,\s]+/
+--- grep_error_log_out
 host foo for service 2 already defined by service 1
+
+=== TEST 12: print message that service was added to the configuration
+Including it's host so it is easy to see that configuration was loaded.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+location /t {
+  content_by_lua_block {
+    require('configuration_loader').global({
+      services = {
+        { id = 1, proxy = { hosts = { 'foo', 'bar' } } },
+        { id = 2, proxy = { hosts = { 'baz', 'daz' } } },
+      }
+    })
+    ngx.say('all ok')
+  }
+}
+--- request
+GET /t
+--- response_body
+all ok
+--- log_level: info
+--- error_code: 200
+--- error_log
+added service 1 configuration with hosts: foo, bar
+added service 2 configuration with hosts: baz, daz
+
+=== TEST 13: return headers with debugging info
+When X-3scale-Debug header has value of the backend authentication.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'service-token',
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/",
+            backend = {
+                endpoint = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT'
+            },
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
+            }
+          }
+       },
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  include $TEST_NGINX_BACKEND_CONFIG;
+
+  location /api/ {
+    echo "all ok";
+  }
+--- request
+GET /t?user_key=val
+--- more_headers
+X-3scale-Debug: service-token
+--- response_body
+all ok
+--- error_code: 200
+--- no_error_log
+[error]
+--- response_headers
+X-3scale-matched-rules: /
+X-3scale-usage: usage%5Bhits%5D=2
+
+=== TEST 14: uses endpoint host as Host header
+when connecting to the backend
+--- main_config
+env RESOLVER=127.0.0.1:1953;
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'service-token',
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/",
+            backend = {
+                endpoint = 'http://localhost.example.com:$TEST_NGINX_SERVER_PORT'
+            },
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
+            }
+          }
+       },
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /api/ {
+    echo "all ok";
+  }
+
+  location /transactions/authrep.xml {
+     content_by_lua_block {
+       if ngx.var.host == 'localhost.example.com' then
+         ngx.exit(200)
+       else
+         ngx.exit(404)
+       end
+     }
+  }
+
+--- request
+GET /t?user_key=val
+--- response_body
+all ok
+--- error_code: 200
+--- udp_listen: 1953
+--- udp_reply eval
+$::dns->("localhost.example.com", "127.0.0.1")
+--- no_error_log
+[error]
+
+=== TEST 15: invalid service
+The message is configurable and default status is 403.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+--- request
+GET /?user_key=value
+--- error_code: 404
+--- no_error_log
+[error]

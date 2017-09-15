@@ -55,6 +55,8 @@ describe('resty.balancer', function()
   end)
 
   describe('round-robin balancer', function()
+    before_each(function() round_robin.reset() end)
+
     local balancer = round_robin.new()
 
     balancer.balancer = {
@@ -71,10 +73,24 @@ describe('resty.balancer', function()
     local peers = balancer:peers(servers)
     peers.cur = 1
 
-    it('loops through peers', function()
+    it(':set_peer loops through peers', function()
       local first = balancer:set_peer(peers)
       local second = balancer:set_peer(peers)
       local third = balancer:set_peer(peers)
+      local fourth = balancer:set_peer(peers)
+
+      assert.same({
+        { '127.0.0.1', 80 },
+        { '127.0.0.2', 8080 },
+        { '127.0.0.3', 8090 },
+        { '127.0.0.1', 80 },
+      }, { first, second, third, fourth})
+    end)
+
+    it(':select_peer loops through peers', function()
+      local first = balancer:select_peer(peers)
+      local second = balancer:select_peer(peers)
+      local third = balancer:select_peer(peers)
 
       assert.same({
         { '127.0.0.1', 80 },
@@ -82,5 +98,22 @@ describe('resty.balancer', function()
         { '127.0.0.3', 8090 }
       }, { first, second, third})
     end)
+
+    it('returns error on empty peers', function()
+      local peer, err = balancer:select_peer({})
+
+      assert.same('empty peers', err)
+      assert.falsy(peer)
+    end)
+
+    it('resets cursor when it overflows peers', function()
+      local p = {'127.0.0.1', 8080 }
+      local overflown_peers = { p , cur = 2, hash = 1234 }
+      local peer, err = balancer:select_peer(overflown_peers)
+
+      assert.equals(p, peer)
+      assert.falsy(err)
+    end)
+
   end)
 end)

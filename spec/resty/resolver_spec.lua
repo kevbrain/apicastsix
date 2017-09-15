@@ -1,4 +1,5 @@
 local resty_resolver = require 'resty.resolver'
+local resolver_cache = require 'resty.resolver.cache'
 
 describe('resty.resolver', function()
 
@@ -11,6 +12,14 @@ describe('resty.resolver', function()
       local r = new(dns)
 
       assert.equal(dns, r.dns)
+    end)
+
+    it('populates options', function()
+      local dns = { TYPE_A = 1 }
+
+      local r = new(dns)
+
+      assert.same({qtype = 1 }, r.options)
     end)
   end)
 
@@ -25,26 +34,40 @@ describe('resty.resolver', function()
           }
         end)
       }
-      resolver = resty_resolver.new(dns)
+      resolver = resty_resolver.new(dns, { cache = resolver_cache.new() })
     end)
 
     it('returns servers', function()
-      dns.TYPE_A = 1
       dns.query = spy.new(function()
         return {
           { name = '3scale.net' , address = '127.0.0.1' }
         }
       end)
+      resolver.options = { qtype = 'A' }
 
       local servers, err = resolver:get_servers('3scale.net')
 
       assert.falsy(err)
       assert.equal(1, #servers)
-      assert.spy(dns.query).was.called_with(dns, '3scale.net', { qtype = 1 })
+      assert.spy(dns.query).was.called_with(dns, '3scale.net.', { qtype = 'A' })
+    end)
+
+    it('skips answers with no address', function()
+      dns.query = spy.new(function()
+        return {
+          { name = 'www.3scale.net' , cname = '3scale.net' },
+          { name = '3scale.net' , address = '127.0.0.1' }
+        }
+      end)
+
+      local servers, err = resolver:get_servers('www.3scale.net')
+
+      assert.falsy(err)
+      assert.equal(1, #servers)
+      assert.spy(dns.query).was.called_with(dns, 'www.3scale.net.', {})
     end)
 
     it('searches domains', function()
-      dns.TYPE_A = 1
       dns.query = spy.new(function(_, qname)
         if qname == '3scale.net' then
           return {
@@ -54,15 +77,16 @@ describe('resty.resolver', function()
           return { errcode = 3, errstr = 'name error' }
         end
       end)
-      resolver.search = { 'example.com', 'net' }
+      resolver.options = { qtype = 'A' }
+      resolver.search = { '', 'example.com', 'net' }
 
       local servers, err = resolver:get_servers('3scale')
 
       assert.falsy(err)
       assert.equal(1, #servers)
-      assert.spy(dns.query).was.called_with(dns, '3scale', { qtype = 1 })
-      assert.spy(dns.query).was.called_with(dns, '3scale.example.com', { qtype = 1 })
-      assert.spy(dns.query).was.called_with(dns, '3scale.net', { qtype = 1 })
+      assert.spy(dns.query).was.called_with(dns, '3scale.', resolver.options)
+      assert.spy(dns.query).was.called_with(dns, '3scale.example.com', resolver.options)
+      assert.spy(dns.query).was.called_with(dns, '3scale.net', resolver.options)
     end)
 
     it('returns servers for ip', function()
@@ -92,6 +116,17 @@ describe('resty.resolver', function()
       assert.falsy(err)
       assert.equal('example.com', answer.query)
     end)
+  end)
+
+  describe('.search', function()
+    it('contains empty scope', function ()
+
+      assert.same({''}, resty_resolver.search)
+    end)
+  end)
+
+  describe(':lookup', function()
+    pending('does query when cached cname missing address')
   end)
 
   describe('.parse_nameservers', function()

@@ -1,10 +1,11 @@
 local round_robin = require 'resty.balancer.round_robin'
 
-local _M = { }
+local _M = { default_balancer = round_robin.new() }
 
-function _M.call()
-  local balancer = round_robin.new()
-  local peers = balancer:peers(ngx.ctx[ngx.var.proxy_host])
+function _M.call(_, balancer)
+  balancer = balancer or _M.default_balancer
+  local host = ngx.var.proxy_host -- NYI: return to lower frame
+  local peers = balancer:peers(ngx.ctx[host])
 
   local peer, err = balancer:set_peer(peers)
 

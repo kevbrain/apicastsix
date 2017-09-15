@@ -13,7 +13,7 @@ else
 fi
 
 bin_dir=$(dirname "${path}")
-apicast_dir="$( cd "${bin_dir}/.." && pwd )"
+apicast_dir=${APICAST_DIR:-"$( cd "${bin_dir}/.." && pwd )"}
 
 pick_openresty() {
   for cmd in "$@"
@@ -24,12 +24,12 @@ pick_openresty() {
     fi
   done
 
+  (>&2 echo "ERROR: Could not find openresty executable in your PATH.")
+  (>&2 echo "Make sure you have one of: $(printf "%s " "$@")")
   exit 1
 }
 
-default_openresty_binary=$(pick_openresty openresty-debug openresty nginx)
-
-openresty_binary=${APICAST_OPENRESTY_BINARY:-$default_openresty_binary}
+openresty_binary=${APICAST_OPENRESTY_BINARY:-$(pick_openresty openresty-debug openresty nginx)}
 log_level=${APICAST_LOG_LEVEL:-warn}
 log_file=${APICAST_LOG_FILE:-stderr}
 log_levels=(emerg alert crit error warn notice info debug)
@@ -46,6 +46,7 @@ log_level="${!log}"
 mkdir -p "${apicast_dir}/logs"
 
 daemon=off
+worker_processes=${APICAST_WORKERS:-1}
 
 usage () {
 	cat <<-USAGE
@@ -54,21 +55,29 @@ usage () {
 	  -c <file> Path to custom config file (JSON).
 	  -d Daemonize
 	  -v Increase verbosity (can be repeated)
-	  -i Auto update interval in seconds.
-	  -r Reload configuration on every request. WARNING: not for production. It has to download configuration on every request.
+	  -i Cache configuration for N seconds. Using 0 will reload on every request (not for production).
+	  -w <workers> Number of worker processes to start.
+	  -m <on|off> Whether to start worker processes. Only for development.
+	  -s <signal> Send signal to a master process: stop, quit, reopen, reload
+	  -p <pid> Path to the PID file.
+	  -b Load configuration on boot.
+	  -e Deployment environment. Can be staging or production.
 USAGE
 }
 
-while getopts ":dc:hvqi:r" opt; do
+main=("")
+args=("")
+
+while getopts ":dc:hvbqi:rw:m:s:p:e:" opt; do
   case "${opt}" in
     d)
-      daemon=on
-      ;;
-    r)
-      export APICAST_RELOAD_CONFIG=1
+      daemon="on"
       ;;
     c)
-      export THREESCALE_CONFIG_FILE="$OPTARG"
+      export APICAST_CONFIGURATION="$OPTARG"
+      ;;
+    b)
+      export APICAST_CONFIGURATION_LOADER="boot"
       ;;
     v)
 	    log_level=$((log_level == max_log_level ? max_log_level : log_level+1))
@@ -77,7 +86,22 @@ while getopts ":dc:hvqi:r" opt; do
 	    log_level=$((log_level == 0 ? 0 : log_level-1))
       ;;
     i)
-      export AUTO_UPDATE_INTERVAL="${OPTARG}"
+      export APICAST_CONFIGURATION_CACHE="${OPTARG}"
+      ;;
+    e)
+      export THREESCALE_DEPLOYMENT_ENV="${OPTARG}"
+    ;;
+    w)
+      worker_processes=${OPTARG}
+    ;;
+    m)
+      main+=("master_process ${OPTARG};")
+    ;;
+    p)
+      main+=("pid ${PWD}/${OPTARG};")
+    ;;
+    s)
+      args+=("-s" "${OPTARG}")
     ;;
     h)
       usage
@@ -92,4 +116,14 @@ while getopts ":dc:hvqi:r" opt; do
   esac
 done
 
-exec "${openresty_binary}" -p "${apicast_dir}" -c conf/nginx.conf -g "daemon ${daemon}; error_log ${log_file} ${log_levels[log_level]};"
+export THREESCALE_DEPLOYMENT_ENV=${THREESCALE_DEPLOYMENT_ENV-production}
+
+main+=("daemon ${daemon};")
+main+=("worker_processes ${worker_processes};")
+main+=$(printenv | awk '$1 ~ /^(APICAST|THREESCALE)_/ {split($0,env,"="); print "env", env[1] ";"}')
+
+function join_by { local IFS="$1"; shift; echo "$*"; }
+args=$(join_by '' "${args[@]}")
+main=$(join_by '' "${main[@]}")
+# shellcheck disable=SC2086
+exec "${openresty_binary}" -p "${apicast_dir}" -c conf/nginx.conf ${args} -g "${main} error_log ${log_file} ${log_levels[log_level]};"

@@ -1,131 +1,120 @@
-local provider = require('provider')
+local proxy = require('proxy')
 local balancer = require('balancer')
-local configuration_loader = require('configuration_loader')
-local util = require('util')
-local pcall = pcall
-local tonumber = tonumber
 local math = math
-local getenv = os.getenv
-local reload_config = util.env_enabled('APICAST_RELOAD_CONFIG')
+local setmetatable = setmetatable
+
+local configuration_loader = require('configuration_loader').new()
+local configuration_store = require('configuration_store')
+local user_agent = require('user_agent')
+
+local noop = function() end
 
 local _M = {
-  _VERSION = '0.1'
+  _VERSION = '3.0.0-pre',
+  _NAME = 'APIcast'
 }
 
-local missing_configuration = getenv('APICAST_MISSING_CONFIGURATION') or 'log'
-local request_logs = util.env_enabled('APICAST_REQUEST_LOGS')
+local mt = {
+  __index = _M
+}
 
-local function handle_missing_configuration(err)
-  if missing_configuration == 'log' then
-    ngx.log(ngx.ERR, 'failed to load configuration, continuing: ', err)
-  elseif missing_configuration == 'exit' then
-    ngx.log(ngx.EMERG, 'failed to load configuration, exiting: ', err)
-    os.exit(1)
-  else
-    ngx.log(ngx.ERR, 'unknown value of APICAST_MISSING_CONFIGURATION: ', missing_configuration)
-    os.exit(1)
-  end
+--- This is called when APIcast boots the master process.
+function _M.new()
+  return setmetatable({
+    configuration = configuration_store.new(),
+    -- So there is no way to use ngx.ctx between request and post_action.
+    -- We somehow need to share the instance of the proxy between those.
+    -- This table is used to store the proxy object with unique reqeust id key
+    -- and removed in the post_action. Because it there is just one instance
+    -- of this module in each worker.
+    post_action_proxy = {}
+  }, mt)
 end
 
-function _M.init()
+function _M:init()
+  user_agent.cache()
+
   math.randomseed(ngx.now())
   -- First calls to math.random after a randomseed tend to be similar; discard them
   for _=1,3 do math.random() end
 
-  local config, err = configuration_loader.init()
-  local init = config and provider.init(config)
-
-  if not init then
-    handle_missing_configuration(err)
-  end
+  configuration_loader.init(self.configuration)
 end
 
-local function refresh_config()
-  local config, err = configuration_loader.boot()
-
-  if config then
-    provider.init(config)
-  else
-    ngx.log(ngx.ERR, 'failed to refresh configuration: ', err)
-  end
+function _M:init_worker()
+  configuration_loader.init_worker(self.configuration)
 end
 
-function _M.init_worker()
-  local interval = tonumber(getenv('AUTO_UPDATE_INTERVAL'), 10) or 0
-
-  local function schedule(...)
-    local ok, err = ngx.timer.at(...)
-
-    if not ok then
-      ngx.log(ngx.ERR, "failed to create the auto update timer: ", err)
-      return
-    end
-  end
-
-  local handler
-
-  handler = function (premature)
-    if premature then return end
-
-    ngx.log(ngx.INFO, 'auto updating configuration')
-
-    local updated, err = pcall(refresh_config)
-
-    if updated then
-      ngx.log(ngx.INFO, 'auto updating configuration finished successfuly')
-    else
-      ngx.log(ngx.ERR, 'auto updating configuration failed with: ', err)
-    end
-
-    schedule(interval, handler)
-  end
-
-  if interval > 0 then
-    schedule(interval, handler)
-  end
+function _M.cleanup()
+  -- now abort all the "light threads" running in the current request handler
+  ngx.exit(499)
 end
 
-function _M.rewrite()
+function _M:rewrite()
+  ngx.on_abort(_M.cleanup)
+
+  ngx.var.original_request_id = ngx.var.request_id
+
   local host = ngx.var.host
   -- load configuration if not configured
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
-  if not provider.configured(host) or reload_config then
-    local config = configuration_loader.boot(host)
-    provider.configure(config)
+
+  local configuration = configuration_loader.rewrite(self.configuration, host)
+
+  local p = proxy.new(configuration)
+  p.set_upstream(p:set_service(host))
+  ngx.ctx.proxy = p
+end
+
+function _M:post_action()
+  local request_id = ngx.var.original_request_id
+  local post_action_proxy = self.post_action_proxy
+
+  if not post_action_proxy then
+    return nil, 'not initialized'
   end
 
-  provider.set_service()
-  provider.set_upstream()
-end
+  local p = ngx.ctx.proxy or post_action_proxy[request_id]
 
-function _M.post_action()
-  provider.post_action()
-end
+  post_action_proxy[request_id] = nil
 
-function _M.access()
-  local fun = provider.call()
-  return fun()
-end
-
-function _M.body_filter()
-  if not request_logs then return end
-
-  ngx.ctx.buffered = (ngx.ctx.buffered or "") .. string.sub(ngx.arg[1], 1, 1000)
-
-  if ngx.arg[2] then
-    ngx.var.resp_body = ngx.ctx.buffered
+  if p then
+    return p:post_action()
+  else
+    ngx.log(ngx.INFO, 'could not find proxy for request id: ', request_id)
+    return nil, 'no proxy for request'
   end
 end
 
-function _M.header_filter()
-  if not request_logs then return end
+function _M:access()
+  local p = ngx.ctx.proxy
+  local post_action_proxy = self.post_action_proxy
 
-  ngx.var.resp_headers = require('cjson').encode(ngx.resp.get_headers())
+  if not post_action_proxy then
+    return nil, 'not initialized'
+  end
+
+  local access, handler = p:call() -- proxy:access() or oauth handler
+
+  local ok, err
+
+  if access then
+    ok, err = access()
+    post_action_proxy[ngx.var.original_request_id] = p
+  elseif handler then
+    ok, err = handler()
+    -- no proxy because that would trigger post action
+  end
+
+  return ok, err
 end
+
+_M.body_filter = noop
+_M.header_filter = noop
 
 _M.balancer = balancer.call
 
-_M.log = function() end
+_M.log = noop
 
 return _M

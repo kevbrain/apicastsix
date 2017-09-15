@@ -1,13 +1,21 @@
-#!/usr/bin/env sh
+#!/usr/bin/env perl
 
-exec resty -e "$(cat <<LUA
-if ngx ~= nil then
-  ngx.exit = function()end
-end
+use strict;
+use warnings FATAL => 'all';
 
-pcall(require, 'luarocks.loader')
+use File::Basename;
+use Cwd;
 
--- Busted command-line runner
-require 'busted.runner'({ standalone = false })
-LUA
-)"
+my $dirname = dirname(__FILE__);
+my $cwd = getcwd();
+
+chdir "$dirname/..";
+
+my $apicast = getcwd();
+
+exec '/usr/bin/env', 'resty',
+    '--http-include', "$apicast/spec/fixtures/echo.conf",
+    "$apicast/bin/busted.lua",
+    '--config-file', "$apicast/.busted",
+    '--directory', "$cwd",
+    @ARGV;

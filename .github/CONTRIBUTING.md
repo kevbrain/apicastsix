@@ -53,7 +53,7 @@ It is important to send proper Host header, as that is used to route between dif
 # Development
 We will also consider contributions in the form of pull requests. Please follow the guidelines here to help your work get accepted.
 
-These guideline is inspired by and based on the Kubernetes guide "[How to get faster PR Reviews](https://github.com/kubernetes/kubernetes/blob/master/docs/devel/faster_reviews.md)".
+These guideline is inspired by and based on the Kubernetes guide "[How to get faster PR Reviews](https://github.com/kubernetes/community/blob/master/contributors/devel/pull-requests.md#best-practices-for-faster-reviews)".
 
 ## Pull requests
 
@@ -66,7 +66,7 @@ To submit a pull request :
 4. Push your changes to your fork (`git push origin feature_x`)
 5. Open a Pull Request and provide a description of the contents of it
 
-### Guideline Summary
+### Guideline Summary
 
 1. Seek feedback early
 2. Smaller PRs are better

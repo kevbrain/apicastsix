@@ -1,16 +1,7 @@
 local configuration = require 'configuration'
-local cjson = require 'cjson'
+local env = require 'resty.env'
 
 describe('Configuration object', function()
-  describe('.parse', function()
-    it('returns new configuration object', function()
-      assert.same(configuration.new({}), configuration.parse('{}', cjson))
-    end)
-
-    it('works with table', function()
-      assert.same(configuration.new({}), configuration.parse({}))
-    end)
-  end)
 
   describe('provides information from the config file', function()
     local config = configuration.new({services = { 'a' }})
@@ -33,27 +24,16 @@ describe('Configuration object', function()
 
       assert.same('example.com', config.hostname_rewrite)
     end)
-  end)
 
-  describe('.decode', function()
-    it('ignores empty string', function()
-      assert.same(nil, configuration.decode(''))
-    end)
-  end)
+    it('overrides backend endpoint from ENV', function()
+      env.set('BACKEND_ENDPOINT_OVERRIDE', 'https://backend.example.com')
 
-  describe('.encode', function()
-    it('encodes to json by default', function()
-      local t = { a = 1, b = 2 }
-      assert.same('{"a":1,"b":2}', configuration.encode(t))
-    end)
+      local config = configuration.parse_service({ proxy = {
+        backend = { endpoint = 'http://example.com', host = 'foo.example.com' }
+      }})
 
-    it('does not do double encoding', function()
-      local str = '{"a":1,"b":2}'
-      assert.same(str, configuration.encode(str))
-    end)
-
-    it('encodes nil to null', function()
-      assert.same('null', configuration.encode(nil))
+      assert.same('https://backend.example.com', config.backend.endpoint)
+      assert.same('backend.example.com', config.backend.host)
     end)
   end)
 
@@ -61,15 +41,15 @@ describe('Configuration object', function()
     local filter_services = configuration.filter_services
 
     it('works with nil', function()
-      local services = { { id = 42 } }
+      local services = { { id = '42' } }
       assert.equal(services, filter_services(services))
     end)
 
     it('works with table with ids', function()
-      local services = { { id = 42 } }
+      local services = { { id = '42' } }
 
-      assert.same(services, filter_services(services, { 42 }))
-      assert.same({}, filter_services(services, { 21 }))
+      assert.same(services, filter_services(services, { '42' }))
+      assert.same({}, filter_services(services, { '21' }))
     end)
   end)
 
@@ -77,15 +57,15 @@ describe('Configuration object', function()
     local services_limit = configuration.services_limit
 
     it('reads from environment', function()
-      stub(os, 'getenv').on_call_with('APICAST_SERVICES').returns('42,21')
+      env.set('APICAST_SERVICES', '42,21')
 
       local services = services_limit()
 
-      assert.same({ [42] = true, [21] = true }, services)
+      assert.same({ ['42'] = true, ['21'] = true }, services)
     end)
 
     it('reads from environment', function()
-      stub(os, 'getenv').on_call_with('APICAST_SERVICES').returns('')
+      env.set('APICAST_SERVICES', '')
 
       local services = services_limit()
 

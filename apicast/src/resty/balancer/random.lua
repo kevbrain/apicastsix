@@ -4,16 +4,14 @@ local _M = {
   _VERSION = '0.1'
 }
 
-local maxn = table.maxn
 local random = math.random
-
 
 function _M.new()
   return balancer.new(_M.call)
 end
 
 local function random_peer(peers)
-  local n = maxn(peers)
+  local n = #peers
   local i = random(1, n)
 
   return peers[i], i

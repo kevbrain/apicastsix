@@ -1,10 +1,10 @@
-local getenv = os.getenv
 local len = string.len
 local tostring = tostring
 local open = io.open
 local assert = assert
 local sub = string.sub
 local util = require 'util'
+local env = require 'resty.env'
 
 local _M = {
   _VERSION = '0.1'
@@ -33,7 +33,7 @@ local function read(path)
 end
 
 function _M.call(path)
-  local file = path or getenv('THREESCALE_CONFIG_FILE')
+  local file = path or env.get('THREESCALE_CONFIG_FILE')
 
   return read(file)
 end

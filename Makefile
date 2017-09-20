@@ -69,13 +69,13 @@ push: ## Push image to the registry
 
 bash: export IMAGE_NAME = apicast-test
 bash: export SERVICE = gateway
-bash: ## Run bash inside the builder image
+bash: builder-image apicast-source ## Run bash inside the builder image
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash $(SERVICE)
 
 dev: export IMAGE_NAME = apicast-test
 dev: export SERVICE = dev
 dev: USER = root
-dev: ## Run APIcast inside the container mounted to local volume
+dev: builder-image apicast-source ## Run APIcast inside the container mounted to local volume
 	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
 test-builder-image: export IMAGE_NAME = apicast-test
 test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
@@ -103,7 +103,7 @@ gateway-logs:
 	$(DOCKER_COMPOSE) logs gateway
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
-test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
+test-runtime-image: runtime-image clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_CONFIGURATION_LOADER=boot -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d

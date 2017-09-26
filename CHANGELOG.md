@@ -6,13 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Request headers are not passed to the backend, preventing sending invalid Content-Type to the access token store endpoint [PR #433](https://github.com/3scale/apicast/pull/433)
+
 ## [3.1.0-rc1] - 2017-09-14
 
 ### Added
 
 - Support for extending APIcast location block with snippets of nginx configuration [PR #407][https://github.com/3scale/apicast/pull/407]
 
-### Fixes
+### Fixed
 
 - Crash on empty OIDC Issuer endpoint [PR #408](https://github.com/3scale/apicast/pull/408)
 - Handle partial credentials [PR #409](https://github.com/3scale/apicast/pull/409)

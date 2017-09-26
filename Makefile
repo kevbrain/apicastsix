@@ -13,6 +13,10 @@ OPENRESTY_VERSION ?= master
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
+DEVEL_IMAGE ?= apicast-development
+DEVEL_DOCKERFILE ?= Dockerfile-development
+DEVEL_DOCKER_COMPOSE_FILE ?= docker-compose-devel.yml
+
 CIRCLE_NODE_INDEX ?= 0
 CIRCLE_STAGE ?= build
 COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
@@ -109,6 +113,12 @@ test-runtime-image: runtime-image clean-containers ## Smoke test the runtime ima
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_CONFIGURATION_LOADER=boot -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'
+
+build-development:
+	docker build -f $(DEVEL_DOCKERFILE) -t $(DEVEL_IMAGE) .
+
+development: build-development ## Run bash inside the development image
+	$(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) run --rm development
 
 dependencies:
 	luarocks make apicast/*.rockspec

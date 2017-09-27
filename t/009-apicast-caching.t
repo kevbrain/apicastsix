@@ -16,7 +16,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 5: call to backend is cached
+=== TEST 1: call to backend is cached
 First call is done synchronously and the second out of band.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -74,7 +74,7 @@ apicast cache miss key: 42:value:usage%5Bhits%5D=2
 apicast cache write key: 42:value:usage%5Bhits%5D=2
 apicast cache hit key: 42:value:usage%5Bhits%5D=2
 
-=== TEST 6: multi service configuration
+=== TEST 2: multi service configuration
 Two services can exist together and are split by their hostname.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -161,7 +161,7 @@ apicast cache write key: 1:one-key:usage%5Bhits%5D=1
 apicast cache miss key: 2:two-id:two-key:usage%5Bhits%5D=2
 apicast cache write key: 2:two-id:two-key:usage%5Bhits%5D=2
 
-=== TEST 7: call to backend is cached
+=== TEST 3: call to backend is cached
 First call is done synchronously and the second out of band.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;

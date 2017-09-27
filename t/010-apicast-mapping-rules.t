@@ -16,7 +16,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 5: call to backend is cached
+=== TEST 1: call to backend is cached
 First call is done synchronously and the second out of band.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;

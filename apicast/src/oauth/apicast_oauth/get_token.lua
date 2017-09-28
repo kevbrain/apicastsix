@@ -112,6 +112,7 @@ local function get_token(params)
     if stored.status == 200 then
       send_token(token)
     else
+      ngx.status = stored.status
       ngx.say('{"error":"'..stored.body..'"}')
       ngx.exit(stored.status)
     end

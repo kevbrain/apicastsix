@@ -11,13 +11,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Upgraded to OpenResty 1.11.2.5-1 [PR #428](https://github.com/3scale/apicast/pull/428)
 - `/oauth/token` endpoint returns an error status code, when the access token couldn't be stored in 3scale backend [PR #436](https://github.com/3scale/apicast/pull/436)]
 
+### Fixed
+
+- Request headers are not passed to the backend, preventing sending invalid Content-Type to the access token store endpoint [PR #433](https://github.com/3scale/apicast/pull/433)
+
 ## [3.1.0-rc1] - 2017-09-14
 
 ### Added
 
 - Support for extending APIcast location block with snippets of nginx configuration [PR #407](https://github.com/3scale/apicast/pull/407)
 
-### Fixes
+### Fixed
 
 - Crash on empty OIDC Issuer endpoint [PR #408](https://github.com/3scale/apicast/pull/408)
 - Handle partial credentials [PR #409](https://github.com/3scale/apicast/pull/409)

@@ -715,3 +715,82 @@ GET /t
 --- no_error_log
 [error]
 
+=== TEST 18: when calling /oauth/token request headers are not passed to the backend
+--- main_config
+  env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
+  env RESOLVER=$TEST_NGINX_RESOLVER;
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        { id = 42, backend_version = 'oauth' }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  lua_need_request_body on;
+  location = /t {
+    content_by_lua_block {
+      local authorize = require('oauth.apicast_oauth.authorize')
+      local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
+      local code = 'authcode'
+      local params = { user_id = 'someuser' }
+      local client_data = {
+        client_id = 'foo',
+        secret_id = 'bar',
+        redirect_uri = 'redirect',
+        access_token = 'token'
+      }
+
+      assert(authorized_callback.persist_code(client_data, params, code))
+
+      ngx.req.set_method(ngx.HTTP_POST)
+      ngx.req.set_body_data('grant_type=authorization_code&client_id=foo&client_secret=bar&redirect_uri=redirect&code=' .. code)
+      ngx.exec('/oauth/token')
+    }
+  }
+
+    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
+    set $backend_host '127.0.0.1';
+    set $service_id 42;
+    set $backend_authentication_type 'provider_key';
+    set $backend_authentication_value 'fookey';
+
+    location = /backend/transactions/oauth_authorize.xml {
+      content_by_lua_block {
+        expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
+        if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
+          ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
+          ngx.exit(200)
+        else
+          ngx.log(ngx.ERR, 'expected: ' .. expected .. ' got: ' .. ngx.var.args)
+          ngx.exit(403)
+        end
+      }
+    }
+
+    location = /backend/services/42/oauth_access_tokens.xml {
+      content_by_lua_block {
+        if ngx.var.http_content_type then
+          ngx.log(ngx.ERR, 'Invalid Content-Type: ', ngx.var.http_content_type)
+          ngx.status = 400
+          ngx.print('invalid content-type')
+          ngx.exit(400)
+        else
+          ngx.exit(200)
+        end
+      }
+    }
+
+--- request
+GET /t
+--- more_headers
+Content-Type: application/json
+--- error_code: 200
+--- response_body
+{"token_type":"bearer","expires_in":604800,"access_token":"token"}
+--- no_error_log
+[error]

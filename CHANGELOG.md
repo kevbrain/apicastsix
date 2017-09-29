@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Changed
 
 - Upgraded to OpenResty 1.11.2.5-1 [PR #428](https://github.com/3scale/apicast/pull/428)
+- `/oauth/token` endpoint returns an error status code, when the access token couldn't be stored in 3scale backend [PR #436](https://github.com/3scale/apicast/pull/436)]
 
 ## [3.1.0-rc1] - 2017-09-14
 
 ### Added
 
-- Support for extending APIcast location block with snippets of nginx configuration [PR #407][https://github.com/3scale/apicast/pull/407]
+- Support for extending APIcast location block with snippets of nginx configuration [PR #407](https://github.com/3scale/apicast/pull/407)
 
 ### Fixes
 
@@ -26,7 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- `THREESCALE\_DEPLOYMENT\_ENV` defaults to `production` [PR #406](https://github.com/3scale/apicast/pull/406)
+- `THREESCALE_DEPLOYMENT_ENV` defaults to `production` [PR #406](https://github.com/3scale/apicast/pull/406)
 - OIDC is now used based on settings on the API Manager [PR #405](https://github.com/3scale/apicast/pull/405)
 - No limit on body size from the client sent to the server [PR #410](https://github.com/3scale/apicast/pull/410)
 - Print module loading errors only when it failed to load [PR #415](https://github.com/3scale/apicast/pull/415)

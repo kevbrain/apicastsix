@@ -66,16 +66,21 @@ local function check_rule(req, rule, usage_t, matched_rules, params)
 end
 
 local function get_auth_params(method)
-  local params
+  local params = ngx.req.get_uri_args()
 
   if method == "GET" then
-    params = ngx.req.get_uri_args()
+    return params
   else
     ngx.req.read_body()
-    params = ngx.req.get_post_args()
-  end
+    local body_params = ngx.req.get_post_args()
 
-  return params
+    -- Adds to body_params URI params that are not included in the body. Doing
+    -- the reverse would be more expensive, because in general, we expect the
+    -- size of body_params to be larger than the size of params.
+    setmetatable(body_params, { __index = params })
+
+    return body_params
+  end
 end
 
 local regex_variable = '\\{[-\\w_]+\\}'

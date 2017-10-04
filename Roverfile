@@ -1,0 +1,13 @@
+luarocks {
+
+    rockspec 'apicast/apicast-0.1-0.rockspec',
+
+    group 'testing' {
+        module { 'busted' },
+    },
+
+    group 'development' {
+        rockspec 'rockspec',
+    }
+}
+

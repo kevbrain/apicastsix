@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Request headers are not passed to the backend, preventing sending invalid Content-Type to the access token store endpoint [PR #433](https://github.com/3scale/apicast/pull/433)
+- Live and ready endpoints now set correct Content-Type header in the response[PR #441](https://github.com/3scale/apicast/pull/441)
 
 ## [3.1.0-rc1] - 2017-09-14
 

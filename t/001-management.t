@@ -30,6 +30,8 @@ env APICAST_MANAGEMENT_API=status;
 include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /status/ready
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
 {"status":"ready","success":true}
 --- error_code: 200
@@ -46,6 +48,8 @@ env APICAST_MANAGEMENT_API=status;
 include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /status/ready
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
 {"success":false,"status":"error","error":"not configured"}
 --- error_code: 412
@@ -65,6 +69,8 @@ env APICAST_MANAGEMENT_API=status;
   include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /status/ready
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
 {"success":true,"status":"warning","warning":"no services"}
 --- error_code: 200
@@ -81,6 +87,8 @@ env APICAST_MANAGEMENT_API=status;
   include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /status/live
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
 {"status":"live","success":true}
 --- error_code: 200

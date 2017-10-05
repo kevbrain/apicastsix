@@ -1,0 +1,37 @@
+#!/bin/bash
+
+COMMAND=$1
+PROJECT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
+
+function run_busted_tests {
+    cd "${PROJECT_PATH}" || exit; ./bin/busted
+}
+
+function run_nginx_unit_tests {
+    cd "${PROJECT_PATH}" || exit
+
+    sudo TEST_NGINX_APICAST_PATH="${PROJECT_PATH}/apicast" \
+         TEST_NGINX_BINARY=openresty \
+         TEST_NGINX_REDIS_HOST=redis \
+         prove
+
+    # Text::Nginx runs nginx in the t/servroot dir. Clean it.
+    sudo rm -rf "${PROJECT_PATH}/t/servroot"
+}
+
+function run_all_tests {
+    run_busted_tests
+    run_nginx_unit_tests
+}
+
+case "${COMMAND}" in
+    busted)
+        run_busted_tests
+        ;;
+    nginx)
+        run_nginx_unit_tests
+        ;;
+    *)
+        run_all_tests
+        ;;
+esac

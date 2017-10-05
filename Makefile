@@ -9,27 +9,40 @@ SHELL=/bin/bash -o pipefail
 SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
-OPENRESTY_VERSION ?= 1.11.2.2-2
+OPENRESTY_VERSION ?= master
 BUILDER_IMAGE ?= quay.io/3scale/s2i-openresty-centos7:$(OPENRESTY_VERSION)
 RUNTIME_IMAGE ?= $(BUILDER_IMAGE)-runtime
 
-lua_files = $(shell find apicast/src -type f -name '*.lua')
-spec_files = $(shell find spec -type f -name '*.lua')
+DEVEL_IMAGE ?= apicast-development
+DEVEL_DOCKERFILE ?= Dockerfile-development
+DEVEL_DOCKER_COMPOSE_FILE ?= docker-compose-devel.yml
+
+CIRCLE_NODE_INDEX ?= 0
+CIRCLE_STAGE ?= build
+COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
+
+export COMPOSE_PROJECT_NAME
+
+DANGER_IMAGE ?= quay.io/3scale/danger
 
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
 
+apicast-source: export IMAGE_NAME ?= apicast-test
+apicast-source: ## Create Docker Volume container with APIcast source code
+	- docker rm -v -f $(COMPOSE_PROJECT_NAME)-source
+	docker create --rm -v /opt/app --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
+	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app
+
+danger: apicast-source
 danger: TEMPFILE := $(shell mktemp)
 danger:
-	env | grep -E 'TRAVIS|DANGER|SEAL' > $(TEMPFILE)
-	docker run --rm -v $(PWD):/src/ -w /src/ --env-file=$(TEMPFILE) -u $(shell id -u) quay.io/3scale/danger danger
+	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
+	docker run --rm  -w /opt/app/ --volumes-from=$(COMPOSE_PROJECT_NAME)-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
 busted: dependencies ## Test Lua.
 	@bin/busted
 	@- luacov
-
-check: dependencies ## Run luacheck to lint lua files
-	luacheck $(lua_files) $(spec_files)
 
 nginx:
 	@ ($(NGINX) -V 2>&1 | grep -e '--with-ipv6' > /dev/null) || (>&2 echo "$(NGINX) `$(NGINX) -v 2>&1` does not have ipv6 support" && exit 1)
@@ -41,9 +54,10 @@ carton:
 prove: carton nginx ## Test nginx
 	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
+prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test
 prove-docker: ## Test nginx inside docker
-	$(DOCKER_COMPOSE) run --rm prove
+	$(DOCKER_COMPOSE) run --rm -T prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
 builder-image: ## Build builder image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=apicast --copy --incremental
@@ -59,27 +73,28 @@ push: ## Push image to the registry
 
 bash: export IMAGE_NAME = apicast-test
 bash: export SERVICE = gateway
-bash: ## Run bash inside the builder image
+bash: builder-image apicast-source ## Run bash inside the builder image
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash $(SERVICE)
 
 dev: export IMAGE_NAME = apicast-test
 dev: export SERVICE = dev
 dev: USER = root
-dev: ## Run APIcast inside the container mounted to local volume
+dev: builder-image apicast-source ## Run APIcast inside the container mounted to local volume
 	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
 test-builder-image: export IMAGE_NAME = apicast-test
 test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
+	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p . -t
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p /opt/app -t
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p .
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p /opt/app
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test bash -c 'for i in {1..5}; do curl --fail http://gateway:8090/status/live && break || sleep 1; done'
 	$(DOCKER_COMPOSE) logs gateway
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X PUT http://gateway:8090/config --data '{"services":[{"id":42}]}'
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=http://gateway:8090/config --user 100001 test bin/entrypoint -d
+	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=http://gateway:8090/config --user 100001 test /tmp/scripts/run -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail http://gateway:8090/status/ready
 	@echo -e $(SEPARATOR)
@@ -92,19 +107,25 @@ gateway-logs:
 	$(DOCKER_COMPOSE) logs gateway
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
-test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
+test-runtime-image: runtime-image clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_CONFIGURATION_LOADER=boot -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'
 
+build-development:
+	docker build -f $(DEVEL_DOCKERFILE) -t $(DEVEL_IMAGE) .
+
+development: build-development ## Run bash inside the development image
+	$(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) run --rm development
+
 dependencies:
 	luarocks make apicast/*.rockspec
 	luarocks make rockspec
 
-clean-containers:
-	$(DOCKER_COMPOSE) down --volumes --remove-orphans
+clean-containers: apicast-source
+	$(DOCKER_COMPOSE) down --volumes
 
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
@@ -113,7 +134,7 @@ doc: dependencies ## Generate documentation
 	ldoc -c doc/config.ld .
 
 node_modules/.bin/markdown-link-check:
-	npm install markdown-link-check@3.0.3 2>/dev/null
+	yarn install
 
 test-doc: node_modules/.bin/markdown-link-check
 	@find . \( -name node_modules -o -name .git -o -name t \) -prune -o -name "*.md" -print0 | xargs -0 -n1  -I % sh -c 'echo; echo ====================; echo Checking: %; node_modules/.bin/markdown-link-check  %' \;

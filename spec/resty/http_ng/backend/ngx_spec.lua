@@ -11,8 +11,9 @@ describe('ngx backend',function()
         assert.are.same({_url = 'http://localhost:8081'}, options.vars)
         return { status = 200, body = '' }
       end
-      local response = backend.send{method = method, url = 'http://localhost:8081' }
+      local response = backend:send{method = method, url = 'http://localhost:8081' }
       assert.truthy(response)
+      assert.truthy(response.request)
     end)
 
     it('sends headers', function()
@@ -22,8 +23,9 @@ describe('ngx backend',function()
         assert.are.same({Host = 'fake.example.com'}, options.ctx.headers)
         return { status = 200, body = '' }
       end
-      local response = backend.send{method = method, url = 'http://localhost:8081/path', headers = {Host = 'fake.example.com'} }
+      local response = backend:send{method = method, url = 'http://localhost:8081/path', headers = {Host = 'fake.example.com'} }
       assert.truthy(response)
+      assert.truthy(response.request)
     end)
   end)
 

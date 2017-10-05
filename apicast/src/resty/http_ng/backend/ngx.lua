@@ -14,7 +14,7 @@ local METHODS = {
 local PROXY_LOCATION = '/___http_call'
 
 backend.capture = ngx.location.capture
-backend.send = function(request)
+backend.send = function(_, request)
   local res = backend.capture(PROXY_LOCATION, {
     method = METHODS[request.method],
     body = request.body,
@@ -30,7 +30,7 @@ backend.send = function(request)
     -- Do what? what error message it should say?
   -- end
 
-  return response.new(res.status, res.header, res.body)
+  return response.new(request, res.status, res.header, res.body)
 end
 
 return backend

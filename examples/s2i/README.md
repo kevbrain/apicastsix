@@ -5,13 +5,15 @@ Source-to-image can be used to create Docker image with baked in customizations.
 ## Build
 
 ```sh
-s2i build . quay.io/3scale/apicast:master my-image-name
+s2i build . quay.io/3scale/apicast:master-builder my-image-name --environment-file=.env
 ```
+
+The build process should print that it is installing `lua-resty-auto-ssl` module.
 
 ## Test
 
 ```sh
-docker run --ENV THREESCALE_CONFIG_FILE=config.json my-image-name
+docker run my-image-name
 ```
 
 And container will start without any error messages.

@@ -7,7 +7,7 @@ my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
 $ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$apicast/conf.d/management.conf";
 
-require("t/dns.pl");
+require("$pwd/t/dns.pl");
 
 log_level('debug');
 repeat_each(2);
@@ -24,12 +24,14 @@ env APICAST_MANAGEMENT_API=status;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('module').proxy:configure({ services = { { id = 42 } } })
+    require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /status/ready
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
 {"status":"ready","success":true}
 --- error_code: 200
@@ -46,8 +48,10 @@ env APICAST_MANAGEMENT_API=status;
 include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /status/ready
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
-{"status":"error","error":"not configured","success":false}
+{"success":false,"status":"error","error":"not configured"}
 --- error_code: 412
 --- no_error_log
 [error]
@@ -59,14 +63,16 @@ env APICAST_MANAGEMENT_API=status;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('module').proxy:configure({services = { }})
+    require('configuration_loader').global({services = { }})
   }
 --- config
   include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /status/ready
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
-{"status":"warning","warning":"no services","success":true}
+{"success":true,"status":"warning","warning":"no services"}
 --- error_code: 200
 --- no_error_log
 [error]
@@ -81,6 +87,8 @@ env APICAST_MANAGEMENT_API=status;
   include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 GET /status/live
+--- response_headers
+Content-Type: application/json; charset=utf-8
 --- response_body
 {"status":"live","success":true}
 --- error_code: 200
@@ -95,7 +103,7 @@ env APICAST_MANAGEMENT_API=debug;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('module').proxy:configure({ services = { { id = 42 } } })
+    require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -130,7 +138,7 @@ GET /test
 --- response_body
 {"status":"ok","config":null}
 null
-{"status":"ok","services":1,"config":{"services":[{"id":42}]}}
+{"services":1,"status":"ok","config":{"services":[{"id":42}]}}
 {"services":[{"id":42}]}
 --- error_code: 200
 --- no_error_log
@@ -153,13 +161,13 @@ Could not resolve GET /foobar - nil
 === TEST 8: boot
 exposes boot function
 --- main_config
-env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
+env THREESCALE_PORTAL_ENDPOINT=http://localhost.local:$TEST_NGINX_SERVER_PORT/config/;
 env RESOLVER=127.0.0.1:1953;
 env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-      require('module').proxy:configure({ services = { { id = 42 } } })
+      require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -170,20 +178,20 @@ POST /boot
 --- error_code: 200
 --- udp_listen: 1953
 --- udp_reply eval
-$::dns->("localhost", "127.0.0.1", 60)
+$::dns->("localhost.local", "127.0.0.1", 60)
 --- no_error_log
 [error]
 
 === TEST 9: boot called twice
 keeps the same configuration
 --- main_config
-env THREESCALE_PORTAL_ENDPOINT=http://localhost:$TEST_NGINX_SERVER_PORT/config/;
+env THREESCALE_PORTAL_ENDPOINT=http://localhost.local:$TEST_NGINX_SERVER_PORT/config/;
 env RESOLVER=127.0.0.1:1953;
 env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-      require('module').proxy:configure({ services = { { id = 42 } } })
+      require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -199,7 +207,7 @@ POST /test
 --- error_code: 200
 --- udp_listen: 1953
 --- udp_reply eval
-$::dns->("localhost", "127.0.0.1", 60)
+$::dns->("localhost.local", "127.0.0.1", 60)
 --- no_error_log
 [error]
 
@@ -221,7 +229,7 @@ env APICAST_MANAGEMENT_API=debug;
 --- request
 GET /test
 --- response_body
-{"status":"ok","services":1,"config":{"services":[{"id":42}]}}
+{"services":1,"status":"ok","config":{"services":[{"id":42}]}}
 {"status":"ok","config":null}
 null
 --- error_code: 200
@@ -247,8 +255,8 @@ env APICAST_MANAGEMENT_API=debug;
   'Content-Type: application/json; charset=utf-8' ]
 --- response_body eval
 [ '{"status":"ok","config":null}'."\n",
-  '{"status":"ok","services":1,"config":{"services":[{"id":42}]}}'."\n",
-  '{"status":"ok","services":1,"config":{"services":[{"id":42}]}}'."\n",
+  '{"services":1,"status":"ok","config":{"services":[{"id":42}]}}'."\n",
+  '{"services":1,"status":"ok","config":{"services":[{"id":42}]}}'."\n",
   '{"services":[{"id":42}]}'."\n" ]  
 --- no_error_log
 [error]
@@ -262,7 +270,7 @@ env APICAST_MANAGEMENT_API=debug;
 lua_package_path "$TEST_NGINX_LUA_PATH";
 init_by_lua_block {
   ngx.now = function() return 0 end
-  local cache = require('resty.resolver.cache').new():save({ {
+  local cache = require('resty.resolver.cache').shared():save({ {
     address = "127.0.0.1",
     class = 1,
     name = "127.0.0.1.xip.io",
@@ -278,7 +286,7 @@ GET /dns/cache
 --- response_headers
 Content-Type: application/json; charset=utf-8
 --- response_body
-{"127.0.0.1.xip.io":{"expires_in":199,"value":{"1":{"address":"127.0.0.1","section":1,"type":1,"class":1,"name":"127.0.0.1.xip.io","ttl":199},"name":"127.0.0.1.xip.io","ttl":199}}}
+{"127.0.0.1.xip.io":{"value":{"1":{"address":"127.0.0.1","class":1,"ttl":199,"name":"127.0.0.1.xip.io","section":1,"type":1},"ttl":199,"name":"127.0.0.1.xip.io"},"expires_in":199}}
 --- no_error_log
 [error]
 
@@ -305,7 +313,7 @@ env APICAST_MANAGEMENT_API=status;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('module').proxy:configure({ services = { { id = 42 } } })
+    require('configuration_loader').global({ services = { { id = 42 } } })
   }
 --- config
 include $TEST_NGINX_MANAGEMENT_CONFIG;
@@ -327,13 +335,13 @@ include $TEST_NGINX_MANAGEMENT_CONFIG;
 POST /config
 invalid json
 --- response_body
-{"status":"error","error":"Expected value but found invalid token at character 1","config":null}
+{"config":null,"status":"error","error":"Expected value but found invalid token at character 1"}
 --- error_code: 400
 --- no_error_log
 [error]
 
 
-=== TEST 15: writing wrong configuration
+=== TEST 16: writing wrong configuration
 JSON is valid but it not a configuration.
 --- main_config
 env APICAST_MANAGEMENT_API=debug;
@@ -345,7 +353,7 @@ include $TEST_NGINX_MANAGEMENT_CONFIG;
 POST /config
 {"id":42}
 --- response_body
-{"status":"not_configured","services":0,"config":{"id":42}}
+{"services":0,"config":{"id":42},"status":"not_configured"}
 --- error_code: 406
 --- no_error_log
 [error]

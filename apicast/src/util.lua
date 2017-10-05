@@ -67,4 +67,18 @@ function _M.system(command)
   end
 end
 
+function _M.to_hash(table)
+  local t = {}
+
+  if not table then
+    return t
+  end
+
+  for i = 1, #table do
+    t[table[i]] = true
+  end
+
+  return t
+end
+
 return _M

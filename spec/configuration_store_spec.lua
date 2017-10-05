@@ -30,6 +30,18 @@ describe('Configuration Store', function()
 
       assert.is_nil(store:find_by_id('example.com'))
     end)
+
+    it('overrides previous values', function()
+      local store = configuration.new()
+      local first = { id = '42', hosts = { 'first.example.com' } }
+      local second = { id = '42', hosts = { 'second.example.com' } }
+
+      store:add(first)
+      assert.equal(first, store:find_by_id('42'))
+
+      store:add(second)
+      assert.equal(second, store:find_by_id('42'))
+    end)
   end)
 
   describe('.find_by_host', function()
@@ -67,11 +79,30 @@ describe('Configuration Store', function()
       assert.same({ }, store:find_by_host('unknown'))
     end)
 
-    it('returns stale records', function()
+    it('returns stale records by default', function()
       local store = configuration.new()
       local service =  { id = '21', hosts = { 'example.com', 'localhost' } }
 
       store:add(service, -1)
+
+      assert.same({ service }, store:find_by_host('example.com'))
+    end)
+
+
+    it('not returns stale records when disabled', function()
+      local store = configuration.new()
+      local service =  { id = '21', hosts = { 'example.com', 'localhost' } }
+
+      store:add(service, -1)
+
+      assert.same({ }, store:find_by_host('example.com', false))
+    end)
+
+    it('normalizes hosts to lowercase', function()
+      local store = configuration.new()
+      local service =  { id = '21', hosts = { 'EXAMPLE.com' } }
+
+      store:add(service)
 
       assert.same({ service }, store:find_by_host('example.com'))
     end)

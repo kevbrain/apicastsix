@@ -1,7 +1,7 @@
 local _M = {}
 
 local cjson = require('cjson')
-local proxy = require('module').proxy
+local module = require('module')
 local router = require('router')
 local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')
@@ -9,7 +9,7 @@ local inspect = require('inspect')
 local resolver_cache = require('resty.resolver.cache')
 local env = require('resty.env')
 
-local live = cjson.encode({status = 'live', success = true})
+local live = { status = 'live', success = true }
 
 local function json_response(body, status)
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -20,21 +20,18 @@ end
 function _M.ready()
   local status = _M.status()
   local code = status.success and ngx.HTTP_OK or 412
-
-  ngx.status = code
-  ngx.say(cjson.encode(status))
+  json_response(status, code)
 end
 
 function _M.live()
-  ngx.status = ngx.HTTP_OK
-  ngx.say(live)
+  json_response(live, ngx.HTTP_OK)
 end
 
-function _M.status(p)
-  p = p or proxy
+function _M.status(config)
+  local configuration = config or module.configuration
   -- TODO: this should be fixed for multi-tenant deployment
-  local has_configuration = p.configuration.configured
-  local has_services = #(p.configuration:all()) > 0
+  local has_configuration = configuration.configured
+  local has_services = #(configuration:all()) > 0
 
   if not has_configuration then
     return { status = 'error', error = 'not configured',  success = false }
@@ -46,7 +43,7 @@ function _M.status(p)
 end
 
 function _M.config()
-  local config = proxy.configuration
+  local config = module.configuration
   local contents = cjson.encode(config.configured and { services = config:all() } or nil)
 
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -68,7 +65,7 @@ function _M.update_config()
   local config, err = configuration_parser.decode(data)
 
   if config then
-    local configured, error = proxy:configure(config)
+    local configured, error = configuration_loader.configure(module.configuration, config)
     -- TODO: respond with proper 304 Not Modified when config is the same
     if configured and #(configured.services) > 0 then
       json_response({ status = 'ok', config = config, services = #(configured.services)})
@@ -83,7 +80,7 @@ end
 function _M.delete_config()
   ngx.log(ngx.DEBUG, 'management config delete')
 
-  proxy.configuration:reset()
+  module.configuration:reset()
   -- TODO: respond with proper 304 Not Modified when config is the same
   local response = cjson.encode({ status = 'ok', config = cjson.null })
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -99,13 +96,13 @@ function _M.boot()
 
   ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(data))
 
-  proxy:configure(config)
+  configuration_loader.configure(module.configuration, config)
 
   ngx.say(response)
 end
 
 function _M.dns_cache()
-  local cache = resolver_cache.new()
+  local cache = resolver_cache.shared()
   return json_response(cache:all())
 end
 

@@ -17,6 +17,7 @@ describe('http_ng', function()
       assert.truthy(response)
       assert.equal(method:upper(), last_request.method)
       assert.equal('http://example.com', last_request.url)
+      assert.equal(last_request, response.request)
     end)
   end
 
@@ -86,6 +87,14 @@ describe('http_ng', function()
       http = http_ng.new{backend = backend, options = { ssl = { verify = false } } }
 
       http.get('http://example.com')
+      local last_request = assert(backend.last_request)
+
+      assert.equal(false, last_request.options.ssl.verify)
+    end)
+    it('can turn off ssl validation for methods with body', function()
+      http = http_ng.new{backend = backend, options = { ssl = { verify = false } } }
+
+      http.post('http://example.com', {})
       local last_request = assert(backend.last_request)
 
       assert.equal(false, last_request.options.ssl.verify)

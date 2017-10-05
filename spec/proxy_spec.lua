@@ -1,4 +1,5 @@
 local configuration_store = require 'configuration_store'
+local Service = require 'configuration.service'
 
 describe('Proxy', function()
   local configuration, proxy
@@ -13,9 +14,51 @@ describe('Proxy', function()
     assert.same('function', type(proxy.access))
   end)
 
-  it('has authorize function', function()
-    assert.truthy(proxy.authorize)
-    assert.same('function', type(proxy.authorize))
+  describe(':call', function()
+    before_each(function()
+      ngx.var = { backend_endpoint = 'http://localhost:1853' }
+      configuration:add(Service.new({ id = 42, hosts = { 'localhost' }}))
+    end)
+
+    it('has authorize function after call', function()
+      proxy:call('localhost')
+
+      assert.truthy(proxy.authorize)
+      assert.same('function', type(proxy.authorize))
+    end)
+
+    it('returns access function', function()
+      local access = proxy:call('localhost')
+
+      assert.same('function', type(access))
+    end)
+
+    it('returns oauth handler when matches oauth route', function()
+      local service = configuration:find_by_id(42)
+      service.backend_version = 'oauth'
+      stub(ngx.req, 'get_method', function() return 'GET' end)
+      ngx.var.uri = '/authorize'
+
+      local access, handler = proxy:call('localhost')
+
+      assert.equal(nil, access)
+      assert.same('function', type(handler))
+    end)
+  end)
+
+  describe(':access', function()
+    local service
+    before_each(function()
+      ngx.var = { backend_endpoint = 'http://localhost:1853' }
+      service = Service.new({ extract_usage = function() end })
+    end)
+
+    it('works with part of the credentials', function()
+      service.credentials = { location = 'headers' }
+      service.backend_version = 2
+      ngx.var.http_app_key = 'key'
+      assert.falsy(proxy:access(service))
+    end)
   end)
 
   it('has post_action function', function()
@@ -32,8 +75,21 @@ describe('Proxy', function()
     assert.falsy(proxy:find_service('unknown'))
   end)
 
+  it('does not return old configuration when new one is available', function()
+    local foo = { id = '42', hosts = { 'foo.example.com'} }
+    local bar = { id = '42', hosts = { 'bar.example.com'} }
+
+    configuration:add(foo, -1) -- expired record
+    assert.equal(foo, proxy:find_service('foo.example.com'))
+
+    configuration:add(bar, -1) -- expired record
+    assert.equal(bar, proxy:find_service('bar.example.com'))
+    assert.falsy(proxy:find_service('foo.example.com'))
+  end)
+
   describe('.get_upstream', function()
-    local get_upstream = proxy.get_upstream
+    local get_upstream
+    before_each(function() get_upstream = proxy.get_upstream end)
 
     it('sets correct upstream port', function()
       assert.same(443, get_upstream({ api_backend = 'https://example.com' }).port)
@@ -42,19 +98,38 @@ describe('Proxy', function()
     end)
   end)
 
-  describe('.configured', function()
-    it('returns false when not configured', function()
-      local p = assert(proxy.new({configuration = {} }))
-      assert.falsy(p:configured())
+  describe('.authorize', function()
+    local service = { backend_authentication = { value = 'not_baz' } }
+    local usage = 'foo'
+    local credentials = 'client_id=blah'
+
+
+    it('takes ttl value if sent', function()
+      local ttl = 80
+      ngx.var = { cached_key = credentials, usage=usage, credentials=credentials, http_x_3scale_debug='baz', real_url='blah' }
+      ngx.ctx = { backend_upstream = ''}
+
+      local response = { status = 200 }
+      stub(ngx.location, 'capture', function() return response end)
+
+      stub(proxy, 'cache_handler').returns(true)
+
+      proxy:authorize(service, usage, credentials, ttl)
+
+      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo', response, ttl)
     end)
 
-    it('returns true when configured', function()
-      local config = configuration_store.new()
-      config:add({ id = 42, hosts = { 'example.com' } })
-      local p = assert(proxy.new(config))
+    it('works with no ttl', function()
+      ngx.var = { cached_key = "client_id=blah", usage=usage, credentials=credentials, http_x_3scale_debug='baz', real_url='blah' }
+      ngx.ctx = { backend_upstream = ''}
 
-      assert.truthy(p:configured('example.com'))
+      local response = { status = 200 }
+      stub(ngx.location, 'capture', function() return response end)
+      stub(proxy, 'cache_handler').returns(true)
+
+      proxy:authorize(service, usage, credentials)
+
+      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo', response, nil)
     end)
   end)
-
 end)

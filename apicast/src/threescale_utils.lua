@@ -1,3 +1,5 @@
+local sub = string.sub
+local tonumber = tonumber
 
 local redis = require 'resty.redis'
 local env = require 'resty.env'
@@ -5,7 +7,15 @@ local env = require 'resty.env'
 local resty_resolver = require 'resty.resolver'
 local resty_balancer = require 'resty.balancer'
 
+local resty_url = require 'resty.url'
+
 local _M = {} -- public interface
+
+local redis_conf = {
+  timeout   = 3000,  -- 3 seconds
+  keepalive = 10000, -- milliseconds
+  poolsize  = 1000   -- # connections
+}
 
 -- private
 -- Logging Helpers
@@ -110,23 +120,82 @@ function _M.resolve(host, port)
   return ip, port
 end
 
-function _M.connect_redis(host, port)
-  local h = host or env.get('REDIS_HOST') or "127.0.0.1"
-  local p = port or env.get('REDIS_PORT') or 6379
+function _M.connect_redis(options)
+  local opts = {}
+
+  local url = options and options.url or env.get('REDIS_URL')
+
+
+  if url then
+    url = resty_url.split(url, 'redis')
+    if url then
+      opts.host = url[4]
+      opts.port = url[5]
+      opts.db = url[6] and tonumber(sub(url[6], 2))
+      opts.password = url[3] or url[2]
+    end
+  elseif options then
+    opts.host = options.host
+    opts.port = options.port
+    opts.db = options.db
+    opts.password = options.password
+  end
+
+  opts.timeout = options and options.timeout or redis_conf.timeout
+
+  local host = opts.host or env.get('REDIS_HOST') or "127.0.0.1"
+  local port = opts.port or env.get('REDIS_PORT') or 6379
+
   local red = redis:new()
 
-  local ok, err = red:connect(_M.resolve(h, p))
+  red:set_timeout(opts.timeout)
+
+  local ok, err = red:connect(_M.resolve(host, port))
   if not ok then
-    return nil, _M.error("failed to connect to redis on " .. h .. ":" .. p .. ":", err)
+    return nil, _M.error("failed to connect to redis on " .. host .. ":" .. port .. ":", err)
   end
+
+  if opts.password then
+    ok = red:auth(opts.password)
+
+    if not ok then
+      return nil, _M.error("failed to auth on redis " .. host .. ":" .. port)
+    end
+  end
+
+  if opts.db then
+    ok = red:select(opts.db)
+
+    if not ok then
+      return nil, _M.error("failed to select db " .. opts.db .. " on redis " .. host .. ":" .. port)
+    end
+  end
+
   return red
+end
+
+-- return ownership of this connection to the pool
+function _M.release_redis(red)
+  red:set_keepalive(redis_conf.keepalive, redis_conf.poolsize)
+end
+
+local xml_header_len = string.len('<?xml version="1.0" encoding="UTF-8"?>')
+
+function _M.match_xml_element(xml, element, value)
+  if not xml then return nil end
+  local pattern = string.format('<%s>%s</%s>', element, value, element)
+  return string.find(xml, pattern, xml_header_len, xml_header_len, true)
 end
 
 -- error and exist
 function _M.error(...)
-  ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
-  ngx.say(...)
-  ngx.exit(ngx.status)
+  if ngx.get_phase() == 'timer' then
+    return ...
+  else
+    ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+    ngx.say(...)
+    ngx.exit(ngx.status)
+  end
 end
 
 function _M.missing_args(text)

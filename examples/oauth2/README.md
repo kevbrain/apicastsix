@@ -51,10 +51,10 @@ A very simple Sinatra app acting as a Client, running on `http://localhost:3001`
 
 The app will display a page where you can enter a `client_id`, `redirect_uri` and `scope` to request an authorization code. 
 
-The Authorization URL targeted will be the `/authorize` endpoint on your API Gateway instance, e.g `localhost:8080/authorize` 
-The Access Token URL targeted will be the `/oauth/token` endpoint on your API Gateway instance. e.g `localhost:8080/oauth/token`
+The Authorization URL targeted will be the `/authorize` endpoint on your API Gateway instance, e.g `http://localhost:8080/authorize` 
+The Access Token URL targeted will be the `/oauth/token` endpoint on your API Gateway instance. e.g `http://localhost:8080/oauth/token`
 
-Both these values are built in to the client, however, the Gateway host can be overwritten by adding a `.env` file under the `client` directory and specifying the gateway host in the `GATEWAY` environment variable (in format `<host>:<port>`), otherwise this will default to `localhost:8080`
+Both these values are built in to the client, however, the Gateway URI can be overwritten by adding a `.env` file under the `client` directory and specifying the gateway URI in the `GATEWAY` environment variable (in format `<scheme>://<host>:<port>`), otherwise this will default to `http://localhost:8080`
 
 Once an authorization code is returned back to the app, you can exchange that for an access token by additionally providing a client secret.
 
@@ -78,4 +78,4 @@ The authorization server will callback APIcast (running on `http://localhost:808
 
 Once the Authorization Code is sent to the redirect URL (client callback endpoint in this case) we exchange this for an access token as per the instructions above under "Exchanging authorization code for an access token."
 
-The `auth-server.rb` code for running this example using `docker-compose` locally assumes that the Gateway host is running on `localhost:8080`. You can always override this by adding a `.env` file in the `auth-server` directory and referencing this within your `docker-compose.yml` file, same as for `client.rb`.
+The `auth-server.rb` code for running this example using `docker-compose` locally assumes that the Gateway host is running on `http://localhost:8080`. You can always override this by adding a `.env` file in the `auth-server` directory and referencing this within your `docker-compose.yml` file, same as for `client.rb`.

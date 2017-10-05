@@ -1,9 +1,12 @@
 local oauth = require 'oauth'
 
 describe('OAuth', function()
-  describe('.call', function()
-    it('returns function matching the route', function()
-      assert.equals('function', type(oauth.call('GET', '/authorize')))
-    end)
+  describe('.oidc', function()
+    it(function() assert.equal(require('oauth.oidc'), oauth.oidc) end)
   end)
+
+  describe('.apicast', function()
+    it(function() assert.equal(require('oauth.apicast_oauth'), oauth.apicast) end)
+  end)
+
 end)

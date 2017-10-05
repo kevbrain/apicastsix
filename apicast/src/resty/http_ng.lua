@@ -1,8 +1,17 @@
+------------
+--- HTTP NG module
+-- Implements HTTP client.
+-- @module http_ng
+
+--- HTTP Client
+-- @type HTTP
+
 local type = type
 local unpack = unpack
 local assert = assert
 local tostring = tostring
 local setmetatable = setmetatable
+local getmetatable = getmetatable
 local rawset = rawset
 local upper = string.upper
 local rawget = rawget
@@ -11,18 +20,12 @@ local next = next
 local pairs = pairs
 local concat = table.concat
 
-------------
---- HTTP
--- HTTP client
--- @module middleware
-
---- HTTP
--- @type HTTP
 
 local resty_backend = require 'resty.http_ng.backend.resty'
 local json = require 'cjson'
 local request = require 'resty.http_ng.request'
 local resty_url = require 'resty.url'
+local http_headers = require 'resty.http_ng.headers'
 
 local DEFAULT_PATH = ''
 
@@ -39,7 +42,7 @@ local function merge(...)
     local t = all[i]
 
     if type(t) == 'table' then
-      res = res or {}
+      res = res or setmetatable({}, getmetatable(t))
       for k,v in pairs(t) do
         res[k] = merge(res[k], v)
       end
@@ -49,6 +52,27 @@ local function merge(...)
   end
 
   return res
+end
+
+local function get_request_params(method, client, url, options)
+  local opts = {}
+  local scheme, user, pass, host, port, path = unpack(assert(resty_url.split(url)))
+  if port then host = concat({host, port}, ':') end
+
+  opts.headers = http_headers.new()
+  opts.headers.host = host
+
+  if user or pass then
+    opts.headers.authorization = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
+  end
+
+  return {
+    url         = concat({ scheme, '://', host, path or DEFAULT_PATH }, ''),
+    method      = method,
+    options     = merge(opts, rawget(client, 'options'), options),
+    client      = client,
+    serializer  = client.serializer or http.serializers.default
+  }
 end
 
 http.method = function(method, client)
@@ -63,25 +87,10 @@ http.method = function(method, client)
 
     assert(url, 'url as first parameter is required')
 
-    local opts = {}
-    local scheme, user, pass, host, port, path = unpack(assert(resty_url.split(url)))
-    if port then host = concat({host, port}, ':') end
+    local req_params = get_request_params(method, client, url, options)
+    local req = http.request.new(req_params)
 
-    opts.headers = { ['Host'] = host }
-
-    if user or pass then
-      opts.headers.Authorization = "Basic " .. ngx.encode_base64(concat({ user or '', pass or '' }, ':'))
-    end
-
-    local req = http.request.new({
-      url         = concat({ scheme, '://', host, path or DEFAULT_PATH }, ''),
-      method      = method,
-      options     = merge(opts, rawget(client, 'options'), options),
-      client      = client,
-      serializer  = client.serializer or http.serializers.default
-    })
-
-    return client.backend.send(req)
+    return client.backend:send(req)
   end
 end
 
@@ -98,10 +107,11 @@ http.method_with_body = function(method, client)
     assert(url, 'url as first parameter is required')
     assert(body, 'body as second parameter is required')
 
-    local req = http.request.new{ url = url, method = method, body = body,
-                                  options = options, client = client,
-                                  serializer = client.serializer or http.serializers.default  }
-    return client.backend.send(req)
+    local req_params = get_request_params(method, client, url, options)
+    req_params.body = body
+    local req = http.request.new(req_params)
+
+    return client.backend:send(req)
   end
 end
 

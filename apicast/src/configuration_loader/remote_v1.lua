@@ -101,7 +101,7 @@ function _M.download(endpoint, _)
   res, err = httpc:request_uri(url, {
     method = "GET",
     headers = headers,
-    ssl_verify = false
+    ssl_verify = env.enabled('OPENSSL_VERIFY')
   })
 
   if err then

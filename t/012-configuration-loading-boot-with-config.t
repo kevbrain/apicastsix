@@ -5,7 +5,7 @@ my $pwd = cwd();
 my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
 
 $ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/*.conf";
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/init.conf";
 $ENV{TEST_NGINX_APICAST_PATH} = $apicast;
 $ENV{APICAST_CONFIGURATION_LOADER} = 'boot';
 $ENV{THREESCALE_CONFIG_FILE} = 't/servroot/html/config.json';
@@ -16,7 +16,7 @@ env_to_nginx(
     'THREESCALE_CONFIG_FILE'
 );
 
-log_level('error');
+log_level('warn');
 repeat_each(2);
 no_root_location();
 run_tests();
@@ -47,7 +47,7 @@ should exit when the file has invalid json
 --- request
 GET
 --- error_log
-failed to load configuration, exiting: Expected value but found invalid token at character 1
+Expected value but found invalid token at character 1
 --- user_files
 >>> config.json
 not valid json

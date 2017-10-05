@@ -4,6 +4,9 @@ local open = io.open
 local gmatch = string.gmatch
 local match = string.match
 local format = string.format
+local find = string.find
+local rep = string.rep
+local unpack = unpack
 local insert = table.insert
 local getenv = os.getenv
 local concat = table.concat
@@ -49,6 +52,18 @@ local function read_resolv_conf(path)
   return output or "", err
 end
 
+local nameserver = {
+  mt = {
+    __tostring = function(t)
+      return concat(t, ':')
+    end
+  }
+}
+
+function nameserver.new(host, port)
+  return setmetatable({ host, port or default_resolver_port }, nameserver.mt)
+end
+
 function _M.parse_nameservers(path)
   local resolv_conf, err = read_resolv_conf(path)
 
@@ -58,7 +73,7 @@ function _M.parse_nameservers(path)
 
   ngx.log(ngx.DEBUG, '/etc/resolv.conf:\n', resolv_conf)
 
-  local search = { '' }
+  local search = { }
   local nameservers = { search = search }
   local resolver = getenv('RESOLVER')
   local domains = match(resolv_conf, 'search%s+([^\n]+)')
@@ -71,26 +86,27 @@ function _M.parse_nameservers(path)
 
   if resolver then
     local m = re.split(resolver, ':', 'oj')
-    insert(nameservers, { m[1] , m[2] or default_resolver_port })
-    return nameservers
+    insert(nameservers, nameserver.new(m[1], m[2]))
+    -- we are going to use all resolvers, because we can't trust dnsmasq
+    -- see https://github.com/3scale/apicast/issues/321 for more details
   end
 
-  for nameserver in gmatch(resolv_conf, 'nameserver%s+([^%s]+)') do
+  for server in gmatch(resolv_conf, 'nameserver%s+([^%s]+)') do
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
-    if nameserver ~= resolver then
-      insert(nameservers, { nameserver, default_resolver_port } )
+    if server ~= resolver then
+      insert(nameservers, nameserver.new(server))
     end
   end
 
   return nameservers
 end
 
-function _M.init_nameservers()
-  local nameservers = _M.parse_nameservers() or {}
+function _M.init_nameservers(path)
+  local nameservers = _M.parse_nameservers(path) or {}
   local search = nameservers.search or {}
 
   for i=1, #nameservers do
-    ngx.log(ngx.INFO, 'adding ', nameservers[i][1],':', nameservers[i][2], ' as default nameserver')
+    ngx.log(ngx.INFO, 'adding ', nameservers[i], ' as default nameserver')
     insert(_M._nameservers, nameservers[i])
   end
 
@@ -114,13 +130,13 @@ function _M.nameservers()
   return _M._nameservers
 end
 
-function _M.init()
-  _M.init_nameservers()
+function _M.init(path)
+  _M.init_nameservers(path)
 end
 
 function _M.new(dns, opts)
   opts = opts or {}
-  local cache = opts.cache or resolver_cache.new()
+  local cache = opts.cache or resolver_cache.shared()
   local search = opts.search or _M.search
 
   ngx.log(ngx.DEBUG, 'resolver search domains: ', concat(search, ' '))
@@ -146,16 +162,22 @@ function _M:instance()
   return resolver
 end
 
+local server_mt = {
+  __tostring = function(t)
+    return format('%s:%s', t.address, t.port)
+  end
+}
+
 local function new_server(answer, port)
   if not answer then return nil, 'missing answer' end
   local address = answer.address
   if not address then return nil, 'server missing address' end
 
-  return {
+  return setmetatable({
     address = answer.address,
     ttl = answer.ttl,
     port = answer.port or port
-  }
+  }, server_mt)
 end
 
 local function new_answer(address, port)
@@ -176,6 +198,16 @@ local function is_ip(address)
   end
 end
 
+local function is_fqdn(name)
+  return find(name, '.', 1, true)
+end
+
+local servers_mt = {
+  __tostring = function(t)
+    return format(rep('%s', #t, ' '), unpack(t))
+  end
+}
+
 local function convert_answers(answers, port)
   local servers = {}
 
@@ -185,12 +217,43 @@ local function convert_answers(answers, port)
 
   servers.answers = answers
 
-  return servers
+  return setmetatable(servers, servers_mt)
 end
 
 local empty = {}
 
-local function lookup(dns, qname, search, options)
+local function valid_answers(answers)
+  return answers and not answers.errcode and #answers > 0 and (not answers.addresses or #answers.addresses > 0)
+end
+
+local function search_dns(self, qname, stale)
+  local search = self.search
+  local dns = self.dns
+  local options = self.options
+  local cache = self.cache
+
+  local answers, err
+
+  for i=1, #search do
+    local query = qname .. '.' .. search[i]
+    ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' search: ', search[i], ' query: ', query)
+
+    answers, err = cache:get(query, stale)
+    if valid_answers(answers) then break end
+
+    answers, err = dns:query(query, options)
+    if valid_answers(answers) then
+      cache:save(answers)
+      break
+    end
+  end
+
+  return answers, err
+end
+
+function _M.lookup(self, qname, stale)
+  local cache = self.cache
+
   ngx.log(ngx.DEBUG, 'resolver query: ', qname)
 
   local answers, err
@@ -199,18 +262,18 @@ local function lookup(dns, qname, search, options)
     ngx.log(ngx.DEBUG, 'host is ip address: ', qname)
     answers = { new_answer(qname) }
   else
-    for i=1, #search do
-      local query = qname .. '.' .. search[i]
-      ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' search: ', search[i], ' query: ', query)
-      answers, err = dns:query(query, options)
-
-      if answers and not answers.errcode and #answers > 0 then
-        break
-      end
+    if is_fqdn(qname) then
+      answers, err = cache:get(qname, stale)
     end
+
+    if not valid_answers(answers) then
+      answers, err = search_dns(self, qname, stale)
+    end
+
   end
 
   ngx.log(ngx.DEBUG, 'resolver query: ', qname, ' finished with ', #(answers or empty), ' answers')
+
   return answers, err
 end
 
@@ -226,20 +289,12 @@ function _M.get_servers(self, qname, opts)
     return nil, 'query missing'
   end
 
-  local cache = self.cache
-  local search = self.search or _M.search
-
   -- TODO: pass proper options to dns resolver (like SRV query type)
 
   local sema, key = synchronization:acquire(format('qname:%s:qtype:%s', qname, 'A'))
   local ok = sema:wait(0)
 
-  local answers, err = cache:get(qname, not ok)
-
-  if not answers or err or #answers.addresses == 0 then
-    answers, err = lookup(dns, qname, search, self.options)
-    cache:save(answers)
-  end
+  local answers, err = self:lookup(qname, not ok)
 
   if ok then
     -- cleanup the key so we don't have unbounded growth of this table

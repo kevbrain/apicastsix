@@ -5,3 +5,5 @@ doc/api/
 node_modules
 .vagrant/
 apicast/logs/
+*.rock
+lua_modules/

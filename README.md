@@ -15,7 +15,7 @@ This Dockerfile creates a [3scale](http://www.3scale.net) gateway, and configure
 To run APIcast on OpenShift, just use template and create a Secret to point to your 3scale Admin Portal.
 
 ```shell
-oc secret new-basicauth threescale-portal-endpoint-secret --password=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net
+oc secret new-basicauth apicast-configuration-url-secret --password=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net
 oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml
 ```
 
@@ -113,7 +113,7 @@ For developing and testing APIcast the following tools are needed:
  luarocks install busted
 ```
 
-- [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx-0.25/lib/Test/Nginx/Socket.pm) – used for integration testing.
+- [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx/lib/Test/Nginx/Socket.pm) – used for integration testing.
 ```shell
  cpan install Carton
  cpan install Test::Nginx

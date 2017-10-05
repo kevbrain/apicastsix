@@ -13,7 +13,7 @@ else
 fi
 
 bin_dir=$(dirname "${path}")
-apicast_dir="$( cd "${bin_dir}/.." && pwd )"
+apicast_dir=${APICAST_DIR:-"$( cd "${bin_dir}/.." && pwd )"}
 
 pick_openresty() {
   for cmd in "$@"
@@ -60,19 +60,24 @@ usage () {
 	  -m <on|off> Whether to start worker processes. Only for development.
 	  -s <signal> Send signal to a master process: stop, quit, reopen, reload
 	  -p <pid> Path to the PID file.
+	  -b Load configuration on boot.
+	  -e Deployment environment. Can be staging or production.
 USAGE
 }
 
 main=("")
 args=("")
 
-while getopts ":dc:hvqi:rw:m:s:p:" opt; do
+while getopts ":dc:hvbqi:rw:m:s:p:e:" opt; do
   case "${opt}" in
     d)
       daemon="on"
       ;;
     c)
-      export THREESCALE_CONFIG_FILE="$OPTARG"
+      export APICAST_CONFIGURATION="$OPTARG"
+      ;;
+    b)
+      export APICAST_CONFIGURATION_LOADER="boot"
       ;;
     v)
 	    log_level=$((log_level == max_log_level ? max_log_level : log_level+1))
@@ -82,6 +87,9 @@ while getopts ":dc:hvqi:rw:m:s:p:" opt; do
       ;;
     i)
       export APICAST_CONFIGURATION_CACHE="${OPTARG}"
+      ;;
+    e)
+      export THREESCALE_DEPLOYMENT_ENV="${OPTARG}"
     ;;
     w)
       worker_processes=${OPTARG}
@@ -107,6 +115,8 @@ while getopts ":dc:hvqi:rw:m:s:p:" opt; do
       ;;
   esac
 done
+
+export THREESCALE_DEPLOYMENT_ENV=${THREESCALE_DEPLOYMENT_ENV-production}
 
 main+=("daemon ${daemon};")
 main+=("worker_processes ${worker_processes};")

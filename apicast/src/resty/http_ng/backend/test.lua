@@ -58,6 +58,25 @@ _M.expectation.match = function(expectation, request)
   return contains(expectation.request, request)
 end
 
+local missing_expectation_mt = {
+  __tostring = function(t)
+    local str = [[
+Missing expecation to match request. Try following:
+test_backend.expect{ url = %q }.
+  respond_with{ status = 200, body = "" }
+    ]]
+    return format(str, t.request.url)
+  end
+}
+
+local function missing_expecation(request)
+  local exception = { request = request }
+
+  return setmetatable(exception, missing_expectation_mt)
+end
+
+_M.missing_expectation = missing_expecation
+
 _M.new = function()
   local requests = {}
   local expectations = {}
@@ -72,7 +91,7 @@ _M.new = function()
   backend.send = function(_, request)
     local expectation = remove(expectations, 1)
 
-    if not expectation then error('no expectation') end
+    if not expectation then error(missing_expecation(request)) end
     local match, err = _M.expectation.match(expectation, request)
     if not match then error('expectation does not match: ' .. err) end
 

@@ -8,17 +8,21 @@ local insert = table.insert
 local concat = table.concat
 local ngx_now = ngx.now
 
-local lrucache = resty_lrucache.new(1000)
-
 local _M = {
   _VERSION = '0.1'
 }
 
 local mt = { __index = _M }
 
+local shared_lrucache = resty_lrucache.new(1000)
+
+function _M.shared()
+  return _M.new(shared_lrucache)
+end
+
 function _M.new(cache)
   return setmetatable({
-    cache = cache or lrucache
+    cache = cache or resty_lrucache.new(100)
   }, mt)
 end
 

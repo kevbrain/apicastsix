@@ -1,0 +1,60 @@
+#! /usr/bin/env resty
+-- vim: set ft=lua:
+
+local datafile = require("datafile")
+local conf = datafile.path("conf", "r", "config")
+
+local ffi = require('ffi')
+ffi.cdef([=[
+int setenv(const char*, const char*, int);
+char *strerror(int errnum);
+int execvp(const char *file, const char *argv[]);
+]=])
+
+local string_array_t = ffi.typeof("const char *[?]")
+
+local function exec(filename, arg)
+  local args = { filename }
+  for i=1, #arg do
+    args[i+1] = arg[i]
+  end
+  local cargv = string_array_t(#args + 1, args)
+  cargv[#args] = nil
+  ffi.C.execvp(filename, cargv)
+  error(ffi.string(ffi.C.strerror(ffi.errno())))
+end
+
+local function setenv(name, value, overwrite)
+  local overwrite_flag = overwrite and 1 or 0
+
+  if ffi.C.setenv(name, value, overwrite_flag) == -1 then
+    return nil, ffi.C.strerror(ffi.errno())
+  else
+    return value
+  end
+end
+
+local _, apicast = datafile.open('apicast', 'r', 'config', function(path)
+  local f, err = io.open(path, "r")
+
+  if f then
+    local ok
+
+    ok, err = f:read(1)
+    f:close()
+
+    if ok then
+      return ok, path
+    end
+  end
+
+  return nil, err
+end)
+
+if conf then
+  setenv('APICAST_DIR', conf, true)
+  print("CONF: ", conf)
+end
+print("APICAST: ", apicast)
+
+exec(apicast or 'apicast', arg)

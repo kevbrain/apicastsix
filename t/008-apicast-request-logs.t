@@ -70,7 +70,7 @@ api response
 --- grep_error_log_out
 
 
-=== TEST 3: response codes are sent when opt-in
+=== TEST 2: response codes are sent when opt-in
 --- main_config
 env APICAST_RESPONSE_CODES=1;
 --- http_config

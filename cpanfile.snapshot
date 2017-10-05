@@ -7,6 +7,129 @@ DISTRIBUTIONS
       Algorithm::Diff::_impl 1.1903
     requirements:
       ExtUtils::MakeMaker 0
+  Cpanel-JSON-XS-3.0233
+    pathname: R/RU/RURBAN/Cpanel-JSON-XS-3.0233.tar.gz
+    provides:
+      Cpanel::JSON::XS 3.0233
+    requirements:
+      ExtUtils::MakeMaker 0
+      Pod::Text 2.08
+  Crypt-JWT-0.018
+    pathname: M/MI/MIK/Crypt-JWT-0.018.tar.gz
+    provides:
+      Crypt::JWT 0.018
+      Crypt::KeyWrap 0.018
+    requirements:
+      Compress::Raw::Zlib 0
+      CryptX 0.034
+      Exporter 5.57
+      ExtUtils::MakeMaker 0
+      JSON::MaybeXS 1.003005
+      perl 5.006
+  CryptX-0.048
+    pathname: M/MI/MIK/CryptX-0.048.tar.gz
+    provides:
+      Crypt::AuthEnc 0.048
+      Crypt::AuthEnc::CCM 0.048
+      Crypt::AuthEnc::ChaCha20Poly1305 0.048
+      Crypt::AuthEnc::EAX 0.048
+      Crypt::AuthEnc::GCM 0.048
+      Crypt::AuthEnc::OCB 0.048
+      Crypt::Checksum 0.048
+      Crypt::Checksum::Adler32 0.048
+      Crypt::Checksum::CRC32 0.048
+      Crypt::Cipher 0.048
+      Crypt::Cipher::AES 0.048
+      Crypt::Cipher::Anubis 0.048
+      Crypt::Cipher::Blowfish 0.048
+      Crypt::Cipher::CAST5 0.048
+      Crypt::Cipher::Camellia 0.048
+      Crypt::Cipher::DES 0.048
+      Crypt::Cipher::DES_EDE 0.048
+      Crypt::Cipher::KASUMI 0.048
+      Crypt::Cipher::Khazad 0.048
+      Crypt::Cipher::MULTI2 0.048
+      Crypt::Cipher::Noekeon 0.048
+      Crypt::Cipher::RC2 0.048
+      Crypt::Cipher::RC5 0.048
+      Crypt::Cipher::RC6 0.048
+      Crypt::Cipher::SAFERP 0.048
+      Crypt::Cipher::SAFER_K128 0.048
+      Crypt::Cipher::SAFER_K64 0.048
+      Crypt::Cipher::SAFER_SK128 0.048
+      Crypt::Cipher::SAFER_SK64 0.048
+      Crypt::Cipher::SEED 0.048
+      Crypt::Cipher::Skipjack 0.048
+      Crypt::Cipher::Twofish 0.048
+      Crypt::Cipher::XTEA 0.048
+      Crypt::Digest 0.048
+      Crypt::Digest::BLAKE2b_160 0.048
+      Crypt::Digest::BLAKE2b_256 0.048
+      Crypt::Digest::BLAKE2b_384 0.048
+      Crypt::Digest::BLAKE2b_512 0.048
+      Crypt::Digest::BLAKE2s_128 0.048
+      Crypt::Digest::BLAKE2s_160 0.048
+      Crypt::Digest::BLAKE2s_224 0.048
+      Crypt::Digest::BLAKE2s_256 0.048
+      Crypt::Digest::CHAES 0.048
+      Crypt::Digest::MD2 0.048
+      Crypt::Digest::MD4 0.048
+      Crypt::Digest::MD5 0.048
+      Crypt::Digest::RIPEMD128 0.048
+      Crypt::Digest::RIPEMD160 0.048
+      Crypt::Digest::RIPEMD256 0.048
+      Crypt::Digest::RIPEMD320 0.048
+      Crypt::Digest::SHA1 0.048
+      Crypt::Digest::SHA224 0.048
+      Crypt::Digest::SHA256 0.048
+      Crypt::Digest::SHA384 0.048
+      Crypt::Digest::SHA3_224 0.048
+      Crypt::Digest::SHA3_256 0.048
+      Crypt::Digest::SHA3_384 0.048
+      Crypt::Digest::SHA3_512 0.048
+      Crypt::Digest::SHA512 0.048
+      Crypt::Digest::SHA512_224 0.048
+      Crypt::Digest::SHA512_256 0.048
+      Crypt::Digest::SHAKE 0.048
+      Crypt::Digest::Tiger192 0.048
+      Crypt::Digest::Whirlpool 0.048
+      Crypt::KeyDerivation 0.048
+      Crypt::Mac 0.048
+      Crypt::Mac::BLAKE2b 0.048
+      Crypt::Mac::BLAKE2s 0.048
+      Crypt::Mac::F9 0.048
+      Crypt::Mac::HMAC 0.048
+      Crypt::Mac::OMAC 0.048
+      Crypt::Mac::PMAC 0.048
+      Crypt::Mac::Pelican 0.048
+      Crypt::Mac::Poly1305 0.048
+      Crypt::Mac::XCBC 0.048
+      Crypt::Misc 0.048
+      Crypt::Mode 0.048
+      Crypt::Mode::CBC 0.048
+      Crypt::Mode::CFB 0.048
+      Crypt::Mode::CTR 0.048
+      Crypt::Mode::ECB 0.048
+      Crypt::Mode::OFB 0.048
+      Crypt::PK 0.048
+      Crypt::PK::DH 0.048
+      Crypt::PK::DSA 0.048
+      Crypt::PK::ECC 0.048
+      Crypt::PK::RSA 0.048
+      Crypt::PRNG 0.048
+      Crypt::PRNG::ChaCha20 0.048
+      Crypt::PRNG::Fortuna 0.048
+      Crypt::PRNG::RC4 0.048
+      Crypt::PRNG::Sober128 0.048
+      Crypt::PRNG::Yarrow 0.048
+      Crypt::Stream::ChaCha 0.048
+      Crypt::Stream::RC4 0.048
+      Crypt::Stream::Sober128 0.048
+      CryptX 0.048
+      Math::BigInt::LTM 0.048
+    requirements:
+      ExtUtils::MakeMaker 0
+      perl 5.006
   Encode-Locale-1.05
     pathname: G/GA/GAAS/Encode-Locale-1.05.tar.gz
     provides:
@@ -143,6 +266,20 @@ DISTRIBUTIONS
       Encode 2.10
       Exporter 5.57
       ExtUtils::MakeMaker 6.30
+  JSON-MaybeXS-1.003009
+    pathname: E/ET/ETHER/JSON-MaybeXS-1.003009.tar.gz
+    provides:
+      JSON::MaybeXS 1.003009
+    requirements:
+      Carp 0
+      Cpanel::JSON::XS 2.3310
+      ExtUtils::CBuilder 0.27
+      ExtUtils::MakeMaker 0
+      File::Spec 0
+      File::Temp 0
+      JSON::PP 2.27300
+      Scalar::Util 0
+      perl 5.006
   LWP-MediaTypes-6.02
     pathname: G/GA/GAAS/LWP-MediaTypes-6.02.tar.gz
     provides:

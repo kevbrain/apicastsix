@@ -9,7 +9,7 @@ local inspect = require('inspect')
 local resolver_cache = require('resty.resolver.cache')
 local env = require('resty.env')
 
-local live = cjson.encode({status = 'live', success = true})
+local live = { status = 'live', success = true }
 
 local function json_response(body, status)
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -20,14 +20,11 @@ end
 function _M.ready()
   local status = _M.status()
   local code = status.success and ngx.HTTP_OK or 412
-
-  ngx.status = code
-  ngx.say(cjson.encode(status))
+  json_response(status, code)
 end
 
 function _M.live()
-  ngx.status = ngx.HTTP_OK
-  ngx.say(live)
+  json_response(live, ngx.HTTP_OK)
 end
 
 function _M.status(config)
@@ -105,7 +102,7 @@ function _M.boot()
 end
 
 function _M.dns_cache()
-  local cache = resolver_cache.new()
+  local cache = resolver_cache.shared()
   return json_response(cache:all())
 end
 

@@ -6,15 +6,90 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## Changed
+
+- Upgraded to OpenResty 1.11.2.5-1 [PR #428](https://github.com/3scale/apicast/pull/428)
+- `/oauth/token` endpoint returns an error status code, when the access token couldn't be stored in 3scale backend [PR #436](https://github.com/3scale/apicast/pull/436)]
+- URI params in POST requests are now taken into account when matching mapping rules [PR #437](https://github.com/3scale/apicast/pull/437)
+
+### Fixed
+
+- Request headers are not passed to the backend, preventing sending invalid Content-Type to the access token store endpoint [PR #433](https://github.com/3scale/apicast/pull/433)
+- Live and ready endpoints now set correct Content-Type header in the response[PR #441](https://github.com/3scale/apicast/pull/441)
+
+## [3.1.0-rc1] - 2017-09-14
+
+### Added
+
+- Support for extending APIcast location block with snippets of nginx configuration [PR #407](https://github.com/3scale/apicast/pull/407)
+
+### Fixed
+
+- Crash on empty OIDC Issuer endpoint [PR #408](https://github.com/3scale/apicast/pull/408)
+- Handle partial credentials [PR #409](https://github.com/3scale/apicast/pull/409)
+- Crash when configuration endpoint was missing [PR #417](https://github.com/3scale/apicast/pull/417)
+- Fix double queries to not fully qualified domains [PR #419](https://github.com/3scale/apicast/pull/419)
+- Fix caching DNS queries with scope (like on OpenShift) [PR #420](https://github.com/3scale/apicast/pull/420)
+
+### Changed
+
+- `THREESCALE_DEPLOYMENT_ENV` defaults to `production` [PR #406](https://github.com/3scale/apicast/pull/406)
+- OIDC is now used based on settings on the API Manager [PR #405](https://github.com/3scale/apicast/pull/405)
+- No limit on body size from the client sent to the server [PR #410](https://github.com/3scale/apicast/pull/410)
+- Print module loading errors only when it failed to load [PR #415](https://github.com/3scale/apicast/pull/415)
+- `bin/busted` rewritten to support different working directories [PR #418](https://github.com/3scale/apicast/pull/418)
+- dnsmasq started in docker will not forward queries without domain [PR #421](https://github.com/3scale/apicast/pull/421)
+
+## [3.1.0-beta2] - 2017-08-21
+
+### Added
+
+- Ability to configure how to cache backend authorizations [PR #396](https://github.com/3scale/apicast/pull/396)
+
+### Fixed
+
+- [THREESCALE-281](https://issues.jboss.org/browse/THREESCALE-281) Not loading services when APICAST\_SERVICES is empty [PR #401](https://github.com/3scale/apicast/pull/401)
+
+## [3.1.0-beta1] - 2017-07-21
+
+### Fixed
+
+- Fixed CVE-2017-7512 [PR #393](https://github.com/3scale/apicast/pull/392)
+
+### Changed
+
+- APIcast module `balancer` method now accepts optional balancer [PR #362](https://github.com/3scale/apicast/pull/362)
+- Extracted lua-resty-url [PR #384](https://github.com/3scale/apicast/pull/384)
+- Extracted lua-resty-env [PR #386](https://github.com/3scale/apicast/pull/386)
+- Do not load all services when APICAST\_SERVICES is set [PR #388](https://github.com/3scale/apicast/pull/388)
+
+### Added
+
+- APIcast published to [luarocks.org](https://luarocks.org/modules/3scale/apicast) [PR #366](https://github.com/3scale/apicast/pull/366)
+- Support for passing remote configuratio URL through the CLI [PR #389](https://github.com/3scale/apicast/pull/389)
+- CLI flag -b to load configuration on boot [PR #389](https://github.com/3scale/apicast/pull/389)
+- OIDC support [PR #382](https://github.com/3scale/apicast/pull/382)
+
+### Removed
+
+- Keycloak / RH SSO integration replaced with OIDC [PR #382](https://github.com/3scale/apicast/pull/382)
+
+## [3.1.0-alpha1] - 2017-05-05
+
 ### Changed
 
 - Bump OpenResty version to [1.11.2.3](https://github.com/3scale/s2i-openresty/releases/tag/1.11.2.3-1) [PR #359](https://github.com/3scale/apicast/pull/359) 
+- Upgraded lua-resty-http and lua-resty-jwt [PR #361](https://github.com/3scale/apicast/pull/361)
 
 ### Added
 
 - Experimental caching proxy to the http client [PR #357](https://github.com/3scale/apicast/pull/357)
 
-## [3.0.0-rc1] - 2017-04-04
+### Changed
+
+- Print better errors when module loading fails [PR #360](https://github.com/3scale/apicast/pull/360)
+
+## [3.0.0] - 2017-04-04
 
 ### Added
 
@@ -147,11 +222,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.0.0-rc1...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.1.0-rc1...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
 [3.0.0-beta1]: https://github.com/3scale/apicast/compare/v3.0.0-alpha2...v3.0.0-beta1
 [3.0.0-beta2]: https://github.com/3scale/apicast/compare/v3.0.0-beta1...v3.0.0-beta2
 [3.0.0-beta3]: https://github.com/3scale/apicast/compare/v3.0.0-beta2...v3.0.0-beta3
-[3.0.0-rc1]: https://github.com/3scale/apicast/compare/v3.0.0-beta3...v3.0.0-rc1
+[3.0.0]: https://github.com/3scale/apicast/compare/v3.0.0-beta3...v3.0.0
+[3.1.0-alpha1]: https://github.com/3scale/apicast/compare/v3.0.0...v3.1.0-alpha1
+[3.1.0-beta1]: https://github.com/3scale/apicast/compare/v3.1.0-alpha1...v3.1.0-beta1
+[3.1.0-beta2]: https://github.com/3scale/apicast/compare/v3.1.0-beta1...v3.1.0-beta2
+[3.1.0-rc1]: https://github.com/3scale/apicast/compare/v3.1.0-beta2...v3.1.0-rc1

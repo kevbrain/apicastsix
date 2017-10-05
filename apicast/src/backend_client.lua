@@ -94,7 +94,7 @@ local function call_backend_transaction(self, path, ...)
     end
   end
 
-  local url = resty_url.join(endpoint, '/transactions/', path, '?', concat(query, '&'))
+  local url = resty_url.join(endpoint, '/transactions', path .. '?' .. concat(query, '&'))
 
   local res = http_client.get(url)
 

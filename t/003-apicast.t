@@ -9,7 +9,7 @@ $ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 
-require("t/dns.pl");
+require("$pwd/t/dns.pl");
 
 log_level('debug');
 repeat_each(2);
@@ -44,7 +44,33 @@ GET /
 credentials missing!
 --- error_code: 401
 
-=== TEST 2: no mapping rules matched
+=== TEST 2: authentication (part of) credentials missing
+The message is configurable as well as the status.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 2,
+          proxy = {
+            error_auth_missing = 'credentials missing!',
+            error_status_auth_missing = 401
+          }
+        }
+      }
+    })
+  }
+--- config
+include $TEST_NGINX_BACKEND_CONFIG;
+include $TEST_NGINX_APICAST_CONFIG;
+--- request
+GET /?app_key=42
+--- response_body chomp
+credentials missing!
+--- error_code: 401
+
+=== TEST 3: no mapping rules matched
 The message is configurable and status also.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -72,7 +98,7 @@ no mapping rules!
 --- error_log
 could not find proxy for request
 
-=== TEST 3: authentication credentials invalid
+=== TEST 4: authentication credentials invalid
 The message is configurable and default status is 403.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -111,7 +137,7 @@ GET /?user_key=value
 credentials invalid!
 --- error_code: 402
 
-=== TEST 4: api backend gets the request
+=== TEST 5: api backend gets the request
 It asks backend and then forwards the request to the api.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -166,7 +192,7 @@ apicast cache miss key: 42:value:usage%5Bhits%5D=2
 --- no_error_log
 [error]
 
-=== TEST 7: mapping rule with fixed value is mandatory
+=== TEST 6: mapping rule with fixed value is mandatory
 When mapping rule has a parameter with fixed value it has to be matched.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -204,7 +230,7 @@ GET /foo?bar=foo&user_key=somekey
 no mapping rules matched!
 --- error_code: 412
 
-=== TEST 8: mapping rule with fixed value is mandatory
+=== TEST 7: mapping rule with fixed value is mandatory
 When mapping rule has a parameter with fixed value it has to be matched.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -249,7 +275,7 @@ X-3scale-matched-rules: /foo?bar=baz
 --- no_error_log
 [error]
 
-=== TEST 9: mapping rule with variable value is required to be sent
+=== TEST 8: mapping rule with variable value is required to be sent
 When mapping rule has a parameter with variable value it has to exist.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -294,7 +320,7 @@ X-3scale-matched-rules: /foo?bar={baz}
 X-3scale-usage: usage%5Bbar%5D=3
 
 
-=== TEST 10: https api backend works
+=== TEST 9: https api backend works
 
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -363,7 +389,7 @@ GET /test?user_key=foo
 api response
 --- error_code: 200
 
-=== TEST 11: print warning on duplicate service hosts
+=== TEST 10: print warning on duplicate service hosts
 So when booting it can be immediately known that some of them won't work.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -390,7 +416,7 @@ all ok
 --- grep_error_log_out
 host foo for service 2 already defined by service 1
 
-=== TEST 12: print message that service was added to the configuration
+=== TEST 11: print message that service was added to the configuration
 Including it's host so it is easy to see that configuration was loaded.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -416,7 +442,7 @@ all ok
 added service 1 configuration with hosts: foo, bar
 added service 2 configuration with hosts: baz, daz
 
-=== TEST 13: return headers with debugging info
+=== TEST 12: return headers with debugging info
 When X-3scale-Debug header has value of the backend authentication.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -462,7 +488,7 @@ all ok
 X-3scale-matched-rules: /
 X-3scale-usage: usage%5Bhits%5D=2
 
-=== TEST 14: uses endpoint host as Host header
+=== TEST 13: uses endpoint host as Host header
 when connecting to the backend
 --- main_config
 env RESOLVER=127.0.0.1:1953;
@@ -516,11 +542,11 @@ all ok
 --- error_code: 200
 --- udp_listen: 1953
 --- udp_reply eval
-$::dns->("localhost.example.com", "127.0.0.1")
+$::dns->("localhost.example.com", "127.0.0.1", 3600)
 --- no_error_log
 [error]
 
-=== TEST 15: invalid service
+=== TEST 14: invalid service
 The message is configurable and default status is 403.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";

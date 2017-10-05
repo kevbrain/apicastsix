@@ -53,7 +53,7 @@ include $TEST_NGINX_APICAST_CONFIG;
 
 location /transactions/authrep.xml {
   content_by_lua_block {
-    local expected = "service_id=42&service_token=token-value&usage%5Bhits%5D=2&user_key=value"
+    local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
     local args = ngx.var.args
     ngx.log(ngx.INFO, 'backend got ', args, ' expected ', expected)
     if args == expected then
@@ -74,7 +74,7 @@ GET /?user_key=value
 yay, api backend: 127.0.0.1
 --- error_code: 200
 --- error_log
-backend got service_id=42&service_token=token-value&usage%5Bhits%5D=2&user_key=value
+backend got service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value
 --- no_error_log
 [error]
 
@@ -155,7 +155,7 @@ GET /test?user_key=foo
 api response
 --- error_code: 200
 --- error_log
-backend client uri: https://127.0.0.1:1953/transactions/authrep.xml?service_id=42&service_token=token-value&usage%5Bhits%5D=1&user_key=foo ok: true status: 200
+backend client uri: https://127.0.0.1:1953/transactions/authrep.xml?service_token=token-value&service_id=42&usage%5Bhits%5D=1&user_key=foo ok: true status: 200
 
 === TEST 3: uses endpoint host as Host header
 when connecting to the backend
@@ -216,4 +216,4 @@ $::dns->("localhost.example.com", "127.0.0.1")
 --- no_error_log
 [error]
 --- error_log
-backend client uri: http://localhost.example.com:1984/transactions/authrep.xml?service_id=42&service_token=service-token&usage%5Bhits%5D=2&user_key=val ok: true status: 200
+backend client uri: http://localhost.example.com:1984/transactions/authrep.xml?service_token=service-token&service_id=42&usage%5Bhits%5D=2&user_key=val ok: true status: 200

@@ -20,8 +20,9 @@ local inspect = require 'inspect'
 local re = require 'ngx.re'
 local env = require 'resty.env'
 local resty_url = require 'resty.url'
+local util = require 'util'
 
-local mt = { __index = _M }
+local mt = { __index = _M, __tostring = function() return 'Configuration' end }
 
 local function map(func, tbl)
   local newtbl = {}
@@ -65,16 +66,21 @@ local function check_rule(req, rule, usage_t, matched_rules, params)
 end
 
 local function get_auth_params(method)
-  local params
+  local params = ngx.req.get_uri_args()
 
   if method == "GET" then
-    params = ngx.req.get_uri_args()
+    return params
   else
     ngx.req.read_body()
-    params = ngx.req.get_post_args()
-  end
+    local body_params = ngx.req.get_post_args()
 
-  return params
+    -- Adds to body_params URI params that are not included in the body. Doing
+    -- the reverse would be more expensive, because in general, we expect the
+    -- size of body_params to be larger than the size of params.
+    setmetatable(body_params, { __index = params })
+
+    return body_params
+  end
 end
 
 local regex_variable = '\\{[-\\w_]+\\}'
@@ -133,6 +139,7 @@ function _M.parse_service(service)
   return Service.new({
       id = tostring(service.id or 'default'),
       backend_version = backend_version,
+      authentication_method = proxy.authentication_method or backend_version,
       hosts = proxy.hosts or { 'localhost' }, -- TODO: verify localhost is good default
       api_backend = proxy.api_backend,
       error_auth_failed = proxy.error_auth_failed,
@@ -154,6 +161,9 @@ function _M.parse_service(service)
       backend = {
         endpoint = backend_endpoint_override or backend.endpoint,
         host = backend_host_override or backend.host
+      },
+      oidc = {
+        issuer_endpoint = proxy.oidc_issuer_endpoint ~= ngx.null and proxy.oidc_issuer_endpoint
       },
       credentials = {
         location = proxy.credentials_location or 'query',
@@ -203,16 +213,6 @@ function _M.parse_service(service)
     })
 end
 
-local function to_hash(table)
-  local t = {}
-
-  for i = 1, #table do
-    t[table[i]] = true
-  end
-
-  return t
-end
-
 function _M.services_limit()
   local services = {}
   local subset = env.get('APICAST_SERVICES')
@@ -220,11 +220,11 @@ function _M.services_limit()
 
   local ids = re.split(subset, ',', 'oj')
 
-  return to_hash(ids)
+  return util.to_hash(ids)
 end
 
 function _M.filter_services(services, subset)
-  subset = subset and to_hash(subset) or _M.services_limit()
+  subset = subset and util.to_hash(subset) or _M.services_limit()
   if not subset or not next(subset) then return services end
 
   local s = {}
@@ -247,7 +247,8 @@ function _M.new(configuration)
 
   return setmetatable({
     version = configuration.timestamp,
-    services = _M.filter_services(map(_M.parse_service, services))
+    services = _M.filter_services(map(_M.parse_service, services)),
+    oidc = configuration.oidc or {}
   }, mt)
 end
 

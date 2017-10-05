@@ -40,6 +40,8 @@ objects:
             value: "${SERVICES_LIST}"
           - name: APICAST_CONFIGURATION_LOADER
             value: "${CONFIGURATION_LOADER}"
+          - name: APICAST_BACKEND_CACHE_HANDLER
+            value: "${BACKEND_CACHE_HANDLER}"
           - name: APICAST_LOG_LEVEL
             value: "${LOG_LEVEL}"
           - name: APICAST_PATH_ROUTING_ENABLED
@@ -129,6 +131,10 @@ parameters:
 - name: CONFIGURATION_LOADER
   description: "When to load configuration. If on gateway start or incoming request. Allowed values are: lazy, boot."
   value: boot
+  required: false
+- name: BACKEND_CACHE_HANDLER
+  description: "How to handle and cache backend authorization responses. Can be one of: strict, resilient."
+  value: strict
   required: false
 - description: "Log level. One of the following: debug, info, notice, warn, error, crit, alert, or emerg."
   name: LOG_LEVEL

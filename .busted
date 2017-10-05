@@ -1,9 +1,14 @@
+local path = require('pl.path')
+local root = path.currentdir()
+
 return {
   _all = {
-    helper = 'spec/spec_helper.lua'
+    helper = path.join(root, 'spec/spec_helper.lua'),
   },
   default = {
     verbose = true,
-    lpath = "./spec/?.lua;./apicast/src/?.lua;"
+    ['shuffle-tests'] = true,
+    ['shuffle-files'] = true,
+    lpath = path.join(root, 'spec/?.lua;')  .. path.join(root, 'apicast/src/?.lua;'),
   },
 }

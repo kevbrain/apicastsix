@@ -25,7 +25,7 @@ describe('test backend',function()
 
     it('expects a request', function()
       local req = request.new{method = 'GET', url = 'http://example.com' }
-      assert.has.error(function() backend:send(req) end, 'no expectation')
+      assert.has.error(function() backend:send(req) end, test_backend.missing_expectation(req))
     end)
 
     it('matches expectation', function()

@@ -32,6 +32,15 @@ Defines how to load the configuration.
 Boot will require configuration when the gateway starts.
 Lazy will load it on demand on incoming request.
 
+### `APICAST_BACKEND_CACHE_HANDLER`
+
+**Values:** strict | resilient
+**Default:** strict
+
+Defines how the authorization cache behaves when backend is unavailable.
+Strict will remove cached application when backend is unavailable.
+Resilient will do so only on getting authorization denied from backend.
+
 ### `APICAST_MODULE`
 
 **Default:** "apicast"
@@ -94,7 +103,12 @@ Allows to specify a custom DNS resolver that will be used by OpenResty. If the `
 
 ### `THREESCALE_DEPLOYMENT_ENV`
 
-The value of this environment variable will be used in the header `X-3scale-User-Agent` in the authorize/report requests made to 3scale Service Management API. It is used by 3scale just for statistics.
+**Values:** staging | production
+**Default:** production
+
+The value of this environment variable will be used to define the environment for which the configuration will be downloaded from 3scale (Staging or Production), when using new APIcast.
+
+The value will also be used in the header `X-3scale-User-Agent` in the authorize/report requests made to 3scale Service Management API. It is used by 3scale just for statistics.
 
 ### `THREESCALE_PORTAL_ENDPOINT`
 
@@ -138,12 +152,6 @@ You should enable the debug level only for debugging.
 Replace `${ID}` with the actual Service ID. The value should be the configuration version you can see in the configuration history on the Admin Portal.
 
 Setting it to particual version will make it not auto-update and always use that version.
-
-### `RHSSO_ENDPOINT`
-
-URI that points to the realm configured on Red Hat Single Sign-On instance for 3scale Applications (a.k.a. clients in Red Hat Single Sign-On.) 
-
-**Example**: `https://rh-sso.example.com:8443/auth/realms/3scale`.
 
 ### `OPENSSL_VERIFY`
 

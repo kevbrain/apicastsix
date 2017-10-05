@@ -144,7 +144,7 @@ function _M.connect_redis(options)
   opts.timeout = options and options.timeout or redis_conf.timeout
 
   local host = opts.host or env.get('REDIS_HOST') or "127.0.0.1"
-  local port = opts.prot or env.get('REDIS_PORT') or 6379
+  local port = opts.port or env.get('REDIS_PORT') or 6379
 
   local red = redis:new()
 
@@ -177,6 +177,14 @@ end
 -- return ownership of this connection to the pool
 function _M.release_redis(red)
   red:set_keepalive(redis_conf.keepalive, redis_conf.poolsize)
+end
+
+local xml_header_len = string.len('<?xml version="1.0" encoding="UTF-8"?>')
+
+function _M.match_xml_element(xml, element, value)
+  if not xml then return nil end
+  local pattern = string.format('<%s>%s</%s>', element, value, element)
+  return string.find(xml, pattern, xml_header_len, xml_header_len, true)
 end
 
 -- error and exist

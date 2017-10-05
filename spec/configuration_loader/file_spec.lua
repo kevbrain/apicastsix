@@ -15,7 +15,7 @@ describe('Configuration File loader', function()
       local pl_path = require('pl.path')
       local _, path = loader.call('fixtures/config.json')
 
-      assert.match(pl_path.currentdir(), path)
+      assert.match(pl_path.currentdir(), path, nil, true)
     end)
   end)
 end)

@@ -1,4 +1,5 @@
 local configuration_store = require 'configuration_store'
+local Service = require 'configuration.service'
 
 describe('Proxy', function()
   local configuration, proxy
@@ -16,7 +17,7 @@ describe('Proxy', function()
   describe(':call', function()
     before_each(function()
       ngx.var = { backend_endpoint = 'http://localhost:1853' }
-      configuration:add({ id = 42, hosts = { 'localhost' }})
+      configuration:add(Service.new({ id = 42, hosts = { 'localhost' }}))
     end)
 
     it('has authorize function after call', function()
@@ -42,6 +43,21 @@ describe('Proxy', function()
 
       assert.equal(nil, access)
       assert.same('function', type(handler))
+    end)
+  end)
+
+  describe(':access', function()
+    local service
+    before_each(function()
+      ngx.var = { backend_endpoint = 'http://localhost:1853' }
+      service = Service.new({ extract_usage = function() end })
+    end)
+
+    it('works with part of the credentials', function()
+      service.credentials = { location = 'headers' }
+      service.backend_version = 2
+      ngx.var.http_app_key = 'key'
+      assert.falsy(proxy:access(service))
     end)
   end)
 
@@ -72,7 +88,8 @@ describe('Proxy', function()
   end)
 
   describe('.get_upstream', function()
-    local get_upstream = proxy.get_upstream
+    local get_upstream
+    before_each(function() get_upstream = proxy.get_upstream end)
 
     it('sets correct upstream port', function()
       assert.same(443, get_upstream({ api_backend = 'https://example.com' }).port)
@@ -82,34 +99,37 @@ describe('Proxy', function()
   end)
 
   describe('.authorize', function()
-    local authorize = proxy.authorize
     local service = { backend_authentication = { value = 'not_baz' } }
     local usage = 'foo'
     local credentials = 'client_id=blah'
+
 
     it('takes ttl value if sent', function()
       local ttl = 80
       ngx.var = { cached_key = credentials, usage=usage, credentials=credentials, http_x_3scale_debug='baz', real_url='blah' }
       ngx.ctx = { backend_upstream = ''}
-      ngx.shared = { api_keys = { cached_key = 'client_id=blah:foo', get = function () return {} end } }
 
-      stub(ngx.shared.api_keys, 'set')
-      stub(ngx.location, 'capture', function() return { status = 200 } end)
+      local response = { status = 200 }
+      stub(ngx.location, 'capture', function() return response end)
 
-      authorize(proxy, service, usage, credentials, ttl)
-      assert.spy(ngx.shared.api_keys.set).was.called_with(ngx.shared.api_keys, 'client_id=blah:foo', 200, 80)
+      stub(proxy, 'cache_handler').returns(true)
+
+      proxy:authorize(service, usage, credentials, ttl)
+
+      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo', response, ttl)
     end)
 
     it('works with no ttl', function()
       ngx.var = { cached_key = "client_id=blah", usage=usage, credentials=credentials, http_x_3scale_debug='baz', real_url='blah' }
       ngx.ctx = { backend_upstream = ''}
-      ngx.shared = { api_keys = { cached_key = 'client_id=blah:foo', get = function () return {} end } }
 
-      stub(ngx.shared.api_keys, 'set')
-      stub(ngx.location, 'capture', function() return { status = 200 } end)
+      local response = { status = 200 }
+      stub(ngx.location, 'capture', function() return response end)
+      stub(proxy, 'cache_handler').returns(true)
 
-      authorize(proxy, service, usage, credentials)
-      assert.spy(ngx.shared.api_keys.set).was.called_with(ngx.shared.api_keys, 'client_id=blah:foo', 200, 0)
+      proxy:authorize(service, usage, credentials)
+
+      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo', response, nil)
     end)
   end)
 end)

@@ -1,3 +1,21 @@
-#!/usr/bin/env sh
+#!/usr/bin/env perl
 
-exec resty --http-include spec/fixtures/echo.conf bin/busted.lua "$@"
+use strict;
+use warnings FATAL => 'all';
+
+use File::Basename;
+use Cwd;
+
+my $dirname = dirname(__FILE__);
+my $cwd = getcwd();
+
+chdir "$dirname/..";
+
+my $apicast = getcwd();
+
+exec '/usr/bin/env', 'resty',
+    '--http-include', "$apicast/spec/fixtures/echo.conf",
+    "$apicast/bin/busted.lua",
+    '--config-file', "$apicast/.busted",
+    '--directory', "$cwd",
+    @ARGV;

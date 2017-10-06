@@ -1,4 +1,4 @@
--- This module customizes the APIcast authorization logic, and returns a different response code 
+-- This module customizes the APIcast authorization logic, and returns a different response code
 -- and message if the authorization failed because the application reached its usage limits.
 -- In other cases the behavior is as in standard APIcast.
 -- The status code, error message and the content-type header can be configured
@@ -42,11 +42,13 @@ proxy.handle_backend_response = function(self, cached_key, response, ttl)
   ngx.log(ngx.DEBUG, '[backend] response status: ', response.status, ' body: ', response.body)
 
   local authorized, reason = self.cache_handler(self.cache, cached_key, response, ttl)
+  local phase = ngx.get_phase()
 
-  if not authorized then
+  -- only respond to the client with the usage limits error in 'access' phase, ignore in 'post_action'
+  if not authorized and phase == 'access' then
     local usage_limits_exceeded = utils.match_xml_element(response.body, 'reason', backend_reason)
     if usage_limits_exceeded then
-      error_limits_exceeded(cached_key)
+      return error_limits_exceeded(cached_key)
     end
   end
 

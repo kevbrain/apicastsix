@@ -1,14 +1,24 @@
 local path = require('pl.path')
 local root = path.currentdir()
 
+local ci = os.getenv('CI')
+
+local all = {
+  helper = path.join(root, 'spec/spec_helper.lua'),
+}
+local default = {
+  verbose = true,
+  ['shuffle-tests'] = true,
+  ['shuffle-files'] = true,
+  lpath = path.join(root, 'spec/?.lua;')  .. path.join(root, 'apicast/src/?.lua;'),
+}
+
+if ci then
+    default.output = 'junit'
+    default.Xoutput = 'tmp/junit/busted.xml'
+end
+
 return {
-  _all = {
-    helper = path.join(root, 'spec/spec_helper.lua'),
-  },
-  default = {
-    verbose = true,
-    ['shuffle-tests'] = true,
-    ['shuffle-files'] = true,
-    lpath = path.join(root, 'spec/?.lua;')  .. path.join(root, 'apicast/src/?.lua;'),
-  },
+  _all = all,
+  default = default,
 }

@@ -56,9 +56,16 @@ jobs:
           key: apicast-rocks-{{ arch }}-{{ checksum "Roverfile.lock" }}
           paths:
             - lua_modules
+      - run: mkdir -p tmp/junit
       - run: ${ROVER} exec make busted
-      - run: ${ROVER} exec prove # no carton on centos
+      - run: JUNIT_OUTPUT_FILE=tmp/junit/prove.xml ${ROVER} exec prove --harness=TAP::Harness::JUnit # no carton on centos
       - run: make doc
+      - store_test_results:
+          path: tmp/junit
+      - store_artifacts:
+          path: tmp/junit
+          destination: junit
+
   deploy:
     <<: *S2i
     steps:

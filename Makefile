@@ -21,6 +21,11 @@ CIRCLE_NODE_INDEX ?= 0
 CIRCLE_STAGE ?= build
 COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
 
+ROVER ?= $(shell which rover 2> /dev/null)
+ifeq ($(ROVER),)
+ROVER := lua_modules/bin/rover
+endif
+
 export COMPOSE_PROJECT_NAME
 
 DANGER_IMAGE ?= quay.io/3scale/danger
@@ -40,8 +45,8 @@ danger:
 	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
 	docker run --rm  -w /opt/app/ --volumes-from=$(COMPOSE_PROJECT_NAME)-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
-busted: dependencies ## Test Lua.
-	@bin/busted
+busted: dependencies $(ROVER) ## Test Lua.
+	@$(ROVER) exec bin/busted
 	@- luacov
 
 nginx:
@@ -120,9 +125,11 @@ build-development:
 development: build-development ## Run bash inside the development image
 	$(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) run --rm development
 
-dependencies:
-	luarocks make apicast/*.rockspec
-	luarocks make rockspec
+dependencies: $(ROVER)
+	$(ROVER) install
+
+lua_modules/bin/rover:
+	luarocks install --server=http://luarocks.org/dev lua-rover --tree lua_modules
 
 clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes
@@ -130,8 +137,8 @@ clean-containers: apicast-source
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
 
-doc: dependencies ## Generate documentation
-	ldoc -c doc/config.ld .
+doc: dependencies $(ROVER) ## Generate documentation
+	$(ROVER) exec ldoc -c doc/config.ld .
 
 node_modules/.bin/markdown-link-check:
 	yarn install

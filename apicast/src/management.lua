@@ -1,7 +1,7 @@
 local _M = {}
 
 local cjson = require('cjson')
-local module = require('module')
+local module = require('policy_chain')
 local router = require('router')
 local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')

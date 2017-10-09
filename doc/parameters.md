@@ -97,6 +97,13 @@ APIcast requires a running Redis instance for OAuth 2.0 flow. `REDIS_PORT` param
 
 APIcast requires a running Redis instance for OAuth 2.0 flow. `REDIS_URL` parameter can be used to set the full URI as DSN format like: `redis://PASSWORD@HOST:PORT/DB`. Takes precedence over `REDIS_PORT` and `REDIS_HOST`.
 
+### `APICAST_OAUTH_TOKENS_TTL`
+
+**Values:** _a number_
+**Default:** 604800
+
+When configured to authenticate using OAuth, this param specifies the TTL (in seconds) of the tokens created.
+
 ### `RESOLVER`
 
 Allows to specify a custom DNS resolver that will be used by OpenResty. If the `RESOLVER` parameter is empty, the DNS resolver will be autodiscovered.

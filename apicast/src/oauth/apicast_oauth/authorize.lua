@@ -81,7 +81,7 @@ end
 
 
 -- Check valid params ( client_id / secret / redirect_url, whichever are sent) against 3scale
-local function check_client_credentials(params)
+local function check_credentials(params)
   local res = ngx.location.capture("/_threescale/check_credentials",
     {
       args = {
@@ -94,20 +94,8 @@ local function check_client_credentials(params)
 
   ngx.log(ngx.INFO, "[oauth] Checking client credentials, status: ", res.status, " body: ", res.body)
 
-  if res.status == 200 and ts.match_xml_element(res.body, 'authorized', true) then
-    return { ["status"] = res.status, ["body"] = res.body }
-  else
-    params.error = "invalid_client"
-    redirect_to_auth(params)
-  end
+  return res.status == 200 and ts.match_xml_element(res.body, 'authorized', true)
 end
-
--- Check valid credentials
-local function check_credentials(params)
-  local res = check_client_credentials(params)
-  return res.status == 200
-end
-
 
 local _M = {
   VERSION = '0.0.1'

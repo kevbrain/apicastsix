@@ -1,7 +1,7 @@
 local _M = {}
 
 local cjson = require('cjson')
-local module = require('policy_chain')
+local context = require('executor'):context()
 local router = require('router')
 local configuration_parser = require('configuration_parser')
 local configuration_loader = require('configuration_loader')
@@ -28,7 +28,7 @@ function _M.live()
 end
 
 function _M.status(config)
-  local configuration = config or module.configuration
+  local configuration = config or context.configuration
   -- TODO: this should be fixed for multi-tenant deployment
   local has_configuration = configuration.configured
   local has_services = #(configuration:all()) > 0
@@ -43,7 +43,7 @@ function _M.status(config)
 end
 
 function _M.config()
-  local config = module.configuration
+  local config = context.configuration
   local contents = cjson.encode(config.configured and { services = config:all() } or nil)
 
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -65,7 +65,7 @@ function _M.update_config()
   local config, err = configuration_parser.decode(data)
 
   if config then
-    local configured, error = configuration_loader.configure(module.configuration, config)
+    local configured, error = configuration_loader.configure(context.configuration, config)
     -- TODO: respond with proper 304 Not Modified when config is the same
     if configured and #(configured.services) > 0 then
       json_response({ status = 'ok', config = config, services = #(configured.services)})
@@ -80,7 +80,7 @@ end
 function _M.delete_config()
   ngx.log(ngx.DEBUG, 'management config delete')
 
-  module.configuration:reset()
+  context.configuration:reset()
   -- TODO: respond with proper 304 Not Modified when config is the same
   local response = cjson.encode({ status = 'ok', config = cjson.null })
   ngx.header.content_type = 'application/json; charset=utf-8'
@@ -96,7 +96,7 @@ function _M.boot()
 
   ngx.log(ngx.DEBUG, 'management boot config:' .. inspect(data))
 
-  configuration_loader.configure(module.configuration, config)
+  configuration_loader.configure(context.configuration, config)
 
   ngx.say(response)
 end

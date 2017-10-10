@@ -55,9 +55,9 @@ local function ttl()
 end
 
 function _M.global(contents)
-  local module = require('policy_chain')
+  local context = require('executor'):context()
 
-  return _M.configure(module.configuration, contents)
+  return _M.configure(context.configuration, contents)
 end
 
 function _M.configure(configuration, contents)

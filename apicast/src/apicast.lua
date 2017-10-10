@@ -3,8 +3,6 @@ local balancer = require('balancer')
 local math = math
 local setmetatable = setmetatable
 
-local configuration_loader = require('configuration_loader').new()
-local configuration_store = require('configuration_store')
 local user_agent = require('user_agent')
 
 local noop = function() end
@@ -21,7 +19,6 @@ local mt = {
 --- This is called when APIcast boots the master process.
 function _M.new()
   return setmetatable({
-    configuration = configuration_store.new(),
     -- So there is no way to use ngx.ctx between request and post_action.
     -- We somehow need to share the instance of the proxy between those.
     -- This table is used to store the proxy object with unique reqeust id key
@@ -31,18 +28,15 @@ function _M.new()
   }, mt)
 end
 
-function _M:init()
+function _M.init()
   user_agent.cache()
 
   math.randomseed(ngx.now())
   -- First calls to math.random after a randomseed tend to be similar; discard them
   for _=1,3 do math.random() end
-
-  configuration_loader.init(self.configuration)
 end
 
-function _M:init_worker()
-  configuration_loader.init_worker(self.configuration)
+function _M.init_worker()
 end
 
 function _M.cleanup()
@@ -50,20 +44,17 @@ function _M.cleanup()
   ngx.exit(499)
 end
 
-function _M:rewrite()
-  ngx.on_abort(_M.cleanup)
+function _M:rewrite(context)
+  ngx.on_abort(self.cleanup)
 
   ngx.var.original_request_id = ngx.var.request_id
 
-  local host = ngx.var.host
   -- load configuration if not configured
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
 
-  local configuration = configuration_loader.rewrite(self.configuration, host)
-
-  local p = proxy.new(configuration)
-  p.set_upstream(p:set_service(host))
+  local p = proxy.new(context.configuration)
+  p.set_upstream(p:set_service(context.host))
   ngx.ctx.proxy = p
 end
 

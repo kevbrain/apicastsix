@@ -555,3 +555,84 @@ GET /?user_key=value
 --- error_code: 404
 --- no_error_log
 [error]
+
+=== TEST 15: default limits exceeded error
+By default, when usage limits are exceeded, a 429 is returned.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      ngx.status = 409;
+      ngx.exit(ngx.HTTP_OK);
+    }
+  }
+
+  location /api-backend/ {
+     echo 'yay';
+  }
+--- request
+GET /?user_key=value
+--- error_code: 429
+
+=== TEST 16: configurable limits exceeded error
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            error_limits_exceeded = 'limits exceeded!',
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            error_status_limits_exceeded = 402,
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      ngx.status = 409;
+      ngx.exit(ngx.HTTP_OK);
+    }
+  }
+
+  location /api-backend/ {
+     echo 'yay';
+  }
+--- request
+GET /?user_key=value
+--- response_body chomp
+limits exceeded!
+--- error_code: 402

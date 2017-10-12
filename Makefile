@@ -125,11 +125,14 @@ build-development:
 development: build-development ## Run bash inside the development image
 	$(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) run --rm development
 
+rover: $(ROVER)
+	@echo $(ROVER)
+
 dependencies: $(ROVER)
 	$(ROVER) install
 
 lua_modules/bin/rover:
-	luarocks install --server=http://luarocks.org/dev lua-rover --tree lua_modules
+	@LUAROCKS_CONFIG=luarocks.config luarocks install --server=http://luarocks.org/dev lua-rover --tree lua_modules 1>&2
 
 clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes

@@ -25,6 +25,7 @@ ROVER ?= $(shell which rover 2> /dev/null)
 ifeq ($(ROVER),)
 ROVER := lua_modules/bin/rover
 endif
+export LUAROCKS_CONFIG=luarocks.config
 
 export COMPOSE_PROJECT_NAME
 
@@ -132,7 +133,7 @@ dependencies: $(ROVER)
 	$(ROVER) install
 
 lua_modules/bin/rover:
-	@LUAROCKS_CONFIG=luarocks.config luarocks install --server=http://luarocks.org/dev lua-rover --tree lua_modules 1>&2
+	@luarocks install --server=http://luarocks.org/dev lua-rover --tree lua_modules 1>&2
 
 clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes

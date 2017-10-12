@@ -41,7 +41,6 @@ jobs:
         environment:
           TEST_NGINX_BINARY: openresty
           LUA_BIN_PATH: /opt/app-root/bin
-          ROVER: /usr/local/openresty/luajit/bin/rover
       - image: redis:3.2.8-alpine
     working_directory: /opt/app-root/apicast
     steps:
@@ -57,8 +56,8 @@ jobs:
           paths:
             - lua_modules
       - run: mkdir -p tmp/junit
-      - run: ${ROVER} exec make busted
-      - run: JUNIT_OUTPUT_FILE=tmp/junit/prove.xml ${ROVER} exec prove --harness=TAP::Harness::JUnit # no carton on centos
+      - run: $(make rover) exec make busted
+      - run: JUNIT_OUTPUT_FILE=tmp/junit/prove.xml $(make rover) exec prove --harness=TAP::Harness::JUnit # no carton on centos
       - run: make doc
       - store_test_results:
           path: tmp/junit

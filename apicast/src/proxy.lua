@@ -75,6 +75,15 @@ local function error_authorization_failed(service)
   return ngx.exit(ngx.HTTP_OK)
 end
 
+local function error_limits_exceeded(service)
+  ngx.log(ngx.INFO, 'limits exceeded for service ', service.id)
+  ngx.var.cached_key = nil
+  ngx.status = service.limits_exceeded_status
+  ngx.header.content_type = service.limits_exceeded_headers
+  ngx.print(service.error_limits_exceeded)
+  return ngx.exit(ngx.HTTP_OK)
+end
+
 local function error_no_match(service)
   ngx.header.x_3scale_matched_rules = ''
   ngx.log(ngx.INFO, 'no rules matched for service ', service.id)
@@ -213,8 +222,13 @@ function _M:authorize(service, usage, credentials, ttl)
 
     local res = http.get(internal_location)
 
-    if not self:handle_backend_response(cached_key, res, ttl) then
-      error_authorization_failed(service)
+    local authorized, rejection_reason = self:handle_backend_response(cached_key, res, ttl)
+    if not authorized then
+      if rejection_reason == 'limits_exceeded' then
+        return error_limits_exceeded(service)
+      else -- Generic error for now. Maybe return different ones in the future.
+        return error_authorization_failed(service)
+      end
     end
   end
 end

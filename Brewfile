@@ -1,4 +1,4 @@
-tap "apitools/openresty"
+tap "3scale/openresty"
 
 brew "homebrew/nginx/openresty", args: ["with-debug"]
-brew "apitools/openresty/luarocks"
+brew "3scale/openresty/luarocks"

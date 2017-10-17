@@ -52,6 +52,8 @@ objects:
             value: "${CONFIGURATION_CACHE}"
           - name: REDIS_URL
             value: "${REDIS_URL}"
+          - name: APICAST_OAUTH_TOKENS_TTL
+            value: "${OAUTH_TOKENS_TTL}"
           - name: APICAST_MANAGEMENT_API
             value: "${MANAGEMENT_API}"
           - name: OPENSSL_VERIFY
@@ -154,6 +156,10 @@ parameters:
 - description: "Redis URL. Required for OAuth2 integration. ex: redis://PASSWORD@127.0.0.1:6379/0"
   name: REDIS_URL
   required: false
+- description: "TTL (in seconds) of the oauth tokens created."
+  name: OAUTH_TOKENS_TTL
+  required: false
+  value: "604800"
 - name: MANAGEMENT_API
   description: "Scope of the Management API. Can be disabled, status or debug. At least status required for health checks."
   required: false

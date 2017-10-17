@@ -1,6 +1,10 @@
 local cjson = require 'cjson'
 local ts = require 'threescale_utils'
 local re = require 'ngx.re'
+local env = require 'resty.env'
+local tonumber = tonumber
+
+local oauth_tokens_default_ttl = 604800 -- 7 days
 
 -- As per RFC for Authorization Code flow: extract params from Authorization header and body
 -- If implementation deviates from RFC, this function should be over-ridden
@@ -28,6 +32,10 @@ local function extract_params()
   return params
 end
 
+local function oauth_tokens_ttl()
+  return tonumber(env.get('APICAST_OAUTH_TOKENS_TTL')) or oauth_tokens_default_ttl
+end
+
 -- Returns the access token (stored in redis) for the client identified by the id
 -- This needs to be called within a minute of it being stored, as it expires and is deleted
 local function request_token(params)
@@ -40,7 +48,10 @@ local function request_token(params)
     local client_data = red:array_to_hash(ok)
     params.user_id = client_data.user_id
     if params.code == client_data.code then
-      return { ["status"] = 200, ["body"] = { ["access_token"] = client_data.access_token, ["token_type"] = "bearer", ["expires_in"] = 604800 } }
+      return { ["status"] = 200,
+               ["body"] = { ["access_token"] = client_data.access_token,
+                            ["token_type"] = "bearer",
+                            ["expires_in"] = oauth_tokens_ttl() } }
     else
       return { ["status"] = 403, ["body"] = '{"error": "invalid authorization code"}' }
     end
@@ -83,7 +94,7 @@ local function check_credentials(params)
   return res.status == 200
 end
 
--- Stores the token in 3scale. You can change the default ttl value of 604800 seconds (7 days) to your desired ttl.
+-- Stores the token in 3scale.
 local function store_token(params, token)
   local body = ts.build_query({ app_id = params.client_id, token = token.access_token, user_id = params.user_id, ttl = token.expires_in })
   local stored = ngx.location.capture( "/_threescale/oauth_store_token", {

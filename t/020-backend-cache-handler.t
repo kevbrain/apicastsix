@@ -67,7 +67,7 @@ env APICAST_BACKEND_CACHE_HANDLER=resilient;
 [ 200, 200 ]
 
 
-=== TEST 2: strict backend will remove cache after not successful satus
+=== TEST 2: strict backend will remove cache after not successful status
 When backend returns server error the next call will be reauthorized.
 --- main_config
 env APICAST_BACKEND_CACHE_HANDLER=strict;
@@ -81,6 +81,8 @@ env APICAST_BACKEND_CACHE_HANDLER=strict;
           id = 42,
           backend_version = 1,
           proxy = {
+            error_status_auth_failed = 402,
+            error_auth_failed = 'credentials invalid!',
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
               { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
@@ -113,6 +115,6 @@ env APICAST_BACKEND_CACHE_HANDLER=strict;
 --- request eval
 ["GET /test?user_key=foo", "GET /foo?user_key=foo"]
 --- response_body eval
-["yay, api backend\x{0a}", "nil" ]
+["yay, api backend\x{0a}", "credentials invalid!" ]
 --- error_code eval
-[ 200, 403 ]
+[ 200, 402 ]

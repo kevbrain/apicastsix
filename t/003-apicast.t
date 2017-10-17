@@ -44,7 +44,32 @@ GET /
 credentials missing!
 --- error_code: 401
 
-=== TEST 2: authentication (part of) credentials missing
+=== TEST 2: credentials missing default error
+There are defaults defined for the error message, the content-type, and the
+status code (401).
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 2,
+        }
+      }
+    })
+  }
+--- config
+include $TEST_NGINX_BACKEND_CONFIG;
+include $TEST_NGINX_APICAST_CONFIG;
+--- request
+GET /?app_key=42
+--- response_headers
+Content-Type: text/plain; charset=utf-8
+--- response_body chomp
+Authentication parameters missing
+--- error_code: 401
+
+=== TEST 3: authentication (part of) credentials missing configurable error
 The message is configurable as well as the status.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -70,7 +95,35 @@ GET /?app_key=42
 credentials missing!
 --- error_code: 401
 
-=== TEST 3: no mapping rules matched
+=== TEST 4: no mapping rules matched default error
+There are defaults defined for the error message, the content-type, and the
+status code (404).
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+        }
+      }
+    })
+  }
+--- config
+include $TEST_NGINX_APICAST_CONFIG;
+--- request
+GET /?user_key=value
+--- response_body chomp
+No Mapping Rule matched
+--- response_headers
+Content-Type: text/plain; charset=utf-8
+no mapping rules!
+--- error_code: 404
+--- error_log
+could not find proxy for request
+
+=== TEST 5: no mapping rules matched configurable error
 The message is configurable and status also.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -98,7 +151,47 @@ no mapping rules!
 --- error_log
 could not find proxy for request
 
-=== TEST 4: authentication credentials invalid
+=== TEST 6: authentication credentials invalid default error
+There are defaults defined for the error message, the content-type, and the
+status code (403).
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /transactions/authrep.xml {
+      deny all;
+  }
+
+  location /api-backend/ {
+     echo 'yay';
+  }
+--- request
+GET /?user_key=value
+--- response_headers
+Content-Type: text/plain; charset=utf-8
+--- response_body chomp
+Authentication failed
+--- error_code: 403
+
+=== TEST 7: authentication credentials invalid configurable error
 The message is configurable and default status is 403.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -137,7 +230,7 @@ GET /?user_key=value
 credentials invalid!
 --- error_code: 402
 
-=== TEST 5: api backend gets the request
+=== TEST 8: api backend gets the request
 It asks backend and then forwards the request to the api.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -192,7 +285,7 @@ apicast cache miss key: 42:value:usage%5Bhits%5D=2
 --- no_error_log
 [error]
 
-=== TEST 6: mapping rule with fixed value is mandatory
+=== TEST 9: mapping rule with fixed value is mandatory
 When mapping rule has a parameter with fixed value it has to be matched.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -230,7 +323,7 @@ GET /foo?bar=foo&user_key=somekey
 no mapping rules matched!
 --- error_code: 412
 
-=== TEST 7: mapping rule with fixed value is mandatory
+=== TEST 10: mapping rule with fixed value is mandatory
 When mapping rule has a parameter with fixed value it has to be matched.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -275,7 +368,7 @@ X-3scale-matched-rules: /foo?bar=baz
 --- no_error_log
 [error]
 
-=== TEST 8: mapping rule with variable value is required to be sent
+=== TEST 11: mapping rule with variable value is required to be sent
 When mapping rule has a parameter with variable value it has to exist.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -320,7 +413,7 @@ X-3scale-matched-rules: /foo?bar={baz}
 X-3scale-usage: usage%5Bbar%5D=3
 
 
-=== TEST 9: https api backend works
+=== TEST 12: https api backend works
 
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -389,7 +482,7 @@ GET /test?user_key=foo
 api response
 --- error_code: 200
 
-=== TEST 10: print warning on duplicate service hosts
+=== TEST 13: print warning on duplicate service hosts
 So when booting it can be immediately known that some of them won't work.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -416,7 +509,7 @@ all ok
 --- grep_error_log_out
 host foo for service 2 already defined by service 1
 
-=== TEST 11: print message that service was added to the configuration
+=== TEST 14: print message that service was added to the configuration
 Including it's host so it is easy to see that configuration was loaded.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -442,7 +535,7 @@ all ok
 added service 1 configuration with hosts: foo, bar
 added service 2 configuration with hosts: baz, daz
 
-=== TEST 12: return headers with debugging info
+=== TEST 15: return headers with debugging info
 When X-3scale-Debug header has value of the backend authentication.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -488,7 +581,7 @@ all ok
 X-3scale-matched-rules: /
 X-3scale-usage: usage%5Bhits%5D=2
 
-=== TEST 13: uses endpoint host as Host header
+=== TEST 16: uses endpoint host as Host header
 when connecting to the backend
 --- main_config
 env RESOLVER=127.0.0.1:1953;
@@ -546,7 +639,7 @@ $::dns->("localhost.example.com", "127.0.0.1", 3600)
 --- no_error_log
 [error]
 
-=== TEST 14: invalid service
+=== TEST 17: invalid service
 The message is configurable and default status is 403.
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -557,3 +650,89 @@ GET /?user_key=value
 --- error_code: 404
 --- no_error_log
 [error]
+
+=== TEST 18: default limits exceeded error
+There are defaults defined for the error message, the content-type, and the
+status code (429).
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      ngx.status = 409;
+      ngx.exit(ngx.HTTP_OK);
+    }
+  }
+
+  location /api-backend/ {
+     echo 'yay';
+  }
+--- request
+GET /?user_key=value
+--- response_headers
+Content-Type: text/plain; charset=utf-8
+--- response_body chomp
+Limits exceeded
+--- error_code: 429
+
+=== TEST 19: configurable limits exceeded error
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            error_limits_exceeded = 'limits exceeded!',
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            error_status_limits_exceeded = 402,
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      ngx.status = 409;
+      ngx.exit(ngx.HTTP_OK);
+    }
+  }
+
+  location /api-backend/ {
+     echo 'yay';
+  }
+--- request
+GET /?user_key=value
+--- response_body chomp
+limits exceeded!
+--- error_code: 402

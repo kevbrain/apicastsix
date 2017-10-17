@@ -66,6 +66,18 @@ describe('Cache Handler', function()
 
       assert.falsy(cache:get('foobar'))
     end)
+
+    it('returns a rejection reason when given', function()
+      local cache = lrucache.new(1)
+
+      local authorized, rejection_reason = handler(
+        cache, 'foobar', { status = 403,
+                           header = { ['3scale-rejection-reason'] = 'some_reason' } })
+
+      assert.falsy(authorized)
+      assert.equal('some_reason', rejection_reason)
+      assert.falsy(cache:get('foobar'))
+    end)
   end)
 
 
@@ -104,6 +116,18 @@ describe('Cache Handler', function()
       assert.falsy(handler(cache, 'foobar', { status = 503 }))
 
       assert.equal(200, cache:get('foobar'))
+    end)
+
+    it('returns a rejection reason when given', function()
+      local cache = lrucache.new(1)
+
+      local authorized, rejection_reason = handler(
+        cache, 'foobar', { status = 403,
+                           header = { ['3scale-rejection-reason'] = 'some_reason' } })
+
+      assert.falsy(authorized)
+      assert.equal('some_reason', rejection_reason)
+      assert.equal(403, cache:get('foobar'))
     end)
   end)
 

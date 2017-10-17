@@ -35,6 +35,38 @@ describe('Configuration object', function()
       assert.same('https://backend.example.com', config.backend.endpoint)
       assert.same('backend.example.com', config.backend.host)
     end)
+
+    it('has a default message, content-type, and status for the auth failed error', function()
+      local config = configuration.parse_service({})
+
+      assert.same('Authentication failed', config.error_auth_failed)
+      assert.same('text/plain; charset=utf-8', config.auth_failed_headers)
+      assert.equals(403, config.auth_failed_status)
+    end)
+
+    it('has a default message, content-type, and status for the missing creds error', function()
+      local config = configuration.parse_service({})
+
+      assert.same('Authentication parameters missing', config.error_auth_missing)
+      assert.same('text/plain; charset=utf-8', config.auth_missing_headers)
+      assert.equals(401, config.auth_missing_status)
+    end)
+
+    it('has a default message, content-type, and status for the no rules matched error', function()
+      local config = configuration.parse_service({})
+
+      assert.same('No Mapping Rule matched', config.error_no_match)
+      assert.same('text/plain; charset=utf-8', config.no_match_headers)
+      assert.equals(404, config.no_match_status)
+    end)
+
+    it('has a default message, content-type, and status for the limits exceeded error', function()
+      local config = configuration.parse_service({})
+
+      assert.same('Limits exceeded', config.error_limits_exceeded)
+      assert.same('text/plain; charset=utf-8', config.limits_exceeded_headers)
+      assert.equals(429, config.limits_exceeded_status)
+    end)
   end)
 
   describe('.filter_services', function()

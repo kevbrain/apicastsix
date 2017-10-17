@@ -9,8 +9,8 @@
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local configuration_store = require 'configuration_store'
+local util = require('util')
 local resty_lrucache = require('resty.lrucache')
-
 local backend_cache_handler = require('backend.cache_handler')
 
 local resty_url = require 'resty.url'
@@ -23,12 +23,21 @@ local concat = table.concat
 local gsub = string.gsub
 local tonumber = tonumber
 local setmetatable = setmetatable
-local exit = ngx.exit
 local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
+local semaphore = require('ngx.semaphore')
+local backend_client = require('backend_client')
+local timers = semaphore.new(tonumber(env.get('APICAST_REPORTING_THREADS') or 0))
+
 local empty = {}
 
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
+
+local using_post_action = response_codes or timers:count() < 1
+
+if not using_post_action then
+  ngx.log(ngx.WARN, 'using experimental asynchronous reporting threads: ', timers:count())
+end
 
 local _M = { }
 
@@ -158,7 +167,7 @@ local http = {
     local backend_upstream = ngx.ctx.backend_upstream
     local previous_real_url = ngx.var.real_url
     ngx.log(ngx.DEBUG, '[ctx] copying backend_upstream of size: ', #backend_upstream)
-    local res = ngx.location.capture(assert(url), { share_all_vars = true, ctx = { backend_upstream = backend_upstream } })
+    local res = ngx.location.capture(assert(url), { share_all_vars = true, ctx = { backend_upstream = backend_upstream, backend_endpoint = ngx.var.backend_endpoint } })
 
     local real_url = ngx.var.real_url
 
@@ -217,6 +226,10 @@ function _M:authorize(service, usage, credentials, ttl)
       error_authorization_failed(service)
     end
   end
+
+  if not using_post_action then
+    self:post_action(true)
+  end
 end
 
 function _M:set_service(host)
@@ -267,8 +280,8 @@ function _M:set_backend_upstream(service)
   ngx.var.backend_authentication_value = backend_authentication.value
   ngx.var.version = self.configuration.version
 
-  -- set backend
-  local url = resty_url.split(backend.endpoint or ngx.var.backend_endpoint)
+  local backend_endpoint = backend.endpoint  or ngx.var.backend_endpoint
+  local url = resty_url.split(backend_endpoint)
   local scheme, _, _, server, port, path =
     url[1], url[2], url[3], url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
 
@@ -278,6 +291,7 @@ function _M:set_backend_upstream(service)
 
   ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. path
   ngx.var.backend_host = backend.host or server or ngx.var.backend_host
+  ngx.var.post_action_backend_endpoint = backend_endpoint
 end
 
 -----
@@ -368,22 +382,62 @@ function _M:access(service)
   return self:authorize(service, usage, credentials, ttl)
 end
 
-
-local function response_codes_encoded_data()
+local function response_codes_data()
   local params = {}
 
   if not response_codes then
-    return ''
+    return params
   end
 
   if response_codes then
     params["log[code]"] = ngx.var.status
   end
 
-  return ngx.escape_uri(ngx.encode_args(params))
+  return params
 end
 
-function _M:post_action()
+local function response_codes_encoded_data()
+  return ngx.escape_uri(ngx.encode_args(response_codes_data()))
+end
+
+local function post_action(_, self, cached_key, backend, ...)
+  local res = util.timer('backend post_action', backend.authrep, backend, ...)
+
+  if not using_post_action then
+    timers:post(1)
+  end
+
+  self:handle_backend_response(cached_key, res)
+end
+
+local function capture_post_action(self, cached_key, service)
+  self:set_backend_upstream(service)
+
+  local auth_uri = service.backend_version == 'oauth' and 'threescale_oauth_authrep' or 'threescale_authrep'
+  local res = http.get("/".. auth_uri .."?log=" .. response_codes_encoded_data())
+
+  self:handle_backend_response(cached_key, res)
+end
+
+local function timer_post_action(self, cached_key, service)
+  local backend = assert(backend_client:new(service), 'missing backend')
+
+  local ok, err = timers:wait(10)
+
+  if ok then
+    -- TODO: try to do this in different phase and use semaphore to limit number of background threads
+    -- TODO: Also it is possible to use sets in shared memory to enqueue work
+    ngx.timer.at(0, post_action, self, cached_key, backend, ngx.ctx.usage, ngx.ctx.credentials, response_codes_data())
+  else
+    ngx.log(ngx.ERR, 'failed to acquire timer: ', err)
+    return capture_post_action(self, cached_key, service)
+  end
+end
+
+function _M:post_action(force)
+  if not using_post_action and not force then
+    return nil, 'post action not needed'
+  end
 
   local cached_key = ngx.var.cached_key
 
@@ -392,17 +446,15 @@ function _M:post_action()
 
     local service_id = ngx.var.service_id
     local service = ngx.ctx.service or self.configuration:find_by_id(service_id)
-    self:set_backend_upstream(service)
 
-    local auth_uri = service.backend_version == 'oauth' and 'threescale_oauth_authrep' or 'threescale_authrep'
-    local res = http.get("/".. auth_uri .."?log=" .. response_codes_encoded_data())
-
-    self:handle_backend_response(cached_key, res)
+    if using_post_action then
+      capture_post_action(self, cached_key, service)
+    else
+      timer_post_action(self, cached_key, service)
+    end
   else
     ngx.log(ngx.INFO, '[async] skipping after action, no cached key')
   end
-
-  exit(ngx.HTTP_OK)
 end
 
 function _M:handle_backend_response(cached_key, response, ttl)

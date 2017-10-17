@@ -495,6 +495,7 @@ env RESOLVER=127.0.0.1:1953;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
+  lua_shared_dict api_keys 1m;
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
@@ -528,6 +529,7 @@ env RESOLVER=127.0.0.1:1953;
        if ngx.var.host == 'localhost.example.com' then
          ngx.exit(200)
        else
+         ngx.log(ngx.ERR, 'invalid host: ', ngx.var.host)
          ngx.exit(404)
        end
      }
@@ -540,7 +542,7 @@ all ok
 --- error_code: 200
 --- udp_listen: 1953
 --- udp_reply eval
-$::dns->("localhost.example.com", "127.0.0.1")
+$::dns->("localhost.example.com", "127.0.0.1", 3600)
 --- no_error_log
 [error]
 

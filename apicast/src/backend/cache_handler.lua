@@ -1,4 +1,5 @@
 local setmetatable = setmetatable
+local pcall = pcall
 
 local _M = {
   handlers = setmetatable({}, { __index = { default = 'strict' } })
@@ -23,12 +24,23 @@ function _M.new(handler)
   return setmetatable({ handler = name }, mt)
 end
 
+local function cached_key_var()
+  return ngx.var.cached_key
+end
+
+local function fetch_cached_key()
+  local ok, stored = pcall(cached_key_var)
+
+  return ok and stored
+end
+
 function _M.handlers.strict(cache, cached_key, response, ttl)
   if response.status == 200 then
     -- cached_key is set in post_action and it is in in authorize
     -- so to not write the cache twice lets write it just in authorize
-    if ngx.var.cached_key ~= cached_key then
-      ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ', ttl: ', ttl )
+
+    if fetch_cached_key(cached_key) ~= cached_key then
+      ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ', ttl: ', ttl, ' sub: ')
       cache:set(cached_key, 200, ttl or 0)
     end
 

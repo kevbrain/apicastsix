@@ -11,6 +11,8 @@
 
 local setmetatable = setmetatable
 local concat = table.concat
+local insert = table.insert
+local len = string.len
 
 local http_ng = require('resty.http_ng')
 local user_agent = require('user_agent')
@@ -84,11 +86,15 @@ local function call_backend_transaction(self, path, ...)
 
   local args = { self.authentication, ... }
 
+  local query = {}
   for i=1, #args do
-    args[i] = ngx.encode_args(args[i])
+    local arg = ngx.encode_args(args[i])
+    if len(arg) > 0 then
+      insert(query, arg)
+    end
   end
 
-  local url = resty_url.join(endpoint, '/transactions', path .. '?' .. concat(args, '&'))
+  local url = resty_url.join(endpoint, '/transactions', path .. '?' .. concat(query, '&'))
 
   local res = http_client.get(url)
 

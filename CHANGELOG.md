@@ -6,11 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## Added
+
+- Experimental option for true out of band reporting (`APICAST_REPORTING_WORKERS`) [PR #290](https://github.com/3scale/apicast/pull/290)
+- `/status/info` endpoint to the Management API [PR #290](https://github.com/3scale/apicast/pull/290)
+
 ## Changed
 
 - Upgraded to OpenResty 1.11.2.5-1 [PR #428](https://github.com/3scale/apicast/pull/428)
 - `/oauth/token` endpoint returns an error status code, when the access token couldn't be stored in 3scale backend [PR #436](https://github.com/3scale/apicast/pull/436)]
 - URI params in POST requests are now taken into account when matching mapping rules [PR #437](https://github.com/3scale/apicast/pull/437)
+- Increased number of background timers and connections in the cosocket pool [PR #290](https://github.com/3scale/apicast/pull/290)
 
 ### Fixed
 
@@ -123,7 +129,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Use per request configuration when cache is disabled [PR #289](https://github.com/3scale/apicast/pull/289)
 - Automatically expose all environment variables starting with `APICAST_` or `THREESCALE_` to nginx [PR #292](https://github.com/3scale/apicast/pull/292)
 - Error log to show why downloading configuration failed [PR #306](https://github.com/3scale/apicast/pull/306)
-- Increased number of background timers and connections in the cosocket pool [PR #290](https://github.com/3scale/apicast/pull/290)
 
 ### Added
 
@@ -132,9 +137,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Ability to lock service to specific configuration version [PR #293](https://github.com/3scale/apicast/pull/292)
 - Ability to use Redis DB and password via `REDIS_URL` [PR #303](https://github.com/3scale/apicast/pull/303)
 - Ability to Authenticate against API using RHSSO and OpenID Connect [PR #283](https://github.com/3scale/apicast/pull/283)
-- Experimental option for true out of band reporting (`APICAST_REPORTING_WORKERS`) [PR #290](https://github.com/3scale/apicast/pull/290)
-- Experimental option for true out of band reporting (`APICAST_REPORTING_THREADS`) [PR #290](https://github.com/3scale/apicast/pull/290)
-- `/status/info` endpoint to the Management API [PR #290](https://github.com/3scale/apicast/pull/290)
 
 ### Fixed
 - `http_ng` client supports auth passsed in the url, and default client options if the request options are missing for methods with body (POST, PUT, etc.) [PR #310](https://github.com/3scale/apicast/pull/310)

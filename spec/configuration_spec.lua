@@ -25,16 +25,6 @@ describe('Configuration object', function()
       assert.same('example.com', config.hostname_rewrite)
     end)
 
-    it('overrides backend endpoint from ENV', function()
-      env.set('BACKEND_ENDPOINT_OVERRIDE', 'https://backend.example.com')
-
-      local config = configuration.parse_service({ proxy = {
-        backend = { endpoint = 'http://example.com', host = 'foo.example.com' }
-      }})
-
-      assert.same('https://backend.example.com', config.backend.endpoint)
-      assert.same('backend.example.com', config.backend.host)
-    end)
 
     it('has a default message, content-type, and status for the auth failed error', function()
       local config = configuration.parse_service({})
@@ -66,6 +56,38 @@ describe('Configuration object', function()
       assert.same('Limits exceeded', config.error_limits_exceeded)
       assert.same('text/plain; charset=utf-8', config.limits_exceeded_headers)
       assert.equals(429, config.limits_exceeded_status)
+    end)
+
+    describe('backend', function()
+      it('defaults to nothing', function()
+        local config = configuration.parse_service({ proxy = {
+          backend = nil
+        }})
+
+        assert.falsy(config.backend)
+      end)
+
+      it('is overriden from ENV', function()
+        env.set('BACKEND_ENDPOINT_OVERRIDE', 'https://backend.example.com')
+
+        local config = configuration.parse_service({ proxy = {
+          backend = { endpoint = 'http://example.com', host = 'foo.example.com' }
+        }})
+
+        assert.same('https://backend.example.com', config.backend.endpoint)
+        assert.same('backend.example.com', config.backend.host)
+      end)
+
+      it('detects TEST_NGINX_SERVER_PORT', function()
+        env.set('TEST_NGINX_SERVER_PORT', '1954')
+
+        local config = configuration.parse_service({ proxy = {
+          backend = nil
+        }})
+
+        assert.same('http://127.0.0.1:1954', config.backend.endpoint)
+        assert.falsy(config.backend.host)
+      end)
     end)
   end)
 

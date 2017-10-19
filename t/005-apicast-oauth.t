@@ -26,7 +26,6 @@ __DATA__
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
   location /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
@@ -66,7 +65,6 @@ called oauth_authorize.xml
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
       local expected = "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri"
@@ -108,7 +106,6 @@ Location: http://example.com/redirect\?response_type=code&client_id=id&state=[a-
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
       if ngx.var.args == "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri" then
@@ -141,7 +138,6 @@ Location: http://example.com/redirect\?response_type=token&client_id=id&scope=wh
   }
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
-set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
 location /backend/transactions/oauth_authorize.xml {
   content_by_lua_block {
@@ -172,7 +168,6 @@ called oauth_authorize.xml
   }
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
-set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
 location /backend/transactions/oauth_authorize.xml {
   content_by_lua_block {
@@ -341,7 +336,6 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
     }
   }
 
-    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         local expected = "provider_key=fookey&service_id=42&app_key=client_secret&app_id=client_id&redirect_uri=redirect_uri"
@@ -407,8 +401,6 @@ GET /t
   location /api-backend/ {
     echo "yay, upstream";
   }
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
   location = /backend/transactions/oauth_authrep.xml {
     echo 'ok';
@@ -489,7 +481,6 @@ Location: http://example.com/redirect\?code=\w+&state=12345
   location /api-backend/ {
     echo "yay, upstream";
   }
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
   location = /backend/transactions/oauth_authrep.xml {
     echo 'ok';
@@ -616,7 +607,6 @@ Regression test for CVE-2017-7512
     }
   }
 
-    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=&app_id=client_id&redirect_uri=redirect_uri"
@@ -684,7 +674,6 @@ GET /t
     }
   }
 
-    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
@@ -755,7 +744,6 @@ GET /t
     }
   }
 
-    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
@@ -839,7 +827,6 @@ When a token TTL is not specified, it applies a default of 7 days (604800 s)
     }
   }
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
   set $backend_host '127.0.0.1';
   set $service_id 42;
   set $backend_authentication_type 'provider_key';
@@ -922,7 +909,6 @@ When an empty token TTL is received, Apicast applies a default of 7 days (604800
     }
   }
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
   set $backend_host '127.0.0.1';
   set $service_id 42;
   set $backend_authentication_type 'provider_key';

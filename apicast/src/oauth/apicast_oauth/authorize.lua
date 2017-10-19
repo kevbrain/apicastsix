@@ -1,5 +1,7 @@
 local random = require 'resty.random'
 local ts = require 'threescale_utils'
+local backend_client = require('backend_client')
+local http_ng_ngx = require('resty.http_ng.backend.ngx')
 
 -- returns a unique string for the client_id. it will be short lived
 local function nonce(client_id)
@@ -81,16 +83,9 @@ end
 
 
 -- Check valid params ( client_id / secret / redirect_url, whichever are sent) against 3scale
-local function check_credentials(params)
-  local res = ngx.location.capture("/_threescale/check_credentials",
-    {
-      args = {
-        app_id = params.client_id,
-        redirect_uri = params.redirect_uri
-      },
-      copy_all_vars = true,
-      ctx = ngx.ctx
-    })
+local function check_credentials(service, params)
+  local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
+  local res = backend:authorize({  app_id = params.client_id, redirect_uri = params.redirect_uri })
 
   ngx.log(ngx.INFO, "[oauth] Checking client credentials, status: ", res.status, " body: ", res.body)
 
@@ -103,7 +98,8 @@ local _M = {
 
 function _M.call()
   local params = extract_params()
-  local is_valid = check_credentials(params)
+  local service = ngx.ctx.service
+  local is_valid = check_credentials(service, params)
 
   if is_valid then
     ngx.log(ngx.DEBUG, 'oauth params valid')

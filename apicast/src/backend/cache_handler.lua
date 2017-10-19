@@ -56,7 +56,7 @@ function _M.handlers.strict(cache, cached_key, response, ttl)
   else
     ngx.log(ngx.NOTICE, 'apicast cache delete key: ', cached_key, ' cause status ', response.status)
     cache:delete(cached_key)
-    return false, rejection_reason(response.header)
+    return false, rejection_reason(response.headers)
   end
 end
 
@@ -69,7 +69,7 @@ function _M.handlers.resilient(cache, cached_key, response, ttl)
     cache:set(cached_key, status, ttl or 0)
 
     local authorized = (status == 200)
-    return authorized, (not authorized and rejection_reason(response.header))
+    return authorized, (not authorized and rejection_reason(response.headers))
   end
 end
 

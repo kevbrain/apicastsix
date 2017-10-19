@@ -46,7 +46,6 @@ __DATA__
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
   location /api-backend/ {
     echo "yes";

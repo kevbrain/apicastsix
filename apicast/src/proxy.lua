@@ -27,6 +27,7 @@ local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
 local semaphore = require('ngx.semaphore')
 local backend_client = require('backend_client')
+local http_ng_ngx = require('resty.http_ng.backend.ngx')
 local timers = semaphore.new(tonumber(env.get('APICAST_REPORTING_THREADS') or 0))
 
 local empty = {}
@@ -170,28 +171,6 @@ else
   _M.find_service = find_service_strict
 end
 
-local http = {
-  get = function(url)
-    ngx.log(ngx.INFO, '[http] requesting ', url)
-    local backend_upstream = ngx.ctx.backend_upstream
-    local previous_real_url = ngx.var.real_url
-    ngx.log(ngx.DEBUG, '[ctx] copying backend_upstream of size: ', #backend_upstream)
-    local res = ngx.location.capture(assert(url), { share_all_vars = true, ctx = { backend_upstream = backend_upstream, backend_endpoint = ngx.var.backend_endpoint } })
-
-    local real_url = ngx.var.real_url
-
-    if real_url ~= previous_real_url then
-      ngx.log(ngx.INFO, '[http] ', real_url, ' (',res.status, ')')
-    else
-      ngx.log(ngx.INFO, '[http] status: ', res.status)
-    end
-
-    ngx.var.real_url = ''
-
-    return res
-  end
-}
-
 local function output_debug_headers(service, usage, credentials)
   ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
 
@@ -204,19 +183,18 @@ local function output_debug_headers(service, usage, credentials)
 end
 
 function _M:authorize(service, usage, credentials, ttl)
-  if usage == '' then
+  local encoded_usage = encode_args(usage)
+  if encoded_usage == '' then
     return error_no_match(service)
   end
+  local encoded_credentials = encode_args(credentials)
 
-  output_debug_headers(service, usage, credentials)
+  output_debug_headers(service, encoded_usage, encoded_credentials)
 
   local internal_location = (self.oauth and '/threescale_oauth_authrep') or '/threescale_authrep'
 
-  -- usage and credentials are expected by the internal endpoints
-  ngx.var.usage = usage
-  ngx.var.credentials = credentials
   -- NYI: return to lower frame
-  local cached_key = ngx.var.cached_key .. ":" .. usage
+  local cached_key = ngx.var.cached_key .. ":" .. encoded_usage
   local cache = self.cache
   local is_known = cache:get(cached_key)
 
@@ -229,7 +207,8 @@ function _M:authorize(service, usage, credentials, ttl)
     -- set cached_key to nil to avoid doing the authrep in post_action
     ngx.var.cached_key = nil
 
-    local res = http.get(internal_location)
+    local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
+    local res = backend:authrep(usage, credentials)
 
     local authorized, rejection_reason = self:handle_backend_response(cached_key, res, ttl)
     if not authorized then
@@ -284,30 +263,6 @@ function _M.set_upstream(service)
   ngx.req.set_header('Host', upstream.host or ngx.var.host)
 end
 
-function _M:set_backend_upstream(service)
-  service = service or ngx.ctx.service
-
-  local backend_authentication = service.backend_authentication or {}
-  local backend = service.backend or {}
-
-  ngx.var.backend_authentication_type = backend_authentication.type
-  ngx.var.backend_authentication_value = backend_authentication.value
-  ngx.var.version = self.configuration.version
-
-  local backend_endpoint = backend.endpoint  or ngx.var.backend_endpoint
-  local url = resty_url.split(backend_endpoint)
-  local scheme, _, _, server, port, path =
-    url[1], url[2], url[3], url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
-
-  local backend_upstream = resty_resolver:instance():get_servers(server, { port = port or nil })
-  ngx.log(ngx.DEBUG, '[resolver] resolved backend upstream: ', backend_upstream)
-  ngx.ctx.backend_upstream = backend_upstream
-
-  ngx.var.backend_endpoint = scheme .. '://backend_upstream' .. path
-  ngx.var.backend_host = backend.host or server or ngx.var.backend_host
-  ngx.var.post_action_backend_endpoint = backend_endpoint
-end
-
 -----
 -- call the proxy and return a handler function
 -- that will perform an action based on the path and backend version
@@ -317,8 +272,6 @@ end
 function _M:call(host)
   host = host or ngx.var.host
   local service = ngx.ctx.service or self:set_service(host)
-
-  self:set_backend_upstream(service)
 
   self.oauth = service:oauth()
 
@@ -377,6 +330,9 @@ function _M:access(service)
   ctx.credentials = credentials
   ctx.matched_patterns = matched_patterns
 
+  self.credentials = credentials
+  self.usage = usage_params
+
   var.cached_key = concat(cached_key, ':')
 
   local ttl
@@ -388,12 +344,10 @@ function _M:access(service)
       ngx.log(ngx.DEBUG, 'oauth failed with ', err)
       return error_authorization_failed(service)
     end
+    ctx.credentials = credentials
   end
 
-  credentials = encode_args(credentials)
-  local usage = encode_args(usage_params)
-
-  return self:authorize(service, usage, credentials, ttl)
+  return self:authorize(service, usage_params, credentials, ttl)
 end
 
 local function response_codes_data()
@@ -425,10 +379,8 @@ local function post_action(_, self, cached_key, backend, ...)
 end
 
 local function capture_post_action(self, cached_key, service)
-  self:set_backend_upstream(service)
-
-  local auth_uri = service.backend_version == 'oauth' and 'threescale_oauth_authrep' or 'threescale_authrep'
-  local res = http.get("/".. auth_uri .."?log=" .. response_codes_encoded_data())
+  local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
+  local res = backend:authrep(self.usage, self.credentials, response_codes_data())
 
   self:handle_backend_response(cached_key, res)
 end
@@ -441,7 +393,7 @@ local function timer_post_action(self, cached_key, service)
   if ok then
     -- TODO: try to do this in different phase and use semaphore to limit number of background threads
     -- TODO: Also it is possible to use sets in shared memory to enqueue work
-    ngx.timer.at(0, post_action, self, cached_key, backend, ngx.ctx.usage, ngx.ctx.credentials, response_codes_data())
+    ngx.timer.at(0, post_action, self, cached_key, backend, self.usage, self.credentials, response_codes_data())
   else
     ngx.log(ngx.ERR, 'failed to acquire timer: ', err)
     return capture_post_action(self, cached_key, service)

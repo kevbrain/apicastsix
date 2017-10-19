@@ -33,7 +33,6 @@ First call is done synchronously and the second out of band.
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
   }
@@ -103,8 +102,6 @@ Two services can exist together and are split by their hostname.
   lua_shared_dict api_keys 10m;
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /transactions/authrep.xml {
     content_by_lua_block {
@@ -178,7 +175,6 @@ First call is done synchronously and the second out of band.
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /transactions/oauth_authrep.xml {
     content_by_lua_block { ngx.exit(200) }

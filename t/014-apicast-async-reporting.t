@@ -156,7 +156,7 @@ api response
 --- error_code: 200
 --- error_log
 backend client uri: https://127.0.0.1:1953/transactions/authrep.xml?service_token=token-value&service_id=42&usage%5Bhits%5D=1&user_key=foo ok: true status: 200
---- wait: 1
+--- wait: 3
 
 === TEST 3: uses endpoint host as Host header
 when connecting to the backend
@@ -213,9 +213,9 @@ all ok
 --- error_code: 200
 --- udp_listen: 1953
 --- udp_reply eval
-$::dns->("localhost.example.com", "127.0.0.1")
+$::dns->("localhost.example.com", "127.0.0.1", 60)
 --- no_error_log
 [error]
 --- error_log
 backend client uri: http://localhost.example.com:1984/transactions/authrep.xml?service_token=service-token&service_id=42&usage%5Bhits%5D=2&user_key=val ok: true status: 200
---- wait: 1
+--- wait: 3

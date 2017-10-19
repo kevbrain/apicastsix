@@ -656,6 +656,7 @@ There are defaults defined for the error message, the content-type, and the
 status code (429).
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
@@ -698,6 +699,7 @@ Limits exceeded
 === TEST 19: configurable limits exceeded error
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {

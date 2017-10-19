@@ -213,7 +213,7 @@ all ok
 --- error_code: 200
 --- udp_listen: 1953
 --- udp_reply eval
-$::dns->("localhost.example.com", "127.0.0.1")
+$::dns->("localhost.example.com", "127.0.0.1", 60)
 --- no_error_log
 [error]
 --- error_log

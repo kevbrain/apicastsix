@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - URI params in POST requests are now taken into account when matching mapping rules [PR #437](https://github.com/3scale/apicast/pull/437)
 - Increased number of background timers and connections in the cosocket pool [PR #290](https://github.com/3scale/apicast/pull/290)
 - Make OAuth tokens TTL configurable [PR #448](https://github.com/3scale/apicast/pull/448)
+- Detect when being executed in Test::Nginx and use default backend accordingly [PR #458](https://github.com/3scale/apicast/pull/458)
 
 ### Fixed
 

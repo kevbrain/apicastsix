@@ -1,23 +1,15 @@
-use Test::Nginx::Socket::Lua 'no_plan';
-use Cwd qw(cwd);
-use Crypt::OpenSSL::RSA;
+use lib 't';
+use TestAPIcast 'no_plan';
 
-my $pwd = cwd();
-my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
-
-$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;$pwd/spec/?.lua;;";
-$ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
-$ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
-$ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
-
+$ENV{TEST_NGINX_LUA_PATH} = "$TestAPIcast::spec/?.lua;$ENV{TEST_NGINX_LUA_PATH}";
 $ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
 $ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | head -1 | tr '\n' ' '`;
+$ENV{BACKEND_ENDPOINT_OVERRIDE} ||= "http://127.0.0.1:$Test::Nginx::Util::ServerPortForClient/backend";
 
 our $rsa = `cat t/fixtures/rsa.pem`;
 
-log_level('debug');
-repeat_each(2);
-no_root_location();
+env_to_nginx('BACKEND_ENDPOINT_OVERRIDE');
+
 run_tests();
 
 __DATA__

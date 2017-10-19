@@ -6,7 +6,6 @@ local len = string.len
 local format = string.format
 local pairs = pairs
 local type = type
-local unpack = unpack
 local error = error
 local tostring = tostring
 local next = next
@@ -129,12 +128,35 @@ end
 
 local Service = require 'configuration.service'
 
+local noop = function() end
+local function readonly_table(table)
+    return setmetatable({}, { __newindex = noop, __index = table })
+end
+
+local empty_t = readonly_table()
+local fake_backend = readonly_table({ endpoint = 'http://127.0.0.1:8081' })
+
+local function backend_endpoint(proxy)
+    local backend_endpoint_override = resty_url.parse(env.get("BACKEND_ENDPOINT_OVERRIDE"))
+    local backend = backend_endpoint_override or proxy.backend or empty_t
+
+    if backend == empty_t then
+        local test_nginx_server_port = env.get('TEST_NGINX_SERVER_PORT')
+        if test_nginx_server_port then
+            return { endpoint =  'http://127.0.0.1:' .. test_nginx_server_port }
+        else
+            return fake_backend
+        end
+    else
+        return { endpoint = backend.endpoint or tostring(backend), host = backend.host }
+    end
+end
+
 function _M.parse_service(service)
   local backend_version = tostring(service.backend_version)
-  local proxy = service.proxy or {}
-  local backend = proxy.backend or {}
-  local backend_endpoint_override = env.get("BACKEND_ENDPOINT_OVERRIDE")
-  local _, _, _, backend_host_override = unpack(resty_url.split(backend_endpoint_override) or {})
+  local proxy = service.proxy or empty_t
+  local backend = backend_endpoint(proxy)
+
 
   return Service.new({
       id = tostring(service.id or 'default'),
@@ -161,10 +183,7 @@ function _M.parse_service(service)
         type = service.backend_authentication_type,
         value = service.backend_authentication_value
       },
-      backend = {
-        endpoint = backend_endpoint_override or backend.endpoint,
-        host = backend_host_override or backend.host
-      },
+      backend = backend,
       oidc = {
         issuer_endpoint = proxy.oidc_issuer_endpoint ~= ngx.null and proxy.oidc_issuer_endpoint
       },

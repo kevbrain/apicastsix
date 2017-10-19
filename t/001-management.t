@@ -1,17 +1,7 @@
-use Test::Nginx::Socket::Lua 'no_plan';
-use Cwd qw(cwd);
+use lib 't';
 
-my $pwd = cwd();
-my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
+use TestAPIcast 'no_plan';
 
-$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$apicast/conf.d/management.conf";
-
-require("$pwd/t/dns.pl");
-
-log_level('debug');
-repeat_each(2);
-no_root_location();
 run_tests();
 
 __DATA__
@@ -177,8 +167,8 @@ POST /boot
 {"status":"ok","config":{"services":[{"id":42}]}}
 --- error_code: 200
 --- udp_listen: 1953
---- udp_reply eval
-$::dns->("localhost.local", "127.0.0.1", 60)
+--- udp_reply dns
+[ "localhost.local", "127.0.0.1", 60 ]
 --- no_error_log
 [error]
 
@@ -206,8 +196,8 @@ POST /test
 {"status":"ok","config":{"services":[{"id":42}]}}
 --- error_code: 200
 --- udp_listen: 1953
---- udp_reply eval
-$::dns->("localhost.local", "127.0.0.1", 60)
+--- udp_reply dns
+[ "localhost.local", "127.0.0.1", 60 ]
 --- no_error_log
 [error]
 

@@ -45,6 +45,7 @@ jobs:
     working_directory: /opt/app-root/apicast
     steps:
       - checkout
+      - run: rm -rf lua_modules
       - restore_cache:
           keys:
             - apicast-rocks-{{ arch }}-{{ checksum "Roverfile.lock" }}

@@ -1,12 +1,9 @@
-use Test::Nginx::Socket 'no_plan';
-use Cwd qw(cwd);
+use lib 't';
+use TestAPIcast 'no_plan';
 
-my $pwd = cwd();
-my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
+$ENV{TEST_NGINX_LUA_PATH} = "$Test::Nginx::Util::HtmlDir/?.lua;$ENV{TEST_NGINX_LUA_PATH}";
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$TestAPIcast::path/http.d/init.conf";
 
-$ENV{TEST_NGINX_LUA_PATH} = "$pwd/t/servroot/html/?.lua;$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/init.conf";
-$ENV{TEST_NGINX_APICAST_PATH} = $apicast;
 $ENV{APICAST_MODULE} = 'customfoobar';
 
 env_to_nginx(
@@ -14,8 +11,6 @@ env_to_nginx(
 );
 
 log_level('warn');
-repeat_each(2);
-no_root_location();
 run_tests();
 
 __DATA__

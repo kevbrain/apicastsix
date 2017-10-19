@@ -1,12 +1,7 @@
-use Test::Nginx::Socket 'no_plan';
-use Cwd qw(cwd);
+use lib 't';
+use TestAPIcast 'no_plan';
 
-my $pwd = cwd();
-my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
-
-$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/init.conf";
-$ENV{TEST_NGINX_APICAST_PATH} = $apicast;
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$TestAPIcast::path/http.d/init.conf";
 $ENV{APICAST_CONFIGURATION_LOADER} = 'boot';
 $ENV{THREESCALE_CONFIG_FILE} = 't/servroot/html/config.json';
 
@@ -17,8 +12,6 @@ env_to_nginx(
 );
 
 log_level('warn');
-repeat_each(2);
-no_root_location();
 run_tests();
 
 __DATA__

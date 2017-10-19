@@ -1,18 +1,9 @@
-use Test::Nginx::Socket::Lua 'no_plan';
-use Cwd qw(cwd);
+use lib 't';
+use TestAPIcast 'no_plan';
 
-my $pwd = cwd();
-my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
-
-$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
-$ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
-$ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
 $ENV{APICAST_PATH_ROUTING_ENABLED} = '1';
 
-log_level('debug');
 repeat_each(1); # Can't be 2 as the second run would hit the cache
-no_root_location();
 run_tests();
 
 __DATA__

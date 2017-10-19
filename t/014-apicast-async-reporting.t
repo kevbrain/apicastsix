@@ -1,23 +1,8 @@
-use Test::Nginx::Socket::Lua 'no_plan';
-use Cwd qw(cwd);
+use lib 't';
+use TestAPIcast 'no_plan';
 
-my $pwd = cwd();
-my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
+env_to_nginx('APICAST_REPORTING_THREADS=1');
 
-$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
-$ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
-$ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
-
-$ENV{APICAST_REPORTING_THREADS} = '1';
-
-require("t/dns.pl");
-
-env_to_nginx('APICAST_REPORTING_THREADS');
-
-log_level('debug');
-repeat_each(2);
-no_root_location();
 run_tests();
 
 __DATA__
@@ -212,8 +197,8 @@ GET /t?user_key=val
 all ok
 --- error_code: 200
 --- udp_listen: 1953
---- udp_reply eval
-$::dns->("localhost.example.com", "127.0.0.1", 60)
+--- udp_reply dns
+[ "localhost.example.com", "127.0.0.1", 60 ]
 --- no_error_log
 [error]
 --- error_log

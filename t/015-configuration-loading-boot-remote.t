@@ -1,21 +1,14 @@
-use Test::Nginx::Socket 'no_plan';
-use Cwd qw(cwd);
+use lib 't';
+use TestAPIcast 'no_plan';
 
-my $pwd = cwd();
-my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
-
-$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/*.conf";
-$ENV{TEST_NGINX_APICAST_PATH} = $apicast;
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$TestAPIcast::path/http.d/*.conf";
 
 env_to_nginx(
     'TEST_NGINX_APICAST_PATH',
     'THREESCALE_PORTAL_ENDPOINT'
 );
 
-master_on();;
-repeat_each(2);
-no_root_location();
+master_on();
 run_tests();
 
 __DATA__

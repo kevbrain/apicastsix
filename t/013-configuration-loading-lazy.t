@@ -1,15 +1,8 @@
-use Test::Nginx::Socket 'no_plan';
-use Cwd qw(cwd);
+use lib 't';
+use TestAPIcast 'no_plan';
 
-my $pwd = cwd();
-my $apicast = $ENV{TEST_NGINX_APICAST_PATH} || "$pwd/apicast";
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$TestAPIcast::path/http.d/init.conf";
 
-$ENV{TEST_NGINX_LUA_PATH} = "$apicast/src/?.lua;;";
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$apicast/http.d/init.conf";
-$ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$apicast/http.d/upstream.conf";
-$ENV{TEST_NGINX_APICAST_CONFIG} = "$apicast/conf.d/apicast.conf";
-$ENV{TEST_NGINX_BACKEND_CONFIG} = "$apicast/conf.d/backend.conf";
-$ENV{TEST_NGINX_APICAST_PATH} = $apicast;
 $ENV{APICAST_CONFIGURATION_LOADER} = 'lazy';
 
 env_to_nginx(
@@ -19,9 +12,7 @@ env_to_nginx(
     'THREESCALE_PORTAL_ENDPOINT'
 );
 
-log_level('debug');
 repeat_each(1);
-no_root_location();
 run_tests();
 
 __DATA__
@@ -92,9 +83,9 @@ GET /t?user_key=fake
       "id": 1,
       "backend_version": 1,
       "proxy": {
-        "api_backend": "http://127.0.0.1:$ENV{TEST_NGINX_SERVER_PORT}/api/",
+        "api_backend": "http://127.0.0.1:$Test::Nginx::Util::ServerPortForClient/api/",
         "backend": {
-          "endpoint": "http://127.0.0.1:$ENV{TEST_NGINX_SERVER_PORT}"
+          "endpoint": "http://127.0.0.1:$Test::Nginx::Util::ServerPortForClient"
         },
         "proxy_rules": [
           { "pattern": "/t", "http_method": "GET", "metric_system_name": "test" }

@@ -348,7 +348,7 @@ POST /config
 --- no_error_log
 [error]
 
-=== TEST 16: status information
+=== TEST 17: status information
 Has information about timers and time.
 --- main_config
 env APICAST_MANAGEMENT_API=status;

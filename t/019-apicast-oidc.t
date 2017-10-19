@@ -23,6 +23,9 @@ __DATA__
       services = {
         { id = 42,
           backend_version = 'oauth',
+          backend_authentication_type = 'provider_key',
+          backend_authentication_value = 'fookey',
+
           proxy = {
             authentication_method = 'oidc',
             oidc_issuer_endpoint = 'https://example.com/auth/realms/apicast',
@@ -44,9 +47,6 @@ __DATA__
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
   set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-  set $backend_authentication_type 'provider_key';
-  set $backend_authentication_value 'fookey';
-
 
   location /api-backend/ {
     echo "yes";

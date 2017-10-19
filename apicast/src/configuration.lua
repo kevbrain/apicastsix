@@ -134,6 +134,7 @@ local function readonly_table(table)
 end
 
 local empty_t = readonly_table()
+local fake_backend = readonly_table({ endpoint = 'http://127.0.0.1:8081' })
 
 local function backend_endpoint(proxy)
     local backend_endpoint_override = resty_url.parse(env.get("BACKEND_ENDPOINT_OVERRIDE"))
@@ -144,7 +145,7 @@ local function backend_endpoint(proxy)
         if test_nginx_server_port then
             return { endpoint =  'http://127.0.0.1:' .. test_nginx_server_port }
         else
-            return nil
+            return fake_backend
         end
     else
         return { endpoint = backend.endpoint or tostring(backend), host = backend.host }

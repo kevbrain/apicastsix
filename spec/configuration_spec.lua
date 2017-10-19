@@ -59,12 +59,13 @@ describe('Configuration object', function()
     end)
 
     describe('backend', function()
-      it('defaults to nothing', function()
+      it('defaults to fake backend', function()
         local config = configuration.parse_service({ proxy = {
           backend = nil
         }})
 
-        assert.falsy(config.backend)
+        assert.same('http://127.0.0.1:8081', config.backend.endpoint)
+        assert.falsy(config.backend.host)
       end)
 
       it('is overriden from ENV', function()

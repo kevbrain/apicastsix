@@ -139,7 +139,7 @@ function _M.store(self, config, ttl)
 end
 
 function _M.reset(self, cache_size)
-  if not self then
+  if not self.services then
     return nil, 'not initialized'
   end
 

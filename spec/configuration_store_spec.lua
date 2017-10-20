@@ -14,6 +14,13 @@ describe('Configuration Store', function()
   end)
 
   describe('.find_by_id', function()
+    it('returns an error when not initialized', function()
+      local res, err = configuration:find_by_id()
+
+      assert.falsy(res)
+      assert.equal('not initialized', err)
+    end)
+
     it('finds service by id', function()
       local store = configuration.new()
       local service = { id = '42' }
@@ -22,7 +29,8 @@ describe('Configuration Store', function()
 
       assert.same(service, store:find_by_id('42'))
     end)
-    it('it does not seach by host', function()
+
+    it('does not seach by host', function()
       local store = configuration.new()
       local service = { id = '42', hosts = { 'example.com' } }
 
@@ -45,6 +53,13 @@ describe('Configuration Store', function()
   end)
 
   describe('.find_by_host', function()
+    it('returns an error when not initialized', function()
+      local res, err = configuration:find_by_host()
+
+      assert.falsy(res)
+      assert.equal('not initialized', err)
+    end)
+
     it('returns stored services by host', function()
       local store = configuration.new()
       local service =  { id = '42', hosts = { 'example.com' } }
@@ -88,8 +103,7 @@ describe('Configuration Store', function()
       assert.same({ service }, store:find_by_host('example.com'))
     end)
 
-
-    it('not returns stale records when disabled', function()
+    it('does not return stale records when disabled', function()
       local store = configuration.new()
       local service =  { id = '21', hosts = { 'example.com', 'localhost' } }
 
@@ -109,38 +123,56 @@ describe('Configuration Store', function()
   end)
 
   describe('.reset', function()
-    local store
+    describe('when not initialized', function()
+      it('returns an error', function()
+        local res, err = configuration:reset()
 
-    before_each(function()
-      store = configuration.new()
+        assert.falsy(res)
+        assert.equal('not initialized', err)
+      end)
     end)
 
-    it('deletes stored hosts', function()
-      store.cache['example.com'] = { { '42'} }
+    describe('when configured', function()
+      local store
 
-      store:reset()
+      before_each(function()
+        store = configuration.new()
+      end)
 
-      assert.equal(0, #store.cache)
-    end)
+      it('deletes stored hosts', function()
+        store.cache['example.com'] = { { '42'} }
 
-    it('deletes all services', function()
-      store.services['42'] = {}
+        store:reset()
 
-      store:reset()
+        assert.equal(0, #store.cache)
+      end)
 
-      assert.equal(0, #store.services)
-    end)
+      it('deletes all services', function()
+        store.services['42'] = {}
 
-    it('sets configured flag', function()
-      store.configured = true
+        store:reset()
 
-      store:reset()
+        assert.equal(0, #store.services)
+      end)
 
-      assert.falsy(store.configured)
+      it('sets configured flag', function()
+        store.configured = true
+
+        store:reset()
+
+        assert.falsy(store.configured)
+      end)
     end)
   end)
 
   describe('.all', function()
+    it('returns an error when not initialized', function()
+      local res, err = configuration:all()
+
+      assert.falsy(res)
+      assert.equal('not initialized', err)
+    end)
+
     it('returns all services', function()
       local store = configuration.new()
 

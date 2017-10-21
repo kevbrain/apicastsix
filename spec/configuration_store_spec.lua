@@ -144,7 +144,7 @@ describe('Configuration Store', function()
 
         store:reset()
 
-        assert.equal(0, #store.cache)
+        assert.same({}, store.cache.hasht)
       end)
 
       it('deletes all services', function()
@@ -152,7 +152,7 @@ describe('Configuration Store', function()
 
         store:reset()
 
-        assert.equal(0, #store.services)
+        assert.same({}, store.services.hasht)
       end)
 
       it('sets configured flag', function()

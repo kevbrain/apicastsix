@@ -5,6 +5,7 @@ local test_backend_client = require 'resty.http_ng.backend.test'
 describe('backend client', function()
 
   local test_backend
+  local options_header_val = 'rejection_reason_header=1'
 
   before_each(function() test_backend = test_backend_client.new() end)
 
@@ -20,7 +21,8 @@ describe('backend client', function()
       test_backend.expect{
         url = 'http://example.com/transactions/authrep.xml?' ..
             ngx.encode_args({ auth = service.backend_authentication.value, service_id = service.id }),
-        headers = { host = 'example.com' }
+        headers = { host = 'example.com',
+                    ['3scale-options'] = options_header_val }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 
@@ -40,7 +42,8 @@ describe('backend client', function()
       test_backend.expect{
         url = 'http://example.com/transactions/authrep.xml?' ..
             ngx.encode_args({ auth = service.backend_authentication.value, service_id = service.id }) ..
-            '&usage%5Bhits%5D=1&user_key=foobar'
+            '&usage%5Bhits%5D=1&user_key=foobar',
+        headers = { ['3scale-options'] = options_header_val }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 
@@ -58,7 +61,8 @@ describe('backend client', function()
       })
       test_backend.expect{
         url = 'http://example.com/transactions/authrep.xml?service_id=42',
-        headers = { host = 'foo.example.com' }
+        headers = { host = 'foo.example.com',
+                    ['3scale-options'] = options_header_val }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 
@@ -75,7 +79,8 @@ describe('backend client', function()
         }
       })
       test_backend.expect{
-        url = 'http://example.com/transactions/oauth_authrep.xml?service_id=42'
+        url = 'http://example.com/transactions/oauth_authrep.xml?service_id=42',
+        headers = { ['3scale-options'] = options_header_val }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 
@@ -97,7 +102,8 @@ describe('backend client', function()
       test_backend.expect{
         url = 'http://example.com/transactions/authorize.xml?' ..
             ngx.encode_args({ auth = service.backend_authentication.value, service_id = service.id }),
-        headers = { host = 'example.com' }
+        headers = { host = 'example.com',
+                    ['3scale-options'] = options_header_val }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 
@@ -117,7 +123,8 @@ describe('backend client', function()
       test_backend.expect{
         url = 'http://example.com/transactions/authorize.xml?' ..
             ngx.encode_args({ auth = service.backend_authentication.value, service_id = service.id }) ..
-            '&usage%5Bhits%5D=1&user_key=foobar'
+            '&usage%5Bhits%5D=1&user_key=foobar',
+        headers = { ['3scale-options'] = options_header_val }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 
@@ -135,7 +142,8 @@ describe('backend client', function()
       })
       test_backend.expect{
         url = 'http://example.com/transactions/authorize.xml?service_id=42',
-        headers = { host = 'foo.example.com' }
+        headers = { host = 'foo.example.com',
+                    ['3scale-options'] = options_header_val }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 
@@ -152,7 +160,8 @@ describe('backend client', function()
         }
       })
       test_backend.expect{
-        url = 'http://example.com/transactions/oauth_authorize.xml?service_id=42'
+        url = 'http://example.com/transactions/oauth_authorize.xml?service_id=42',
+        headers = { ['3scale-options'] = options_header_val }
       }.respond_with{ status = 200 }
       local backend_client = assert(_M:new(service, test_backend))
 

@@ -11,6 +11,7 @@ local synchronization = require('resty.synchronization').new(1)
 
 local error = error
 local len = string.len
+local format = string.format
 local assert = assert
 local pcall = pcall
 local tonumber = tonumber
@@ -89,8 +90,9 @@ end
 -- Cosocket API is not available in the init_by_lua* context (see more here: https://github.com/openresty/lua-nginx-module#cosockets-not-available-everywhere)
 -- For this reason a new process needs to be started to download the configuration through 3scale API
 function _M.run_external_command(cmd, cwd)
-  cwd = cwd or env.get('TEST_NGINX_APICAST_PATH') or ngx.config.prefix()
-  local config, err, code = util.system("cd '" .. cwd .."' && libexec/"..(cmd or "boot"))
+  local config, err, code = util.system(format('cd %s && libexec/%s',
+    cwd or env.get('TEST_NGINX_APICAST_PATH') or '.',
+    cmd or 'boot'))
 
   -- Try to read the file in current working directory before changing to the prefix.
   if err then config = file_loader.call() end

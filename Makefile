@@ -90,9 +90,9 @@ test-builder-image: export IMAGE_NAME = apicast-test
 test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p /opt/app -t
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -c /opt/app-root/src/conf/nginx.conf -g 'error_log stderr info; pid /tmp/nginx.pid;' -t
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -p /opt/app
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -c /opt/app-root/src/conf/nginx.conf -g 'error_log stderr info; pid /tmp/nginx.pid;'
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test bash -c 'for i in {1..5}; do curl --fail http://gateway:8090/status/live && break || sleep 1; done'
 	$(DOCKER_COMPOSE) logs gateway
@@ -105,7 +105,9 @@ test-builder-image: builder-image clean-containers ## Smoke test the builder ima
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test curl --fail -X POST http://gateway:8090/boot
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway /opt/app/libexec/boot | grep 'APIcast/'
+	$(DOCKER_COMPOSE) run --rm -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway libexec/boot | grep 'APIcast/'
+	@echo -e $(SEPARATOR)
+	$(DOCKER_COMPOSE) run --rm gateway bin/apicast -c http://echo-api.3scale.net -d -b
 
 gateway-logs: export IMAGE_NAME = does-not-matter
 gateway-logs:

@@ -11,9 +11,57 @@ describe('Configuration Store', function()
 
       assert.equal(service, store:find_by_id('42'))
     end)
+
+    it('sets the configured flag to true', function()
+      local store = configuration.new()
+
+      store:store({ services = { id = '42', hosts = { 'example.com' } } })
+      assert.truthy(store.configured)
+    end)
+
+    describe('when path routing is enabled', function()
+      local path_routing_enabled = configuration.path_routing
+
+      setup(function() -- Wouldn't be needed if we injected path_routing_enabled
+        configuration.path_routing = true;
+      end)
+
+      teardown(function()
+        configuration.path_routing = path_routing_enabled
+      end)
+
+      it('defines several services for the same host', function()
+        local store = configuration.new()
+        local service1 = { id = '21', hosts = { 'example.com' } }
+        local service2 = { id = '22', hosts = { 'example.com' } }
+
+        store:store({ services = { service1, service2 } })
+
+        assert.same({ service1, service2 }, store:find_by_host('example.com'))
+      end)
+    end)
+
+    describe('when path routing is disabled', function()
+      it('ignores defining a host for a service if already defined for another', function()
+        local store = configuration.new()
+        local service1 = { id = '21', hosts = { 'example.com' } }
+        local service2 = { id = '22', hosts = { 'example.com' } }
+
+        store:store({ services = { service1, service2 } })
+
+        assert.same({ service1 }, store:find_by_host('example.com'))
+      end)
+    end)
   end)
 
   describe('.find_by_id', function()
+    it('returns an error when not initialized', function()
+      local res, err = configuration:find_by_id()
+
+      assert.falsy(res)
+      assert.equal('not initialized', err)
+    end)
+
     it('finds service by id', function()
       local store = configuration.new()
       local service = { id = '42' }
@@ -22,7 +70,8 @@ describe('Configuration Store', function()
 
       assert.same(service, store:find_by_id('42'))
     end)
-    it('it does not seach by host', function()
+
+    it('does not seach by host', function()
       local store = configuration.new()
       local service = { id = '42', hosts = { 'example.com' } }
 
@@ -42,9 +91,22 @@ describe('Configuration Store', function()
       store:add(second)
       assert.equal(second, store:find_by_id('42'))
     end)
+
+    it('returns nil when the service does not exist', function()
+      local store = configuration.new()
+
+      assert.is_nil(store:find_by_id('42'))
+    end)
   end)
 
   describe('.find_by_host', function()
+    it('returns an error when not initialized', function()
+      local res, err = configuration:find_by_host()
+
+      assert.falsy(res)
+      assert.equal('not initialized', err)
+    end)
+
     it('returns stored services by host', function()
       local store = configuration.new()
       local service =  { id = '42', hosts = { 'example.com' } }
@@ -88,8 +150,7 @@ describe('Configuration Store', function()
       assert.same({ service }, store:find_by_host('example.com'))
     end)
 
-
-    it('not returns stale records when disabled', function()
+    it('does not return stale records when disabled', function()
       local store = configuration.new()
       local service =  { id = '21', hosts = { 'example.com', 'localhost' } }
 
@@ -109,45 +170,106 @@ describe('Configuration Store', function()
   end)
 
   describe('.reset', function()
-    local store
+    describe('when not initialized', function()
+      it('returns an error', function()
+        local res, err = configuration:reset()
 
-    before_each(function()
-      store = configuration.new()
+        assert.falsy(res)
+        assert.equal('not initialized', err)
+      end)
     end)
 
-    it('deletes stored hosts', function()
-      store.cache['example.com'] = { { '42'} }
+    describe('when configured', function()
+      local store
 
-      store:reset()
+      before_each(function()
+        store = configuration.new()
+      end)
 
-      assert.equal(0, #store.cache)
-    end)
+      it('deletes stored hosts', function()
+        store.cache['example.com'] = { { '42'} }
 
-    it('deletes all services', function()
-      store.services['42'] = {}
+        store:reset()
 
-      store:reset()
+        assert.same({}, store.cache.hasht)
+      end)
 
-      assert.equal(0, #store.services)
-    end)
+      it('deletes all services', function()
+        store.services['42'] = {}
 
-    it('sets configured flag', function()
-      store.configured = true
+        store:reset()
 
-      store:reset()
+        assert.same({}, store.services.hasht)
+      end)
 
-      assert.falsy(store.configured)
+      it('sets configured flag', function()
+        store.configured = true
+
+        store:reset()
+
+        assert.falsy(store.configured)
+      end)
+
+      it('resets de size of the services cache', function()
+        local service1 = { id = '42', hosts = { 'example1.com' } }
+        local service2 = { id = '43', hosts = { 'example2.com' } }
+
+        store:reset(1)
+
+        -- Add 2, as size is 1 only the second will be kept.
+        store:add(service1)
+        store:add(service2)
+
+        assert.is_nil(store:find_by_id('42'))
+        assert.equal(service2, store:find_by_id('43'))
+      end)
+
+      it('resets de size of the hosts cache', function()
+        local service1 = { id = '42', hosts = { 'example1.com' } }
+        local service2 = { id = '43', hosts = { 'example2.com' } }
+
+        store:reset(1)
+
+        -- Add 2, as size is 1 only the second will be kept.
+        store:add(service1)
+        store:add(service2)
+
+        assert.same({}, store:find_by_host('example1.com'), false)
+        assert.same({ service2 }, store:find_by_host('example2.com'), false)
+      end)
     end)
   end)
 
   describe('.all', function()
+    it('returns an error when not initialized', function()
+      local res, err = configuration:all()
+
+      assert.falsy(res)
+      assert.equal('not initialized', err)
+    end)
+
     it('returns all services', function()
       local store = configuration.new()
 
-      local service = { id = '42' }
-      store:add(service)
+      local service1 = { id = '42' }
+      local service2 = { id = '43' }
+      store:add(service1)
+      store:add(service2)
 
-      assert.same({ service }, store:all())
+      assert.same({ service1, service2 }, store:all())
+    end)
+  end)
+
+  describe('.add', function()
+    it('overrides previous services of the host', function()
+      local store = configuration.new()
+      local service1 = { id = '21', hosts = { 'example.com' } }
+      local service2 = { id = '22', hosts = { 'example.com' } }
+
+      store:add(service1)
+      store:add(service2)
+
+      assert.same({ service2 }, store:find_by_host('example.com'))
     end)
   end)
 end)

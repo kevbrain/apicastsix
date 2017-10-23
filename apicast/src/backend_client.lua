@@ -71,6 +71,18 @@ function _M:new(service, http_client)
   }, mt)
 end
 
+local function build_args(args)
+  local query = {}
+
+  for i=1, #args do
+    local arg = ngx.encode_args(args[i])
+    if len(arg) > 0 then
+      insert(query, arg)
+    end
+  end
+
+  return concat(query, '&')
+end
 
 local function build_url(self, path, ...)
   local endpoint = self.endpoint
@@ -80,16 +92,7 @@ local function build_url(self, path, ...)
   end
 
   local args = { self.authentication, ... }
-
-  local query = {}
-  for i=1, #args do
-    local arg = ngx.encode_args(args[i])
-    if len(arg) > 0 then
-      insert(query, arg)
-    end
-  end
-
-  return resty_url.join(endpoint, '', path .. '?' .. concat(query, '&'))
+  return resty_url.join(endpoint, '', path .. '?' .. build_args(args))
 end
 
 local function call_backend_transaction(self, path, options, ...)
@@ -107,6 +110,20 @@ local function call_backend_transaction(self, path, options, ...)
   return res
 end
 
+local function authrep_path(using_oauth)
+  return (using_oauth and '/transactions/oauth_authrep.xml') or
+         '/transactions/authrep.xml'
+end
+
+local function auth_path(using_oauth)
+  return (using_oauth and '/transactions/oauth_authorize.xml') or
+         '/transactions/authorize.xml'
+end
+
+local function create_token_path(service_id)
+  return format('/services/%s/oauth_access_tokens.xml', service_id)
+end
+
 local authorize_options = {
   headers = {
     ['3scale-options'] =  'rejection_reason_header=1'
@@ -121,7 +138,7 @@ function _M:authrep(...)
     return nil, 'not initialized'
   end
 
-  local auth_uri = self.version == 'oauth' and '/transactions/oauth_authrep.xml' or '/transactions/authrep.xml'
+  local auth_uri = authrep_path(self.version == 'oauth')
   return call_backend_transaction(self, auth_uri, authorize_options, ...)
 end
 
@@ -133,7 +150,7 @@ function _M:authorize(...)
     return nil, 'not initialized'
   end
 
-  local auth_uri = self.version == 'oauth' and '/transactions/oauth_authorize.xml' or '/transactions/authorize.xml'
+  local auth_uri = auth_path(self.version == 'oauth')
   return call_backend_transaction(self, auth_uri, authorize_options, ...)
 end
 
@@ -148,7 +165,7 @@ function _M:store_oauth_token(token_info)
     return nil, 'not initialized'
   end
 
-  local url = build_url(self, format('/services/%s/oauth_access_tokens.xml', self.service_id))
+  local url = build_url(self, create_token_path(self.service_id))
   return http_client.post(url, token_info)
 end
 

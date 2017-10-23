@@ -191,8 +191,6 @@ function _M:authorize(service, usage, credentials, ttl)
 
   output_debug_headers(service, encoded_usage, encoded_credentials)
 
-  local internal_location = (self.oauth and '/threescale_oauth_authrep') or '/threescale_authrep'
-
   -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. encoded_usage
   local cache = self.cache
@@ -362,10 +360,6 @@ local function response_codes_data()
   end
 
   return params
-end
-
-local function response_codes_encoded_data()
-  return ngx.escape_uri(ngx.encode_args(response_codes_data()))
 end
 
 local function post_action(_, self, cached_key, backend, ...)

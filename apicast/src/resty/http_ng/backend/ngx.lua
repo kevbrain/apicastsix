@@ -40,7 +40,7 @@ local balancer = require('balancer')
 local resty_resolver = require('resty.resolver')
 local resty_url = require('resty.url')
 
-function backend:balancer()
+function backend.balancer()
   return balancer:call()
 end
 
@@ -50,7 +50,7 @@ local function split_path(path)
   if res then return res else return nil, err end
 end
 
-function backend:resolver()
+function backend.resolver()
   local uri = assert(resty_url.parse(ngx.ctx.url))
 
   ngx.ctx.http_client = resty_resolver:instance():get_servers(uri.host,

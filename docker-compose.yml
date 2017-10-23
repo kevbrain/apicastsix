@@ -13,7 +13,7 @@ services:
       - "8080:8080"
       - "8090:8090"
     volumes:
-      - .:/opt/app
+      - .:/opt/app-root/src
     env_file: .env
     environment:
       TEST_NGINX_BINARY: openresty
@@ -36,9 +36,8 @@ services:
     entrypoint: "bash -ec"
     environment:
       TEST_NGINX_BINARY: openresty
-      TEST_NGINX_APICAST_PATH: /opt/app
       TEST_NGINX_REDIS_HOST: redis
-    command: "'$$TEST_NGINX_BINARY -V; prove; exit $$?'"
+    command: "'$$TEST_NGINX_BINARY -V; cd ; prove; exit $$?'"
     dns_search:
       - example.com
     depends_on:

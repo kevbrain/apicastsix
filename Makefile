@@ -36,14 +36,14 @@ test: ## Run all tests
 apicast-source: export IMAGE_NAME ?= apicast-test
 apicast-source: ## Create Docker Volume container with APIcast source code
 	- docker rm -v -f $(COMPOSE_PROJECT_NAME)-source
-	docker create --rm -v /opt/app --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
-	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app
+	docker create --rm -v /opt/app-root/src --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
+	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app-root/src
 
 danger: apicast-source
 danger: TEMPFILE := $(shell mktemp)
 danger:
 	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
-	docker run --rm  -w /opt/app/ --volumes-from=$(COMPOSE_PROJECT_NAME)-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
+	docker run --rm  -w /opt/app-root/src --volumes-from=$(COMPOSE_PROJECT_NAME)-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
 busted: dependencies $(ROVER) ## Test Lua.
 	@$(ROVER) exec bin/busted

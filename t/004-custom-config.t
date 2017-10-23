@@ -1,13 +1,15 @@
 use lib 't';
 use TestAPIcast 'no_plan';
 
+$ENV{APICAST_CUSTOM_CONFIG} = "$Test::Nginx::Util::HtmlDir/custom.lua";
+
+env_to_nginx('APICAST_CUSTOM_CONFIG');
+
 run_tests();
 
 __DATA__
 
 === TEST 1: loading custom config file works
---- main_config
-  env APICAST_CUSTOM_CONFIG=html/custom.lua;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 --- config

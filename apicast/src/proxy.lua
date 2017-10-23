@@ -480,8 +480,18 @@ end
 if custom_config then
   local path = package.path
   local module = gsub(custom_config, '%.lua$', '') -- strip .lua from end of the file
-  package.path = package.path .. ';' .. ngx.config.prefix() .. '?.lua;'
+  package.path = package.path .. ';' .. './?.lua;'
   local ok, c = pcall(function() return require(module) end)
+
+  if not ok then
+    local chunk, _ = loadfile(custom_config)
+
+    if chunk then
+      ok = true
+      c =  chunk()
+    end
+  end
+
   package.path = path
 
   if ok then

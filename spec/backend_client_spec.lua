@@ -170,4 +170,36 @@ describe('backend client', function()
       assert.equal(200, res.status)
     end)
   end)
+
+  describe('store_oauth_token', function()
+    it('makes the right call to backend', function()
+      local service_id = '42'
+      local service = configuration.parse_service({
+        id = service_id,
+        backend_version = 'oauth',
+        proxy = {
+          backend = { endpoint = 'http://example.com' },
+        },
+        backend_authentication_type = 'service_token',
+        backend_authentication_value = '123'
+      })
+
+      test_backend.expect{
+        -- Notice that the service_id appears twice, but it's not a problem.
+        url = 'http://example.com/services/42/'..
+              'oauth_access_tokens.xml?service_token=123&service_id=42',
+        body = 'user_id=a_user_id&ttl=3600&token=my_token&app_id=an_app_id',
+      }.respond_with{ status = 200 }
+
+      local backend_client = assert(_M:new(service, test_backend))
+      local res = backend_client:store_oauth_token({
+        token = 'my_token',
+        ttl = 3600,
+        app_id = 'an_app_id',
+        user_id = 'a_user_id'
+      })
+
+      assert.equal(200, res.status)
+    end)
+  end)
 end)

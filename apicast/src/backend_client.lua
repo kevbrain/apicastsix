@@ -137,7 +137,11 @@ function _M:authorize(...)
   return call_backend_transaction(self, auth_uri, authorize_options, ...)
 end
 
-function _M:store_oauth_token(token)
+--- Calls backend to create an oauth token.
+-- @tparam ?{table, ...} list of query params (might include the token, ttl,
+--   app_id, and user_id)
+-- @treturn http_ng.response http response
+function _M:store_oauth_token(token_info)
   local http_client = self.http_client
 
   if not http_client then
@@ -145,7 +149,7 @@ function _M:store_oauth_token(token)
   end
 
   local url = build_url(self, format('/services/%s/oauth_access_tokens.xml', self.service_id))
-  return http_client.post(url, token)
+  return http_client.post(url, token_info)
 end
 
 return _M

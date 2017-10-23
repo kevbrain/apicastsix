@@ -2,7 +2,9 @@
 
 ssl=$(mktemp -q)
 
+certificate=${SSL_CERT_FILE:-"$(pwd)/conf/ca-bundle.crt"}
+
 echo "lua_ssl_verify_depth 5;" >> "${ssl}"
-echo "lua_ssl_trusted_certificate \"$(pwd)/conf/ca-bundle.crt\";" >> "${ssl}"
+echo "lua_ssl_trusted_certificate \"${certificate}\";" >> "${ssl}"
 
 exec resty --http-include "${ssl}" "libexec/$(basename "$0").lua" "$@"

@@ -130,7 +130,7 @@ rover: $(ROVER)
 	@echo $(ROVER)
 
 dependencies: $(ROVER)
-	$(ROVER) install
+	$(ROVER) install --roverfile=apicast/Roverfile
 
 lua_modules/bin/rover:
 	@luarocks install --server=http://luarocks.org/dev lua-rover --tree lua_modules 1>&2

@@ -1,0 +1,15 @@
+luarocks {
+
+    rockspec 'apicast-0.1-0.rockspec',
+
+    group 'testing' {
+        module { 'busted' },
+    },
+
+    group 'development' {
+        module {'ldoc'},
+        module {'lua-resty-repl'},
+        module {'lua-resty-iputils', '0.3.0'},
+    }
+}
+

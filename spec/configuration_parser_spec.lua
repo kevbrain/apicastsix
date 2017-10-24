@@ -18,20 +18,4 @@ describe('Configuration Parser', function()
       assert.same(nil, _M.decode(''))
     end)
   end)
-
-  describe('.encode', function()
-    it('encodes to json by default', function()
-      local t = { a = 1, b = 2 }
-      assert.same('{"a":1,"b":2}', _M.encode(t))
-    end)
-
-    it('does not do double encoding', function()
-      local str = '{"a":1,"b":2}'
-      assert.same(str, _M.encode(str))
-    end)
-
-    it('encodes nil to null', function()
-      assert.same('null', _M.encode(nil))
-    end)
-  end)
 end)

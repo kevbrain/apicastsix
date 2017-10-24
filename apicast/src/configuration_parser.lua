@@ -30,15 +30,6 @@ function _M.decode(contents, encoder)
   return ret
 end
 
-
-function _M.encode(contents, encoder)
-  if type(contents) == 'string' then return contents end
-
-  encoder = encoder or cjson
-
-  return encoder.encode(contents)
-end
-
 function _M.parse(contents, encoder)
   local config, err = _M.decode(contents, encoder)
 

@@ -43,6 +43,7 @@ danger: apicast-source
 danger: TEMPFILE := $(shell mktemp)
 danger:
 	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
+	docker pull $(DANGER_IMAGE)
 	docker run --rm  -w /opt/app-root/src --volumes-from=$(COMPOSE_PROJECT_NAME)-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
 busted: dependencies $(ROVER) ## Test Lua.

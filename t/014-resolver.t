@@ -4,6 +4,8 @@ use TestAPIcast 'no_plan';
 $ENV{TEST_NGINX_HTTP_CONFIG} = "$TestAPIcast::path/http.d/*.conf";
 $ENV{RESOLVER} = '127.0.1.1:5353';
 
+$ENV{TEST_NGINX_RESOLV_CONF} = "$Test::Nginx::Util::HtmlDir/resolv.conf";
+
 env_to_nginx(
     'RESOLVER'
 );
@@ -18,7 +20,7 @@ both RESOLVER env variable and resolvers in resolv.conf should be used
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('resty.resolver').init(ngx.config.prefix() .. 'html/resolv.conf')
+    require('resty.resolver').init('$TEST_NGINX_RESOLV_CONF')
   }
 --- config
   location = /t {

@@ -43,8 +43,6 @@ done
 log="log_level_${log_level}"
 log_level="${!log}"
 
-mkdir -p "${apicast_dir}/logs"
-
 daemon=off
 worker_processes=${APICAST_WORKERS:-1}
 
@@ -125,5 +123,8 @@ main+=$(printenv | awk '$1 ~ /^(APICAST|THREESCALE)_/ {split($0,env,"="); print 
 function join_by { local IFS="$1"; shift; echo "$*"; }
 args=$(join_by '' "${args[@]}")
 main=$(join_by '' "${main[@]}")
+
+cd "${apicast_dir}"
+
 # shellcheck disable=SC2086
-exec "${openresty_binary}" -p "${apicast_dir}" -c conf/nginx.conf ${args} -g "${main} error_log ${log_file} ${log_levels[log_level]};"
+exec "${openresty_binary}" -c "${apicast_dir}/conf/nginx.conf"  ${args} -g "${main} error_log ${log_file} ${log_levels[log_level]};"

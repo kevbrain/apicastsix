@@ -7,7 +7,7 @@ jobs:
     environment:
       S2I_VERSION: "1.1.7-226afa1"
       DOCKER_COMPOSE_VERSION: "1.16.1"
-      OPENRESTY_VERSION: "1.11.2.5-1"
+      OPENRESTY_VERSION: "1.11.2.5-1-rover"
     steps:
       - run: apk update && apk add wget make bash curl py-pip git openssh-client
       - run: |
@@ -37,7 +37,7 @@ jobs:
       - run: make prove-docker
   build:
     docker:
-      - image: quay.io/3scale/s2i-openresty-centos7:1.11.2.5-2
+      - image: quay.io/3scale/s2i-openresty-centos7:1.11.2.5-1-rover
         environment:
           TEST_NGINX_BINARY: openresty
           LUA_BIN_PATH: /opt/app-root/bin
@@ -48,12 +48,12 @@ jobs:
       - run: rm -rf lua_modules
       - restore_cache:
           keys:
-            - apicast-rocks-{{ arch }}-{{ checksum "Roverfile.lock" }}
+            - apicast-rocks-{{ arch }}-{{ checksum "apicast/Roverfile.lock" }}
             - apicast-rocks-{{ arch }}-{{ .Branch }}
             - apicast-rocks-{{ arch }}-master
       - run: make dependencies
       - save_cache:
-          key: apicast-rocks-{{ arch }}-{{ checksum "Roverfile.lock" }}
+          key: apicast-rocks-{{ arch }}-{{ checksum "apicast/Roverfile.lock" }}
           paths:
             - lua_modules
       - run: mkdir -p tmp/junit

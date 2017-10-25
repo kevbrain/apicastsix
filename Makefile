@@ -28,8 +28,6 @@ endif
 
 export COMPOSE_PROJECT_NAME
 
-DANGER_IMAGE ?= quay.io/3scale/danger
-
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
 
@@ -39,12 +37,6 @@ apicast-source: ## Create Docker Volume container with APIcast source code
 	docker create --rm -v /opt/app-root/src --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
 	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app-root/src
 
-danger: apicast-source
-danger: TEMPFILE := $(shell mktemp)
-danger:
-	env | grep -E 'CIRCLE|TRAVIS|DANGER|SEAL' > $(TEMPFILE)
-	docker pull $(DANGER_IMAGE)
-	docker run --rm  -w /opt/app-root/src --volumes-from=$(COMPOSE_PROJECT_NAME)-source --env-file=$(TEMPFILE) -u $(shell id -u) $(DANGER_IMAGE) danger
 
 busted: dependencies $(ROVER) ## Test Lua.
 	@$(ROVER) exec bin/busted

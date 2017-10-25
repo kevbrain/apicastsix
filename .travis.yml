@@ -33,5 +33,5 @@ before_install:
 - travis/install-s2i.sh
 - export PATH="${PATH}:${HOME}/openresty/bin:${HOME}/openresty/luajit/bin:${HOME}/openresty/nginx/sbin:${HOME}/bin:${HOME}/.luarocks/bin"
 script:
-- make builder-image danger
+- make builder-image
 - make test-doc

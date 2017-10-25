@@ -1,0 +1,11 @@
+#!/usr/bin/env resty
+
+local ok, setup = pcall(require, 'rover.setup')
+
+if ok then
+    setup()
+else
+    package.path = './src/?.lua;' .. package.path
+end
+
+require('apicast.cli')(arg)

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `/status/info` endpoint to the Management API [PR #290](https://github.com/3scale/apicast/pull/290)
 - `/_threescale/healthz` endpoint returns a success status code, this is used for health checking in kubernetes environments [PR #285](https://github.com/3scale/apicast/pull/285)
 - Usage limit errors are now configurable to distinguish them from other authorization errors [PR #453](https://github.com/3scale/apicast/pull/453).
+- Templating nginx configuration with liquid. [PR #449](https://github.com/3scale/apicast/pull/449)
 
 ## Changed
 
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Make OAuth tokens TTL configurable [PR #448](https://github.com/3scale/apicast/pull/448)
 - Detect when being executed in Test::Nginx and use default backend accordingly [PR #458](https://github.com/3scale/apicast/pull/458)
 - Update the s2i-openresty image to have the same path (`/opt/app-root/src`) in all images [PR #460](https://github.com/3scale/apicast/pull/460)
+- Launcher scripts are now Perl + Lua instead of Shell [PR #449](https://github.com/3scale/apicast/pull/449)
 
 ### Fixed
 

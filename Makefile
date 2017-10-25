@@ -83,9 +83,9 @@ test-builder-image: export IMAGE_NAME = apicast-test
 test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -c /opt/app-root/src/conf/nginx.conf -g 'error_log stderr info; pid /tmp/nginx.pid;' -t
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --test
 	@echo -e $(SEPARATOR)
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway openresty -c /opt/app-root/src/conf/nginx.conf -g 'error_log stderr info; pid /tmp/nginx.pid;'
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --daemon
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test bash -c 'for i in {1..5}; do curl --fail http://gateway:8090/status/live && break || sleep 1; done'
 	$(DOCKER_COMPOSE) logs gateway

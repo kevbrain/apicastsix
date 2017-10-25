@@ -1,130 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env perl
+use strict;
+use warnings FATAL => 'all';
 
-set -euo pipefail
-IFS=$'\n\t'
+use File::Basename;
+use Cwd qw(abs_path);
 
-script=${BASH_SOURCE[0]}
-if (readlink -f "${script}" > /dev/null 2>&1); then
-  path=$(readlink -f "${script}")
-elif (readlink "${script}" > /dev/null 2>&1); then
-  path="$(dirname "${script}")/$(readlink "${script}")"
-else
-  path="${script}"
-fi
+my $apicast = $ENV{APICAST_DIR} || abs_path(dirname(abs_path(__FILE__)) . '/..');
+my $bindir = $apicast . '/bin';
+my $lua_path = $ENV{LUA_PATH} || ';';
 
-bin_dir=$(dirname "${path}")
-apicast_dir=${APICAST_DIR:-"$( cd "${bin_dir}/.." && pwd )"}
+chdir $apicast;
 
-pick_openresty() {
-  for cmd in "$@"
-  do
-    if (${cmd} -V > /dev/null 2>&1); then
-      echo "${cmd}"
-      exit 0
-    fi
-  done
+$ENV{LUA_PATH} = "$apicast/src/?.lua;${lua_path}";
 
-  (>&2 echo "ERROR: Could not find openresty executable in your PATH.")
-  (>&2 echo "Make sure you have one of: $(printf "%s " "$@")")
-  exit 1
-}
-
-openresty_binary=${APICAST_OPENRESTY_BINARY:-$(pick_openresty openresty-debug openresty nginx)}
-log_level=${APICAST_LOG_LEVEL:-warn}
-log_file=${APICAST_LOG_FILE:-stderr}
-log_levels=(emerg alert crit error warn notice info debug)
-((max_log_level=${#log_levels[@]}-1))
-
-for ((i=0; i < ${#log_levels[@]}; i++)); do
-	ll=${log_levels[i]}
-	declare -r "log_level_${ll}=$i"
-done
-
-log="log_level_${log_level}"
-log_level="${!log}"
-
-daemon=off
-worker_processes=${APICAST_WORKERS:-1}
-
-usage () {
-	cat <<-USAGE
-	Usage $0
-	  -h Show this help
-	  -c <file> Path to custom config file (JSON).
-	  -d Daemonize
-	  -v Increase verbosity (can be repeated)
-	  -i Cache configuration for N seconds. Using 0 will reload on every request (not for production).
-	  -w <workers> Number of worker processes to start.
-	  -m <on|off> Whether to start worker processes. Only for development.
-	  -s <signal> Send signal to a master process: stop, quit, reopen, reload
-	  -p <pid> Path to the PID file.
-	  -b Load configuration on boot.
-	  -e Deployment environment. Can be staging or production.
-USAGE
-}
-
-main=("")
-args=("")
-
-while getopts ":dc:hvbqi:rw:m:s:p:e:" opt; do
-  case "${opt}" in
-    d)
-      daemon="on"
-      ;;
-    c)
-      export APICAST_CONFIGURATION="$OPTARG"
-      ;;
-    b)
-      export APICAST_CONFIGURATION_LOADER="boot"
-      ;;
-    v)
-	    log_level=$((log_level == max_log_level ? max_log_level : log_level+1))
-      ;;
-    q)
-	    log_level=$((log_level == 0 ? 0 : log_level-1))
-      ;;
-    i)
-      export APICAST_CONFIGURATION_CACHE="${OPTARG}"
-      ;;
-    e)
-      export THREESCALE_DEPLOYMENT_ENV="${OPTARG}"
-    ;;
-    w)
-      worker_processes=${OPTARG}
-    ;;
-    m)
-      main+=("master_process ${OPTARG};")
-    ;;
-    p)
-      main+=("pid ${PWD}/${OPTARG};")
-    ;;
-    s)
-      args+=("-s" "${OPTARG}")
-    ;;
-    h)
-      usage
-      exit 0
-      ;;
-    \?)
-      echo "Invalid option: -${OPTARG}" >&2
-      echo
-      usage
-      exit 1
-      ;;
-  esac
-done
-
-export THREESCALE_DEPLOYMENT_ENV=${THREESCALE_DEPLOYMENT_ENV-production}
-
-main+=("daemon ${daemon};")
-main+=("worker_processes ${worker_processes};")
-main+=$(printenv | awk '$1 ~ /^(APICAST|THREESCALE)_/ {split($0,env,"="); print "env", env[1] ";"}')
-
-function join_by { local IFS="$1"; shift; echo "$*"; }
-args=$(join_by '' "${args[@]}")
-main=$(join_by '' "${main[@]}")
-
-cd "${apicast_dir}"
-
-# shellcheck disable=SC2086
-exec "${openresty_binary}" -c "${apicast_dir}/conf/nginx.conf"  ${args} -g "${main} error_log ${log_file} ${log_levels[log_level]};"
+exec '/usr/bin/env', 'resty',
+    "$bindir/cli", @ARGV;

@@ -1,0 +1,93 @@
+env REDIS_HOST;
+env REDIS_PORT;
+env REDIS_URL;
+env RESOLVER;
+env BACKEND_ENDPOINT_OVERRIDE;
+env OPENSSL_VERIFY;
+
+{% for env in env -%}
+  {%- if env.name | starts_with: 'APICAST_', 'THREESCALE_' %}
+    env {{ env.name }};
+  {%- endif -%}
+{%- endfor %}
+
+daemon {{ daemon | default: 'off' }};
+master_process {{ master_process | default: 'on' }};
+worker_processes {{ worker_processes | default: 'auto' }};
+
+{% for file in "main.d/*.conf" | filesystem %}
+  {% include file %}
+{% endfor %}
+
+error_log /dev/null emerg;
+
+events {
+  worker_connections  16192;
+  multi_accept        on;
+}
+
+http {
+  sendfile           on;
+  tcp_nopush         on;
+  tcp_nodelay        on;
+
+  # Enabling the Lua code cache is strongly encouraged for production use
+  # Disabling it should only be done for testing and development purposes
+  lua_code_cache {{  lua_code_cache | default: 'on' }};
+  lua_max_running_timers {{ lua_running_timers | default: 2048 }};
+  lua_socket_pool_size {{ lua_socket_pool_size | default: 512 }};
+  server_names_hash_bucket_size 128;
+
+  log_format time '[$time_local] $host:$server_port $remote_addr:$remote_port "$request" $status $body_bytes_sent ($request_time) $post_action_impact';
+  access_log off;
+
+  lua_package_path ";;{{prefix}}/?.lua;{{prefix}}/src/?.lua";
+
+  {% for file in "http.d/*.conf" | filesystem %}
+    {% include file %}
+  {% endfor %}
+
+  server {
+    listen 8090;
+
+    server_name _;
+
+    {% include "conf.d/management.conf" %}
+  }
+
+  server {
+    listen 8081;
+
+    server_name backend;
+
+    {% include "conf.d/backend.conf" %}
+  }
+
+  server {
+    listen 8081 default_server;
+
+    server_name echo _;
+
+    {% include "conf.d/echo.conf" %}
+  }
+
+  server {
+    access_log /dev/stdout time;
+
+    listen 8080;
+
+    server_name _;
+    underscores_in_headers on;
+
+    {% include "http.d/ssl.conf" %}
+
+    {% for file in "apicast.d/*.conf" | filesystem %}
+      {% include file %}
+    {% endfor %}
+    {% include "conf.d/apicast.conf" %}
+  }
+
+  {% for file in "sites.d/*.conf" | filesystem %}
+    {% include file %}
+  {% endfor %}
+}

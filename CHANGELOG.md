@@ -227,3 +227,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.1.0-beta2]: https://github.com/3scale/apicast/compare/v3.1.0-beta1...v3.1.0-beta2
 [3.1.0-rc1]: https://github.com/3scale/apicast/compare/v3.1.0-beta2...v3.1.0-rc1
 [3.1.0-rc2]: https://github.com/3scale/apicast/compare/v3.1.0-rc1...v3.1.0-rc2
+[3.1.0]: https://github.com/3scale/apicast/compare/v3.1.0-rc2...v3.1.0

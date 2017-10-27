@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.1.0] - 2017-10-27
+- 3.1.0-rc2 was considered final and became 3.1.0.
+
 ## [3.1.0-rc2] - 2017-09-29
 
 ### Fixed

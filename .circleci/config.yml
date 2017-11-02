@@ -81,6 +81,13 @@ jobs:
             make runtime-image push IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}";
             make builder-image push IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder";
 
+  benchmark:
+    machine: true
+    steps:
+      - checkout
+      - run: IMAGE_TAG=${CIRCLE_TAG:-${CIRCLE_BRANCH}} docker-compose -f docker-compose.benchmark.yml run wrk
+      - run: IMAGE_TAG=${CIRCLE_TAG:-${CIRCLE_BRANCH}} DURATION=300 docker-compose -f docker-compose.benchmark.yml run wrk
+
 workflows:
   version: 2
   build:
@@ -102,3 +109,6 @@ workflows:
           filters:
             tags:
               only: /^v\d+\..+/
+      - benchmark:
+          requires:
+            - deploy

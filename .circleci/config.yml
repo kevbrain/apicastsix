@@ -85,8 +85,11 @@ jobs:
     machine: true
     steps:
       - checkout
-      - run: IMAGE_TAG=${CIRCLE_TAG:-${CIRCLE_BRANCH}} docker-compose -f docker-compose.benchmark.yml run wrk
-      - run: IMAGE_TAG=${CIRCLE_TAG:-${CIRCLE_BRANCH}} DURATION=300 docker-compose -f docker-compose.benchmark.yml run wrk
+      - run: IMAGE_TAG=${CIRCLE_TAG:-${CIRCLE_BRANCH}} make benchmark
+      - run: IMAGE_TAG=master make benchmark
+      - store_artifacts:
+          path: tmp/benchmark
+          destination: benchmark
 
 workflows:
   version: 2

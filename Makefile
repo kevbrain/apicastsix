@@ -144,6 +144,18 @@ node_modules/.bin/markdown-link-check:
 test-doc: node_modules/.bin/markdown-link-check
 	@find . \( -name node_modules -o -name .git -o -name t \) -prune -o -name "*.md" -print0 | xargs -0 -n1  -I % sh -c 'echo; echo ====================; echo Checking: %; node_modules/.bin/markdown-link-check  %' \;
 
+benchmark: export IMAGE_TAG ?= master
+benchmark: export COMPOSE_FILE ?= docker-compose.benchmark.yml
+benchmark: export COMPOSE_PROJECT_NAME = apicast-benchmark
+benchmark: export WRK_REPORT ?= $(IMAGE_TAG).csv
+benchmark: export DURATION ?= 300
+benchmark:
+	## warmup round for $(DURATION)/10 seconds
+	DURATION=$$(( $(DURATION) / 10 )) $(DOCKER_COMPOSE) run wrk
+	## run the real benchmark for $(DURATION) seconds
+	$(DOCKER_COMPOSE) run wrk
+	- $(DOCKER_COMPOSE) down --volumes
+
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

@@ -7,8 +7,13 @@ services:
      - ${CIRCLE_WORKING_DIRECTORY:-.}/examples/configuration/:/tmp/apicast/:ro
   wrk:
     image: skandyla/wrk
+    environment:
+      - WRK_REPORT=/tmp/wrk/${WRK_REPORT:-report.csv}
     depends_on:
     - apicast
     links:
     - apicast
-    command: "--threads ${THREADS:-10} --connections ${CONNECTIONS:-100} --duration ${DURATION:-60} -H 'Host: localhost' http://apicast:8080/echo?user_key=foo"
+    volumes:
+     - ${CIRCLE_WORKING_DIRECTORY:-.}/script/wrk-report.lua:/tmp/wrk/report.lua
+     - ${CIRCLE_WORKING_DIRECTORY:-.}/tmp/benchmark:/tmp/wrk/
+    command: "--script /tmp/wrk/report.lua --threads ${THREADS:-10} --connections ${CONNECTIONS:-100} --duration ${DURATION:-60} -H 'Host: localhost' http://apicast:8080/echo?user_key=foo"

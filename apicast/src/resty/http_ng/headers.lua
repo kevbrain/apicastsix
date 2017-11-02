@@ -8,6 +8,7 @@ local setmetatable = setmetatable
 local getmetatable = getmetatable
 local type = type
 local lower = string.lower
+local upper = string.upper
 local ngx_re = ngx.re
 
 local normalize_exceptions = {
@@ -26,7 +27,7 @@ local headers_mt = {
 }
 
 local regex_first_letter = [[^\w]]
-local upper_first_match = function(matches) return matches[0]:upper() end
+local upper_first_match = function(matches) return upper(matches[0]) end
 
 local capitalize = function(string)
   local str = ngx_re.sub(string, regex_first_letter, upper_first_match, 'jo')

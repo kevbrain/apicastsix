@@ -1,0 +1,14 @@
+version: '2.1'
+services:
+  apicast:
+    image: quay.io/3scale/apicast:${IMAGE_TAG:-master}
+    command: bin/apicast -c /tmp/apicast/echo.json -b
+    volumes:
+     - ${CIRCLE_WORKING_DIRECTORY:-.}/examples/configuration/:/tmp/apicast/:ro
+  wrk:
+    image: skandyla/wrk
+    depends_on:
+    - apicast
+    links:
+    - apicast
+    command: "--threads ${THREADS:-10} --connections ${CONNECTIONS:-100} --duration ${DURATION:-60} -H 'Host: localhost' http://apicast:8080/echo?user_key=foo"

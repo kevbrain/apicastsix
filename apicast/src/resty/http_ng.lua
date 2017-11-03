@@ -25,7 +25,6 @@ local resty_backend = require 'resty.http_ng.backend.resty'
 local json = require 'cjson'
 local request = require 'resty.http_ng.request'
 local resty_url = require 'resty.url'
-local http_headers = require 'resty.http_ng.headers'
 
 local DEFAULT_PATH = ''
 
@@ -59,7 +58,7 @@ local function get_request_params(method, client, url, options)
   local scheme, user, pass, host, port, path = unpack(assert(resty_url.split(url)))
   if port then host = concat({host, port}, ':') end
 
-  opts.headers = http_headers.new()
+  opts.headers = {}
   opts.headers.host = host
 
   if user or pass then

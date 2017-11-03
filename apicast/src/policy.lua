@@ -5,10 +5,15 @@ local policy_chain = require('policy_chain')
 
 local noop = function() end
 
-function _M.new(name)
+--- Initialize new policy
+-- Returns a new policy that you can extend however you want.
+-- @tparam string name Name of the new policy.
+-- @tparam string version Version of the new policy. Default value is 0.0
+-- @treturn policy New policy
+function _M.new(name, version)
     local policy = {
-        _NAME = name or 'policy',
-        _VERSION = '0.0',
+        _NAME = name,
+        _VERSION = version ,
     }
     local mt = { __index = policy }
 
@@ -20,7 +25,7 @@ function _M.new(name)
         policy[policy_chain.PHASES[i]] = noop
     end
 
-    return policy, mt
+    return policy
 end
 
 return _M

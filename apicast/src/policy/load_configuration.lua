@@ -1,14 +1,14 @@
-local setmetatable = setmetatable
-
-local _M, mt = require('policy').new()
+local _M = require('policy').new('Load Configuration')
 
 local configuration_loader = require('configuration_loader').new()
 local configuration_store = require('configuration_store')
 
-function _M.new()
-    return setmetatable({
-        configuration = configuration_store.new(),
-    }, mt)
+local new = _M.new
+
+function _M.new(...)
+    local policy = new(...)
+    policy.configuration = configuration_store.new()
+    return policy
 end
 
 function _M:export()

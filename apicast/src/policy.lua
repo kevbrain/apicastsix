@@ -1,6 +1,7 @@
 local _M = {}
 
 local setmetatable = setmetatable
+local ipairs = ipairs
 local policy_chain = require('policy_chain')
 
 local noop = function() end
@@ -21,11 +22,15 @@ function _M.new(name, version)
         return setmetatable({}, mt)
     end
 
-    for i=1,#(policy_chain.PHASES) do
-        policy[policy_chain.PHASES[i]] = noop
+    for _, phase in _M.phases() do
+        policy[phase] = noop
     end
 
     return policy
+end
+
+function _M.phases()
+    return ipairs(policy_chain.PHASES)
 end
 
 return _M

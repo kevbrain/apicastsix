@@ -17,8 +17,7 @@ for i=1, #(policy_chain.PHASES) do
 end
 
 function _M.new()
-    local local_chain = policy_chain.build()
-
+    local local_chain = policy_chain.load('policy.local_chain')
     local load_configuration = policy_chain.load('policy.load_configuration', local_chain)
 
     local global_chain = policy_chain.build({ load_configuration, local_chain })

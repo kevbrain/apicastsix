@@ -1,4 +1,3 @@
-local proxy = require('proxy')
 local balancer = require('balancer')
 local math = math
 local setmetatable = setmetatable
@@ -53,7 +52,7 @@ function _M:rewrite(context)
   -- that is useful when lua_code_cache is off
   -- because the module is reloaded and has to be configured again
 
-  local p = proxy.new(context.configuration)
+  local p = context.proxy
   p.set_upstream(p:set_service(context.host))
   ngx.ctx.proxy = p
 end

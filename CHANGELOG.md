@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Make OAuth tokens TTL configurable [PR #448](https://github.com/3scale/apicast/pull/448)
 - Detect when being executed in Test::Nginx and use default backend accordingly [PR #458](https://github.com/3scale/apicast/pull/458)
 - Update the s2i-openresty image to have the same path (`/opt/app-root/src`) in all images [PR #460](https://github.com/3scale/apicast/pull/460)
+- Unify how to connect to 3scale backend [PR #456](https://github.com/3scale/apicast/pull/456)
 
 ### Fixed
 

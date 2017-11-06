@@ -8,6 +8,10 @@ dependencies = {
   'lua-resty-jwt',
   'lua-resty-url',
   'lua-resty-env',
+  'lua-resty-execvp',
+  'liquid',
+  'argparse',
+  'penlight',
 }
 build = {
    type = "builtin",

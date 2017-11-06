@@ -35,8 +35,6 @@ env APICAST_BACKEND_CACHE_HANDLER=resilient;
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(502) }
   }
@@ -87,8 +85,6 @@ env APICAST_BACKEND_CACHE_HANDLER=strict;
   lua_shared_dict api_keys 10m;
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(502) }

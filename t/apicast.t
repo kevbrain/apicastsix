@@ -161,8 +161,6 @@ status code (403).
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-
   location /transactions/authrep.xml {
       deny all;
   }
@@ -202,8 +200,6 @@ The message is configurable and default status is 403.
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-
   location /transactions/authrep.xml {
       deny all;
   }
@@ -229,6 +225,8 @@ It asks backend and then forwards the request to the api.
         {
           id = 42,
           backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'token-value',
           proxy = {
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
@@ -241,10 +239,6 @@ It asks backend and then forwards the request to the api.
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-  set $backend_authentication_type 'service_token';
-  set $backend_authentication_value 'token-value';
 
   location /transactions/authrep.xml {
     content_by_lua_block {
@@ -299,8 +293,6 @@ When mapping rule has a parameter with fixed value it has to be matched.
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
   }
@@ -335,8 +327,6 @@ When mapping rule has a parameter with fixed value it has to be matched.
   lua_shared_dict api_keys 1m;
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /api/ {
     echo "api response";
@@ -380,8 +370,6 @@ When mapping rule has a parameter with variable value it has to exist.
   lua_shared_dict api_keys 1m;
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /api/ {
     echo "api response";
@@ -428,8 +416,6 @@ X-3scale-usage: usage%5Bbar%5D=3
 
   ssl_certificate ../html/server.crt;
   ssl_certificate_key ../html/server.key;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /api/ {
     echo "api response";
@@ -614,7 +600,6 @@ env RESOLVER=127.0.0.1:1953;
        end
      }
   }
-
 --- request
 GET /t?user_key=val
 --- response_body
@@ -662,11 +647,11 @@ status code (429).
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-
   location /transactions/authrep.xml {
     content_by_lua_block {
-      ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1' then
+        ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      end
       ngx.status = 409;
       ngx.exit(ngx.HTTP_OK);
     }
@@ -682,6 +667,8 @@ Content-Type: text/plain; charset=utf-8
 --- response_body chomp
 Limits exceeded
 --- error_code: 429
+--- no_error_log
+[error]
 
 === TEST 19: configurable limits exceeded error
 --- http_config
@@ -707,11 +694,11 @@ Limits exceeded
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-
   location /transactions/authrep.xml {
     content_by_lua_block {
-      ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1' then
+        ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      end
       ngx.status = 409;
       ngx.exit(ngx.HTTP_OK);
     }
@@ -725,3 +712,5 @@ GET /?user_key=value
 --- response_body chomp
 limits exceeded!
 --- error_code: 402
+--- no_error_log
+[error]

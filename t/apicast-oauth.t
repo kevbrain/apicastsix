@@ -13,6 +13,7 @@ __DATA__
 
 === TEST 1: calling /authorize redirects with error when credentials are missing
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
@@ -25,7 +26,6 @@ __DATA__
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
   location /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
@@ -49,12 +49,15 @@ called oauth_authorize.xml
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
   env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
-        { backend_version = 'oauth',
+        { id = 42, backend_version = 'oauth',
+          backend_authentication_type = 'provider_key',
+          backend_authentication_value = 'fookey',
           proxy = { oauth_login_url = "http://example.com/redirect" } }
       }
     })
@@ -62,16 +65,10 @@ called oauth_authorize.xml
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-  set $backend_host '127.0.0.1';
-  set $service_id 42;
-  set $backend_authentication_type 'provider_key';
-  set $backend_authentication_value 'fookey';
-
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
       local expected = "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri"
-      if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
+      if ngx.var.args == expected then
         ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized></status>')
         ngx.exit(200)
       else
@@ -91,6 +88,7 @@ Location: http://example.com/redirect\?response_type=code&client_id=id&state=[a-
 === TEST 3: calling /authorize works (Implicit)
 [Section 1.3.2 of RFC 6749](https://tools.ietf.org/html/rfc6749#section-1.3.2)
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
@@ -98,6 +96,8 @@ Location: http://example.com/redirect\?response_type=code&client_id=id&state=[a-
       services = {
         {
          id = 42, backend_version = 'oauth',
+         backend_authentication_type = 'provider_key',
+         backend_authentication_value = 'fookey',
          proxy = { oauth_login_url = "http://example.com/redirect" }
         }
       }
@@ -106,14 +106,9 @@ Location: http://example.com/redirect\?response_type=code&client_id=id&state=[a-
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-  set $backend_host '127.0.0.1';
-  set $backend_authentication_type 'provider_key';
-  set $backend_authentication_value 'fookey';
-
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
-      if ngx.var.args == "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri" and ngx.var.host == ngx.var.backend_host then
+      if ngx.var.args == "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri" then
         ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized></status>')
         ngx.exit(200)
       else
@@ -132,6 +127,7 @@ Location: http://example.com/redirect\?response_type=token&client_id=id&scope=wh
 
 === TEST 4: calling /oauth/token returns correct error message on missing parameters
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').mock({
@@ -142,7 +138,6 @@ Location: http://example.com/redirect\?response_type=token&client_id=id&scope=wh
   }
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
-set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
 location /backend/transactions/oauth_authorize.xml {
   content_by_lua_block {
@@ -162,6 +157,7 @@ called oauth_authorize.xml
 
 === TEST 5: calling /oauth/token returns correct error message on invalid parameters
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').mock({
@@ -172,7 +168,6 @@ called oauth_authorize.xml
   }
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
-set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
 location /backend/transactions/oauth_authorize.xml {
   content_by_lua_block {
@@ -190,7 +185,7 @@ POST /oauth/token?grant_type=authorization_code&client_id=client_id&redirect_uri
 --- error_log
 called oauth_authorize.xml
 
-=== TEST 6: calling /callback without params returns correct erro message
+=== TEST 6: calling /callback without params returns correct error message
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -302,18 +297,22 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
   env RESOLVER=$TEST_NGINX_RESOLVER;
   env APICAST_OAUTH_TOKENS_TTL=123;
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
-        { id = 42, backend_version = 'oauth' }
+        { id = 42, backend_version = 'oauth',
+         backend_authentication_type = 'provider_key',
+         backend_authentication_value = 'fookey'
+        }
       }
     })
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  lua_need_request_body on;
+
   location = /t {
     content_by_lua_block {
       local authorize = require('oauth.apicast_oauth.authorize')
@@ -331,20 +330,16 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
       assert(authorized_callback.persist_code(client_data, { state = 'somestate', user_id = 'someuser', redirect_uri = 'redirect_uri' }, code))
 
       ngx.req.set_method(ngx.HTTP_POST)
+      ngx.req.read_body()
       ngx.req.set_body_data('grant_type=authorization_code&client_id=client_id&redirect_uri=redirect_uri&client_secret=client_secret&code=' .. code)
       ngx.exec('/oauth/token')
     }
   }
 
-    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-    set $backend_host '127.0.0.1';
-    set $backend_authentication_type 'provider_key';
-    set $backend_authentication_value 'fookey';
-
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
-        expected = "provider_key=fookey&service_id=42&app_key=client_secret&app_id=client_id&redirect_uri=redirect_uri"
-        if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
+        local expected = "provider_key=fookey&service_id=42&app_key=client_secret&app_id=client_id&redirect_uri=redirect_uri"
+        if ngx.var.args == expected then
           ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>client_secret</key></application></status>')
           ngx.exit(200)
         else
@@ -355,7 +350,9 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
     }
 
     location = /backend/services/42/oauth_access_tokens.xml {
+      client_body_timeout 1s;
       content_by_lua_block {
+        ngx.req.read_body()
         local ttl = tonumber(ngx.req.get_post_args()['ttl'])
         if ttl ~= 123 then
           ngx.log(ngx.ERR, 'Backend did not receive the correct TTL.')
@@ -404,8 +401,6 @@ GET /t
   location /api-backend/ {
     echo "yay, upstream";
   }
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
   location = /backend/transactions/oauth_authrep.xml {
     echo 'ok';
@@ -486,7 +481,6 @@ Location: http://example.com/redirect\?code=\w+&state=12345
   location /api-backend/ {
     echo "yay, upstream";
   }
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
 
   location = /backend/transactions/oauth_authrep.xml {
     echo 'ok';
@@ -576,11 +570,14 @@ Regression test for CVE-2017-7512
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
   env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
-        { id = 42, backend_version = 'oauth' }
+        { id = 42, backend_version = 'oauth',
+         backend_authentication_type = 'provider_key',
+         backend_authentication_value = 'fookey', }
       }
     })
   }
@@ -610,15 +607,10 @@ Regression test for CVE-2017-7512
     }
   }
 
-    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-    set $backend_host '127.0.0.1';
-    set $backend_authentication_type 'provider_key';
-    set $backend_authentication_value 'fookey';
-
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=&app_id=client_id&redirect_uri=redirect_uri"
-        if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
+        if ngx.var.args == expected then
         ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>client_secret</key></application></status>')
           ngx.exit(200)
         else
@@ -646,11 +638,14 @@ GET /t
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
   env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
-        { id = 42, backend_version = 'oauth' }
+        { id = 42, backend_version = 'oauth',
+         backend_authentication_type = 'provider_key',
+         backend_authentication_value = 'fookey', }
       }
     })
   }
@@ -679,16 +674,10 @@ GET /t
     }
   }
 
-    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-    set $backend_host '127.0.0.1';
-    set $service_id 42;
-    set $backend_authentication_type 'provider_key';
-    set $backend_authentication_value 'fookey';
-
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
-        if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
+        if ngx.var.args == expected then
           ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
           ngx.exit(200)
         else
@@ -720,11 +709,14 @@ GET /t
   env RESOLVER=$TEST_NGINX_RESOLVER;
   env APICAST_OAUTH_TOKENS_TTL=123;
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
-        { id = 42, backend_version = 'oauth' }
+        { id = 42, backend_version = 'oauth',
+         backend_authentication_type = 'provider_key',
+         backend_authentication_value = 'fookey', }
       }
     })
   }
@@ -734,7 +726,6 @@ GET /t
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorize = require('oauth.apicast_oauth.authorize')
       local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
       local code = 'authcode'
       local params = { user_id = 'someuser' }
@@ -753,16 +744,10 @@ GET /t
     }
   }
 
-    set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
-    set $backend_host '127.0.0.1';
-    set $service_id 42;
-    set $backend_authentication_type 'provider_key';
-    set $backend_authentication_value 'fookey';
-
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
-        if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
+        if ngx.var.args == expected then
           ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
           ngx.exit(200)
         else
@@ -801,17 +786,20 @@ Content-Type: application/json
 --- no_error_log
 [error]
 
-=== TEST 18: default token TTL when not specified
+=== TEST 19: default token TTL when not specified
 When a token TTL is not specified, it applies a default of 7 days (604800 s)
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
   env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
-        { id = 42, backend_version = 'oauth' }
+        { id = 42, backend_version = 'oauth',
+         backend_authentication_type = 'provider_key',
+         backend_authentication_value = 'fookey', }
       }
     })
   }
@@ -821,7 +809,6 @@ When a token TTL is not specified, it applies a default of 7 days (604800 s)
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorize = require('oauth.apicast_oauth.authorize')
       local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
       local code = 'authcode'
       local params = { user_id = 'someuser' }
@@ -840,7 +827,6 @@ When a token TTL is not specified, it applies a default of 7 days (604800 s)
     }
   }
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
   set $backend_host '127.0.0.1';
   set $service_id 42;
   set $backend_authentication_type 'provider_key';
@@ -881,18 +867,21 @@ Content-Type: application/json
 --- no_error_log
 [error]
 
-=== TEST 19: default token TTL when given an empty one
+=== TEST 20: default token TTL when given an empty one
 When an empty token TTL is received, Apicast applies a default of 7 days (604800 s)
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
   env RESOLVER=$TEST_NGINX_RESOLVER;
   env APICAST_OAUTH_TOKENS_TTL=;
 --- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
     require('configuration_loader').mock({
       services = {
-        { id = 42, backend_version = 'oauth' }
+        { id = 42, backend_version = 'oauth',
+         backend_authentication_type = 'provider_key',
+         backend_authentication_value = 'fookey', }
       }
     })
   }
@@ -902,7 +891,6 @@ When an empty token TTL is received, Apicast applies a default of 7 days (604800
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorize = require('oauth.apicast_oauth.authorize')
       local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
       local code = 'authcode'
       local params = { user_id = 'someuser' }
@@ -921,7 +909,6 @@ When an empty token TTL is received, Apicast applies a default of 7 days (604800
     }
   }
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/backend';
   set $backend_host '127.0.0.1';
   set $service_id 42;
   set $backend_authentication_type 'provider_key';

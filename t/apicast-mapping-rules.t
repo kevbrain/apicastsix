@@ -16,6 +16,8 @@ First call is done synchronously and the second out of band.
         {
           id = 42,
           backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'token-value',
           proxy = {
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
@@ -34,10 +36,6 @@ First call is done synchronously and the second out of band.
   lua_shared_dict api_keys 10m;
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-  set $backend_authentication_type 'service_token';
-  set $backend_authentication_value 'token-value';
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
@@ -80,8 +78,6 @@ url params in a POST call are taken into account when matching mapping rules.
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /api/ {
     echo "api response";
@@ -127,8 +123,6 @@ request body params in a POST call are taken into account when matching mapping 
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /api/ {
     echo "api response";
@@ -177,8 +171,6 @@ precedence.
   }
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
 
   location /api/ {
     echo "api response";

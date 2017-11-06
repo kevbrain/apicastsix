@@ -2,6 +2,8 @@ local cjson = require 'cjson'
 local ts = require 'threescale_utils'
 local re = require 'ngx.re'
 local env = require 'resty.env'
+local backend_client = require('backend_client')
+local http_ng_ngx = require('resty.http_ng.backend.ngx')
 local tonumber = tonumber
 
 local oauth_tokens_default_ttl = 604800 -- 7 days
@@ -61,10 +63,9 @@ end
 
 
 -- Check valid params ( client_id / secret / redirect_url, whichever are sent) against 3scale
-local function check_client_credentials(params)
-  local res = ngx.location.capture("/_threescale/check_credentials",
-    { args = { app_id = params.client_id, app_key = params.client_secret, redirect_uri = params.redirect_uri },
-      copy_all_vars = true, ctx = ngx.ctx })
+local function check_client_credentials(service, params)
+  local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
+  local res = backend:authorize({ app_id = params.client_id, app_key = params.client_secret, redirect_uri = params.redirect_uri })
 
   ngx.log(ngx.INFO, "[oauth] Checking client credentials, status: ", res.status, " body: ", res.body)
 
@@ -90,17 +91,16 @@ end
 
 -- Check valid credentials
 local function check_credentials(params)
-  local res = check_client_credentials(params)
+  local res = check_client_credentials(ngx.ctx.service, params)
   return res.status == 200
 end
 
 -- Stores the token in 3scale.
-local function store_token(params, token)
-  local body = ts.build_query({ app_id = params.client_id, token = token.access_token, user_id = params.user_id, ttl = token.expires_in })
-  local stored = ngx.location.capture( "/_threescale/oauth_store_token", {
-    method = ngx.HTTP_POST, body = body, copy_all_vars = true, ctx = ngx.ctx } )
-  stored.body = stored.body or stored.status
-  return { ["status"] = stored.status , ["body"] = stored.body }
+local function store_token(service, params, token)
+  local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
+  local res = assert(backend:store_oauth_token({ app_id = params.client_id, token = token.access_token, user_id = params.user_id, ttl = token.expires_in }))
+
+  return { status = res.status , body = res.body or res.status }
 end
 
 
@@ -118,7 +118,7 @@ local function get_token(params)
 
   if res.status == 200 then
     local token = res.body
-    local stored = store_token(params, token)
+    local stored = store_token(ngx.ctx.service, params, token)
 
     if stored.status == 200 then
       send_token(token)

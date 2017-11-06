@@ -23,7 +23,7 @@ response.headers = require 'resty.http_ng.headers'
 
 function response.new(request, status, headers, body)
   assert(status, 'missing request status')
-  assert(body, 'missing request body')
+  assert(body, 'missing response body')
 
   local mt = {}
   mt['__index'] = function(table, key)

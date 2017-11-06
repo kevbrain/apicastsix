@@ -38,8 +38,6 @@ env APICAST_SERVICES=42,21;
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  set $backend_endpoint 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT';
-
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
   }

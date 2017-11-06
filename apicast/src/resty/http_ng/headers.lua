@@ -8,6 +8,9 @@ local setmetatable = setmetatable
 local getmetatable = getmetatable
 local type = type
 local lower = string.lower
+local upper = string.upper
+local sub = string.sub
+local ngx_re = ngx.re
 
 local normalize_exceptions = {
   etag = 'ETag'
@@ -25,31 +28,29 @@ local headers_mt = {
 }
 
 local capitalize = function(string)
-  local str = string:gsub('^%w', function(first) return first:upper() end)
-  return str
+  return upper(sub(string, 1, 1)) .. sub(string, 2)
+end
+
+local regex_parts = [[[^_-]+]]
+
+local key_parts_capitalized = function(key)
+  local parts = {}
+
+  for matches in ngx_re.gmatch(key, regex_parts, 'jo') do
+    insert(parts, capitalize(matches[0]))
+  end
+
+  return parts
 end
 
 headers.normalize_key = function(key)
-  local exception = normalize_exceptions[headers.downcase_key(key)]
+  local exception = normalize_exceptions[lower(key)]
 
   if exception then
     return exception
   end
 
-  local parts = {}
-  key:gsub('[^_-]+', function(part)
-    insert(parts, capitalize(part))
-  end)
-
-  return concat(parts, '-')
-end
-
-headers.downcase_key = function(key)
-  local parts = {}
-  key:gsub('[^_-]+', function(part)
-    insert(parts, lower(part))
-  end)
-  return concat(parts, '_')
+  return concat(key_parts_capitalized(key), '-')
 end
 
 local header_mt = {

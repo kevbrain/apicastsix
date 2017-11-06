@@ -2,6 +2,8 @@
 local _M = require('backend.cache_handler')
 local lrucache = require('resty.lrucache')
 
+local response = require('resty.http_ng.response')
+
 
 describe('Cache Handler', function()
 
@@ -71,8 +73,7 @@ describe('Cache Handler', function()
       local cache = lrucache.new(1)
 
       local authorized, rejection_reason = handler(
-        cache, 'foobar', { status = 403,
-                           header = { ['3scale-rejection-reason'] = 'some_reason' } })
+        cache, 'foobar', response.new(nil, 403, { ['3scale-rejection-reason'] = 'some_reason' }, ''))
 
       assert.falsy(authorized)
       assert.equal('some_reason', rejection_reason)
@@ -122,8 +123,7 @@ describe('Cache Handler', function()
       local cache = lrucache.new(1)
 
       local authorized, rejection_reason = handler(
-        cache, 'foobar', { status = 403,
-                           header = { ['3scale-rejection-reason'] = 'some_reason' } })
+        cache, 'foobar', response.new(nil, 403, { ['3scale-rejection-reason'] = 'some_reason' }, ''))
 
       assert.falsy(authorized)
       assert.equal('some_reason', rejection_reason)

@@ -47,6 +47,7 @@ end
 
 function _M.load(module, ...)
     if type(module) == 'string' then
+        ngx.log(ngx.DEBUG, 'loading policy module: ', module)
         return require(module).new(...)
     else
         return module

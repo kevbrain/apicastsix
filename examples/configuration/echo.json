@@ -14,6 +14,10 @@
           "endpoint": "http://127.0.0.1:8081",
           "host": "echo"
         },
+        "policy_chain": [
+          { "name": "policy.echo" },
+          { "name": "apicast" }
+        ],
         "proxy_rules": [
           {
             "http_method": "GET",

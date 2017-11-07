@@ -20,6 +20,7 @@ local re = require 'ngx.re'
 local env = require 'resty.env'
 local resty_url = require 'resty.url'
 local util = require 'util'
+local policy_chain = require 'policy_chain'
 
 local mt = { __index = _M, __tostring = function() return 'Configuration' end }
 
@@ -157,6 +158,18 @@ local function backend_endpoint(proxy)
     end
 end
 
+local function build_policy_chain(policies)
+  if not policies then return nil, 'no policy chain' end
+
+  local chain = {}
+
+  for i=1, #policies do
+    chain[i] = policy_chain.load(policies[i].name, policies[i].configuration)
+  end
+
+  return policy_chain.new(chain)
+end
+
 function _M.parse_service(service)
   local backend_version = tostring(service.backend_version)
   local proxy = service.proxy or empty_t
@@ -169,6 +182,7 @@ function _M.parse_service(service)
       authentication_method = proxy.authentication_method or backend_version,
       hosts = proxy.hosts or { 'localhost' }, -- TODO: verify localhost is good default
       api_backend = proxy.api_backend,
+      policy_chain = build_policy_chain(proxy.policy_chain),
       error_auth_failed = proxy.error_auth_failed or 'Authentication failed',
       error_limits_exceeded = proxy.error_limits_exceeded or 'Limits exceeded',
       error_auth_missing = proxy.error_auth_missing or 'Authentication parameters missing',

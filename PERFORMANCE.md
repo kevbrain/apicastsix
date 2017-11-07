@@ -26,6 +26,12 @@ Then by opening another terminal you can use vegeta to create traffic:
 echo 'GET http://localhost:8080/?user_key=foo' | vegeta attack -rate=200 -duration=5m | vegeta report
 ```
 
+Or you can use wrk to get as much throughtput as possible:
+
+```shell
+wrk --connections 100 --threads 10 --duration 300 'http://localhost:8080/?user_key=foo'
+```
+
 And in another terminal you can create flamegraphs:
 
 ```shell

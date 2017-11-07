@@ -46,11 +46,17 @@ Vagrant.configure("2") do |config|
      yum -y install openresty-resty openresty-debuginfo openresty-pcre-debuginfo systemtap git epel-release httpd-tools
      yum -y install luarocks
 
+     yum -y groupinstall 'Development Tools'
+     yum -y install openssl-devel
+
      # Clone various utilities
      git clone https://github.com/openresty/stapxx.git /usr/local/stapxx || (cd /usr/local/stapxx && git pull)
      git clone https://github.com/brendangregg/FlameGraph.git /usr/local/flamegraph || (cd /usr/local/flamegraph && git pull)
      git clone https://github.com/openresty/openresty-systemtap-toolkit.git /usr/local/openresty-systemtap-toolkit || (cd /usr/local/openresty-systemtap-toolkit && git pull)
      curl -L https://github.com/tsenart/vegeta/releases/download/v6.1.1/vegeta-v6.1.1-linux-amd64.tar.gz | tar -xz --overwrite -C /usr/local/bin/
+
+     git clone https://github.com/wg/wrk.git /usr/local/wrk || (cd /usr/local/wrk && git pull)
+     ( cd /usr/local/wrk && make && mv wrk /usr/local/bin/ )
 
      # Utility to resolve builtin functions
      echo '#!/usr/bin/env luajit' > /usr/local/bin/ljff

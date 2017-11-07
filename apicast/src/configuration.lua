@@ -71,7 +71,12 @@ local function get_auth_params(method)
     return params
   else
     ngx.req.read_body()
-    local body_params = ngx.req.get_post_args()
+    local body_params, err = ngx.req.get_post_args()
+
+    if not body_params then
+      ngx.log(ngx.NOTICE, 'Error while getting post args: ', err)
+      body_params = {}
+    end
 
     -- Adds to body_params URI params that are not included in the body. Doing
     -- the reverse would be more expensive, because in general, we expect the

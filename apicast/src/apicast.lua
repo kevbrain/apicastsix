@@ -53,7 +53,7 @@ function _M:rewrite(context)
   -- because the module is reloaded and has to be configured again
 
   local p = context.proxy
-  p.set_upstream(p:set_service(context.host))
+  p.set_upstream(context.service)
   ngx.ctx.proxy = p
 end
 
@@ -77,15 +77,16 @@ function _M:post_action()
   end
 end
 
-function _M:access()
+function _M:access(context)
   local p = ngx.ctx.proxy
+  ngx.ctx.service = context.service
   local post_action_proxy = self.post_action_proxy
 
   if not post_action_proxy then
     return nil, 'not initialized'
   end
 
-  local access, handler = p:call() -- proxy:access() or oauth handler
+  local access, handler = p:call(context.service) -- proxy:access() or oauth handler
 
   local ok, err
 

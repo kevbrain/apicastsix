@@ -12,11 +12,10 @@ function _M.new(...)
   return self
 end
 
-local function build_chain(context, host)
+local function build_chain(context)
   local proxy = Proxy.new(context.configuration)
 
   context.proxy = context.proxy or proxy
-  context.service = context.service or proxy:find_service(host)
   context.policy_chain = policy_chain.build({})
 end
 
@@ -30,7 +29,7 @@ end
 local rewrite = _M.rewrite
 
 function _M:rewrite(context, ...)
-  build_chain(context, context.host or ngx.var.host)
+  build_chain(context)
   rewrite(self, context, ...)
 end
 

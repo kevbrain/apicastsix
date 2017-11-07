@@ -8,7 +8,6 @@
 
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
-local configuration_store = require 'configuration_store'
 local util = require('util')
 local resty_lrucache = require('resty.lrucache')
 local backend_cache_handler = require('backend.cache_handler')
@@ -17,7 +16,6 @@ local resty_url = require 'resty.url'
 
 local assert = assert
 local type = type
-local next = next
 local insert = table.insert
 local concat = table.concat
 local gsub = string.gsub
@@ -107,68 +105,13 @@ end
 local function error_service_not_found(host)
   ngx.status = 404
   ngx.print('')
-  ngx.log(ngx.WARN, 'could not find service for host: ', host)
+  ngx.log(ngx.WARN, 'could not find service for host: ', host or ngx.var.host)
   return ngx.exit(ngx.status)
 end
 -- End Error Codes
 
 local function get_debug_value(service)
   return ngx.var.http_x_3scale_debug == service.backend_authentication.value
-end
-
-local function find_service_strict(self, host)
-  local found
-  local services = self.configuration:find_by_host(host)
-
-  for s=1, #services do
-    local service = services[s]
-    local hosts = service.hosts or {}
-
-    for h=1, #hosts do
-      if hosts[h] == host and service == self.configuration:find_by_id(service.id) then
-        found = service
-        break
-      end
-    end
-    if found then break end
-  end
-
-  return found or ngx.log(ngx.WARN, 'service not found for host ', host)
-end
-
-local function find_service_cascade(self, host)
-  local found
-  local request = ngx.var.request
-  local services = self.configuration:find_by_host(host)
-
-  for s=1, #services do
-    local service = services[s]
-    local hosts = service.hosts or {}
-
-    for h=1, #hosts do
-      if hosts[h] == host then
-        local name = service.system_name or service.id
-        ngx.log(ngx.DEBUG, 'service ', name, ' matched host ', hosts[h])
-        local usage, matched_patterns = service:extract_usage(request)
-
-        if next(usage) and matched_patterns ~= '' then
-          ngx.log(ngx.DEBUG, 'service ', name, ' matched patterns ', matched_patterns)
-          found = service
-          break
-        end
-      end
-    end
-    if found then break end
-  end
-
-  return found or find_service_strict(self, host)
-end
-
-if configuration_store.path_routing then
-  ngx.log(ngx.WARN, 'apicast experimental path routing enabled')
-  _M.find_service = find_service_cascade
-else
-  _M.find_service = find_service_strict
 end
 
 local function output_debug_headers(service, usage, credentials)
@@ -223,21 +166,23 @@ function _M:authorize(service, usage, credentials, ttl)
   end
 end
 
-function _M:set_service(host)
-  host = host or ngx.var.host
-  local service = self:find_service(host)
-
+function _M.set_service(service)
   if not service then
-    error_service_not_found(host)
+    error_service_not_found()
   end
 
   ngx.ctx.service = service
   ngx.var.service_id = service.id
+
   return service
 end
 
 function _M.get_upstream(service)
   service = service or ngx.ctx.service
+
+  if not service then
+    return error_service_not_found()
+  end
 
   local url = resty_url.split(service.api_backend) or empty
   local scheme = url[1] or 'http'
@@ -264,12 +209,11 @@ end
 -----
 -- call the proxy and return a handler function
 -- that will perform an action based on the path and backend version
--- @string host optional hostname, uses `ngx.var.host` otherwise
+-- @tparam service service service object
 -- @treturn nil|function access function (when the request needs to be authenticated with this)
 -- @treturn nil|function handler function (when the request is not authenticated and has some own action)
-function _M:call(host)
-  host = host or ngx.var.host
-  local service = ngx.ctx.service or self:set_service(host)
+function _M:call(service)
+  service = _M.set_service(service or ngx.ctx.service)
 
   self.oauth = service:oauth()
 

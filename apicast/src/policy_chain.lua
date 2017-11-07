@@ -1,9 +1,3 @@
-local resty_env = require('resty.env')
-
-if resty_env.get('APICAST_MODULE') then
-    return require('module')
-end
-
 local setmetatable = setmetatable
 local insert = table.insert
 local error = error
@@ -13,14 +7,10 @@ local require = require
 local noop = function() end
 
 local linked_list = require('linked_list')
+local policy = require('policy')
 
 local _M = {
-    PHASES = {
-        'init', 'init_worker',
-        'rewrite', 'access', 'balancer',
-        'header_filter', 'body_filter',
-        'post_action',  'log'
-    }
+
 }
 
 local mt = {
@@ -92,10 +82,8 @@ local function call_chain(phase_name)
     end
 end
 
-for i=1, #(_M.PHASES) do
-    local phase_name = _M.PHASES[i]
-
-    _M[phase_name] = call_chain(phase_name)
+for _,phase in policy:phases() do
+    _M[phase] = call_chain(phase)
 end
 
 return _M.build()

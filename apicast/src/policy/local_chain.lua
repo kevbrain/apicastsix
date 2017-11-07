@@ -16,7 +16,7 @@ local function build_chain(context)
 end
 
 -- forward all policy methods to the policy chain
-for _, phase in policy.phases() do
+for _, phase in policy:phases() do
   _M[phase] = function(_, context, ...)
     local policy_chain = find_policy_chain(context)
 

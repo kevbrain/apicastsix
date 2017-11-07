@@ -1,18 +1,23 @@
-local setmetatable = setmetatable
+local resty_env = require('resty.env')
+
+if resty_env.get('APICAST_MODULE') then
+  return require('module')
+end
 
 local policy_chain = require('policy_chain')
+local policy = require('policy')
 local linked_list = require('linked_list')
+
+local setmetatable = setmetatable
 
 local _M = { }
 
 local mt = { __index = _M }
 
 -- forward all policy methods to the policy chain
-for i=1, #(policy_chain.PHASES) do
-    local phase_name = policy_chain.PHASES[i]
-
-    _M[phase_name] = function(self, ...)
-        return self.policy_chain[phase_name](self.policy_chain, self:context(phase_name), ...)
+for _,phase in policy:phases() do
+    _M[phase] = function(self, ...)
+        return self.policy_chain[phase](self.policy_chain, self:context(phase), ...)
     end
 end
 

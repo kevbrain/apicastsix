@@ -18,6 +18,10 @@ $ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$path/http.d/upstream.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$path/conf.d/backend.conf";
 $ENV{TEST_NGINX_APICAST_CONFIG} = "$path/conf.d/apicast.conf";
 
+if ($ENV{DEBUG}) {
+    $ENV{TEST_NGINX_ERROR_LOG} ||= '/dev/stderr';
+}
+
 env_to_nginx("TEST_NGINX_SERVER_PORT=$Test::Nginx::Util::ServerPortForClient");
 
 log_level('debug');

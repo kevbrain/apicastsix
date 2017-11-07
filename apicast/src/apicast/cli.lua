@@ -38,7 +38,7 @@ function mt.__call(self, arg)
 
     if ok and cmd then
         self.commands[cmd](ret)
-    elseif ret and not next(ret) then
+    elseif ret and type(ret) == 'table' and not next(ret) then
         local start = self.commands.start
         start(start:parse(arg))
     else

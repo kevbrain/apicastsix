@@ -151,7 +151,7 @@ benchmark: export WRK_REPORT ?= $(IMAGE_TAG).csv
 benchmark: export DURATION ?= 300
 benchmark:
 	- $(DOCKER_COMPOSE) up --force-recreate -d apicast
-	@sleep 5
+	$(DOCKER_COMPOSE) run curl
 	## warmup round for $(DURATION)/10 seconds
 	DURATION=$$(( $(DURATION) / 10 )) $(DOCKER_COMPOSE) run wrk
 	## run the real benchmark for $(DURATION) seconds

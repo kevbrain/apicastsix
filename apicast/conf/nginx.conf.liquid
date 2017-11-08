@@ -7,19 +7,20 @@ env OPENSSL_VERIFY;
 
 {% for env in env -%}
   {%- if env.name | starts_with: 'APICAST_', 'THREESCALE_' %}
-    env {{ env.name }};
+    env {{ env.name }}={{ env.value }};
   {%- endif -%}
 {%- endfor %}
 
 daemon {{ daemon | default: 'off' }};
 master_process {{ master_process | default: 'on' }};
 worker_processes {{ worker_processes | default: 'auto' }};
+pid {{ pid | default: 'nginx.pid' }};
 
 {% for file in "main.d/*.conf" | filesystem %}
   {% include file %}
 {% endfor %}
 
-error_log /dev/null emerg;
+error_log {{ error_log | default: '/dev/null' }} {{  log_level | default: 'emerg' }};
 
 events {
   worker_connections  16192;
@@ -74,7 +75,7 @@ http {
   server {
     access_log /dev/stdout time;
 
-    listen 8080;
+    listen {{ port.apicast | default: 8080 }};
 
     server_name _;
     underscores_in_headers on;

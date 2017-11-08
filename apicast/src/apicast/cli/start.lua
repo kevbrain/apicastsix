@@ -103,6 +103,9 @@ function mt:__call(options)
     context.prefix = dir
     context.ca_bundle = pl.path.abspath(context.ca_bundle or pl.path.join(dir, 'conf', 'ca-bundle.crt'))
 
+    -- also use env from the config file
+    update_env(config.env or {})
+
     local nginx = nginx_config(context, dir, path, env)
 
     local log_level = get_log_level(self, options)

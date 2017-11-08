@@ -8,3 +8,4 @@ apicast/logs/
 *.rock
 lua_modules/
 tmp/benchmark/
+apicast/config/test.lua

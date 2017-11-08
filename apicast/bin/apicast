@@ -3,11 +3,12 @@ use strict;
 use warnings FATAL => 'all';
 
 use File::Basename;
-use Cwd qw(abs_path);
+use Cwd qw(getcwd abs_path);
 
 my $apicast = $ENV{APICAST_DIR} || abs_path(dirname(abs_path(__FILE__)) . '/..');
 my $bindir = $apicast . '/bin';
 my $lua_path = $ENV{LUA_PATH};
+my $cwd = getcwd();
 
 chomp(my $rover = `which rover`);
 if ($rover) { $rover = abs_path($rover) }
@@ -21,6 +22,7 @@ if ($rover && !$lua_path) {
 chdir $apicast;
 
 $ENV{LUA_PATH} = "$apicast/src/?.lua;${lua_path}";
+$ENV{PWD} = $cwd;
 
 my @args = ('resty', "$bindir/cli", @ARGV);
 

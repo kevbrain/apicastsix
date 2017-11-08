@@ -40,17 +40,23 @@ Vagrant.configure("2") do |config|
 
   config.vm.synced_folder ".", "/home/vagrant/app"
 
-  config.vm.provision "shell", inline: <<-SHELL
+  config.vm.provision "shell", inline: <<-'SHELL'
      # Install OpenResty and other tools
      yum-config-manager --add-repo https://openresty.org/yum/centos/OpenResty.repo
      yum -y install openresty-resty openresty-debuginfo openresty-pcre-debuginfo systemtap git epel-release httpd-tools
      yum -y install luarocks
+
+     yum -y groupinstall 'Development Tools'
+     yum -y install openssl-devel
 
      # Clone various utilities
      git clone https://github.com/openresty/stapxx.git /usr/local/stapxx || (cd /usr/local/stapxx && git pull)
      git clone https://github.com/brendangregg/FlameGraph.git /usr/local/flamegraph || (cd /usr/local/flamegraph && git pull)
      git clone https://github.com/openresty/openresty-systemtap-toolkit.git /usr/local/openresty-systemtap-toolkit || (cd /usr/local/openresty-systemtap-toolkit && git pull)
      curl -L https://github.com/tsenart/vegeta/releases/download/v6.1.1/vegeta-v6.1.1-linux-amd64.tar.gz | tar -xz --overwrite -C /usr/local/bin/
+
+     git clone https://github.com/wg/wrk.git /usr/local/wrk || (cd /usr/local/wrk && git pull)
+     ( cd /usr/local/wrk && make && mv wrk /usr/local/bin/ )
 
      # Utility to resolve builtin functions
      echo '#!/usr/bin/env luajit' > /usr/local/bin/ljff
@@ -62,8 +68,11 @@ Vagrant.configure("2") do |config|
      echo 'exec /usr/local/stapxx/stap++ -I /usr/local/stapxx/tapset "$@"' >> /usr/local/bin/stap++
      chmod +x /usr/local/bin/stap++
 
+     echo 'pathmunge lua_modules/bin' > /etc/profile.d/rover.sh
+     chmod +x /etc/profile.d/rover.sh
+
      # Install APIcast dependencies
-     luarocks make app/apicast/*.rockspec --tree /usr/local/openresty/luajit
+     (cd app && make dependencies)
 
      # Add various utilites to the PATH
      ln -sf /usr/local/openresty/luajit/bin/luajit /usr/local/bin/luajit
@@ -74,6 +83,9 @@ Vagrant.configure("2") do |config|
 
      # Allow vagrant user to use systemtap
      usermod -a -G stapusr,stapdev vagrant
+
+     mkdir -p /usr/share/lua/5.1/luarocks/
+     curl -L https://raw.githubusercontent.com/3scale/s2i-openresty/ffb1c55533be866a97466915d7ef31c12bae688c/site_config.lua > /usr/share/lua/5.1/luarocks/site_config.lua
 
      # Raise opened files limit for vagrant user
      echo -e 'vagrant\t\t\t-\tnofile\t\t1000000' > /etc/security/limits.d/90-nofile.conf

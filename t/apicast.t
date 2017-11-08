@@ -714,3 +714,62 @@ limits exceeded!
 --- error_code: 402
 --- no_error_log
 [error]
+
+
+=== TEST 20: Credentials in large POST body
+POST bodies larger than 'client_body_buffer_size' are written to a temp file,
+and we ignore them. That means that credentials stored in the body are not
+taken into account.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  # Our POST body will be larger than this. Looks like the minimum is 1KB even
+  # if we set a lower value like in this case (1B).
+  client_body_buffer_size 1;
+
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'token-value',
+          proxy = {
+            error_auth_missing = 'credentials missing!',
+            error_status_auth_missing = 401,
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'POST', metric_system_name = 'hits', delta = 2 }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      -- Notice that the user_key sent in the body does not appear here.
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2"
+      local args = ngx.var.args
+      if args == expected then
+        ngx.exit(403)
+      else
+        ngx.log(ngx.ERR, expected, ' did not match: ', args)
+        ngx.exit(500)
+      end
+    }
+  }
+
+--- request eval
+"POST /
+user_key=value-".( "1" x 1024)
+--- response_body chomp
+credentials missing!
+--- error_code: 401
+--- no_error_log
+[error]

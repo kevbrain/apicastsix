@@ -35,7 +35,13 @@ local function read_body_args(...)
 
   ngx.req.read_body()
 
-  local args = ngx.req.get_post_args()
+  local args, err = ngx.req.get_post_args()
+
+  if not args then
+    ngx.log(ngx.NOTICE, 'Error while getting post args: ', err)
+    args = {}
+  end
+
   local results = {}
 
   for n=1, select('#', ...) do

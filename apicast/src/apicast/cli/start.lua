@@ -95,6 +95,11 @@ function mt:__call(options)
         context.daemon = 'on'
     end
 
+
+    if options.master and options.master[1] == 'off' then
+        context.master_process = 'off'
+    end
+
     context.prefix = dir
     context.ca_bundle = pl.path.abspath(context.ca_bundle or pl.path.join(dir, 'conf', 'ca-bundle.crt'))
 
@@ -125,6 +130,7 @@ local function configure(cmd)
         cmd:flag('--dev', 'Start in development environment')
     )
 
+    cmd:flag("-m --master", "Test the nginx config"):args('?')
     cmd:flag("-t --test", "Test the nginx config")
     cmd:flag("--debug", "Debug mode. Prints more information.")
     cmd:option("-c --configuration",

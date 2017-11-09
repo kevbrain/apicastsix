@@ -37,7 +37,7 @@ services:
     environment:
       TEST_NGINX_BINARY: openresty
       TEST_NGINX_REDIS_HOST: redis
-    command: "'$$TEST_NGINX_BINARY -V; cd ; prove; exit $$?'"
+    command: "'$$TEST_NGINX_BINARY -V; cd ; rover exec prove; exit $$?'"
     dns_search:
       - example.com
     depends_on:

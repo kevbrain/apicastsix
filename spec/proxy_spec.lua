@@ -66,15 +66,6 @@ describe('Proxy', function()
     assert.same('function', type(proxy.post_action))
   end)
 
-  pending('finds service by host', function()
-    local example = { id = 42, hosts = { 'example.com'} }
-
-    configuration:add(example)
-
-    assert.same(example, proxy:find_service('example.com'))
-    assert.falsy(proxy:find_service('unknown'))
-  end)
-
   pending('does not return old configuration when new one is available', function()
     local foo = { id = '42', hosts = { 'foo.example.com'} }
     local bar = { id = '42', hosts = { 'bar.example.com'} }

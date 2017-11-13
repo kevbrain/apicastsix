@@ -16,7 +16,7 @@ add_block_preprocessor(sub {
     my $configuration = Test::Nginx::Util::expand_env_in_config($block->configuration);
     my $backend = $block->backend;
     my $upstream = $block->upstream;
-    my $sites_d = $block->sites_d;
+    my $sites_d = $block->sites_d || '';
     my $ServerPort = $Test::Nginx::Util::ServerPort;
 
     if (defined $backend) {

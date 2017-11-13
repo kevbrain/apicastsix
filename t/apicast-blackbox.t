@@ -28,7 +28,6 @@ credentials missing!
 
 === TEST 2 api backend gets the request
 It asks backend and then forwards the request to the api.
---- ONLY
 --- configuration
 {
   "services": [

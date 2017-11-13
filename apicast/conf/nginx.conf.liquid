@@ -91,4 +91,6 @@ http {
   {% for file in "sites.d/*.conf" | filesystem %}
     {% include file %}
   {% endfor %}
+
+  {{ sites_d }}
 }

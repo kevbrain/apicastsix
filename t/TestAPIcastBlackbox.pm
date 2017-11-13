@@ -2,6 +2,7 @@ package TestAPIcastBlackbox;
 use strict;
 use warnings FATAL => 'all';
 use v5.10.1;
+use JSON;
 
 use lib 't';
 use TestAPIcast  -Base;
@@ -12,8 +13,51 @@ add_block_preprocessor(sub {
     my $block = shift;
     my $seq = $block->seq_num;
     my $name = $block->name;
+    my $configuration = Test::Nginx::Util::expand_env_in_config($block->configuration);
+    my $backend = $block->backend;
+    my $upstream = $block->upstream;
+    my $sites_d = $block->sites_d;
+    my $ServerPort = $Test::Nginx::Util::ServerPort;
 
+    if (defined $backend) {
+        $sites_d .= <<_EOC_;
+        server {
+            listen $ServerPort;
+
+            server_name test_backend backend;
+
+            $backend
+        }
+
+        upstream test_backend {
+            server 127.0.0.1:$ServerPort;
+        }
+
+_EOC_
+        $ENV{BACKEND_ENDPOINT_OVERRIDE} = "http://test_backend:$ServerPort";
+    }
+
+    if (defined $upstream) {
+        $sites_d .= <<_EOC_;
+        server {
+            listen $ServerPort;
+
+            server_name test;
+
+            $upstream
+        }
+
+        upstream test {
+            server 127.0.0.1:$ServerPort;
+        }
+_EOC_
+    }
+
+    decode_json($configuration);
+
+    $block->set_value("configuration", $configuration);
     $block->set_value("config", "$name ($seq)");
+    $block->set_value('sites_d', $sites_d)
 });
 
 my $write_nginx_config = sub {
@@ -29,11 +73,14 @@ my $write_nginx_config = sub {
     my $AccLogFile = $Test::Nginx::Util::AccLogFile;
     my $ServerPort = $Test::Nginx::Util::ServerPort;
 
+    my $sites_d = $block->sites_d;
+
     my ($conf, $configuration) = tempfile();
     print $conf $block->configuration;
     close $conf;
 
     my ($env, $env_file) = tempfile();
+
     print $env <<_EOC_;
 return {
     worker_processes = '$Workers',
@@ -46,6 +93,7 @@ return {
     access_log = '$AccLogFile',
     port = { apicast = '$ServerPort' },
     env = { APICAST_CONFIGURATION = 'file://$configuration', APICAST_CONFIGURATION_LOADER = 'boot' },
+    sites_d = [============================[$sites_d]============================],
 }
 _EOC_
     close $env;
@@ -55,7 +103,7 @@ _EOC_
     my $apicast = `bin/apicast --boot --test --environment test --configuration $configuration 2>&1`;
     if ($apicast =~ /configuration file (?<file>.+?) test is successful/)
     {
-        move($+{file}, $Test::Nginx::Util::ConfFile);
+        move($+{file}, $ConfFile);
     } else {
         warn "Missing config file: $Test::Nginx::Util::ConfFile";
         warn $apicast;

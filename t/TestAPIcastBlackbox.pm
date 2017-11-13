@@ -33,9 +33,8 @@ my $write_nginx_config = sub {
     print $conf $block->configuration;
     close $conf;
 
-    open my $out, ">apicast/config/test.lua" or Test::Nginx::Util::bail_out "Can't open $ConfFile for writing: $!\n";
-
-    print $out <<_EOC_;
+    my ($env, $env_file) = tempfile();
+    print $env <<_EOC_;
 return {
     worker_processes = '$Workers',
     master_process = '$MasterProcessEnabled',
@@ -49,7 +48,9 @@ return {
     env = { APICAST_CONFIGURATION = 'file://$configuration', APICAST_CONFIGURATION_LOADER = 'boot' },
 }
 _EOC_
-    close $out;
+    close $env;
+
+    $ENV{APICAST_ENVIRONMENT_CONFIG} = $env_file;
 
     my $apicast = `bin/apicast --boot --test --environment test --configuration $configuration 2>&1`;
     if ($apicast =~ /configuration file (?<file>.+?) test is successful/)

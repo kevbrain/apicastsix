@@ -25,8 +25,8 @@ end
 function _M:load(env)
     local environment = env or self.default_environment
     local root = self.root
-    local name = ("%s.lua"):format(environment)
-    local path = pl_path.join(root, 'config', name)
+    local name = resty_env.value('APICAST_ENVIRONMENT_CONFIG') or ("%s.lua"):format(environment)
+    local path = pl_path.abspath(name, pl_path.join(root, 'config'))
 
     print('loading config for: ', environment, ' environment from ', path)
 

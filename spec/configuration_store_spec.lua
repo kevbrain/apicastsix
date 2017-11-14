@@ -52,6 +52,14 @@ describe('Configuration Store', function()
         assert.same({ service1 }, store:find_by_host('example.com'))
       end)
     end)
+
+    it('stores config with OIDC', function()
+      local store = configuration.new()
+      local service_one = { id = '7', hosts = { 'example.com' } }
+      local service_two = { id = '42', hosts = { 'oidc.example.com' } }
+
+      assert(store:store({services = { service_one, service_two }, oidc = { ngx.null, ngx.null }}))
+    end)
   end)
 
   describe('.find_by_id', function()

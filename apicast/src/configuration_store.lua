@@ -101,7 +101,7 @@ function _M.store(self, config, ttl)
     local hosts = service.hosts or {}
     local id = service.id
 
-    if oidc[i] then
+    if oidc[i] ~= ngx.null then
       -- merge service and OIDC config, this is far from ideal, but easy for now
       for k,v in pairs(oidc[i] or {}) do
         service.oidc[k] = v

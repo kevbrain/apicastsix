@@ -10,7 +10,7 @@ local user_agent = require('user_agent')
 local noop = function() end
 
 local _M = {
-  _VERSION = '3.0.0-pre',
+  _VERSION = require('version'),
   _NAME = 'APIcast'
 }
 

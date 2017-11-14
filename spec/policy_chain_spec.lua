@@ -125,9 +125,9 @@ describe('policy_chain', function()
 
       local shared_data = chain:export()
 
-      -- This does not raise, but it does not do anything.
-      shared_data.new_shared_data = 'some_data'
-
+      assert.has_error(function()
+        shared_data.new_shared_data = 'some_data'
+      end, 'readonly list')
       assert.is_nil(shared_data.new_shared_data)
     end)
 

@@ -14,7 +14,7 @@ describe('linked_list', function()
     it('returns a list that cannot be modified', function()
       local list = linked_list.readonly({ a = 1 })
 
-      list.abc = 123
+      assert.has_error(function() list.abc = 123 end, 'readonly list')
       assert.is_nil(list.abc)
     end)
 

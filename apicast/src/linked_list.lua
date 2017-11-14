@@ -1,4 +1,5 @@
 local setmetatable = setmetatable
+local error = error
 
 local _M = {
 
@@ -14,7 +15,9 @@ end
 
 local ro_mt = {
     __index = __index,
-    __newindex = noop,
+    __newindex = function()
+        error("readonly list")
+    end,
 }
 
 local rw_mt = {

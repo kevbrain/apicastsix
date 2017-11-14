@@ -23,6 +23,11 @@ describe('policy', function()
       assert.equals(my_policy_version, my_policy._VERSION)
     end)
 
+    it('set the version to 0.0 when not specified', function()
+      local my_policy = policy.new('my_policy')
+      assert.equals('0.0', my_policy._VERSION)
+    end)
+
     it('defines a method for each of the nginx phases; they do nothing by default', function()
       local my_policy = policy.new('custom_authorizer')
 

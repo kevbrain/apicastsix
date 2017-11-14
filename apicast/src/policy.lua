@@ -20,7 +20,7 @@ local noop = function() end
 function _M.new(name, version)
     local policy = {
         _NAME = name,
-        _VERSION = version ,
+        _VERSION = version or '0.0',
     }
     local mt = { __index = policy }
 

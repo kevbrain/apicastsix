@@ -1,3 +1,10 @@
+--- PolicyChain module
+-- A policy chain is simply a sorted list of policies. The policy chain
+-- defines a method for each one of the nginx phases (rewrite, access, etc.).
+-- Each of those methods simply calls the same method on each of the policies
+-- of the chain that implement that method. The calls are made following the
+-- order that the policies have in the chain.
+
 local setmetatable = setmetatable
 local insert = table.insert
 local error = error
@@ -24,6 +31,13 @@ local mt = {
     end
 }
 
+--- Build a policy chain
+-- Builds a new policy chain from a list of modules representing policies.
+-- If no modules are given, 'apicast' will be used.
+-- @tparam table modules Each module can be a string or an object. If the
+--  module is a string, the result of require(module).new() will be added to
+--  the chain. If it's an object, it will added as is to the chain.
+-- @treturn PolicyChain New PolicyChain
 function _M.build(modules)
     local chain = {}
     local list = modules or { 'apicast' }
@@ -35,6 +49,13 @@ function _M.build(modules)
     return _M.new(chain)
 end
 
+--- Load a module
+-- If the module is a string, returns the result of initializing it with the
+-- given arguments. Otherwise, this function simply returns the module
+-- received.
+-- @tparam string/object The module
+-- @tparam[opt] params needed to initialize the module
+-- @treturn object The module instantiated
 function _M.load(module, ...)
     if type(module) == 'string' then
         ngx.log(ngx.DEBUG, 'loading policy module: ', module)
@@ -61,6 +82,9 @@ function _M:add(module)
     insert(self, _M.load(module))
 end
 
+--- Export the shared context of the chain
+-- @treturn linked_list The context of the chain. Note: the list returned is
+--   read-only.
 function _M:export()
     local chain = self.config
 

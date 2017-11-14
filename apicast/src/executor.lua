@@ -1,3 +1,9 @@
+--- Executor module
+-- The executor has a policy chain and will simply forward the calls it
+-- receives to that policy chain. It also manages the 'context' that is passed
+-- when calling the policy chain methods. This 'context' contains information
+-- shared among policies.
+
 local resty_env = require('resty.env')
 
 if resty_env.get('APICAST_MODULE') then
@@ -54,6 +60,9 @@ local function shared_build_context(executor)
     return context
 end
 
+--- Shared context among policies
+-- @tparam string phase Nginx phase
+-- @treturn linked_list The context. Note: The list returned is 'read-write'.
 function _M:context(phase)
     if phase == 'init' then
         return build_context(self)

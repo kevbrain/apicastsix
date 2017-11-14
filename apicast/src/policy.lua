@@ -1,3 +1,11 @@
+--- Policy module
+-- Policies should define a method for each of the nginx phases (rewrite,
+-- access, etc.) in which they want to run code. When Apicast runs each of
+-- those phases, if the policy has been loaded, it will run the code in the
+-- method with the phase name. So for example, if we want to define a policy
+-- that needs to execute something in the rewrite phase, we need to write
+-- a 'rewrite' method.
+
 local _M = { }
 
 local PHASES = {

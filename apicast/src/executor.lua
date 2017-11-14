@@ -4,12 +4,6 @@
 -- when calling the policy chain methods. This 'context' contains information
 -- shared among policies.
 
-local resty_env = require('resty.env')
-
-if resty_env.get('APICAST_MODULE') then
-  return require('module')
-end
-
 local policy_chain = require('policy_chain')
 local policy = require('policy')
 local linked_list = require('linked_list')

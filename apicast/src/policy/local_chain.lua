@@ -1,8 +1,23 @@
+local resty_env = require('resty.env')
+
 local policy = require('policy')
 local Proxy = require('proxy')
 local _M = policy.new('Local Policy Chain')
 
-local default_chain = require('policy_chain').build({ 'apicast' })
+local function build_default_chain()
+  local module
+
+  if resty_env.get('APICAST_MODULE') then
+    -- Needed to keep compatibility with the old module system.
+    module = 'module'
+  else
+    module = 'apicast'
+  end
+
+  return require('policy_chain').build({ module })
+end
+
+local default_chain = build_default_chain()
 
 local function find_policy_chain(context)
   return context.policy_chain or (context.service and context.service.policy_chain) or default_chain

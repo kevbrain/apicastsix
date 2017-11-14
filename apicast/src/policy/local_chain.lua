@@ -2,7 +2,7 @@ local policy = require('policy')
 local Proxy = require('proxy')
 local _M = policy.new('Local Policy Chain')
 
-local default_chain = require('policy_chain').build()
+local default_chain = require('policy_chain').build({ 'apicast' })
 
 local function find_policy_chain(context)
   return context.policy_chain or (context.service and context.service.policy_chain) or default_chain

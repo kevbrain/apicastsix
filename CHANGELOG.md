@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Update the s2i-openresty image to have the same path (`/opt/app-root/src`) in all images [PR #460](https://github.com/3scale/apicast/pull/460)
 - Launcher scripts are now Perl + Lua instead of Shell [PR #449](https://github.com/3scale/apicast/pull/449)
 - Unify how to connect to 3scale backend [PR #456](https://github.com/3scale/apicast/pull/456)
+- Upgraded OpenResty to 1.13.6.1 [PR #480](https://github.com/3scale/apicast/pull/480)
 
 ### Fixed
 

@@ -41,9 +41,13 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/home/vagrant/app"
 
   config.vm.provision "shell", inline: <<-'SHELL'
+     set -x -e
+     yum -y install yum-utils
      # Install OpenResty and other tools
-     yum-config-manager --add-repo https://openresty.org/yum/centos/OpenResty.repo
-     yum -y install openresty-resty openresty-debuginfo openresty-pcre-debuginfo systemtap git epel-release httpd-tools
+     yum-config-manager --add-repo https://openresty.org/package/centos/openresty.repo
+
+     yum -y install openresty-resty openresty-debuginfo openresty-pcre-debuginfo
+     yum -y install systemtap git epel-release httpd-tools
      yum -y install luarocks
 
      yum -y groupinstall 'Development Tools'
@@ -71,6 +75,9 @@ Vagrant.configure("2") do |config|
      echo 'pathmunge lua_modules/bin' > /etc/profile.d/rover.sh
      chmod +x /etc/profile.d/rover.sh
 
+     mkdir -p /usr/share/lua/5.1/luarocks/
+     curl -L https://raw.githubusercontent.com/3scale/s2i-openresty/ffb1c55533be866a97466915d7ef31c12bae688c/site_config.lua > /usr/share/lua/5.1/luarocks/site_config.lua
+
      # Install APIcast dependencies
      (cd app && make dependencies)
 
@@ -83,9 +90,6 @@ Vagrant.configure("2") do |config|
 
      # Allow vagrant user to use systemtap
      usermod -a -G stapusr,stapdev vagrant
-
-     mkdir -p /usr/share/lua/5.1/luarocks/
-     curl -L https://raw.githubusercontent.com/3scale/s2i-openresty/ffb1c55533be866a97466915d7ef31c12bae688c/site_config.lua > /usr/share/lua/5.1/luarocks/site_config.lua
 
      # Raise opened files limit for vagrant user
      echo -e 'vagrant\t\t\t-\tnofile\t\t1000000' > /etc/security/limits.d/90-nofile.conf

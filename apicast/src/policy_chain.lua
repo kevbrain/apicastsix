@@ -82,7 +82,7 @@ local function call_chain(phase_name)
     end
 end
 
-for _,phase in policy:phases() do
+for _,phase in policy.phases() do
     _M[phase] = call_chain(phase)
 end
 

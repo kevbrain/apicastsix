@@ -15,7 +15,7 @@ local _M = { }
 local mt = { __index = _M }
 
 -- forward all policy methods to the policy chain
-for _,phase in policy:phases() do
+for _,phase in policy.phases() do
     _M[phase] = function(self, ...)
         return self.policy_chain[phase](self.policy_chain, self:context(phase), ...)
     end

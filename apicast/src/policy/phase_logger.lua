@@ -5,7 +5,7 @@
 local policy = require('policy')
 local _M = policy.new('Phase logger')
 
-for _, phase in policy:phases() do
+for _, phase in policy.phases() do
   _M[phase] = function() ngx.log(ngx.DEBUG, 'running phase: ', phase) end
 end
 

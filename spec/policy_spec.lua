@@ -31,7 +31,7 @@ describe('policy', function()
     it('defines a method for each of the nginx phases; they do nothing by default', function()
       local my_policy = policy.new('custom_authorizer')
 
-      for _, phase in policy:phases() do
+      for _, phase in policy.phases() do
         -- To be precise, we should check that the function is defined, returns
         -- nil, and it does not have any side-effects. Checking the latter is
         -- complicated so we'll leave it for now.
@@ -51,7 +51,7 @@ describe('policy', function()
   describe('.phases', function()
     it('returns the nginx phases where policies can run, sorted by order of execution', function()
       local res = {}
-      for _, phase in policy:phases() do
+      for _, phase in policy.phases() do
         table.insert(res, phase)
       end
 

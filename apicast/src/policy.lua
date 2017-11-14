@@ -1,10 +1,10 @@
-local _M = {
-    PHASES = {
-        'init', 'init_worker',
-        'rewrite', 'access', 'balancer',
-        'header_filter', 'body_filter',
-        'post_action',  'log'
-    }
+local _M = { }
+
+local PHASES = {
+    'init', 'init_worker',
+    'rewrite', 'access', 'balancer',
+    'header_filter', 'body_filter',
+    'post_action',  'log'
 }
 
 local setmetatable = setmetatable
@@ -28,15 +28,15 @@ function _M.new(name, version)
         return setmetatable({}, mt)
     end
 
-    for _, phase in _M:phases() do
+    for _, phase in _M.phases() do
         policy[phase] = noop
     end
 
     return policy
 end
 
-function _M:phases()
-    return ipairs(self.PHASES)
+function _M.phases()
+    return ipairs(PHASES)
 end
 
 return _M

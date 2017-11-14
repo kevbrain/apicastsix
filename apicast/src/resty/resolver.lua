@@ -14,6 +14,7 @@ local io_type = io.type
 local re_match = ngx.re.match
 local resolver_cache = require 'resty.resolver.cache'
 local dns_client = require 'resty.resolver.dns_client'
+local upstream = require 'ngx.upstream'
 local re = require('ngx.re')
 local semaphore = require "ngx.semaphore"
 local synchronization = require('resty.synchronization').new(1)
@@ -251,6 +252,22 @@ local function search_dns(self, qname, stale)
   return answers, err
 end
 
+local function resolve_upstream(qname)
+  local peers, err = upstream.get_primary_peers(qname)
+
+  if not peers then
+    return nil, err
+  end
+
+  for i=1, #peers do
+    local m = re.split(peers[i].name, ':', 'oj')
+
+    peers[i] = new_answer(m[1], m[2])
+  end
+
+  return peers
+end
+
 function _M.lookup(self, qname, stale)
   local cache = self.cache
 
@@ -264,6 +281,8 @@ function _M.lookup(self, qname, stale)
   else
     if is_fqdn(qname) then
       answers, err = cache:get(qname, stale)
+    else
+      answers, err = resolve_upstream(qname)
     end
 
     if not valid_answers(answers) then

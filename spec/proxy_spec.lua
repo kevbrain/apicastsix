@@ -66,18 +66,6 @@ describe('Proxy', function()
     assert.same('function', type(proxy.post_action))
   end)
 
-  pending('does not return old configuration when new one is available', function()
-    local foo = { id = '42', hosts = { 'foo.example.com'} }
-    local bar = { id = '42', hosts = { 'bar.example.com'} }
-
-    configuration:add(foo, -1) -- expired record
-    assert.equal(foo, proxy:find_service('foo.example.com'))
-
-    configuration:add(bar, -1) -- expired record
-    assert.equal(bar, proxy:find_service('bar.example.com'))
-    assert.falsy(proxy:find_service('foo.example.com'))
-  end)
-
   describe('.get_upstream', function()
     local get_upstream
     before_each(function() get_upstream = proxy.get_upstream end)

@@ -12,6 +12,12 @@ local setmetatable = setmetatable
 
 local _M = { }
 
+local DEFAULT_POLICIES = {
+    'policy.load_configuration',
+    'policy.find_service',
+    'policy.local_chain'
+}
+
 local mt = { __index = _M }
 
 -- forward all policy methods to the policy chain
@@ -21,12 +27,12 @@ for _,phase in policy.phases() do
     end
 end
 
-function _M.new()
-    local global_chain = policy_chain.build({
-        'policy.load_configuration', 'policy.find_service', 'policy.local_chain'
-    })
+local function global_chain()
+    return policy_chain.build(DEFAULT_POLICIES)
+end
 
-    return setmetatable({ policy_chain = global_chain }, mt)
+function _M.new()
+    return setmetatable({ policy_chain = global_chain() }, mt)
 end
 
 local function build_context(executor)

@@ -6,7 +6,6 @@
 -- order that the policies have in the chain.
 
 local setmetatable = setmetatable
-local insert = table.insert
 local error = error
 local rawset = rawset
 local type = type
@@ -76,10 +75,6 @@ end
 function _M:freeze()
     self.frozen = true
     return self
-end
-
-function _M:add(module)
-    insert(self, _M.load(module))
 end
 
 --- Export the shared context of the chain

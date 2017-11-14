@@ -69,10 +69,6 @@ function _M.new(list)
 
     local self = setmetatable(chain, mt)
     chain.config = self:export()
-    return self:freeze()
-end
-
-function _M:freeze()
     self.frozen = true
     return self
 end

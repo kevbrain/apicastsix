@@ -4,7 +4,7 @@ local env = require 'resty.env'
 local setmetatable = setmetatable
 
 local _M = {
-  _VERSION = '3.0.0-pre'
+  _VERSION = require('version')
 }
 
 function _M.deployment()

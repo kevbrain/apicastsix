@@ -649,7 +649,7 @@ status code (429).
 
   location /transactions/authrep.xml {
     content_by_lua_block {
-      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1' then
+      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1&no_body=1' then
         ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
       end
       ngx.status = 409;
@@ -696,7 +696,7 @@ Limits exceeded
 
   location /transactions/authrep.xml {
     content_by_lua_block {
-      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1' then
+      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1&no_body=1' then
         ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
       end
       ngx.status = 409;

@@ -948,3 +948,54 @@ Content-Type: application/json
 {"token_type":"bearer","expires_in":604800,"access_token":"token"}
 --- no_error_log
 [error]
+
+=== TEST 21: correct 3scale backend options
+When authorizing against 3scale's backend, the call includes the correct
+options in the headers. That is, it includes the 'rejection_reason' option,
+but not the 'no_body' one, as in the oauth flow, parsing the response body is
+necessary.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+
+  init_by_lua_block {
+    require('configuration_loader').mock({
+      services = {
+        {
+          backend_version = 'oauth',
+          proxy = {
+            credentials_location = "query",
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+
+    ngx.shared.api_keys:set('default:foobar:usage%5Bhits%5D=0', 200)
+  }
+  lua_shared_dict api_keys 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  include $TEST_NGINX_BACKEND_CONFIG;
+
+  location /api-backend/ {
+    echo "yay, upstream";
+  }
+
+  location = /backend/transactions/oauth_authrep.xml {
+    content_by_lua_block {
+      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1' then
+        ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+      end
+    }
+  }
+--- request
+GET /?access_token=foobar
+--- error_code: 200
+--- response_body
+yay, upstream
+--- no_error_log
+[error]

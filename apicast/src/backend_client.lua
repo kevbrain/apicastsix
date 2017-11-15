@@ -124,11 +124,23 @@ local function create_token_path(service_id)
   return format('/services/%s/oauth_access_tokens.xml', service_id)
 end
 
-local authorize_options = {
-  headers = {
-    ['3scale-options'] =  'rejection_reason_header=1'
-  }
-}
+-- Returns the authorize options that 3scale backend accepts. Those options
+-- are specified via headers. Right now there are 2:
+--  - rejection_reason_header: asks backend to return why a call is denied
+--    (limits exceeded, application key invalid, etc.)
+--  - no_nody: when enabled, backend will not return a response body. The
+--    body has many information like metrics, limits, etc. This information is
+--    parsed only when using oauth. By enabling this option will save some work
+--    to the 3scale backend and reduce network traffic.
+local function authorize_options(using_oauth)
+  local headers = { ['3scale-options'] = 'rejection_reason_header=1' }
+
+  if not using_oauth then
+    headers['3scale-options'] = headers['3scale-options'] .. '&no_body=1'
+  end
+
+  return { headers = headers }
+end
 
 --- Call authrep (oauth_authrep) on backend.
 -- @tparam ?{table,...} query list of query parameters
@@ -138,8 +150,9 @@ function _M:authrep(...)
     return nil, 'not initialized'
   end
 
-  local auth_uri = authrep_path(self.version == 'oauth')
-  return call_backend_transaction(self, auth_uri, authorize_options, ...)
+  local using_oauth = self.version == 'oauth'
+  local auth_uri = authrep_path(using_oauth)
+  return call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
 end
 
 --- Call authorize (oauth_authorize) on backend.
@@ -150,8 +163,9 @@ function _M:authorize(...)
     return nil, 'not initialized'
   end
 
-  local auth_uri = auth_path(self.version == 'oauth')
-  return call_backend_transaction(self, auth_uri, authorize_options, ...)
+  local using_oauth = self.version == 'oauth'
+  local auth_uri = auth_path(using_oauth)
+  return call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
 end
 
 --- Calls backend to create an oauth token.

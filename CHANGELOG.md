@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## Added
+
+- New policy chains system. This allows users to write custom policies to configure what Apicast can do on each of the Nginx phases [PR #450](https://github.com/3scale/apicast/pull/450)
+
 ## [3.2.0-alpha1]
 
 ## Added
@@ -15,7 +19,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `/_threescale/healthz` endpoint returns a success status code, this is used for health checking in kubernetes environments [PR #285](https://github.com/3scale/apicast/pull/285)
 - Usage limit errors are now configurable to distinguish them from other authorization errors [PR #453](https://github.com/3scale/apicast/pull/453).
 - Templating nginx configuration with liquid. [PR #449](https://github.com/3scale/apicast/pull/449)
-- New policy chains system. This allows users to write custom policies to configure what Apicast can do on each of the Nginx phases [PR #450](https://github.com/3scale/apicast/pull/450)
 
 ## Changed
 

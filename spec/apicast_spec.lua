@@ -30,7 +30,7 @@ describe('APIcast module', function()
         return 'post_ok'
       end)
 
-      local ok, err = apicast:access()
+      local ok, err = apicast:access({})
 
       assert.same('ok', ok)
       assert.falsy(err)
@@ -43,7 +43,7 @@ describe('APIcast module', function()
         -- return nothing for example
       end)
 
-      local ok, err = apicast:access()
+      local ok, err = apicast:access({})
 
       assert.falsy(ok)
       assert.falsy(err)

@@ -3,6 +3,10 @@ use strict;
 use warnings FATAL => 'all';
 use v5.10.1;
 
+BEGIN {
+    $ENV{TEST_NGINX_BINARY} ||= 'openresty';
+}
+
 use Test::Nginx::Socket::Lua -Base;
 
 use Cwd qw(cwd);

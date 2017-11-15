@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Added
 
 - New policy chains system. This allows users to write custom policies to configure what Apicast can do on each of the Nginx phases [PR #450](https://github.com/3scale/apicast/pull/450)
+- Resolver can resolve nginx upstreams [PR #478](https://github.com/3scale/apicast/pull/478)
 
 ## [3.2.0-alpha1]
 

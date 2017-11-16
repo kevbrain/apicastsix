@@ -9,6 +9,10 @@ use TestAPIcast  -Base;
 use File::Copy "move";
 use File::Temp qw/ tempfile /;
 
+BEGIN {
+    $ENV{APICAST_OPENRESTY_BINARY} = $ENV{TEST_NGINX_BINARY};
+}
+
 add_block_preprocessor(sub {
     my $block = shift;
     my $seq = $block->seq_num;

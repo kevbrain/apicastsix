@@ -76,7 +76,9 @@ local function get_log_level(self, options)
 end
 
 function mt:__call(options)
-    local openresty = resty_env.get('APICAST_OPENRESTY_BINARY') or pick_openesty(self.openresty)
+    local openresty = resty_env.value('APICAST_OPENRESTY_BINARY') or
+                      resty_env.value('TEST_NGINX_BINARY') or
+                      pick_openesty(self.openresty)
     local dir = resty_env.get('APICAST_DIR') or pl.path.abspath('.')
     local config = configuration.new(dir)
     local path = options.template
@@ -102,6 +104,9 @@ function mt:__call(options)
 
     context.prefix = dir
     context.ca_bundle = pl.path.abspath(context.ca_bundle or pl.path.join(dir, 'conf', 'ca-bundle.crt'))
+
+    -- also use env from the config file
+    update_env(config.env or {})
 
     local nginx = nginx_config(context, dir, path, env)
 

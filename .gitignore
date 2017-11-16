@@ -1,6 +1,6 @@
 luacov.*.out
 local/
-t/servroot/
+t/servroot*/
 doc/api/
 node_modules
 .vagrant/

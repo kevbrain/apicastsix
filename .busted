@@ -10,7 +10,7 @@ local default = {
   verbose = true,
   ['shuffle-tests'] = true,
   ['shuffle-files'] = true,
-  lpath = path.join(root, 'spec/?.lua;')  .. path.join(root, 'apicast/src/?.lua;'),
+  lpath = path.join(root, 'spec/?.lua;')  .. path.join(root, 'gateway/src/?.lua;'),
 }
 
 if ci then

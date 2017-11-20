@@ -12,7 +12,7 @@ use Test::Nginx::Socket::Lua -Base;
 use Cwd qw(cwd);
 
 my $pwd = cwd();
-our $path = $ENV{TEST_NGINX_APICAST_PATH} ||= "$pwd/apicast";
+our $path = $ENV{TEST_NGINX_APICAST_PATH} ||= "$pwd/gateway";
 our $spec = "$pwd/spec";
 our $servroot = $Test::Nginx::Util::ServRoot;
 

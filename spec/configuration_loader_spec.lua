@@ -16,7 +16,7 @@ insulate('Configuration object', function()
     local configuration = require 'configuration_loader'
 
     it('runs boot', function()
-      local config, err = configuration.run_external_command('boot', 'apicast')
+      local config, err = configuration.run_external_command('boot', 'gateway')
 
       assert.falsy(config)
       assert.match('missing configuration', err)

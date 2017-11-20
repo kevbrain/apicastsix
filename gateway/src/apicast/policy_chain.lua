@@ -42,7 +42,8 @@ function _M.build(modules)
     local list = modules or { 'apicast.policy.apicast' }
 
     for i=1, #list do
-        chain[i] = _M.load(list[i])
+        -- TODO: make this error better, possibly not crash and just log and skip the module
+        chain[i] = _M.load(list[i]) or error("module " .. list[i] .. ' could not be loaded')
     end
 
     return _M.new(chain)
@@ -58,7 +59,13 @@ end
 function _M.load(module, ...)
     if type(module) == 'string' then
         ngx.log(ngx.DEBUG, 'loading policy module: ', module)
-        return require(module).new(...)
+        local mod = require(module)
+
+        if mod then
+            return mod.new(...)
+        else
+            return mod
+        end
     else
         return module
     end

@@ -13,7 +13,7 @@ local mt = {}
 
 local function load_commands(commands, argparse)
     for i=1, #commands do
-        commands[commands[i]] = require('apicast.cli.' .. commands[i]).new(argparse)
+        commands[commands[i]] = require('apicast.cli.command.' .. commands[i]).new(argparse)
     end
     return commands
 end

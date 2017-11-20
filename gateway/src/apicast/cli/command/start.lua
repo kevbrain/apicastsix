@@ -8,8 +8,8 @@ local concat = table.concat
 local exec = require('resty.execvp')
 local resty_env = require('resty.env')
 
-local Template = require('apicast.template')
-local configuration = require('apicast.configuration')
+local Template = require('apicast.cli.template')
+local configuration = require('apicast.cli.configuration')
 
 local pl = {
     path = require('pl.path'),

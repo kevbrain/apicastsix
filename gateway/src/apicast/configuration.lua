@@ -19,8 +19,8 @@ local inspect = require 'inspect'
 local re = require 'ngx.re'
 local env = require 'resty.env'
 local resty_url = require 'resty.url'
-local util = require 'util'
-local policy_chain = require 'policy_chain'
+local util = require 'apicast.util'
+local policy_chain = require 'apicast.policy_chain'
 
 local mt = { __index = _M, __tostring = function() return 'Configuration' end }
 
@@ -132,7 +132,7 @@ local function check_querystring_params(params, args)
   return match
 end
 
-local Service = require 'configuration.service'
+local Service = require 'apicast.configuration.service'
 
 local noop = function() end
 local function readonly_table(table)

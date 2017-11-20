@@ -7,6 +7,6 @@ busted.before_each(function()
   jwt_validators.set_system_clock(ngx_now)
 end)
 
-local oidc = require('oauth.oidc')
+local oidc = require('apicast.oauth.oidc')
 
 busted.before_each(oidc.reset)

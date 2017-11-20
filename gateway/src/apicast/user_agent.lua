@@ -4,7 +4,7 @@ local env = require 'resty.env'
 local setmetatable = setmetatable
 
 local _M = {
-  _VERSION = require('version')
+  _VERSION = require('apicast.version')
 }
 
 function _M.deployment()
@@ -23,7 +23,7 @@ function _M.system_information()
 end
 
 function _M.platform()
-  local module = require('module')
+  local module = require('apicast.module')
 
   if not module then
     return nil, 'invalid module'

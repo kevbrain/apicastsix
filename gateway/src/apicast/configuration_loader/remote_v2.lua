@@ -10,11 +10,11 @@ local type = type
 
 local resty_url = require 'resty.url'
 local http_ng = require "resty.http_ng"
-local user_agent = require 'user_agent'
+local user_agent = require 'apicast.user_agent'
 local cjson = require 'cjson'
 local resty_env = require 'resty.env'
 local re = require 'ngx.re'
-local configuration = require 'configuration'
+local configuration = require 'apicast.configuration'
 
 local _M = {
   _VERSION = '0.1'

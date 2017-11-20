@@ -1,7 +1,7 @@
-local _M = require('policy').new('Load Configuration')
+local _M = require('apicast.policy').new('Load Configuration')
 
-local configuration_loader = require('configuration_loader').new()
-local configuration_store = require('configuration_store')
+local configuration_loader = require('apicast.configuration_loader').new()
+local configuration_store = require('apicast.configuration_store')
 
 local new = _M.new
 

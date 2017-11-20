@@ -1,9 +1,9 @@
 file = {
-  '../gateway/src/proxy.lua',
-  '../gateway/src/configuration/service.lua',
+  '../gateway/src/apicast/proxy.lua',
+  '../gateway/src/apicast/configuration/service.lua',
   '../gateway/src/resty/http_ng.lua',
   '../gateway/src/resty/http_ng/backend/resty.lua',
-  '../gateway/src/backend_client.lua',
+  '../gateway/src/apicast/backend_client.lua',
   '../gateway/src/resty/synchronization.lua',
 }
 dir = '../doc/api'

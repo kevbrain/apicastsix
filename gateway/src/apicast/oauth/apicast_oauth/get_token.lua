@@ -1,8 +1,8 @@
 local cjson = require 'cjson'
-local ts = require 'threescale_utils'
+local ts = require 'apicast.threescale_utils'
 local re = require 'ngx.re'
 local env = require 'resty.env'
-local backend_client = require('backend_client')
+local backend_client = require('apicast.backend_client')
 local http_ng_ngx = require('resty.http_ng.backend.ngx')
 local tonumber = tonumber
 

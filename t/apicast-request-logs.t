@@ -12,7 +12,7 @@ __DATA__
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -63,7 +63,7 @@ env APICAST_RESPONSE_CODES=1;
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           id = 42,

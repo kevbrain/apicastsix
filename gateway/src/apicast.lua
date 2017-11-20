@@ -1,13 +1,13 @@
-local balancer = require('balancer')
+local balancer = require('apicast.balancer')
 local math = math
 local setmetatable = setmetatable
 
-local user_agent = require('user_agent')
+local user_agent = require('apicast.user_agent')
 
 local noop = function() end
 
 local _M = {
-  _VERSION = require('version'),
+  _VERSION = require('apicast.version'),
   _NAME = 'APIcast'
 }
 

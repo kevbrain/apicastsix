@@ -4,18 +4,18 @@
 -- when calling the policy chain methods. This 'context' contains information
 -- shared among policies.
 
-local policy_chain = require('policy_chain')
-local policy = require('policy')
-local linked_list = require('linked_list')
+local policy_chain = require('apicast.policy_chain')
+local policy = require('apicast.policy')
+local linked_list = require('apicast.linked_list')
 
 local setmetatable = setmetatable
 
 local _M = { }
 
 local DEFAULT_POLICIES = {
-    'policy.load_configuration',
-    'policy.find_service',
-    'policy.local_chain'
+    'apicast.policy.load_configuration',
+    'apicast.policy.find_service',
+    'apicast.policy.local_chain'
 }
 
 local mt = { __index = _M }

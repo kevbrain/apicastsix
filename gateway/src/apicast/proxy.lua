@@ -8,9 +8,9 @@
 
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
-local util = require('util')
+local util = require('apicast.util')
 local resty_lrucache = require('resty.lrucache')
-local backend_cache_handler = require('backend.cache_handler')
+local backend_cache_handler = require('apicast.backend.cache_handler')
 
 local resty_url = require 'resty.url'
 
@@ -24,7 +24,7 @@ local setmetatable = setmetatable
 local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
 local semaphore = require('ngx.semaphore')
-local backend_client = require('backend_client')
+local backend_client = require('apicast.backend_client')
 local http_ng_ngx = require('resty.http_ng.backend.ngx')
 local timers = semaphore.new(tonumber(env.get('APICAST_REPORTING_THREADS') or 0))
 

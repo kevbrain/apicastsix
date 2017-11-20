@@ -1,4 +1,4 @@
-local Service = require 'configuration.service'
+local Service = require 'apicast.configuration.service'
 
 describe('Service object', function()
   describe(':credentials', function()

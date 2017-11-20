@@ -1,4 +1,4 @@
-local _M = require('oauth.oidc')
+local _M = require('apicast.oauth.oidc')
 
 local jwt_validators = require('resty.jwt-validators')
 local jwt = require('resty.jwt')

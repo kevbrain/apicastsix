@@ -1,10 +1,10 @@
 local _M = {}
 
 local cjson = require('cjson')
-local context = require('executor'):context()
+local context = require('apicast.executor'):context()
 local router = require('router')
-local configuration_parser = require('configuration_parser')
-local configuration_loader = require('configuration_loader')
+local configuration_parser = require('apicast.configuration_parser')
+local configuration_loader = require('apicast.configuration_loader')
 local inspect = require('inspect')
 local resolver_cache = require('resty.resolver.cache')
 local env = require('resty.env')
@@ -87,7 +87,7 @@ function _M.delete_config()
   ngx.say(response)
 end
 
-local util = require 'util'
+local util = require 'apicast.util'
 
 function _M.boot()
   local data = util.timer('configuration.boot', configuration_loader.boot)

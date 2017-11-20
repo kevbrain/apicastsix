@@ -2,7 +2,7 @@ local jwt = require 'resty.jwt'
 local jwt_validators = require 'resty.jwt-validators'
 
 local lrucache = require 'resty.lrucache'
-local util = require 'util'
+local util = require 'apicast.util'
 
 local setmetatable = setmetatable
 local len = string.len

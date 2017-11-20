@@ -6,8 +6,8 @@ local tonumber = tonumber
 local resty_url = require 'resty.url'
 local http = require "resty.resolver.http"
 local socket_resolver = require('resty.resolver.socket')
-local configuration_parser = require 'configuration_parser'
-local user_agent = require 'user_agent'
+local configuration_parser = require 'apicast.configuration_parser'
+local user_agent = require 'apicast.user_agent'
 local env = require 'resty.env'
 
 local _M = {

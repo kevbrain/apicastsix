@@ -1,6 +1,6 @@
 local apicast = require('apicast').new()
 local iputils = require("resty.iputils")
-local default_balancer = require('balancer').default_balancer
+local default_balancer = require('apicast.balancer').default_balancer
 local resty_balancer = require('resty.balancer')
 
 local _M = { _VERSION = '0.0' }

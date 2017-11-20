@@ -15,7 +15,7 @@ lua_shared_dict api_keys 1m;
 lua_package_path "$TEST_NGINX_LUA_PATH";
 init_by_lua_block {
   ngx.shared.api_keys:set('42:value:usage%5Bhits%5D=2', 200)
-  require('configuration_loader').mock({
+  require('apicast.configuration_loader').mock({
     services = {
       {
         id = 42,
@@ -71,7 +71,7 @@ include $TEST_NGINX_UPSTREAM_CONFIG;
 lua_package_path "$TEST_NGINX_LUA_PATH";
 init_by_lua_block {
   ngx.shared.api_keys:set('42:foo:usage%5Bhits%5D=1', 200)
-  require('configuration_loader').mock({
+  require('apicast.configuration_loader').mock({
     services = {
       {
         id = 42,
@@ -153,7 +153,7 @@ lua_package_path "$TEST_NGINX_LUA_PATH";
 lua_shared_dict api_keys 1m;
 init_by_lua_block {
   ngx.shared.api_keys:set('42:val:usage%5Bhits%5D=2', 200)
-  require('configuration_loader').mock({
+  require('apicast.configuration_loader').mock({
     services = {
       {
         id = 42,

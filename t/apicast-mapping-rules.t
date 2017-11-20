@@ -11,7 +11,7 @@ First call is done synchronously and the second out of band.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -57,7 +57,7 @@ url params in a POST call are taken into account when matching mapping rules.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -102,7 +102,7 @@ request body params in a POST call are taken into account when matching mapping 
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -150,7 +150,7 @@ precedence.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           id = 42,

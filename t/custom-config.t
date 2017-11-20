@@ -16,9 +16,9 @@ __DATA__
   location /t {
     content_by_lua_block {
       path = package.path
-      require('proxy')
+      require('apicast.proxy')
       assert(path == package.path)
-      package.loaded.proxy = nil
+      package.loaded['apicast.proxy'] = nil
       ngx.exit(ngx.HTTP_OK)
     }
   }

@@ -11,7 +11,7 @@ local select = select
 
 local http_authorization = require 'resty.http_authorization'
 
-local oauth = require('oauth')
+local oauth = require('apicast.oauth')
 
 local _M = { }
 local mt = { __index = _M  }

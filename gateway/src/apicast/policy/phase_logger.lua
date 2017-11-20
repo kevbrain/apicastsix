@@ -2,7 +2,7 @@
 -- the nginx phases. It's useful when testing to make sure that all the phases
 -- are executed.
 
-local policy = require('policy')
+local policy = require('apicast.policy')
 local _M = policy.new('Phase logger')
 
 for _, phase in policy.phases() do

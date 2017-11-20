@@ -1,4 +1,4 @@
-local policy = require 'policy'
+local policy = require 'apicast.policy'
 
 describe('policy', function()
   local phases = {

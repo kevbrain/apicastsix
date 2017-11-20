@@ -1,12 +1,12 @@
-local configuration_store = require 'configuration_store'
-local Service = require 'configuration.service'
+local configuration_store = require 'apicast.configuration_store'
+local Service = require 'apicast.configuration.service'
 
 describe('Proxy', function()
   local configuration, proxy
 
   before_each(function()
     configuration = configuration_store.new()
-    proxy = require('proxy').new(configuration)
+    proxy = require('apicast.proxy').new(configuration)
   end)
 
   it('has access function', function()

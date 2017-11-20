@@ -1,4 +1,4 @@
-local loader = require 'configuration_loader.mock'
+local loader = require 'apicast.configuration_loader.mock'
 
 describe('Configuration Mock loader', function()
   describe('.call', function()

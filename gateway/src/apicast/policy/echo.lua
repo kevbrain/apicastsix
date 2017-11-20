@@ -1,4 +1,4 @@
-local policy = require('policy')
+local policy = require('apicast.policy')
 local _M = policy.new('Echo Policy')
 
 function _M.access()

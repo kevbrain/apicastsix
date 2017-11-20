@@ -16,7 +16,7 @@ local len = string.len
 local format = string.format
 
 local http_ng = require('resty.http_ng')
-local user_agent = require('user_agent')
+local user_agent = require('apicast.user_agent')
 local resty_url = require('resty.url')
 local resty_env = require('resty.env')
 

@@ -1,7 +1,7 @@
-local _M = require 'configuration_loader.remote_v2'
+local _M = require 'apicast.configuration_loader.remote_v2'
 local test_backend_client = require 'resty.http_ng.backend.test'
 local cjson = require 'cjson'
-local user_agent = require 'user_agent'
+local user_agent = require 'apicast.user_agent'
 local env = require 'resty.env'
 
 describe('Configuration Remote Loader V2', function()

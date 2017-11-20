@@ -1,6 +1,6 @@
-local random = require 'resty.random'
-local ts = require 'threescale_utils'
-local backend_client = require('backend_client')
+local random = require('resty.random')
+local ts = require('apicast.threescale_utils')
+local backend_client = require('apicast.backend_client')
 local http_ng_ngx = require('resty.http_ng.backend.ngx')
 
 -- returns a unique string for the client_id. it will be short lived

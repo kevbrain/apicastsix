@@ -1,4 +1,4 @@
-local policy = require 'policy'
+local policy = require 'apicast.policy'
 
 describe('policy_chain', function()
   local phases = {
@@ -9,7 +9,7 @@ describe('policy_chain', function()
   }
 
   it('defines a method for each of the nginx phases supported', function()
-    local policy_chain = require 'policy_chain'
+    local policy_chain = require 'apicast.policy_chain'
 
     for _, phase in ipairs(phases) do
       assert.equals('function', type(policy_chain[phase]))
@@ -32,7 +32,7 @@ describe('policy_chain', function()
     stub(custom_policy_2, 'access')
 
     -- Build the policy chain
-    local policy_chain = require 'policy_chain'
+    local policy_chain = require 'apicast.policy_chain'
     local chain = policy_chain.build({ custom_policy_1, custom_policy_2 })
 
     chain:init()
@@ -48,7 +48,7 @@ describe('policy_chain', function()
 
   it('uses APIcast as default when no policies are specified', function()
     local apicast = require 'apicast'
-    local policy_chain = require 'policy_chain'
+    local policy_chain = require 'apicast.policy_chain'
 
     -- Stub apicast methods to avoid calling them. We are just interested in
     -- knowing whether they were called.
@@ -74,7 +74,7 @@ describe('policy_chain', function()
       end
     end
 
-    local policy_chain = require 'policy_chain'
+    local policy_chain = require 'apicast.policy_chain'
     local sorted_policies = { policies[2], policies[3], policies[1] }
     local chain = policy_chain.build(sorted_policies)
 
@@ -83,7 +83,7 @@ describe('policy_chain', function()
   end)
 
   it('does not allow to modify phase methods after the chain has been built', function()
-    local policy_chain = require 'policy_chain'
+    local policy_chain = require 'apicast.policy_chain'
 
     for _, phase in ipairs(phases) do
       assert.has_error(function()
@@ -93,7 +93,7 @@ describe('policy_chain', function()
   end)
 
   it('does not allow to add new methods to the chain after it has been built', function()
-    local policy_chain = require 'policy_chain'
+    local policy_chain = require 'apicast.policy_chain'
 
     assert.has_error(function()
       policy_chain['new_phase'] = function() end
@@ -108,7 +108,7 @@ describe('policy_chain', function()
       local policy_2 = policy.new('2')
       policy_2.export = function() return { shared_data_2 = '2' } end
 
-      local policy_chain = require 'policy_chain'
+      local policy_chain = require 'apicast.policy_chain'
       local chain = policy_chain.build({ policy_1, policy_2 })
 
       local shared_data = chain:export()
@@ -120,7 +120,7 @@ describe('policy_chain', function()
       local policy_1 = policy.new('1')
       policy_1.export = function() return { shared_data = '1' } end
 
-      local policy_chain = require 'policy_chain'
+      local policy_chain = require 'apicast.policy_chain'
       local chain = policy_chain.build({ policy_1 })
 
       local shared_data = chain:export()
@@ -139,7 +139,7 @@ describe('policy_chain', function()
         local policy_2 = policy.new('custom_authorizer')
         policy_2.export = function() return { shared_data_1 = '2' } end
 
-        local policy_chain = require 'policy_chain'
+        local policy_chain = require 'apicast.policy_chain'
         local chain = policy_chain.build({ policy_1, policy_2 })
 
         local shared_data = chain:export()

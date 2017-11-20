@@ -1,5 +1,5 @@
-local _M = require 'configuration_parser'
-local configuration = require 'configuration'
+local _M = require 'apicast.configuration_parser'
+local configuration = require 'apicast.configuration'
 local cjson = require 'cjson'
 
 describe('Configuration Parser', function()

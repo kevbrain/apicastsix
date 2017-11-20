@@ -1,6 +1,6 @@
-local get_token = require 'oauth.apicast_oauth.get_token'
-local callback = require 'oauth.apicast_oauth.authorized_callback'
-local authorize = require 'oauth.apicast_oauth.authorize'
+local get_token = require 'apicast.oauth.apicast_oauth.get_token'
+local callback = require 'apicast.oauth.apicast_oauth.authorized_callback'
+local authorize = require 'apicast.oauth.apicast_oauth.authorize'
 local router = require 'router'
 
 local setmetatable = setmetatable

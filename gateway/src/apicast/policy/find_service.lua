@@ -1,8 +1,8 @@
 local next = next
 
-local policy = require('policy')
+local policy = require('apicast.policy')
 local _M = policy.new('Find Service Policy')
-local configuration_store = require 'configuration_store'
+local configuration_store = require 'apicast.configuration_store'
 local new = _M.new
 
 local function find_service_strict(configuration, host)

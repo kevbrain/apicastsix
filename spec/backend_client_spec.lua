@@ -1,5 +1,5 @@
-local _M = require('backend_client')
-local configuration = require('configuration')
+local _M = require('apicast.backend_client')
+local configuration = require('apicast.configuration')
 local test_backend_client = require 'resty.http_ng.backend.test'
 
 describe('backend client', function()

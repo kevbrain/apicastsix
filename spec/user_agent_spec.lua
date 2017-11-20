@@ -1,4 +1,4 @@
-local user_agent = require 'user_agent'
+local user_agent = require 'apicast.user_agent'
 local ffi = require("ffi")
 local env = require 'resty.env'
 
@@ -69,7 +69,7 @@ describe('User Agent', function()
 
     it('works when module fails to load', function()
 
-      local module = require('module')
+      local module = require('apicast.module')
 
       stub(module, 'require').returns(42, 'failed to load')
 

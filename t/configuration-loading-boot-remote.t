@@ -25,7 +25,7 @@ env PATH;
 --- config
 location = /t {
   content_by_lua_block {
-    local loader = require('configuration_loader.remote_v2')
+    local loader = require('apicast.configuration_loader.remote_v2')
     ngx.say(assert(loader:call()))
   }
 }
@@ -52,7 +52,7 @@ env PATH;
 --- config
 location = /t {
   content_by_lua_block {
-    local loader = require('configuration_loader.remote_v2')
+    local loader = require('apicast.configuration_loader.remote_v2')
     ngx.say(assert(loader:call('localhost')))
   }
 }

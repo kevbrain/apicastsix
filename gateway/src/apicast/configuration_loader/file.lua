@@ -4,7 +4,7 @@ local tostring = tostring
 local open = io.open
 local assert = assert
 local sub = string.sub
-local util = require 'util'
+local util = require 'apicast.util'
 local env = require 'resty.env'
 
 local _M = {

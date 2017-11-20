@@ -36,7 +36,7 @@ backend.send = function(_, request)
   return response.new(request, res.status, res.header, res.body)
 end
 
-local balancer = require('balancer')
+local balancer = require('apicast.balancer')
 local resty_resolver = require('resty.resolver')
 local resty_url = require('resty.url')
 

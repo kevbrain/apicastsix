@@ -12,8 +12,8 @@ local type = type
 local require = require
 local noop = function() end
 
-local linked_list = require('linked_list')
-local policy = require('policy')
+local linked_list = require('apicast.linked_list')
+local policy = require('apicast.policy')
 
 local _M = {
 

@@ -1,10 +1,10 @@
-local configuration_store = require('configuration_store')
-local configuration_parser = require 'configuration_parser'
-local mock_loader = require 'configuration_loader.mock'
-local file_loader = require 'configuration_loader.file'
-local remote_loader_v1 = require 'configuration_loader.remote_v1'
-local remote_loader_v2 = require 'configuration_loader.remote_v2'
-local util = require 'util'
+local configuration_store = require('apicast.configuration_store')
+local configuration_parser = require 'apicast.configuration_parser'
+local mock_loader = require 'apicast.configuration_loader.mock'
+local file_loader = require 'apicast.configuration_loader.file'
+local remote_loader_v1 = require 'apicast.configuration_loader.remote_v1'
+local remote_loader_v2 = require 'apicast.configuration_loader.remote_v2'
+local util = require 'apicast.util'
 local env = require('resty.env')
 local resty_url = require('resty.url')
 local synchronization = require('resty.synchronization').new(1)
@@ -55,7 +55,7 @@ local function ttl()
 end
 
 function _M.global(contents)
-  local context = require('executor'):context()
+  local context = require('apicast.executor'):context()
 
   return _M.configure(context.configuration, contents)
 end

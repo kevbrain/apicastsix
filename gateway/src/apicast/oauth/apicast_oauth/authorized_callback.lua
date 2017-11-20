@@ -5,7 +5,7 @@
 -- to this endpoint, with the same status code that we sent him at the
 -- moment of the first redirect
 local random = require 'resty.random'
-local ts = require 'threescale_utils'
+local ts = require 'apicast.threescale_utils'
 
 -- The authorization server should send some data in the callback response to let the
 -- API Gateway know which user to associate with the token.

@@ -1,4 +1,4 @@
-local loader = require 'configuration_loader.remote_v1'
+local loader = require 'apicast.configuration_loader.remote_v1'
 
 describe('Configuration object', function()
 

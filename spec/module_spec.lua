@@ -26,7 +26,7 @@ describe('module', function()
     end)
 
     it('defaults to apicast', function()
-      local apicast = require('apicast')
+      local apicast = require('apicast.policy.apicast')
       local module = require('apicast.module')
 
       assert.truthy(module._NAME)

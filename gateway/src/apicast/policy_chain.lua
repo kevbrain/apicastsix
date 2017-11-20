@@ -39,7 +39,7 @@ local mt = {
 -- @treturn PolicyChain New PolicyChain
 function _M.build(modules)
     local chain = {}
-    local list = modules or { 'apicast' }
+    local list = modules or { 'apicast.policy.apicast' }
 
     for i=1, #list do
         chain[i] = _M.load(list[i])

@@ -11,7 +11,7 @@ local function build_default_chain()
     -- Needed to keep compatibility with the old module system.
     module = 'apicast.module'
   else
-    module = 'apicast'
+    module = 'apicast.policy.apicast'
   end
 
   return require('apicast.policy_chain').build({ module })

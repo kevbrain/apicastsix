@@ -1,4 +1,4 @@
-local apicast = require('apicast').new()
+local apicast = require('apicast.policy.apicast').new()
 local iputils = require("resty.iputils")
 local default_balancer = require('apicast.balancer').default_balancer
 local resty_balancer = require('resty.balancer')

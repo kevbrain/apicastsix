@@ -1,4 +1,4 @@
-local _M = require 'apicast'
+local _M = require 'apicast.policy.apicast'
 
 describe('APIcast module', function()
 

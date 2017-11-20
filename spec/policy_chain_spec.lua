@@ -47,7 +47,7 @@ describe('policy_chain', function()
   end)
 
   it('uses APIcast as default when no policies are specified', function()
-    local apicast = require 'apicast'
+    local apicast = require 'apicast.policy.apicast'
     local policy_chain = require 'apicast.policy_chain'
 
     -- Stub apicast methods to avoid calling them. We are just interested in

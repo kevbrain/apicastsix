@@ -4,6 +4,8 @@
 -- when calling the policy chain methods. This 'context' contains information
 -- shared among policies.
 
+require('apicast.loader') -- to load code from deprecated paths
+
 local policy_chain = require('apicast.policy_chain')
 local policy = require('apicast.policy')
 local linked_list = require('apicast.linked_list')

@@ -11,7 +11,7 @@
 -- by default, 'Access-Control-Allow-Origin' in the response will be set to
 -- 'example.com' too.
 
-local policy = require('policy')
+local policy = require('apicast.policy')
 local _M = policy.new('CORS Policy')
 
 local new = _M.new

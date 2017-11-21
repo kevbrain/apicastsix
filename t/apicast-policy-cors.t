@@ -18,8 +18,8 @@ Returns 204 and sets the appropriate headers.
       "backend_authentication_value": "token-value",
       "proxy": {
         "policy_chain": [
-          { "name": "policy.cors" },
-          { "name": "apicast" }
+          { "name": "apicast.policy.cors" },
+          { "name": "apicast.policy.apicast" }
         ],
         "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
         "proxy_rules": [
@@ -57,8 +57,8 @@ the request. So for example, if the request sets the 'Origin' header to
       "backend_authentication_value": "token-value",
       "proxy": {
         "policy_chain": [
-          { "name": "policy.cors" },
-          { "name": "apicast" }
+          { "name": "apicast.policy.cors" },
+          { "name": "apicast.policy.apicast" }
         ],
         "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
         "proxy_rules": [
@@ -105,6 +105,7 @@ Access-Control-Allow-Credentials: true
 === TEST 3: CORS actual request with custom config
 This tests a CORS actual (not preflight) request. We use a custom config to set
 the CORS headers in the response.
+--- ONLY
 --- configuration
 {
   "services": [
@@ -115,12 +116,12 @@ the CORS headers in the response.
       "backend_authentication_value": "token-value",
       "proxy": {
         "policy_chain": [
-          { "name": "policy.cors",
+          { "name": "apicast.policy.cors",
             "configuration": { "allow_headers": [ "X-Custom-Header-1", "X-Custom-Header-2" ],
                                "allow_methods": [ "POST", "GET", "OPTIONS" ],
                                "allow_origin" : "*",
                                "allow_credentials": false } },
-          { "name": "apicast" }
+          { "name": "apicast.policy.apicast" }
         ],
         "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
         "proxy_rules": [

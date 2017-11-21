@@ -34,7 +34,7 @@ RUN cpan install version \
  && cpan install Carton
 
 COPY cpanfile ${USER_HOME}
-COPY apicast/apicast-0.1-0.rockspec ${USER_HOME}/apicast/
+COPY gateway/apicast-0.1-0.rockspec ${USER_HOME}/apicast/
 COPY rockspec ${USER_HOME}
 
 WORKDIR ${USER_HOME}

@@ -1,4 +1,4 @@
-local loader = require 'configuration_loader.file'
+local loader = require 'apicast.configuration_loader.file'
 
 describe('Configuration File loader', function()
   describe('.call', function()

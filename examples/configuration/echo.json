@@ -15,7 +15,6 @@
           "host": "echo"
         },
         "policy_chain": [
-          { "name": "policy.echo" },
           { "name": "apicast" }
         ],
         "proxy_rules": [

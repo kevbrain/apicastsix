@@ -1,12 +1,12 @@
-local oauth = require 'oauth'
+local oauth = require 'apicast.oauth'
 
 describe('OAuth', function()
   describe('.oidc', function()
-    it(function() assert.equal(require('oauth.oidc'), oauth.oidc) end)
+    it(function() assert.equal(require('apicast.oauth.oidc'), oauth.oidc) end)
   end)
 
   describe('.apicast', function()
-    it(function() assert.equal(require('oauth.apicast_oauth'), oauth.apicast) end)
+    it(function() assert.equal(require('apicast.oauth.apicast_oauth'), oauth.apicast) end)
   end)
 
 end)

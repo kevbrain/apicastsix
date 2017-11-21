@@ -19,7 +19,7 @@ __DATA__
   lua_package_path "$TEST_NGINX_LUA_PATH";
   include $TEST_NGINX_UPSTREAM_CONFIG;
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42,
           backend_version = 'oauth',

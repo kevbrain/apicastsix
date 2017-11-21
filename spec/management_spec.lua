@@ -1,5 +1,5 @@
-local _M = require('management')
-local configuration_store = require('configuration_store')
+local _M = require('apicast.management')
+local configuration_store = require('apicast.configuration_store')
 
 insulate('Management API', function()
 

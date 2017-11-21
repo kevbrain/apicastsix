@@ -1,4 +1,4 @@
-local linked_list = require 'linked_list'
+local linked_list = require 'apicast.linked_list'
 
 describe('linked_list', function()
   describe('readonly', function()

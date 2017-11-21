@@ -1,10 +1,10 @@
-local configuration = require('configuration')
+local configuration = require('apicast.configuration')
 
 describe('find_service', function()
   describe('.rewrite', function()
     describe('when path routing is enabled', function()
       it('finds the service by matching rules and stores it in the given context', function()
-        require('configuration_store').path_routing = true
+        require('apicast.configuration_store').path_routing = true
 
         -- We access ngx.var.request and ngx.req.get_uri_args directly in the
         -- code, so we need to mock them. We should probably try to avoid this
@@ -12,7 +12,7 @@ describe('find_service', function()
         ngx.var = { request = 'GET /def HTTP/1.1' }
         ngx.req = { get_uri_args = function() return {} end }
 
-        local find_service_policy = require('policy.find_service').new()
+        local find_service_policy = require('apicast.policy.find_service').new()
         local host = 'example.com'
 
         local service_1 = configuration.parse_service({
@@ -42,7 +42,7 @@ describe('find_service', function()
           }
         })
 
-        local configuration_store = require('configuration_store').new()
+        local configuration_store = require('apicast.configuration_store').new()
         configuration_store:store(
           { services = { service_1, service_2, service_3 } })
 
@@ -54,12 +54,12 @@ describe('find_service', function()
 
       describe('and no rules are matched', function()
         it('finds a service for the host in the context and stores the service there', function()
-          require('configuration_store').path_routing = true
+          require('apicast.configuration_store').path_routing = true
           ngx.var = { request = 'GET /abc HTTP/1.1' }
           ngx.req = { get_uri_args = function() return {} end }
 
           local host = 'example.com'
-          local find_service_policy = require('policy.find_service').new()
+          local find_service_policy = require('apicast.policy.find_service').new()
 
           local service = configuration.parse_service({
             id = 42,
@@ -70,7 +70,7 @@ describe('find_service', function()
             }
           })
 
-          local configuration_store = require('configuration_store').new()
+          local configuration_store = require('apicast.configuration_store').new()
           configuration_store:add(service)
 
           local context = { host = host, configuration = configuration_store }
@@ -82,12 +82,12 @@ describe('find_service', function()
 
       describe('and no rules are matches and there is not a service for the host', function()
         it('stores nil in the service field of the given context', function()
-          require('configuration_store').path_routing = true
+          require('apicast.configuration_store').path_routing = true
           ngx.var = { request = 'GET /abc HTTP/1.1' }
           ngx.req = { get_uri_args = function() return {} end }
 
-          local find_service_policy = require('policy.find_service').new()
-          local configuration_store = require('configuration_store').new()
+          local find_service_policy = require('apicast.policy.find_service').new()
+          local configuration_store = require('apicast.configuration_store').new()
 
           local context = {
             host = 'example.com',
@@ -101,10 +101,10 @@ describe('find_service', function()
     end)
 
     describe('when path routing is disabled', function()
-      require('configuration_store').path_routing = false
+      require('apicast.configuration_store').path_routing = false
 
       it('finds the service of the host in the given context and stores it there', function()
-        local find_service_policy = require('policy.find_service').new()
+        local find_service_policy = require('apicast.policy.find_service').new()
 
         local host = 'example.com'
         local service = configuration.parse_service({
@@ -115,7 +115,7 @@ describe('find_service', function()
                               metric_system_name = 'hits', delta = 1 } }
           }
         })
-        local configuration_store = require('configuration_store').new()
+        local configuration_store = require('apicast.configuration_store').new()
         configuration_store:add(service)
 
         local context = { host = host, configuration = configuration_store }
@@ -125,8 +125,8 @@ describe('find_service', function()
 
       describe('and there is not a service for the host', function()
         it('stores nil in the service field of the given context', function()
-          local find_service_policy = require('policy.find_service').new()
-          local configuration_store = require('configuration_store').new()
+          local find_service_policy = require('apicast.policy.find_service').new()
+          local configuration_store = require('apicast.configuration_store').new()
 
           local context = {
             host = 'example.com',

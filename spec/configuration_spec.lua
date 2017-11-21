@@ -1,4 +1,4 @@
-local configuration = require 'configuration'
+local configuration = require 'apicast.configuration'
 local env = require 'resty.env'
 
 describe('Configuration object', function()

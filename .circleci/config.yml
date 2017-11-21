@@ -48,12 +48,12 @@ jobs:
       - run: rm -rf lua_modules
       - restore_cache:
           keys:
-            - apicast-rocks-{{ arch }}-{{ checksum "apicast/Roverfile.lock" }}
+            - apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
             - apicast-rocks-{{ arch }}-{{ .Branch }}
             - apicast-rocks-{{ arch }}-master
       - run: make dependencies
       - save_cache:
-          key: apicast-rocks-{{ arch }}-{{ checksum "apicast/Roverfile.lock" }}
+          key: apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
           paths:
             - lua_modules
       - run: mkdir -p tmp/junit

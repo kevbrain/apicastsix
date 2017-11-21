@@ -1,4 +1,4 @@
-local configuration = require 'configuration_store'
+local configuration = require('apicast.configuration_store')
 
 describe('Configuration Store', function()
 

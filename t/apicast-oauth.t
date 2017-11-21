@@ -17,7 +17,7 @@ __DATA__
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { backend_version = 'oauth',
           proxy = { oauth_login_url = "http://example.com/redirect" } }
@@ -53,7 +53,7 @@ called oauth_authorize.xml
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth',
           backend_authentication_type = 'provider_key',
@@ -92,7 +92,7 @@ Location: http://example.com/redirect\?response_type=code&client_id=id&state=[a-
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
          id = 42, backend_version = 'oauth',
@@ -130,7 +130,7 @@ Location: http://example.com/redirect\?response_type=token&client_id=id&scope=wh
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -160,7 +160,7 @@ called oauth_authorize.xml
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -189,7 +189,7 @@ called oauth_authorize.xml
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -209,7 +209,7 @@ GET /callback
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -234,7 +234,7 @@ include $TEST_NGINX_APICAST_CONFIG;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { backend_version = 'oauth' }
       }
@@ -258,7 +258,7 @@ Not part of the RFC. This is the Gateway API to create access tokens and redirec
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth', oauth_login_url = "" }
       }
@@ -269,7 +269,7 @@ Not part of the RFC. This is the Gateway API to create access tokens and redirec
 
   location = /fake-authorize {
     content_by_lua_block {
-      local authorize = require('oauth.apicast_oauth.authorize')
+      local authorize = require('apicast.oauth.apicast_oauth.authorize')
       local redirect_uri = 'http://example.com/redirect'
       local nonce = authorize.persist_nonce(42, {
         client_id = 'foo',
@@ -300,7 +300,7 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth',
          backend_authentication_type = 'provider_key',
@@ -315,8 +315,8 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
 
   location = /t {
     content_by_lua_block {
-      local authorize = require('oauth.apicast_oauth.authorize')
-      local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
+      local authorize = require('apicast.oauth.apicast_oauth.authorize')
+      local authorized_callback = require('apicast.oauth.apicast_oauth.authorized_callback')
       local redirect_uri = 'http://example.com/redirect'
       local nonce = authorize.persist_nonce(42, {
         client_id = 'foo',
@@ -376,7 +376,7 @@ GET /t
   include $TEST_NGINX_UPSTREAM_CONFIG;
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',
@@ -421,7 +421,7 @@ yay, upstream
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42,
           backend_version = 'oauth',
@@ -434,7 +434,7 @@ yay, upstream
 
   location = /fake-authorize {
     content_by_lua_block {
-      local authorize = require('oauth.apicast_oauth.authorize')
+      local authorize = require('apicast.oauth.apicast_oauth.authorize')
       local params = authorize.extract_params()
       local nonce = authorize.persist_nonce(42, params)
       ngx.exec('/callback?redirect_uri=' .. params.redirect_uri .. '&state=' .. nonce)
@@ -456,7 +456,7 @@ Location: http://example.com/redirect\?code=\w+&state=12345
   include $TEST_NGINX_UPSTREAM_CONFIG;
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',
@@ -500,7 +500,7 @@ yay, upstream
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',
@@ -533,7 +533,7 @@ credentials missing!
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',
@@ -573,7 +573,7 @@ Regression test for CVE-2017-7512
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth',
          backend_authentication_type = 'provider_key',
@@ -587,8 +587,8 @@ Regression test for CVE-2017-7512
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorize = require('oauth.apicast_oauth.authorize')
-      local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
+      local authorize = require('apicast.oauth.apicast_oauth.authorize')
+      local authorized_callback = require('apicast.oauth.apicast_oauth.authorized_callback')
       local redirect_uri = 'http://example.com/redirect'
       local nonce = authorize.persist_nonce(42, {
         client_id = 'foo',
@@ -641,7 +641,7 @@ GET /t
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth',
          backend_authentication_type = 'provider_key',
@@ -655,8 +655,8 @@ GET /t
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorize = require('oauth.apicast_oauth.authorize')
-      local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
+      local authorize = require('apicast.oauth.apicast_oauth.authorize')
+      local authorized_callback = require('apicast.oauth.apicast_oauth.authorized_callback')
       local code = 'authcode'
       local params = { user_id = 'someuser' }
       local client_data = {
@@ -712,7 +712,7 @@ GET /t
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth',
          backend_authentication_type = 'provider_key',
@@ -726,7 +726,7 @@ GET /t
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
+      local authorized_callback = require('apicast.oauth.apicast_oauth.authorized_callback')
       local code = 'authcode'
       local params = { user_id = 'someuser' }
       local client_data = {
@@ -795,7 +795,7 @@ When a token TTL is not specified, it applies a default of 7 days (604800 s)
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth',
          backend_authentication_type = 'provider_key',
@@ -809,7 +809,7 @@ When a token TTL is not specified, it applies a default of 7 days (604800 s)
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
+      local authorized_callback = require('apicast.oauth.apicast_oauth.authorized_callback')
       local code = 'authcode'
       local params = { user_id = 'someuser' }
       local client_data = {
@@ -877,7 +877,7 @@ When an empty token TTL is received, Apicast applies a default of 7 days (604800
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         { id = 42, backend_version = 'oauth',
          backend_authentication_type = 'provider_key',
@@ -891,7 +891,7 @@ When an empty token TTL is received, Apicast applies a default of 7 days (604800
   lua_need_request_body on;
   location = /t {
     content_by_lua_block {
-      local authorized_callback = require('oauth.apicast_oauth.authorized_callback')
+      local authorized_callback = require('apicast.oauth.apicast_oauth.authorized_callback')
       local code = 'authcode'
       local params = { user_id = 'someuser' }
       local client_data = {
@@ -959,7 +959,7 @@ necessary.
   include $TEST_NGINX_UPSTREAM_CONFIG;
 
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           backend_version = 'oauth',

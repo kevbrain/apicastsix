@@ -1,4 +1,4 @@
-local util = require 'util'
+local util = require 'apicast.util'
 
 describe('util',function()
   describe('system', function()

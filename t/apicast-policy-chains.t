@@ -18,7 +18,7 @@ defined at the service level.
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
-    require('configuration_loader').mock({
+    require('apicast.configuration_loader').mock({
       services = {
         {
           id = 42,
@@ -26,7 +26,7 @@ defined at the service level.
           backend_authentication_type = 'service_token',
           backend_authentication_value = 'token-value',
           proxy = {
-            policy_chain = { { name = 'policy.phase_logger' }, { name = 'apicast' } },
+            policy_chain = { { name = 'apicast.policy.phase_logger' }, { name = 'apicast.policy.apicast' } },
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
               {
@@ -57,6 +57,8 @@ GET /test?user_key=abc
 --- response_body
 yay, api backend
 --- error_code: 200
+--- no_error_log
+[error]
 --- error_log chomp
 running phase: rewrite
 running phase: access

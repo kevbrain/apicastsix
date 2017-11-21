@@ -7,13 +7,13 @@ describe('executor', function()
   }
 
   it('forwards all the policy methods to the policy chain', function()
-    local executor = require 'executor'
+    local executor = require 'apicast.executor'
 
     -- Policies included by default in the executor
     local default_executor_chain = {
-      require 'policy.load_configuration',
-      require 'policy.find_service',
-      require 'policy.local_chain'
+      require 'apicast.policy.load_configuration',
+      require 'apicast.policy.find_service',
+      require 'apicast.policy.local_chain'
     }
 
     -- Stub all the nginx phases methods for each of the policies

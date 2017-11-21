@@ -1,8 +1,8 @@
 insulate('Configuration object', function()
 
   insulate('.mock', function()
-    local configuration = require 'configuration_loader'
-    local mock_loader = require 'configuration_loader.mock'
+    local configuration = require 'apicast.configuration_loader'
+    local mock_loader = require 'apicast.configuration_loader.mock'
 
     it('saves mock configuration', function()
       local config = { 'foo' }
@@ -13,10 +13,10 @@ insulate('Configuration object', function()
   end)
 
   describe('.init', function()
-    local configuration = require 'configuration_loader'
+    local configuration = require 'apicast.configuration_loader'
 
     it('runs boot', function()
-      local config, err = configuration.run_external_command('boot', 'apicast')
+      local config, err = configuration.run_external_command('boot', 'gateway')
 
       assert.falsy(config)
       assert.match('missing configuration', err)
@@ -24,7 +24,7 @@ insulate('Configuration object', function()
   end)
 
   describe('lazy', function()
-    local configuration_loader = require 'configuration_loader'
+    local configuration_loader = require 'apicast.configuration_loader'
 
     it('configures proxy on init', function()
       local config = {}
@@ -38,8 +38,8 @@ insulate('Configuration object', function()
 
 
   describe('.configured', function()
-    local _M = require('configuration_loader')
-    local configuration_store = require('configuration_store')
+    local _M = require('apicast.configuration_loader')
+    local configuration_store = require('apicast.configuration_store')
 
     it('returns false when not configured', function()
       local configuration = {}
@@ -62,8 +62,8 @@ insulate('Configuration object', function()
   end)
 
   describe('.configure', function()
-    local _M = require('configuration_loader')
-    local configuration_store = require('configuration_store')
+    local _M = require('apicast.configuration_loader')
+    local configuration_store = require('apicast.configuration_store')
     local cjson = require('cjson')
 
     it('returns true with empty configuration', function()
@@ -88,8 +88,8 @@ insulate('Configuration object', function()
   end)
 
   describe('lazy loader', function()
-    local _M = require('configuration_loader')
-    local configuration_store = require('configuration_store')
+    local _M = require('apicast.configuration_loader')
+    local configuration_store = require('apicast.configuration_store')
     local loader
 
     before_each(function() loader = _M.new('lazy') end)

@@ -1,5 +1,5 @@
 local _M = require 'examples.custom-module.blacklist'
-local apicast = require 'apicast'
+local apicast = require 'apicast.policy.apicast'
 
 describe('blacklist', function()
   it('returns new module instance', function()

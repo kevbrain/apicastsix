@@ -105,7 +105,6 @@ Access-Control-Allow-Credentials: true
 === TEST 3: CORS actual request with custom config
 This tests a CORS actual (not preflight) request. We use a custom config to set
 the CORS headers in the response.
---- ONLY
 --- configuration
 {
   "services": [

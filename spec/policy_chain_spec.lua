@@ -92,6 +92,38 @@ describe('policy_chain', function()
     end, 'readonly table')
   end)
 
+  describe('.insert', function()
+
+    it('adds policy to the end of the chain', function()
+      local chain = _M.new({ 'one', 'two' })
+
+      chain:insert(policy)
+
+      assert.equal(policy, chain[3])
+      assert.equal(3, #chain)
+    end)
+
+    it('adds a policy to specific position', function()
+      local chain = _M.new({ 'one', 'two'})
+
+      chain:insert(policy, 2)
+      assert.equal(policy, chain[2])
+      assert.equal('one', chain[1])
+      assert.equal('two', chain[3])
+      assert.equal(3, #chain)
+    end)
+
+    it('errors when inserting to frozen chain', function()
+      local chain = _M.new({}):freeze()
+
+      local ok, err = chain:insert(policy, 1)
+
+      assert.is_nil(ok)
+      assert.equal(err, 'frozen chain')
+      assert.equal(0, #chain)
+    end)
+  end)
+
   describe('.export', function()
     it('returns the data exposed by each of its policies', function()
       local policy_1 = policy.new('1')
@@ -134,6 +166,18 @@ describe('policy_chain', function()
         local shared_data = chain:export()
         assert.equal('1', shared_data['shared_data_1'])
       end)
+    end)
+  end)
+
+  describe('.default', function()
+    it('returns a default policy chain', function()
+      local default = _M.default()
+
+      assert(#default > 1, 'has <= 1 policy')
+    end)
+
+    it('returns not frozen chain', function()
+      assert.falsy(_M.default().frozen)
     end)
   end)
 end)

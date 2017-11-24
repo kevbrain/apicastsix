@@ -1,3 +1,6 @@
+local executor = require 'apicast.executor'
+local policy_chain = require 'apicast.policy_chain'
+
 describe('executor', function()
   local phases = {
     'init', 'init_worker',
@@ -7,8 +10,6 @@ describe('executor', function()
   }
 
   it('forwards all the policy methods to the policy chain', function()
-    local executor = require 'apicast.executor'
-
     -- Policies included by default in the executor
     local default_executor_chain = {
       require 'apicast.policy.load_configuration',
@@ -31,5 +32,13 @@ describe('executor', function()
         assert.stub(policy[phase]).was_called()
       end
     end
+  end)
+
+  it('freezes the policy chain', function()
+    local chain = policy_chain.new({})
+    assert.falsy(chain.frozen)
+
+    executor.new(chain)
+    assert.truthy(chain.frozen)
   end)
 end)

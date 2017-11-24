@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Resolver can resolve nginx upstreams [PR #478](https://github.com/3scale/apicast/pull/478)
 - Calls 3scale backend with the 'no_body' option enabled. This reduces network traffic in cases where APIcast does not need to parse the response body [PR #483](https://github.com/3scale/apicast/pull/483)
 - Methods to modify policy chains [PR #505](https://github.com/3scale/apicast/pull/505)
+- Ability to load several environment configurations [PR #504](https://github.com/3scale/apicast/pull/504)
 
 ## Changed
 

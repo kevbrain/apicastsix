@@ -17,7 +17,7 @@ add_block_preprocessor(sub {
     my $block = shift;
     my $seq = $block->seq_num;
     my $name = $block->name;
-    my $configuration = Test::Nginx::Util::expand_env_in_config($block->configuration);
+    my $configuration = $block->configuration;
     my $backend = $block->backend;
     my $upstream = $block->upstream;
     my $sites_d = $block->sites_d || '';
@@ -57,9 +57,12 @@ _EOC_
 _EOC_
     }
 
-    decode_json($configuration);
+    if (defined $configuration) {
+        $configuration = Test::Nginx::Util::expand_env_in_config($configuration);
+        decode_json($configuration);
+        $block->set_value("configuration", $configuration);
+    }
 
-    $block->set_value("configuration", $configuration);
     $block->set_value("config", "$name ($seq)");
     $block->set_value('sites_d', $sites_d)
 });
@@ -79,12 +82,25 @@ my $write_nginx_config = sub {
 
     my $sites_d = $block->sites_d;
 
-    my ($conf, $configuration) = tempfile();
-    print $conf $block->configuration;
-    close $conf;
+
+    my $configuration = $block->configuration;
+    my $conf;
+    my $configuration_file = $block->configuration_file;
+
+    if (defined $configuration_file) {
+        chomp($configuration_file);
+        $configuration_file = "$configuration_file";
+    } else {
+        if (defined $configuration) {
+            ($conf, $configuration_file) = tempfile();
+            print $conf $configuration;
+            close $conf;
+
+            $configuration_file = "$configuration_file";
+        }
+    }
 
     my ($env, $env_file) = tempfile();
-
     print $env <<_EOC_;
 return {
     worker_processes = '$Workers',
@@ -96,15 +112,16 @@ return {
     lua_code_cache = 'on',
     access_log = '$AccLogFile',
     port = { apicast = '$ServerPort' },
-    env = { APICAST_CONFIGURATION = 'file://$configuration', APICAST_CONFIGURATION_LOADER = 'boot' },
+    env = {
+        THREESCALE_CONFIG_FILE = [[$configuration_file]],
+        APICAST_CONFIGURATION_LOADER = 'boot',
+    },
     sites_d = [============================[$sites_d]============================],
 }
 _EOC_
     close $env;
 
-    $ENV{APICAST_ENVIRONMENT_CONFIG} = $env_file;
-
-    my $apicast = `bin/apicast --boot --test --environment test --configuration $configuration 2>&1`;
+    my $apicast = `APICAST_CONFIGURATION_LOADER="" bin/apicast start --test --environment $env_file --configuration $configuration_file 2>&1`;
     if ($apicast =~ /configuration file (?<file>.+?) test is successful/)
     {
         move($+{file}, $ConfFile);
@@ -112,6 +129,12 @@ _EOC_
         warn "Missing config file: $Test::Nginx::Util::ConfFile";
         warn $apicast;
     }
+
+    if ($PidFile && -f $PidFile) {
+        unlink $PidFile or warn "Couldn't remove $PidFile.\n";
+    }
+
+    $ENV{APICAST_LOADED_ENVIRONMENTS} = $env_file;
 };
 
 BEGIN {

@@ -119,7 +119,7 @@ describe('policy_chain', function()
       local ok, err = chain:insert(policy, 1)
 
       assert.is_nil(ok)
-      assert.equal(err, 'frozen chain')
+      assert.equal(err, 'frozen')
       assert.equal(0, #chain)
     end)
   end)

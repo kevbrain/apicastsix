@@ -28,7 +28,7 @@ _M.default_environment = 'production'
 -- @tfield ?string ca_bundle path to CA store file
 -- @table environment.default_config default configuration
 _M.default_config = {
-    ca_bundle = resty_env.get('SSL_CERT_FILE'),
+    ca_bundle = resty_env.value('SSL_CERT_FILE'),
 }
 
 local mt = { __index = _M }
@@ -59,7 +59,7 @@ function _M.new()
 end
 
 local function expand_environment_name(name)
-    local root = resty_env.get('APICAST_DIR') or pl_path.abspath('.')
+    local root = resty_env.value('APICAST_DIR') or pl_path.abspath('.')
     local pwd = resty_env.value('PWD')
 
     local path = pl_path.abspath(name, pwd)

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Changed
 
 - Namespace all APIcast code in `apicast` folder. Possible BREAKING CHANGE for some customizations. [PR #486](https://github.com/3scale/apicast/pull/486)
+- CLI ignores environment variables that are empty strings [PR #504](https://github.com/3scale/apicast/pull/504)
 
 ## Fixed
 

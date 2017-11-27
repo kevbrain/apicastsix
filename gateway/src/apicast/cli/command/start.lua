@@ -46,7 +46,7 @@ end
 
 
 local function apicast_root()
-    return resty_env.get('APICAST_DIR') or pl.path.abspath('.')
+    return resty_env.value('APICAST_DIR') or pl.path.abspath('.')
 end
 
 local function nginx_config(context,path)
@@ -167,7 +167,7 @@ local function configure(cmd)
     cmd:option("--template", "Nginx config template.", 'conf/nginx.conf.liquid')
 
 
-    cmd:option('-e --environment', "Deployment to start. Can also be a path to a Lua file.", resty_env.get('THREESCALE_DEPLOYMENT_ENV') or 'production'):count('*')
+    cmd:option('-e --environment', "Deployment to start. Can also be a path to a Lua file.", resty_env.value('THREESCALE_DEPLOYMENT_ENV') or 'production'):count('*')
     cmd:flag('--dev', 'Start in development environment')
 
     cmd:flag("-m --master", "Test the nginx config"):args('?')
@@ -175,23 +175,23 @@ local function configure(cmd)
     cmd:flag("--debug", "Debug mode. Prints more information.")
     cmd:option("-c --configuration",
         "Path to custom config file (JSON)",
-        resty_env.get('APICAST_CONFIGURATION'))
+        resty_env.value('APICAST_CONFIGURATION'))
     cmd:flag("-d --daemon", "Daemonize.")
     cmd:option("-w --workers",
         "Number of worker processes to start.",
-        resty_env.get('APICAST_WORKERS') or 1)
+        resty_env.value('APICAST_WORKERS') or 1)
     cmd:option("-p --pid", "Path to the PID file.")
     cmd:mutex(
         cmd:flag('-b --boot',
             "Load configuration on boot.",
-            resty_env.get('APICAST_CONFIGURATION_LOADER') == 'boot'),
+            resty_env.value('APICAST_CONFIGURATION_LOADER') == 'boot'),
         cmd:flag('-l --lazy',
             "Load configuration on demand.",
-            resty_env.get('APICAST_CONFIGURATION_LOADER') == 'lazy')
+            resty_env.value('APICAST_CONFIGURATION_LOADER') == 'lazy')
     )
     cmd:option("-i --refresh-interval",
         "Cache configuration for N seconds. Using 0 will reload on every request (not for production).",
-        resty_env.get('APICAST_CONFIGURATION_CACHE'))
+        resty_env.value('APICAST_CONFIGURATION_CACHE'))
 
     cmd:mutex(
         cmd:flag('-v --verbose',
@@ -200,8 +200,8 @@ local function configure(cmd)
         cmd:flag('-q --quiet', "Decrease logging verbosity.")
         :count(("0-%s"):format(_M.log_level - 1))
     )
-    cmd:option('--log-level', 'Set log level', resty_env.get('APICAST_LOG_LEVEL') or 'warn')
-    cmd:option('--log-file', 'Set log file', resty_env.get('APICAST_LOG_FILE') or 'stderr')
+    cmd:option('--log-level', 'Set log level', resty_env.value('APICAST_LOG_LEVEL') or 'warn')
+    cmd:option('--log-file', 'Set log file', resty_env.value('APICAST_LOG_FILE') or 'stderr')
 
     cmd:epilog([[
       Example: apicast start --dev

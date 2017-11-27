@@ -1,12 +1,8 @@
 file = {
-  '../gateway/src/apicast/proxy.lua',
-  '../gateway/src/apicast/configuration/service.lua',
-  '../gateway/src/resty/http_ng.lua',
-  '../gateway/src/resty/http_ng/backend/resty.lua',
-  '../gateway/src/apicast/backend_client.lua',
-  '../gateway/src/resty/synchronization.lua',
+  '../gateway/src/apicast',
+  '../gateway/src/resty',
 }
-dir = '../doc/api'
+dir = '../doc/lua'
 project = 'APIcast'
 title = 'NGINX based API gateway used to integrate your internal and external API services with 3scale’s API Management Platform'
 merge = true

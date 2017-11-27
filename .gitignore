@@ -1,7 +1,7 @@
 luacov.*.out
 local/
 t/servroot*/
-doc/api/
+doc/lua/
 node_modules
 .vagrant/
 apicast/logs/

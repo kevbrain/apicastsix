@@ -137,8 +137,10 @@ clean-containers: apicast-source
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
 
-doc: dependencies $(ROVER) ## Generate documentation
+doc/lua/index.html: $(wildcard gateway/src/**/*.lua) | dependencies $(ROVER)
 	$(ROVER) exec ldoc -c doc/config.ld .
+
+doc: doc/lua/index.html ## Generate documentation
 
 node_modules/.bin/markdown-link-check:
 	yarn install

@@ -59,12 +59,15 @@ jobs:
       - run: mkdir -p tmp/junit
       - run: $(make rover) exec make busted
       - run: JUNIT_OUTPUT_FILE=tmp/junit/prove.xml $(make rover) exec prove --harness=TAP::Harness::JUnit # no carton on centos
-      - run: make doc
       - store_test_results:
           path: tmp/junit
       - store_artifacts:
           path: tmp/junit
           destination: junit
+      - run: make doc
+      - store_artifacts:
+          path: doc/lua
+          destination: doc
 
   deploy:
     <<: *S2i

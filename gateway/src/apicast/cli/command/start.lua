@@ -9,7 +9,7 @@ local exec = require('resty.execvp')
 local resty_env = require('resty.env')
 
 local Template = require('apicast.cli.template')
-local configuration = require('apicast.cli.configuration')
+local Environment = require('apicast.cli.environment')
 
 local pl = {
     path = require('pl.path'),
@@ -26,7 +26,7 @@ local _M = {
 
 local mt = { __index = _M }
 
-local function pick_openesty(candidates)
+local function find_openresty_command(candidates)
     for i=1, #candidates do
         local ok = os.execute(('%s -V 2>/dev/null'):format(candidates[i]))
 
@@ -44,10 +44,13 @@ local function update_env(env)
     end
 end
 
-local function nginx_config(context, dir, path, env)
-    update_env(env)
 
-    local template = Template:new(context, dir, true)
+local function apicast_root()
+    return resty_env.value('APICAST_DIR') or pl.path.abspath('.')
+end
+
+local function nginx_config(context,path)
+    local template = Template:new(context, apicast_root(), true)
     local tmp = pl.path.tmpname()
     pl.file.write(tmp, template:render(path))
     return tmp
@@ -75,21 +78,42 @@ local function get_log_level(self, options)
     return log_level
 end
 
-function mt:__call(options)
-    local openresty = resty_env.value('APICAST_OPENRESTY_BINARY') or
-                      resty_env.value('TEST_NGINX_BINARY') or
-                      pick_openesty(self.openresty)
-    local dir = resty_env.get('APICAST_DIR') or pl.path.abspath('.')
-    local config = configuration.new(dir)
-    local path = options.template
-    local environment = options.dev and 'development' or options.environment
-    local context = config:load(environment)
-    local env = {
+
+local function build_environment_config(options)
+    local config = Environment.new()
+
+    for i=1, #options.environment do
+        local ok, err = config:add(options.environment[i])
+
+        if not ok then
+            print('not loading ', options.environment[i], ': ', err)
+        end
+    end
+
+    if options.dev then config:add('development') end
+
+    config:save()
+
+    return config
+end
+
+local function openresty_binary(candidates)
+    return resty_env.value('APICAST_OPENRESTY_BINARY') or
+        resty_env.value('TEST_NGINX_BINARY') or
+        find_openresty_command(candidates)
+end
+
+local function build_env(options, config)
+    return {
         APICAST_CONFIGURATION = options.configuration,
         APICAST_CONFIGURATION_LOADER = options.boot and 'boot' or 'lazy',
         APICAST_CONFIGURATION_CACHE = options.cache,
-        THREESCALE_DEPLOYMENT_ENV = environment,
+        THREESCALE_DEPLOYMENT_ENV = config.name,
     }
+end
+
+local function build_context(options, config)
+    local context = config:context()
 
     context.worker_processes = options.workers or context.worker_processes
 
@@ -97,18 +121,30 @@ function mt:__call(options)
         context.daemon = 'on'
     end
 
-
     if options.master and options.master[1] == 'off' then
         context.master_process = 'off'
     end
 
-    context.prefix = dir
-    context.ca_bundle = pl.path.abspath(context.ca_bundle or pl.path.join(dir, 'conf', 'ca-bundle.crt'))
 
+    context.prefix = apicast_root()
+    context.ca_bundle = pl.path.abspath(context.ca_bundle or pl.path.join(context.prefix, 'conf', 'ca-bundle.crt'))
+
+    return context
+end
+
+function mt:__call(options)
+    local openresty = openresty_binary(self.openresty)
+    local config = build_environment_config(options)
+    local context = build_context(options, config)
+    local env = build_env(options, config)
+
+    local template_path = options.template
+
+    update_env(env)
     -- also use env from the config file
-    update_env(config.env or {})
+    update_env(context.env or {})
 
-    local nginx = nginx_config(context, dir, path, env)
+    local nginx = nginx_config(context, template_path)
 
     local log_level = get_log_level(self, options)
     local log_file = options.log_file or self.log_file
@@ -130,33 +166,32 @@ local function configure(cmd)
     cmd:usage("Usage: apicast-cli start [OPTIONS]")
     cmd:option("--template", "Nginx config template.", 'conf/nginx.conf.liquid')
 
-    cmd:mutex(
-        cmd:option('-e --environment', "Deployment to start.", resty_env.get('THREESCALE_DEPLOYMENT_ENV')),
-        cmd:flag('--dev', 'Start in development environment')
-    )
+
+    cmd:option('-e --environment', "Deployment to start. Can also be a path to a Lua file.", resty_env.value('THREESCALE_DEPLOYMENT_ENV') or 'production'):count('*')
+    cmd:flag('--dev', 'Start in development environment')
 
     cmd:flag("-m --master", "Test the nginx config"):args('?')
     cmd:flag("-t --test", "Test the nginx config")
     cmd:flag("--debug", "Debug mode. Prints more information.")
     cmd:option("-c --configuration",
         "Path to custom config file (JSON)",
-        resty_env.get('APICAST_CONFIGURATION'))
+        resty_env.value('APICAST_CONFIGURATION'))
     cmd:flag("-d --daemon", "Daemonize.")
     cmd:option("-w --workers",
         "Number of worker processes to start.",
-        resty_env.get('APICAST_WORKERS') or 1)
+        resty_env.value('APICAST_WORKERS') or 1)
     cmd:option("-p --pid", "Path to the PID file.")
     cmd:mutex(
         cmd:flag('-b --boot',
             "Load configuration on boot.",
-            resty_env.get('APICAST_CONFIGURATION_LOADER') == 'boot'),
+            resty_env.value('APICAST_CONFIGURATION_LOADER') == 'boot'),
         cmd:flag('-l --lazy',
             "Load configuration on demand.",
-            resty_env.get('APICAST_CONFIGURATION_LOADER') == 'lazy')
+            resty_env.value('APICAST_CONFIGURATION_LOADER') == 'lazy')
     )
     cmd:option("-i --refresh-interval",
         "Cache configuration for N seconds. Using 0 will reload on every request (not for production).",
-        resty_env.get('APICAST_CONFIGURATION_CACHE'))
+        resty_env.value('APICAST_CONFIGURATION_CACHE'))
 
     cmd:mutex(
         cmd:flag('-v --verbose',
@@ -165,8 +200,8 @@ local function configure(cmd)
         cmd:flag('-q --quiet', "Decrease logging verbosity.")
         :count(("0-%s"):format(_M.log_level - 1))
     )
-    cmd:option('--log-level', 'Set log level', resty_env.get('APICAST_LOG_LEVEL') or 'warn')
-    cmd:option('--log-file', 'Set log file', resty_env.get('APICAST_LOG_FILE') or 'stderr')
+    cmd:option('--log-level', 'Set log level', resty_env.value('APICAST_LOG_LEVEL') or 'warn')
+    cmd:option('--log-file', 'Set log file', resty_env.value('APICAST_LOG_FILE') or 'stderr')
 
     cmd:epilog([[
       Example: apicast start --dev

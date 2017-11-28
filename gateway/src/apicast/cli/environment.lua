@@ -14,9 +14,31 @@ local assert = assert
 local error = error
 local print = print
 local pairs = pairs
+local ipairs = ipairs
+local tostring = tostring
 local insert = table.insert
 local concat = table.concat
 local re = require('ngx.re')
+
+local function parse_nameservers()
+    local resolver = require('resty.resolver')
+    local nameservers = {}
+
+    for _,nameserver in ipairs(resolver.init_nameservers()) do
+        -- resty.resolver returns nameservers as tables with __tostring metamethod
+        -- unfortunately those objects can't be joined with table.concat
+        -- and have to be converted to strings first
+        insert(nameservers, tostring(nameserver))
+    end
+
+    -- return the table only if there are some nameservers
+    -- because it is way easier to check in liquid and `resolver` directive
+    -- has to contain at least one server, so we can skip it when there are none
+    if #nameservers > 0 then
+        return nameservers
+    end
+end
+
 
 local _M = {}
 ---
@@ -26,9 +48,11 @@ _M.default_environment = 'production'
 
 --- Default configuration.
 -- @tfield ?string ca_bundle path to CA store file
+-- @tfield ?{string,...} nameservers list of nameservers
 -- @table environment.default_config default configuration
 _M.default_config = {
     ca_bundle = resty_env.value('SSL_CERT_FILE'),
+    nameservers = parse_nameservers(),
 }
 
 local mt = { __index = _M }

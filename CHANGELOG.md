@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - New policy chains system. This allows users to write custom policies to configure what Apicast can do on each of the Nginx phases [PR #450](https://github.com/3scale/apicast/pull/450)
 - Resolver can resolve nginx upstreams [PR #478](https://github.com/3scale/apicast/pull/478)
+- Add `resolver` directive in the nginx configuration [PR #508](https://github.com/3scale/apicast/pull/508)
 - Calls 3scale backend with the 'no_body' option enabled. This reduces network traffic in cases where APIcast does not need to parse the response body [PR #483](https://github.com/3scale/apicast/pull/483)
 - Methods to modify policy chains [PR #505](https://github.com/3scale/apicast/pull/505)
 - Ability to load several environment configurations [PR #504](https://github.com/3scale/apicast/pull/504)

@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Namespace all APIcast code in `apicast` folder. Possible BREAKING CHANGE for some customizations. [PR #486](https://github.com/3scale/apicast/pull/486)
 
+## Fixed
+
+- Loading installed luarocks from outside rover [PR #503](https://github.com/3scale/apicast/pull/503)
+
 ## [3.2.0-alpha1]
 
 ## Added

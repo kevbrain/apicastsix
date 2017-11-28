@@ -3,6 +3,9 @@
 local ok, setup = pcall(require, 'rover.setup')
 
 if ok then
+    -- preload apicast before openresty lua paths are removed
+    require('apicast.executor')
+
     setup()
 else
     package.path = './src/?.lua;' .. package.path

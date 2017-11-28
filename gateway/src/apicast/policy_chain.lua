@@ -10,10 +10,11 @@ local error = error
 local rawset = rawset
 local type = type
 local require = require
+local insert = table.insert
 local noop = function() end
 
 local linked_list = require('apicast.linked_list')
-local policy = require('apicast.policy')
+local policy_phases = require('apicast.policy').phases
 
 local _M = {
 
@@ -49,12 +50,25 @@ function _M.build(modules)
     return _M.new(chain)
 end
 
+
+local DEFAULT_POLICIES = {
+    'apicast.policy.load_configuration',
+    'apicast.policy.find_service',
+    'apicast.policy.local_chain'
+}
+
+--- Return new policy chain with default policies.
+-- @treturn PolicyChain
+function _M.default()
+    return _M.build(DEFAULT_POLICIES)
+end
+
 --- Load a module
 -- If the module is a string, returns the result of initializing it with the
 -- given arguments. Otherwise, this function simply returns the module
 -- received.
--- @tparam string/object The module
--- @tparam[opt] params needed to initialize the module
+-- @tparam string|table module the module or its name
+-- @tparam ?table ... params needed to initialize the module
 -- @treturn object The module instantiated
 function _M.load(module, ...)
     if type(module) == 'string' then
@@ -71,14 +85,19 @@ function _M.load(module, ...)
     end
 end
 
+--- Initialize new @{PolicyChain}.
+-- @treturn PolicyChain
 function _M.new(list)
     local chain = list or {}
 
     local self = setmetatable(chain, mt)
     chain.config = self:export()
-    self.frozen = true
     return self
 end
+
+---------------------
+--- @type PolicyChain
+-- An instance of @{policy_chain}.
 
 --- Export the shared context of the chain
 -- @treturn linked_list The context of the chain. Note: the list returned is
@@ -96,6 +115,29 @@ function _M:export()
     return chain
 end
 
+--- Freeze the policy chain to prevent modifications.
+-- After calling this method it won't be possible to insert more policies.
+-- @treturn PolicyChain returns self
+function _M:freeze()
+    self.frozen = true
+    return self
+end
+
+--- Insert a policy into the chain
+-- @tparam Policy policy the policy to be added to the chain
+-- @tparam[opt] int position the position to add the policy to, defaults to last one
+-- @treturn int lenght of the chain
+-- @error frozen | returned when chain is not modifiable
+-- @see freeze
+function _M:insert(policy, position)
+    if self.frozen then
+        return nil, 'frozen'
+    else
+        insert(self, position or #self+1, policy)
+        return #self
+    end
+end
+
 local function call_chain(phase_name)
     return function(self, ...)
         for i=1, #self do
@@ -104,8 +146,8 @@ local function call_chain(phase_name)
     end
 end
 
-for _,phase in policy.phases() do
+for _,phase in policy_phases() do
     _M[phase] = call_chain(phase)
 end
 
-return _M.build()
+return _M.build():freeze()

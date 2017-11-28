@@ -6,19 +6,13 @@
 
 require('apicast.loader') -- to load code from deprecated paths
 
-local policy_chain = require('apicast.policy_chain')
+local PolicyChain = require('apicast.policy_chain')
 local policy = require('apicast.policy')
 local linked_list = require('apicast.linked_list')
 
 local setmetatable = setmetatable
 
 local _M = { }
-
-local DEFAULT_POLICIES = {
-    'apicast.policy.load_configuration',
-    'apicast.policy.find_service',
-    'apicast.policy.local_chain'
-}
 
 local mt = { __index = _M }
 
@@ -29,12 +23,8 @@ for _,phase in policy.phases() do
     end
 end
 
-local function global_chain()
-    return policy_chain.build(DEFAULT_POLICIES)
-end
-
-function _M.new()
-    return setmetatable({ policy_chain = global_chain() }, mt)
+function _M.new(policy_chain)
+    return setmetatable({ policy_chain = policy_chain:freeze() }, mt)
 end
 
 local function build_context(executor)
@@ -67,4 +57,4 @@ function _M:context(phase)
     return shared_build_context(self)
 end
 
-return _M.new()
+return _M.new(PolicyChain.default())

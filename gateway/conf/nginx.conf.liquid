@@ -44,6 +44,11 @@ http {
 
   lua_package_path ";;{{prefix}}/?.lua;{{prefix}}/src/?.lua";
 
+  {% if nameservers %}
+    resolver {{ nameservers | join: " " }};
+  {% endif %}
+
+
   {% for file in "http.d/*.conf" | filesystem %}
     {% include file %}
   {% endfor %}

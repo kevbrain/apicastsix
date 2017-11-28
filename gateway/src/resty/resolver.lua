@@ -115,6 +115,8 @@ function _M.init_nameservers(path)
     ngx.log(ngx.INFO, 'adding ', search[i], ' as search domain')
     insert(_M.search, search[i])
   end
+
+  return nameservers
 end
 
 function _M.nameservers()

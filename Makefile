@@ -45,14 +45,11 @@ busted: dependencies $(ROVER) ## Test Lua.
 	@- luacov
 
 nginx:
-	@ ($(NGINX) -V 2>&1 | grep -e '--with-ipv6' > /dev/null) || (>&2 echo "$(NGINX) `$(NGINX) -v 2>&1` does not have ipv6 support" && exit 1)
+	@ ($(NGINX) -V 2>&1) > /dev/null
 
-# TODO: implement check to verify carton is there
-carton:
-	@carton install > /dev/null
-
-prove: carton nginx ## Test nginx
-	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
+prove: HARNESS ?= TAP::Harness
+prove: $(ROVER) nginx ## Test nginx
+	$(ROVER) exec prove --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test

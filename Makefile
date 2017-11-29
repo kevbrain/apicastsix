@@ -45,7 +45,7 @@ busted: dependencies $(ROVER) ## Test Lua.
 	@- luacov
 
 nginx:
-	@ ($(NGINX) -V 2>&1 | grep -e '--with-ipv6' > /dev/null) || (>&2 echo "$(NGINX) `$(NGINX) -v 2>&1` does not have ipv6 support" && exit 1)
+	@ ($(NGINX) -V 2>&1) > /dev/null
 
 # TODO: implement check to verify carton is there
 carton:

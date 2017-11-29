@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Calls 3scale backend with the 'no_body' option enabled. This reduces network traffic in cases where APIcast does not need to parse the response body [PR #483](https://github.com/3scale/apicast/pull/483)
 - Methods to modify policy chains [PR #505](https://github.com/3scale/apicast/pull/505)
 - Ability to load several environment configurations [PR #504](https://github.com/3scale/apicast/pull/504)
+- Ability to configure policy chain from the environment configuration [PR #496](https://github.com/3scale/apicast/pull/496)
 
 ## Changed
 

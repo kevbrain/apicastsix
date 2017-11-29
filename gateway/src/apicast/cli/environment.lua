@@ -16,6 +16,7 @@ local print = print
 local pairs = pairs
 local ipairs = ipairs
 local tostring = tostring
+local tonumber = tonumber
 local insert = table.insert
 local concat = table.concat
 local re = require('ngx.re')
@@ -48,10 +49,12 @@ _M.default_environment = 'production'
 
 --- Default configuration.
 -- @tfield ?string ca_bundle path to CA store file
+-- @tfield ?policy_chain policy_chain @{policy_chain} instance
 -- @tfield ?{string,...} nameservers list of nameservers
 -- @table environment.default_config default configuration
 _M.default_config = {
     ca_bundle = resty_env.value('SSL_CERT_FILE'),
+    policy_chain = require('apicast.policy_chain').default(),
     nameservers = parse_nameservers(),
 }
 
@@ -125,6 +128,7 @@ function _M:add(env)
 
     local config = loadfile(path, 't', {
         print = print, inspect = require('inspect'), context = self._context,
+        tonumber = tonumber, tostring = tostring,
         pcall = pcall, require = require, assert = assert, error = error,
     })
 

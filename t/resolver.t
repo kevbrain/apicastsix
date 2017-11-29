@@ -66,3 +66,27 @@ servers: 2
 2.3.4.5:6789
 --- no_error_log
 [error]
+
+
+=== TEST 3: can have ipv6 RESOLVER
+RESOLVER env variable can be IPv6 address
+--- main_config
+env RESOLVER=[dead::beef]:5353;
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_worker_by_lua_block {
+    require('resty.resolver').init('$TEST_NGINX_RESOLV_CONF')
+  }
+--- config
+  location = /t {
+    content_by_lua_block {
+      local nameservers = require('resty.resolver').nameservers()
+      ngx.say('nameservers: ', #nameservers, ' ', tostring(nameservers[1]))
+    }
+  }
+--- request
+GET /t
+--- response_body
+nameservers: 1 [dead::beef]:5353
+--- user_files
+>>> resolv.conf

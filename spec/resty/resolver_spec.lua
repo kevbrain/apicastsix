@@ -129,8 +129,36 @@ describe('resty.resolver', function()
     pending('does query when cached cname missing address')
   end)
 
+  describe('.parse_resolver', function()
+
+    it("handles invalid data", function()
+      assert.same({'foobar', 'invalid address'}, { resty_resolver.parse_resolver('foobar') })
+    end)
+
+    it("handles missing data", function()
+      assert.same({}, { resty_resolver.parse_resolver() })
+    end)
+
+    it("parses ipv4 without port", function()
+      assert.same({'192.168.0.1', 53}, resty_resolver.parse_resolver('192.168.0.1'))
+    end)
+
+    it("parses ipv4 with port", function()
+      assert.same({'192.168.0.1', '5353'}, resty_resolver.parse_resolver('192.168.0.1:5353'))
+    end)
+
+    it("parses ipv6 without port", function()
+      assert.same({'[dead::beef:5353]', 53}, resty_resolver.parse_resolver('dead::beef:5353'))
+    end)
+
+    it("parses ipv6 with port", function()
+      assert.same({'[dead::beef]', '5353'}, resty_resolver.parse_resolver('[dead::beef]:5353'))
+    end)
+  end)
+
   describe('.parse_nameservers', function()
     local tmpname
+    local resty_env = require('resty.env')
 
     before_each(function()
       tmpname = io.tmpfile()
@@ -155,6 +183,22 @@ describe('resty.resolver', function()
       assert.same({ 'localdomain.example.com', 'local' },  search)
     end)
 
+    it('ignores invalid RESOLVER', function()
+      resty_env.set('RESOLVER', 'invalid-nameserver')
+
+      local nameservers = resty_resolver.parse_nameservers('')
+
+      assert.equal(0, #nameservers)
+    end)
+
+    it('uses correct RESOLVER', function()
+      resty_env.set('RESOLVER', '192.168.0.1:53')
+
+      local nameservers = resty_resolver.parse_nameservers('')
+
+      assert.equal(1, #nameservers)
+      assert.same({'192.168.0.1', '53'}, nameservers[1])
+    end)
   end)
 
 end)

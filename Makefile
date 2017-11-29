@@ -51,8 +51,8 @@ nginx:
 carton:
 	@carton install > /dev/null
 
-prove: carton nginx ## Test nginx
-	@carton exec prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
+prove: nginx ## Test nginx
+	prove 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test

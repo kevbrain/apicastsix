@@ -47,10 +47,6 @@ busted: dependencies $(ROVER) ## Test Lua.
 nginx:
 	@ ($(NGINX) -V 2>&1) > /dev/null
 
-# TODO: implement check to verify carton is there
-carton:
-	@carton install > /dev/null
-
 prove: HARNESS ?= TAP::Harness
 prove: $(ROVER) nginx ## Test nginx
 	$(ROVER) exec prove --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'

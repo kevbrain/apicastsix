@@ -16,6 +16,7 @@ local print = print
 local pairs = pairs
 local ipairs = ipairs
 local tostring = tostring
+local tonumber = tonumber
 local insert = table.insert
 local concat = table.concat
 local re = require('ngx.re')
@@ -127,6 +128,7 @@ function _M:add(env)
 
     local config = loadfile(path, 't', {
         print = print, inspect = require('inspect'), context = self._context,
+        tonumber = tonumber, tostring = tostring,
         pcall = pcall, require = require, assert = assert, error = error,
     })
 

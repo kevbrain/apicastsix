@@ -53,6 +53,14 @@ local function read_resolv_conf(path)
   return output or "", err
 end
 
+local function ipv4(address)
+  return re_match(address, '^([0-9]{1,3}\\.){3}[0-9]{1,3}$', 'oj')
+end
+
+local function ipv6(address)
+  return re_match(address, '^\\[[a-f\\d:]+\\]$', 'oj')
+end
+
 local nameserver = {
   mt = {
     __tostring = function(t)
@@ -62,6 +70,10 @@ local nameserver = {
 }
 
 function nameserver.new(host, port)
+  if not ipv4(host) and not ipv6(host) then
+    -- then it is likely ipv6 without [ ] around
+    host = format('[%s]', host)
+  end
   return setmetatable({ host, port or default_resolver_port }, nameserver.mt)
 end
 

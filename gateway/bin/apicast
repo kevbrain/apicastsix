@@ -10,6 +10,8 @@ my $bindir = $apicast . '/bin';
 my $lua_path = $ENV{LUA_PATH};
 my $cwd = getcwd();
 
+$ENV{PATH} .= ":$cwd/lua_modules/bin";
+
 chomp(my $rover = `which rover`);
 if ($rover) { $rover = abs_path($rover) }
 

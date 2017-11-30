@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+## Fixed
+
+- Detecting local rover installation from the CLI [PR #519](https://github.com/3scale/apicast/pull/519)
+
 ## [3.2.0-alpha2] - 2017-11-30
 
 ## Added

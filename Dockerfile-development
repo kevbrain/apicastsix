@@ -1,4 +1,4 @@
-FROM quay.io/3scale/s2i-openresty-centos7:1.11.2.5-1
+FROM quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover2
 LABEL maintainer="dortiz@redhat.com"
 
 USER root
@@ -8,43 +8,24 @@ ARG USER_NAME=default
 ARG USER_HOME=/home/centos
 
 RUN yum -y update \
- && yum -y install perl-CPAN sudo \
+ && yum -y install sudo \
  && yum -y autoremove \
  && yum -y clean all
 
-RUN mkdir ${USER_HOME} \
+RUN mkdir -p ${USER_HOME}/gateway \
  && chown -R ${USER_NAME}: ${USER_HOME} \
  && echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER_NAME} \
  && chmod 0440 /etc/sudoers.d/${USER_NAME}
 
-USER ${USER_NAME}
-
-# envs required by cpan
-ENV PATH="/opt/app-root/src/perl5/bin${PATH:+:${PATH}}"
-ENV PERL5LIB="/opt/app-root/src/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
-ENV PERL_LOCAL_LIB_ROOT="/opt/app-root/src/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"
-ENV PERL_MB_OPT="--install_base \"/opt/app-root/src/perl5\""
-ENV PERL_MM_OPT="INSTALL_BASE=/opt/app-root/src/perl5"
-ENV SHELL=/bin/bash
-
-ENV PATH=/usr/local/openresty/bin:/usr/local/openresty/luajit/bin:$PATH
-
-RUN cpan install version \
- && cpan install Module::Metadata \
- && cpan install Carton
-
-COPY cpanfile ${USER_HOME}
-COPY gateway/apicast-0.1-0.rockspec ${USER_HOME}/apicast/
-COPY rockspec ${USER_HOME}
+COPY gateway/Roverfile ${USER_HOME}/gateway
+COPY gateway/Roverfile.lock ${USER_HOME}/gateway
+COPY Makefile ${USER_HOME}
 
 WORKDIR ${USER_HOME}
 
-RUN cpan install
+RUN make dependencies
 
-USER root
-
-RUN luarocks make apicast/apicast-0.1-0.rockspec
-RUN luarocks make rockspec
-
-USER ${USER_NAME}
 COPY . ${USER_HOME}
+
+RUN chown -R ${USER_NAME}: ${USER_HOME}
+USER ${USER_NAME}

@@ -54,15 +54,15 @@ http {
   {% endfor %}
 
   server {
-    listen 8090;
+    listen {{ port.management | default: 8090 }};
 
-    server_name _;
+    server_name management _;
 
     {% include "conf.d/management.conf" %}
   }
 
   server {
-    listen 8081;
+    listen {{ port.backend | default: 8081 }};
 
     server_name backend;
 
@@ -70,7 +70,7 @@ http {
   }
 
   server {
-    listen 8081 default_server;
+    listen {{ port.echo | default: 8081 }} default_server;
 
     server_name echo _;
 

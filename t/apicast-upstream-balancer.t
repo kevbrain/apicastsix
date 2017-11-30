@@ -15,7 +15,7 @@ location /t {
     local resty_resolver = require 'resty.resolver'
     local dns_client = require 'resty.dns.resolver'
 
-    local dns = dns_client:new{ nameservers = { { "127.0.0.1", 1953 } } }
+    local dns = dns_client:new{ nameservers = { { "127.0.0.1", $TEST_NGINX_RANDOM_PORT } } }
     local resolver = resty_resolver.new(dns)
 
     local servers = resolver:get_servers('3scale.net')
@@ -31,7 +31,7 @@ location /t {
     ngx.say(require('cjson').encode(upstream))
   }
 }
---- udp_listen: 1953
+--- udp_listen random_port
 --- udp_reply dns
 [ "localhost", "127.0.0.1" ]
 --- request
@@ -116,7 +116,7 @@ location /t {
     local resty_resolver = require 'resty.resolver'
     local dns_client = require 'resty.dns.resolver'
 
-    local dns = dns_client:new{ nameservers = { { "127.0.0.1", 1953 } } }
+    local dns = dns_client:new{ nameservers = { { "127.0.0.1", $TEST_NGINX_RANDOM_PORT } } }
     local resolver = resty_resolver.new(dns)
 
     ngx.ctx.upstream = resolver:get_servers('localhost', { port = $TEST_NGINX_SERVER_PORT })
@@ -124,7 +124,7 @@ location /t {
 
   proxy_pass http://upstream/api;
 }
---- udp_listen: 1953
+--- udp_listen random_port
 --- udp_reply dns
 [ "localhost", "127.0.0.1" ]
 --- request

@@ -6,6 +6,9 @@ REGISTRY ?= quay.io/3scale
 export TEST_NGINX_BINARY ?= openresty
 NGINX = $(shell which $(TEST_NGINX_BINARY))
 SHELL=/bin/bash -o pipefail
+
+NPROC ?= $(firstword $(shell nproc 2>/dev/null) 1)
+
 SEPARATOR="\n=============================================\n"
 
 IMAGE_NAME ?= apicast-test
@@ -48,8 +51,9 @@ nginx:
 	@ ($(NGINX) -V 2>&1) > /dev/null
 
 prove: HARNESS ?= TAP::Harness
+prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) nginx ## Test nginx
-	$(ROVER) exec prove --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
+	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test

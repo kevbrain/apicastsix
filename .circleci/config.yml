@@ -58,7 +58,11 @@ jobs:
             - lua_modules
       - run: mkdir -p tmp/junit
       - run: $(make rover) exec make busted
-      - run: JUNIT_OUTPUT_FILE=tmp/junit/prove.xml make prove HARNESS=TAP::Harness::JUnit
+      - run:
+          command: make prove
+          environment:
+            JUNIT_OUTPUT_FILE: tmp/junit/prove.xml
+            HARNESS: TAP::Harness::JUnit
       - store_test_results:
           path: tmp/junit
       - store_artifacts:

@@ -79,6 +79,9 @@ my $write_nginx_config = sub {
     my $PidFile = $Test::Nginx::Util::PidFile;
     my $AccLogFile = $Test::Nginx::Util::AccLogFile;
     my $ServerPort = $Test::Nginx::Util::ServerPort;
+    my $backend_port = TestAPIcast::get_random_port();
+    my $management_port = TestAPIcast::get_random_port();
+    my $echo_port = TestAPIcast::get_random_port();
 
     my $sites_d = $block->sites_d;
 
@@ -111,7 +114,12 @@ return {
     pid = '$PidFile',
     lua_code_cache = 'on',
     access_log = '$AccLogFile',
-    port = { apicast = '$ServerPort' },
+    port = {
+      apicast = '$ServerPort',
+      management = '$management_port',
+      backend = '$backend_port',
+      echo = '$echo_port',
+    },
     env = {
         THREESCALE_CONFIG_FILE = [[$configuration_file]],
         APICAST_CONFIGURATION_LOADER = 'boot',

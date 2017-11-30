@@ -26,11 +26,52 @@ if ($ENV{DEBUG}) {
     $ENV{TEST_NGINX_ERROR_LOG} ||= '/dev/stderr';
 }
 
+our @EXPORT = qw( get_random_port );
+
+
+sub get_random_port {
+    my $tries = 1000;
+    my $ServerPort;
+
+    for (my $i = 0; $i < $tries; $i++) {
+        my $port = int(rand 60000) + 1025;
+
+        my $sock = IO::Socket::INET->new(
+            LocalAddr => $Test::Nginx::Util::ServerAddr,
+            LocalPort => $port,
+            Proto => 'tcp',
+            Timeout => 0.1,
+        );
+
+        if (defined $sock) {
+            $sock->close();
+            $ServerPort = $port;
+            last;
+        }
+
+        if ($Test::Nginx::Util::Verbose) {
+            warn "Try again, port $port is already in use: $@\n";
+        }
+    }
+
+    if (!defined $ServerPort) {
+        bail_out "Cannot find an available listening port number after $tries attempts.\n";
+    }
+
+    return $ServerPort;
+}
+
 env_to_nginx("TEST_NGINX_SERVER_PORT=$Test::Nginx::Util::ServerPortForClient");
 
 log_level('debug');
 repeat_each($ENV{TEST_NGINX_REPEAT_EACH} || 2);
 no_root_location();
+
+add_block_preprocessor(sub {
+    my $block = shift;
+
+    $ENV{TEST_NGINX_RANDOM_PORT} = $block->random_port;
+});
 
 our $dns = sub ($$$) {
     my ($host, $ip, $ttl) = @_;
@@ -66,6 +107,27 @@ our $dns = sub ($$$) {
     }
 };
 
+sub Test::Base::Filter::random_port {
+    my ($self) = @_;
+
+    my $block = $self->current_block;
+    my $random_port = $block->random_port;
+
+    if ( !defined $random_port ) {
+        if ($Test::Nginx::Util::Randomize) {
+            $random_port = get_random_port();
+        } else {
+            $random_port = 1953;
+        }
+    }
+
+    $block->set_value('random_port', $random_port);
+
+    $ENV{TEST_NGINX_RANDOM_PORT} = $random_port;
+
+    return $random_port
+}
+
 
 sub Test::Base::Filter::dns {
     my ($self, $code) = @_;
@@ -77,6 +139,13 @@ sub Test::Base::Filter::dns {
     }
 
     return $dns->(@$input)
+}
+
+
+sub Test::Base::Filter::env {
+    my ($self, $input) = @_;
+
+    return Test::Nginx::Util::expand_env_in_config($input);
 }
 
 1;

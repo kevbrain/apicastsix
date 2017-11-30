@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Ability to load several environment configurations [PR #504](https://github.com/3scale/apicast/pull/504)
 - Ability to configure policy chain from the environment configuration [PR #496](https://github.com/3scale/apicast/pull/496)
 - Load environment variables defined in the configuration [PR #507](https://github.com/3scale/apicast/pull/507)
+- Allow configuration of the echo/management/fake backend ports [PR #506](https://github.com/3scale/apicast/pull/506)
 
 ## Changed
 

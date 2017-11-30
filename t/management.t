@@ -152,7 +152,7 @@ Could not resolve GET /foobar - nil
 exposes boot function
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost.local:$TEST_NGINX_SERVER_PORT/config/;
-env RESOLVER=127.0.0.1:1953;
+env RESOLVER=127.0.0.1:$TEST_NGINX_RANDOM_PORT;
 env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -166,7 +166,7 @@ POST /boot
 --- response_body
 {"status":"ok","config":{"services":[{"id":42}]}}
 --- error_code: 200
---- udp_listen: 1953
+--- udp_listen random_port
 --- udp_reply dns
 [ "localhost.local", "127.0.0.1", 60 ]
 --- no_error_log
@@ -176,7 +176,7 @@ POST /boot
 keeps the same configuration
 --- main_config
 env THREESCALE_PORTAL_ENDPOINT=http://localhost.local:$TEST_NGINX_SERVER_PORT/config/;
-env RESOLVER=127.0.0.1:1953;
+env RESOLVER=127.0.0.1:$TEST_NGINX_RANDOM_PORT;
 env APICAST_MANAGEMENT_API=debug;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -195,7 +195,7 @@ POST /test
 {"status":"ok","config":{"services":[{"id":42}]}}
 {"status":"ok","config":{"services":[{"id":42}]}}
 --- error_code: 200
---- udp_listen: 1953
+--- udp_listen random_port
 --- udp_reply dns
 [ "localhost.local", "127.0.0.1", 60 ]
 --- no_error_log

@@ -557,7 +557,7 @@ X-3scale-usage: usage%5Bhits%5D=2
 === TEST 16: uses endpoint host as Host header
 when connecting to the backend
 --- main_config
-env RESOLVER=127.0.0.1:1953;
+env RESOLVER=127.0.0.1:$TEST_NGINX_RANDOM_PORT;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -605,7 +605,7 @@ GET /t?user_key=val
 --- response_body
 all ok
 --- error_code: 200
---- udp_listen: 1953
+--- udp_listen random_port
 --- udp_reply dns
 [ "localhost.example.com", "127.0.0.1", 3600 ]
 --- no_error_log

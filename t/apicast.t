@@ -389,7 +389,7 @@ X-3scale-usage: usage%5Bbar%5D=3
 
 
 === TEST 12: https api backend works
-
+--- ssl random_port
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -400,7 +400,7 @@ X-3scale-usage: usage%5Bbar%5D=3
           id = 42,
           backend_version = 1,
           proxy = {
-            api_backend = 'https://127.0.0.1:1953/api/',
+            api_backend = 'https://127.0.0.1:$TEST_NGINX_RANDOM_PORT/api/',
             proxy_rules = {
               { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
             }
@@ -412,7 +412,7 @@ X-3scale-usage: usage%5Bbar%5D=3
   lua_shared_dict api_keys 1m;
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  listen 1953 ssl;
+  listen $TEST_NGINX_RANDOM_PORT ssl;
 
   ssl_certificate ../html/server.crt;
   ssl_certificate_key ../html/server.key;

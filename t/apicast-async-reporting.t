@@ -65,7 +65,7 @@ backend got service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=v
 
 === TEST 2: https api backend works
 with async background reporting
-
+--- ssl random_port
 --- http_config
 include $TEST_NGINX_UPSTREAM_CONFIG;
 lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -80,7 +80,7 @@ init_by_lua_block {
         backend_authentication_type = 'service_token',
         backend_authentication_value = 'token-value',
         proxy = {
-          backend = { endpoint = "https://127.0.0.1:1953" },
+          backend = { endpoint = "https://127.0.0.1:$TEST_NGINX_RANDOM_PORT" },
           api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/",
           proxy_rules = {
             { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1 }
@@ -93,7 +93,7 @@ init_by_lua_block {
 lua_shared_dict api_keys 1m;
 --- config
 include $TEST_NGINX_APICAST_CONFIG;
-listen 1953 ssl;
+listen $TEST_NGINX_RANDOM_PORT ssl;
 
 ssl_certificate ../html/server.crt;
 ssl_certificate_key ../html/server.key;
@@ -139,8 +139,8 @@ GET /test?user_key=foo
 --- response_body
 api response
 --- error_code: 200
---- error_log
-backend client uri: https://127.0.0.1:1953/transactions/authrep.xml?service_token=token-value&service_id=42&usage%5Bhits%5D=1&user_key=foo ok: true status: 200
+--- error_log env
+backend client uri: https://127.0.0.1:$TEST_NGINX_RANDOM_PORT/transactions/authrep.xml?service_token=token-value&service_id=42&usage%5Bhits%5D=1&user_key=foo ok: true status: 200
 --- wait: 3
 
 === TEST 3: uses endpoint host as Host header

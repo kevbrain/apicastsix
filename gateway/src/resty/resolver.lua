@@ -8,12 +8,15 @@ local find = string.find
 local rep = string.rep
 local unpack = unpack
 local insert = table.insert
-local getenv = os.getenv
 local concat = table.concat
 local io_type = io.type
+
+require('resty.core.regex') -- to allow use of ngx.re.match in the init phase
+
 local re_match = ngx.re.match
 local resolver_cache = require 'resty.resolver.cache'
 local dns_client = require 'resty.resolver.dns_client'
+local resty_env = require 'resty.env'
 local upstream = require 'ngx.upstream'
 local re = require('ngx.re')
 local semaphore = require "ngx.semaphore"
@@ -53,6 +56,14 @@ local function read_resolv_conf(path)
   return output or "", err
 end
 
+local function ipv4(address)
+  return re_match(address, '^([0-9]{1,3}\\.){3}[0-9]{1,3}$', 'oj')
+end
+
+local function ipv6(address)
+  return re_match(address, '^\\[[a-f\\d:]+\\]$', 'oj')
+end
+
 local nameserver = {
   mt = {
     __tostring = function(t)
@@ -62,8 +73,34 @@ local nameserver = {
 }
 
 function nameserver.new(host, port)
+  if not ipv4(host) and not ipv6(host) then
+    -- then it is likely ipv6 without [ ] around
+    host = format('[%s]', host)
+  end
   return setmetatable({ host, port or default_resolver_port }, nameserver.mt)
 end
+
+function _M.parse_resolver(resolver)
+  if not resolver then return end
+
+  local m, err = re_match(resolver, [[^
+      (
+        (?:\d{1,3}\.){3}\d{1,3} # ipv4
+        |
+        \[[a-f\d:]+\] # ipv6 in [ ] brackes, like [dead::beef]
+        |
+        [a-f\d:]+ # ipv6 without brackets
+      )
+      (?:\:(\d+))? # optional port
+    $]], 'ojx')
+
+  if m then
+    return nameserver.new(m[1], m[2])
+  else
+    return resolver, err or 'invalid address'
+  end
+end
+
 
 function _M.parse_nameservers(path)
   local resolv_conf, err = read_resolv_conf(path)
@@ -76,7 +113,6 @@ function _M.parse_nameservers(path)
 
   local search = { }
   local nameservers = { search = search }
-  local resolver = getenv('RESOLVER')
   local domains = match(resolv_conf, 'search%s+([^\n]+)')
 
   ngx.log(ngx.DEBUG, 'search ', domains)
@@ -85,11 +121,15 @@ function _M.parse_nameservers(path)
     insert(search, domain)
   end
 
-  if resolver then
-    local m = re.split(resolver, ':', 'oj')
-    insert(nameservers, nameserver.new(m[1], m[2]))
+  local resolver
+  resolver, err = _M.parse_resolver(resty_env.value('RESOLVER'))
+
+  if err then
+    ngx.log(ngx.ERR, 'invalid resolver ', resolver, ' error: ', err)
+  elseif resolver then
     -- we are going to use all resolvers, because we can't trust dnsmasq
     -- see https://github.com/3scale/apicast/issues/321 for more details
+    insert(nameservers, resolver)
   end
 
   for server in gmatch(resolv_conf, 'nameserver%s+([^%s]+)') do

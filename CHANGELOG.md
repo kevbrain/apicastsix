@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Fixed
 
 - Loading installed luarocks from outside rover [PR #503](https://github.com/3scale/apicast/pull/503)
+- Support IPv6 addresses in `/etc/resolv.conf` [PR #511](https://github.com/3scale/apicast/pull/511)
 
 ## [3.2.0-alpha1]
 

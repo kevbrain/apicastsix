@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CORS policy configuration",
+  "type": "object",
+  "properties": {
+    "allow_headers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allow_methods": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "GET",
+          "HEAD",
+          "POST",
+          "PUT",
+          "DELETE",
+          "PATCH",
+          "OPTIONS",
+          "TRACE",
+          "CONNECT"
+        ]
+      }
+    },
+    "allow_origin": {
+      "type": "string"
+    },
+    "allow_credentials": {
+      "type": "boolean"
+    }
+  }
+}

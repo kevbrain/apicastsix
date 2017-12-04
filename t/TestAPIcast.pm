@@ -16,7 +16,8 @@ our $path = $ENV{TEST_NGINX_APICAST_PATH} ||= "$pwd/gateway";
 our $spec = "$pwd/spec";
 our $servroot = $Test::Nginx::Util::ServRoot;
 
-$ENV{TEST_NGINX_LUA_PATH} = "$path/src/?.lua;;";
+# src/?/policy.lua allows us to require apicast.policy.apolicy
+$ENV{TEST_NGINX_LUA_PATH} = "$path/src/?.lua;$path/src/?/policy.lua;;";
 $ENV{TEST_NGINX_MANAGEMENT_CONFIG} = "$path/conf.d/management.conf";
 $ENV{TEST_NGINX_UPSTREAM_CONFIG} = "$path/http.d/upstream.conf";
 $ENV{TEST_NGINX_BACKEND_CONFIG} = "$path/conf.d/backend.conf";

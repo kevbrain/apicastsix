@@ -72,8 +72,8 @@ replaceable with custom ones.
 ## Write your own policy
 
 To write your own policy you need to write a Lua module that instantiates a
-[Policy](../gateway/src/apicast/policy.lua) and defines a method for each of
-the phases where it needs to execute something.
+[Policy](../gateway/src/apicast/policy/policy.lua) and defines a method for
+each of the phases where it needs to execute something.
 
 Suppose that we wanted to run a policy that logged a message in the `rewrite`
 and the `header_filter` phases. This is how our module would look
@@ -125,10 +125,10 @@ end
 In the [policy folder](../gateway/src/apicast/policy) you can find several
 policies. These ones are quite simple and can be used as examples to write your
 own:
-- [Echo](../gateway/src/apicast/policy/echo.lua)
-- [Phase logger](../gateway/src/apicast/policy/phase_logger.lua)
-- [CORS](../gateway/src/apicast/policy/cors.lua)
-- [Headers](../gateway/src/apicast/policy/headers.lua)
+- [Echo](../gateway/src/apicast/policy/echo)
+- [Phase logger](../gateway/src/apicast/policy/phase_logger)
+- [CORS](../gateway/src/apicast/policy/cors)
+- [Headers](../gateway/src/apicast/policy/headers)
 
 
 ## Integrate your policies

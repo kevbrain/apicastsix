@@ -4,7 +4,7 @@ Environment configuration can define the global policy chain. You can provide cu
 
 ## Using Echo Policy
 
-[Echo policy](../../gateway/src/apicast/policy/echo.lua) accepts configuration option to terminate the request phase. See the example in [`configuration.lua`](./configuration.lua).
+[Echo policy](../../gateway/src/apicast/policy/echo) accepts configuration option to terminate the request phase. See the example in [`configuration.lua`](./configuration.lua).
 
 You can start it as:
 

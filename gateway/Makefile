@@ -3,6 +3,6 @@ $(INST_LUADIR)/apicast:
 
 install: $(INST_LUADIR)/apicast
 	@echo --- install
-	cp -R apicast/src/* $(INST_LUADIR)/
-	cp apicast/bin/apicast* $(INST_BINDIR)/
-	cp -r apicast/*.d apicast/conf $(INST_CONFDIR)
+	cp -R gateway/src/* $(INST_LUADIR)/
+	cp gateway/bin/apicast* $(INST_BINDIR)/
+	cp -r gateway/*.d gateway/conf $(INST_CONFDIR)

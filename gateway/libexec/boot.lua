@@ -1,5 +1,7 @@
 pcall(require, 'luarocks.loader')
-package.path = package.path .. ";./src/?.lua"
+
+-- src/?/policy.lua allows us to require apicast.policy.apolicy
+package.path = package.path .. ";./src/?.lua;./src/?/policy.lua"
 
 local configuration = require 'apicast.configuration_loader'
 

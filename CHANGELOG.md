@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## Added
+
+- Definition of JSON schemas for policy configurations [PR #522](https://github.com/3scale/apicast/pull/522)
+
 ## Fixed
 
 - Detecting local rover installation from the CLI [PR #519](https://github.com/3scale/apicast/pull/519)

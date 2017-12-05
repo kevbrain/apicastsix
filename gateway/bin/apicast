@@ -23,7 +23,8 @@ if ($rover && !$lua_path) {
 
 chdir $apicast;
 
-$ENV{LUA_PATH} = "$apicast/src/?.lua;${lua_path}";
+# src/?/policy.lua allows us to require apicast.policy.apolicy
+$ENV{LUA_PATH} = "$apicast/src/?.lua;$apicast/src/?/policy.lua;${lua_path}";
 $ENV{PWD} = $cwd;
 
 my @args = ('resty', "$bindir/cli", @ARGV);

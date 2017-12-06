@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Detecting local rover installation from the CLI [PR #519](https://github.com/3scale/apicast/pull/519)
 - Use more `command` instead of `which` to work in plain shell [PR #521](https://github.com/3scale/apicast/pull/521)
+- Fixed rockspec so APIcast can be installed by luarocks [PR #523](https://github.com/3scale/apicast/pull/523)
 
 ## [3.2.0-alpha2] - 2017-11-30
 

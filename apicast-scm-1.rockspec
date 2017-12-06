@@ -18,7 +18,7 @@ dependencies = {
 }
 build = {
    type = "make",
-   makefile = 'apicast/Makefile',
+   makefile = 'gateway/Makefile',
    build_pass = false,
    build_variables = {
       CFLAGS='$(CFLAGS)'

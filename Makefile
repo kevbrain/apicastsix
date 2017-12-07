@@ -41,6 +41,10 @@ endif
 
 CPANM ?= $(shell command -v cpanm 2> /dev/null)
 
+ifneq ($(CI),true)
+S2I_OPTIONS += --copy
+endif
+
 export COMPOSE_PROJECT_NAME
 
 test: ## Run all tests
@@ -78,7 +82,7 @@ prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm -T prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
 builder-image: ## Build builder image
-	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --copy --incremental $(S2I_OPTIONS)
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --incremental $(S2I_OPTIONS)
 
 runtime-image: PULL_POLICY ?= always
 runtime-image: IMAGE_NAME = apicast-runtime-test

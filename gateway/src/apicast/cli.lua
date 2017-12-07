@@ -1,3 +1,5 @@
+require('apicast.loader')
+
 local command_target = '_cmd'
 local parser = require('argparse')() {
     name = "APIcast",

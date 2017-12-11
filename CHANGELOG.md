@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed rockspec so APIcast can be installed by luarocks [PR #523](https://github.com/3scale/apicast/pull/523)
 - Fix loading renamed APIcast code [PR #525](https://github.com/3scale/apicast/pull/525)
 
+## Changed
+
+- Consolidate apicast-0.1-0.rockspec into apicast-scm-1.rockspec [PR #526](https://github.com/3scale/apicast/pull/526)
+
 ## [3.2.0-alpha2] - 2017-11-30
 
 ## Added

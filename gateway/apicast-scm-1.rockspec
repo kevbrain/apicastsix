@@ -10,11 +10,16 @@ description = {
    license = "Apache License 2.0"
 }
 dependencies = {
-   'lua-resty-http == 0.10-0',
-   'inspect == 3.1.0-1',
-   'router == 2.1-0',
-   'lua-resty-jwt == 0.1.10-1',
-   'datafile == 0.4-1',
+   'lua-resty-http',
+   'inspect',
+   'router',
+   'lua-resty-jwt',
+   'lua-resty-url',
+   'lua-resty-env',
+   'lua-resty-execvp',
+   'liquid',
+   'argparse',
+   'penlight',
 }
 build = {
    type = "make",

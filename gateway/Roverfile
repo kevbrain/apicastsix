@@ -1,6 +1,6 @@
 luarocks {
 
-    rockspec 'apicast-0.1-0.rockspec',
+    rockspec 'apicast-scm-1.rockspec',
 
     group 'testing' {
         module { 'busted' },

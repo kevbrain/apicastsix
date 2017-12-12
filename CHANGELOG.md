@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Added
 
 - Definition of JSON schemas for policy configurations [PR #522](https://github.com/3scale/apicast/pull/522)
+- URL rewriting policy [PR #529](https://github.com/3scale/apicast/pull/529)
 
 ## Fixed
 

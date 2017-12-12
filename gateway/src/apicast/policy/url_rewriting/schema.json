@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "URL rewriting policy configuration",
+  "type": "object",
+  "properties": {
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": ["sub", "gsub"]
+          },
+          "regex": {
+            "type": "string"
+          },
+          "replace": {
+            "type": "string"
+          },
+          "options": {
+            "type": "string"
+          },
+          "break": {
+            "type": "boolean"
+          }
+        },
+        "required": ["op", "regex", "replace"]
+      }
+    }
+  }
+}

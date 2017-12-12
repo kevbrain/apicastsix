@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Use more `command` instead of `which` to work in plain shell [PR #521](https://github.com/3scale/apicast/pull/521)
 - Fixed rockspec so APIcast can be installed by luarocks [PR #523](https://github.com/3scale/apicast/pull/523)
 - Fix loading renamed APIcast code [PR #525](https://github.com/3scale/apicast/pull/525)
+- Fix `apicast` command when installed from luarocks [PR #527](https://github.com/3scale/apicast/pull/527)
 
 ## Changed
 

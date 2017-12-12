@@ -2,11 +2,53 @@
 use strict;
 use warnings FATAL => 'all';
 
+use File::Temp qw/ tempfile /;
+
 use File::Basename;
 use Cwd qw(getcwd abs_path);
 
-my $apicast = $ENV{APICAST_DIR} || abs_path(dirname(abs_path(__FILE__)) . '/..');
-my $bindir = $apicast . '/bin';
+sub detect_lua_version {
+    chomp(my $lua_version = `resty -e 'print(_VERSION:match(" (5%.[123])\$"))' 2> /dev/null` || '5.1');
+    return $lua_version;
+}
+
+my $apicast_dir = $ENV{APICAST_DIR} || abs_path(dirname(abs_path(__FILE__)) . '/..');
+
+
+sub detect_apicast_paths {
+    my $lua_modules = abs_path(dirname(abs_path(__FILE__)) . '/..');
+    my $command = basename(__FILE__);
+
+    my ($lua, $lua_file) = tempfile();
+
+    print $lua <<_LUA_;
+local rocks_dir = assert(require('luarocks.path').rocks_dir(arg[1]), 'could not get rocks dir')
+local manifest = assert(require('luarocks.manif').load_manifest(rocks_dir), 'could not load manifest')
+print(rocks_dir, '/', manifest.commands[arg[2]])
+_LUA_
+
+    my $rock = qx{resty "$lua_file" "$lua_modules" "$command" 2>/dev/null};
+
+    unlink $lua_file;
+    chomp $rock;
+
+    if (defined $rock && length $rock) {
+        return (
+            $rock . '/bin',
+            $rock . '/conf',
+            $rock =~ s{/lib/luarocks/rocks/apicast/.+?/?$}[/share/lua/@{[ detect_lua_version ]}]r
+        );
+    } else {
+        return (
+            $apicast_dir . '/bin',
+            $apicast_dir,
+            $apicast_dir . '/src'
+        )
+    }
+}
+
+my ($apicast_bin, $apicast_conf, $apicast_src) = detect_apicast_paths();
+
 my $lua_path = $ENV{LUA_PATH};
 my $cwd = getcwd();
 
@@ -21,12 +63,26 @@ if ($rover && !$lua_path) {
     $lua_path ||= ';';
 }
 
-chdir $apicast;
+$ENV{APICAST_DIR} = $apicast_conf;
 
 # src/?/policy.lua allows us to require apicast.policy.apolicy
-$ENV{LUA_PATH} = "$apicast/src/?.lua;$apicast/src/?/policy.lua;${lua_path}";
+$ENV{LUA_PATH} = sprintf('%1$s/?.lua;%1$s/?/policy.lua;', $apicast_src) . $lua_path;
 $ENV{PWD} = $cwd;
 
-my @args = ('resty', "$bindir/cli", @ARGV);
+my $bin = "$apicast_bin/cli";
+
+if (! -f $bin) {
+    warn "$bin does not exist";
+
+    my ($lua, $lua_file) = tempfile();
+
+    print $lua <<_LUA_;
+require('apicast.cli')(arg)
+_LUA_
+
+    $bin = $lua_file;
+}
+
+my @args = ('resty', $bin, @ARGV);
 
 exec '/usr/bin/env', @args;

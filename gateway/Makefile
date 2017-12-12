@@ -5,4 +5,4 @@ install: $(INST_LUADIR)/apicast
 	@echo --- install
 	cp -R gateway/src/* $(INST_LUADIR)/
 	cp gateway/bin/apicast* $(INST_BINDIR)/
-	cp -r gateway/*.d gateway/conf $(INST_CONFDIR)
+	cp -r gateway/*.d gateway/conf{,ig} $(INST_CONFDIR)

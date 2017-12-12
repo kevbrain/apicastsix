@@ -1,5 +1,5 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
 env_to_nginx('APICAST_REPORTING_THREADS=1');
 

@@ -1,7 +1,7 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$TestAPIcast::path/http.d/init.conf";
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$Test::APIcast::path/http.d/init.conf";
 
 $ENV{APICAST_CONFIGURATION_LOADER} = 'lazy';
 

@@ -1,5 +1,5 @@
 use lib 't';
-use TestAPIcastBlackbox 'no_plan';
+use Test::APIcast::Blackbox 'no_plan';
 
 $ENV{APICAST_CONFIGURATION_LOADER} = 'boot';
 

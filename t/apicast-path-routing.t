@@ -1,5 +1,5 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
 $ENV{APICAST_PATH_ROUTING_ENABLED} = '1';
 

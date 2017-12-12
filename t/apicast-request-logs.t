@@ -1,5 +1,5 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
 run_tests();
 

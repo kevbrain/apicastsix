@@ -31,6 +31,8 @@ ifeq ($(ROVER),)
 ROVER := lua_modules/bin/rover
 endif
 
+CPANM ?= $(shell command -v cpanm 2> /dev/null)
+
 export COMPOSE_PROJECT_NAME
 
 test: ## Run all tests
@@ -53,6 +55,10 @@ nginx:
 prove: HARNESS ?= TAP::Harness
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) nginx ## Test nginx
+ifeq ($(CPANM),)
+	$(error Missing cpanminus. Install it by running `curl -L https://cpanmin.us | perl - App::cpanminus`)
+endif
+	$(CPANM) --installdeps ./gateway
 	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source

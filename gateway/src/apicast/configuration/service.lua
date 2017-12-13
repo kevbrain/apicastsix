@@ -253,18 +253,15 @@ function _M:oauth()
   end
 end
 
-function _M:extract_usage(request, _)
-  local req = re.split(request, " ", 'oj')
-  local method, url = req[1], req[2]
-  local path = re.split(url, "\\?", 'oj')[1]
+local function extract_usage_v2(config, method, path)
   local usage_t =  {}
   local matched_rules = {}
   local params = {}
-  local rules = self.rules
+  local rules = config.rules
 
   local args = get_auth_params(method)
 
-  ngx.log(ngx.DEBUG, '[mapping] service ', self.id, ' has ', #rules, ' rules')
+  ngx.log(ngx.DEBUG, '[mapping] service ', config.id, ' has ', #rules, ' rules')
 
   for i = 1, #rules do
     check_rule({path=path, method=method, args=args}, rules[i], usage_t, matched_rules, params)
@@ -273,6 +270,33 @@ function _M:extract_usage(request, _)
   -- if there was no match, usage is set to nil and it will respond a 404, this
   -- behavior can be changed
   return usage_t, concat(matched_rules, ", "), params
+end
+
+-- Deprecated
+function _M:extract_usage(request)
+  ngx.log(ngx.WARN, 'extract_usage is deprecated, please use get_usage(method, path)')
+  local req = re.split(request, " ", 'oj')
+  local method, url = req[1], req[2]
+  local path = re.split(url, "\\?", 'oj')[1]
+
+  return extract_usage_v2(self, method, path)
+end
+
+--- Get the usage associated with a request
+-- @tparam string method Method of the request (GET, POST, etc.)
+-- @tparam string path Path of the request
+function _M:get_usage(method, path)
+  -- This is a simple dispatcher. If it detects that the 'extract_usage' method
+  -- has been defined, it calls it. Otherwise, it calls the new version of the
+  -- method. This is done to keep backwards compatibility, because in previous
+  -- versions it was possible to ovewrite that method and expect to be called
+  -- from where get_usage is currently being called.
+
+  if self.extract_usage and self.extract_usage ~= _M.extract_usage then
+    return self:extract_usage(ngx.var.request)
+  else
+    return extract_usage_v2(self, method, path)
+  end
 end
 
 return _M

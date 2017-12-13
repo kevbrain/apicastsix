@@ -236,8 +236,6 @@ function _M:call(service)
 end
 
 function _M:access(service)
-  local request = ngx.var.request -- NYI: return to lower frame
-
   ngx.var.secret_token = service.secret_token
 
   local credentials, err = service:extract_credentials()
@@ -247,7 +245,7 @@ function _M:access(service)
     return error_no_credentials(service)
   end
 
-  local _, matched_patterns, usage_params = service:extract_usage(request)
+  local _, matched_patterns, usage_params = service:get_usage(ngx.req.get_method(), ngx.var.uri)
   local cached_key = { service.id }
 
   -- remove integer keys for serialization

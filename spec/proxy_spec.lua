@@ -49,7 +49,8 @@ describe('Proxy', function()
   describe(':access', function()
     local service
     before_each(function()
-      ngx.var = { backend_endpoint = 'http://localhost:1853' }
+      ngx.var = { backend_endpoint = 'http://localhost:1853', uri = '/a/uri' }
+      ngx.req = { get_method = function () return 'GET' end}
       service = Service.new({ extract_usage = function() end })
     end)
 

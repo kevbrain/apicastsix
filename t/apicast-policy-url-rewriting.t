@@ -234,3 +234,61 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 5: url rewriting policy placed before the apicast one in the chain
+The url rewriting policy is placed before the apicast one in the policy chain,
+this means that the request will be rewritten before matching the mapping
+rules.
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
+      local args = ngx.var.args
+      if args == expected then
+        ngx.exit(200)
+      else
+        ngx.log(ngx.ERR, expected, ' did not match: ', args)
+        ngx.exit(403)
+      end
+    }
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/new", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          {
+            "name": "apicast.policy.url_rewriting",
+            "configuration":
+              [
+                { "op": "sub", "regex": "original", "replace": "new" }
+              ]
+          },
+          { "name": "apicast.policy.apicast" }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location /new {
+    content_by_lua_block {
+      ngx.say('yay, api backend');
+    }
+  }
+--- request
+GET /original?user_key=value
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

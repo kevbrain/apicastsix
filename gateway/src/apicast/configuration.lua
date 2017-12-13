@@ -3,7 +3,6 @@ local _M = {
 }
 
 local len = string.len
-local format = string.format
 local pairs = pairs
 local type = type
 local error = error
@@ -11,7 +10,6 @@ local tostring = tostring
 local next = next
 local lower = string.lower
 local insert = table.insert
-local concat = table.concat
 local setmetatable = setmetatable
 local re_match = ngx.re.match
 
@@ -32,60 +30,8 @@ local function map(func, tbl)
   return newtbl
 end
 
-local function set_or_inc(t, name, delta)
-  return (t[name] or 0) + (delta or 0)
-end
-
 local function regexpify(path)
   return path:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
-end
-
-local function check_rule(req, rule, usage_t, matched_rules, params)
-  local pattern = rule.regexpified_pattern
-  local match = re_match(req.path, format("^%s", pattern), 'oj')
-
-  if match and req.method == rule.method then
-    local args = req.args
-
-    if rule.querystring_params(args) then -- may return an empty table
-      local system_name = rule.system_name
-      -- FIXME: this had no effect, what is it supposed to do?
-      -- when no querystringparams
-      -- in the rule. it's fine
-      -- for i,p in ipairs(rule.parameters or {}) do
-      --   param[p] = match[i]
-      -- end
-
-      local value = set_or_inc(usage_t, system_name, rule.delta)
-
-      usage_t[system_name] = value
-      params['usage[' .. system_name .. ']'] = value
-      insert(matched_rules, rule.pattern)
-    end
-  end
-end
-
-local function get_auth_params(method)
-  local params = ngx.req.get_uri_args()
-
-  if method == "GET" then
-    return params
-  else
-    ngx.req.read_body()
-    local body_params, err = ngx.req.get_post_args()
-
-    if not body_params then
-      ngx.log(ngx.NOTICE, 'Error while getting post args: ', err)
-      body_params = {}
-    end
-
-    -- Adds to body_params URI params that are not included in the body. Doing
-    -- the reverse would be more expensive, because in general, we expect the
-    -- size of body_params to be larger than the size of params.
-    setmetatable(body_params, { __index = params })
-
-    return body_params
-  end
 end
 
 local regex_variable = '\\{[-\\w_]+\\}'
@@ -212,26 +158,6 @@ function _M.parse_service(service)
         app_id = lower(proxy.auth_app_id or 'app_id'),
         app_key = lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
       },
-      extract_usage = function (config, request, _)
-        local req = re.split(request, " ", 'oj')
-        local method, url = req[1], req[2]
-        local path = re.split(url, "\\?", 'oj')[1]
-        local usage_t =  {}
-        local matched_rules = {}
-        local params = {}
-        local rules = config.rules
-
-        local args = get_auth_params(method)
-
-        ngx.log(ngx.DEBUG, '[mapping] service ', config.id, ' has ', #config.rules, ' rules')
-
-        for i = 1, #rules do
-          check_rule({path=path, method=method, args=args}, rules[i], usage_t, matched_rules, params)
-        end
-
-        -- if there was no match, usage is set to nil and it will respond a 404, this behavior can be changed
-        return usage_t, concat(matched_rules, ", "), params
-      end,
       rules = map(function(proxy_rule)
         local querystring_parameters = hash_to_array(proxy_rule.querystring_parameters)
 

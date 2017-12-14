@@ -2,10 +2,12 @@
 -- This policy enables CORS (Cross Origin Resource Sharing) request handling.
 -- The policy is configurable. Users can specify the values for the following
 -- headers in the response:
+--
 --   - Access-Control-Allow-Headers
 --   - Access-Control-Allow-Methods
 --   - Access-Control-Allow-Origin
 --   - Access-Control-Allow-Credentials
+--
 -- By default, those headers are set so all the requests are allowed. For
 -- example, if the request contains the 'Origin' header set to 'example.com',
 -- by default, 'Access-Control-Allow-Origin' in the response will be set to

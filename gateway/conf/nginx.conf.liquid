@@ -42,8 +42,7 @@ http {
   log_format time '[$time_local] $host:$server_port $remote_addr:$remote_port "$request" $status $body_bytes_sent ($request_time) $post_action_impact';
   access_log off;
 
-  # src/?/policy.lua allows us to require apicast.policy.apolicy
-  lua_package_path ";;{{prefix}}/?.lua;{{prefix}}/src/?.lua;{{prefix}}/src/?/policy.lua";
+  lua_package_path ";;{{prefix}}/?.lua;{{prefix}}/src/?.lua;";
 
   {% if nameservers %}
     resolver {{ nameservers | join: " " }};

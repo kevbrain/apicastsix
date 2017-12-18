@@ -3,6 +3,8 @@ local require = require
 local dofile = dofile
 local type = type
 
+require('apicast.loader')
+
 local env = require 'resty.env'
 
 local function error_message(error)

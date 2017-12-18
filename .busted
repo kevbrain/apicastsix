@@ -11,8 +11,7 @@ local default = {
   ['shuffle-tests'] = true,
   ['shuffle-files'] = true,
 
-  -- src/?/policy.lua allows us to require apicast.policy.apolicy
-  lpath = path.join(root, 'spec/?.lua;')  .. path.join(root, 'gateway/src/?.lua;gateway/src/?/policy.lua'),
+  lpath = path.join(root, 'spec/?.lua;')  .. path.join(root, 'gateway/src/?.lua;'),
 }
 
 if ci then

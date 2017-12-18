@@ -65,8 +65,7 @@ if ($rover && !$lua_path) {
 
 $ENV{APICAST_DIR} = $apicast_conf;
 
-# src/?/policy.lua allows us to require apicast.policy.apolicy
-$ENV{LUA_PATH} = sprintf('%1$s/?.lua;%1$s/?/policy.lua;', $apicast_src) . $lua_path;
+$ENV{LUA_PATH} = sprintf('%1$s/?.lua;', $apicast_src) . $lua_path;
 $ENV{PWD} = $cwd;
 
 my $bin = "$apicast_bin/cli";

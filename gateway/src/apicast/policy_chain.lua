@@ -13,6 +13,8 @@ local require = require
 local insert = table.insert
 local noop = function() end
 
+require('apicast.loader')
+
 local linked_list = require('apicast.linked_list')
 local policy_phases = require('apicast.policy').phases
 

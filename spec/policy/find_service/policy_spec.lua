@@ -6,11 +6,14 @@ describe('find_service', function()
       it('finds the service by matching rules and stores it in the given context', function()
         require('apicast.configuration_store').path_routing = true
 
-        -- We access ngx.var.request and ngx.req.get_uri_args directly in the
-        -- code, so we need to mock them. We should probably try to avoid this
-        -- kind of coupling.
-        ngx.var = { request = 'GET /def HTTP/1.1' }
-        ngx.req = { get_uri_args = function() return {} end }
+        -- We access ngx.var.uri, ngx.req.get_method, and ngx.req.get_uri_args
+        -- directly in the code, so we need to mock them. We should probably
+        -- try to avoid this kind of coupling.
+        ngx.var = { uri = '/def' }
+        ngx.req = {
+          get_uri_args = function() return {} end,
+          get_method = function() return 'GET' end
+        }
 
         local find_service_policy = require('apicast.policy.find_service').new()
         local host = 'example.com'
@@ -55,8 +58,11 @@ describe('find_service', function()
       describe('and no rules are matched', function()
         it('finds a service for the host in the context and stores the service there', function()
           require('apicast.configuration_store').path_routing = true
-          ngx.var = { request = 'GET /abc HTTP/1.1' }
-          ngx.req = { get_uri_args = function() return {} end }
+          ngx.var = { uri = '/abc' }
+          ngx.req = {
+            get_uri_args = function() return {} end,
+            get_method = function() return 'GET' end
+          }
 
           local host = 'example.com'
           local find_service_policy = require('apicast.policy.find_service').new()
@@ -80,11 +86,14 @@ describe('find_service', function()
         end)
       end)
 
-      describe('and no rules are matches and there is not a service for the host', function()
+      describe('and no rules are matched and there is not a service for the host', function()
         it('stores nil in the service field of the given context', function()
           require('apicast.configuration_store').path_routing = true
-          ngx.var = { request = 'GET /abc HTTP/1.1' }
-          ngx.req = { get_uri_args = function() return {} end }
+          ngx.var = { uri = '/abc' }
+          ngx.req = {
+            get_uri_args = function() return {} end,
+            get_method = function() return 'GET' end
+          }
 
           local find_service_policy = require('apicast.policy.find_service').new()
           local configuration_store = require('apicast.configuration_store').new()

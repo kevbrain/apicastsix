@@ -27,8 +27,9 @@ end
 
 local function find_service_cascade(configuration, host)
   local found
-  local request = ngx.var.request
   local services = configuration:find_by_host(host)
+  local method = ngx.req.get_method()
+  local uri = ngx.var.uri
 
   for s=1, #services do
     local service = services[s]
@@ -38,7 +39,7 @@ local function find_service_cascade(configuration, host)
       if hosts[h] == host then
         local name = service.system_name or service.id
         ngx.log(ngx.DEBUG, 'service ', name, ' matched host ', hosts[h])
-        local usage, matched_patterns = service:extract_usage(request)
+        local usage, matched_patterns = service:get_usage(method, uri)
 
         if next(usage) and matched_patterns ~= '' then
           ngx.log(ngx.DEBUG, 'service ', name, ' matched patterns ', matched_patterns)

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Deprecated `Configuration.extract_usage` in favor of `Service.get_usage` [PR #531](https://github.com/3scale/apicast/pull/531)
 - Extract Test::APIcast to own package on CPAN [PR #528](https://github.com/3scale/apicast/pull/528)
 - Load policies by the APIcast loader instead of changing load path [PR #532](https://github.com/3scale/apicast/pull/532), [PR #536](https://github.com/3scale/apicast/pull/536)
+- Add `src` directory to the Lua load path when using CLI [PR #533](https://github.com/3scale/apicast/pull/533)
 
 ## [3.2.0-alpha2] - 2017-11-30
 

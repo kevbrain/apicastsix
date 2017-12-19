@@ -82,6 +82,15 @@ _LUA_
     $bin = $lua_file;
 }
 
-my @args = ('resty', $bin, @ARGV);
+my @resty_args = ();
+
+# Add directories to the lua load path.
+# APIcast source and a local src directory.
+for my $inc ($apicast_src, 'src') {
+    if (-d $inc) {
+        push @resty_args, '-I', $inc;
+    }
+}
+my @args = ('resty', @resty_args, $bin, @ARGV);
 
 exec '/usr/bin/env', @args;

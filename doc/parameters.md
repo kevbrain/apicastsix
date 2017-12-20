@@ -29,8 +29,8 @@ Specifies the log level for the OpenResty logs.
 **Default:** lazy
 
 Defines how to load the configuration.
-Boot will require configuration when the gateway starts.
-Lazy will load it on demand on incoming request.
+Boot will request the configuration to the API manager when the gateway starts.
+Lazy will load it on demand for each incoming request (to guarantee a complete refresh on each request `APICAST_CONFIGURATION_CACHE` should be 0).
 
 ### `APICAST_BACKEND_CACHE_HANDLER`
 
@@ -77,7 +77,7 @@ Service IDs can be found on the **Dashboard > APIs** page, tagged as _ID for API
 **Values:** _a number > 60_  
 **Default:** 0
 
-Specifies the interval (in seconds) that will be the configuration stored for. The value should be set to 0 or more than 60. For example, if `APICAST_CONFIGURATION_CACHE` is set to 120, the gateway will reload the configuration every 2 minutes (120 seconds).
+Specifies the interval (in seconds) that the configuration will be stored for. The value should be set to 0 (not compatible with boot value of `APICAST_CONFIGURATION_LOADER`) or more than 60. For example, if `APICAST_CONFIGURATION_CACHE` is set to 120, the gateway will reload the configuration from the API manager every 2 minutes (120 seconds).
 
 ### `REDIS_HOST`
 

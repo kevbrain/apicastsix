@@ -1,5 +1,5 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
 repeat_each(1); # Can't be two as the second call would hit the cache
 run_tests();

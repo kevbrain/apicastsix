@@ -1,7 +1,7 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
-$ENV{TEST_NGINX_LUA_PATH} = "$TestAPIcast::spec/?.lua;$ENV{TEST_NGINX_LUA_PATH}";
+$ENV{TEST_NGINX_LUA_PATH} = "$Test::APIcast::spec/?.lua;$ENV{TEST_NGINX_LUA_PATH}";
 $ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
 $ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | head -1 | tr '\n' ' '`;
 $ENV{BACKEND_ENDPOINT_OVERRIDE} ||= "http://127.0.0.1:$Test::Nginx::Util::ServerPortForClient/backend";

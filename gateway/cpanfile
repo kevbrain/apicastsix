@@ -1,0 +1,3 @@
+requires 'Test::APIcast', '0.03';
+requires 'JSON::WebToken';
+requires 'Crypt::OpenSSL::RSA';

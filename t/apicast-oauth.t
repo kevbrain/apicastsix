@@ -1,5 +1,5 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
 $ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
 $ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | head -1 | tr '\n' ' '`;

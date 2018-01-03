@@ -24,10 +24,15 @@ local function loader(name, path)
 end
 
 --- Try to load a policy. Policies can have a `.policy` suffix.
-local function policy_namespace(name, path)
+local function policy_loader(name, path)
   local policy = name .. '.policy'
 
-  local found, err = loader(policy, path or package.path)
+  return loader(policy, path or package.path)
+end
+
+--- Searcher has to return the loader or an error message.
+local function policy_searcher(name, path)
+  local found, err = policy_loader(name, path)
 
   return found or err
 end
@@ -37,7 +42,7 @@ local function prefix_loader(name, path)
   local found, err = loader(prefixed, path)
 
   if not found then
-    found = policy_namespace(prefixed, path)
+    found = policy_loader(prefixed, path)
   end
 
   if found then
@@ -52,7 +57,7 @@ local function rename_loader(name, path)
   local found, err = loader(new, path)
 
   if not found then
-    found = policy_namespace(new, path)
+    found = policy_loader(new, path)
   end
 
   if found then
@@ -74,5 +79,5 @@ local function apicast_namespace(name)
   end
 end
 
-table.insert(package.searchers, policy_namespace)
+table.insert(package.searchers, policy_searcher)
 table.insert(package.searchers, apicast_namespace)

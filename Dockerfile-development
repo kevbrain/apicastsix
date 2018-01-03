@@ -19,11 +19,13 @@ RUN mkdir -p ${USER_HOME}/gateway \
 
 COPY gateway/Roverfile ${USER_HOME}/gateway
 COPY gateway/Roverfile.lock ${USER_HOME}/gateway
+COPY gateway/cpanfile ${USER_HOME}/gateway
 COPY Makefile ${USER_HOME}
 
 WORKDIR ${USER_HOME}
 
 RUN make dependencies
+RUN cpanm --installdeps ./gateway
 
 COPY . ${USER_HOME}
 

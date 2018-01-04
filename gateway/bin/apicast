@@ -77,8 +77,6 @@ $ENV{PWD} = $cwd;
 my $bin = "$apicast_bin/cli";
 
 if (! -f $bin) {
-    warn "$bin does not exist";
-
     my ($lua, $lua_file) = tempfile();
 
     print $lua <<_LUA_;

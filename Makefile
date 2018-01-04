@@ -52,13 +52,15 @@ busted: dependencies $(ROVER) ## Test Lua.
 nginx:
 	@ ($(NGINX) -V 2>&1) > /dev/null
 
-prove: HARNESS ?= TAP::Harness
-prove: export TEST_NGINX_RANDOMIZE=1
-prove: $(ROVER) nginx ## Test nginx
+cpan:
 ifeq ($(CPANM),)
 	$(error Missing cpanminus. Install it by running `curl -L https://cpanmin.us | perl - App::cpanminus`)
 endif
 	$(CPANM) --installdeps ./gateway
+
+prove: HARNESS ?= TAP::Harness
+prove: export TEST_NGINX_RANDOMIZE=1
+prove: $(ROVER) nginx cpan ## Test nginx
 	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source

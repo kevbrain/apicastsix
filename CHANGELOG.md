@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix `apicast` command when installed from luarocks [PR #527](https://github.com/3scale/apicast/pull/527)
 - Fix lua docs formatting in the CORS policy [PR #530](https://github.com/3scale/apicast/pull/530)
 - `post_action` phase not being called in the policy_chain [PR #539](https://github.com/3scale/apicast/pull/539)
+- Failing to execute `libexec/boot` on some systems [PR #544](https://github.com/3scale/apicast/pull/544)
 
 ## Changed
 

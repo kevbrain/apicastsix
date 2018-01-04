@@ -35,5 +35,5 @@ wrk --connections 100 --threads 10 --duration 300 'http://localhost:8080/?user_k
 And in another terminal you can create flamegraphs:
 
 ```shell
-lj-lua-stacks.sxx  -x `pgrep openresty` --skip-badvars --arg time=30 | fix-lua-bt - | stackcollapse-stap.pl | flamegraph.pl > app/graph.svg
+lj-lua-stacks.sxx  -x `pgrep openresty` --skip-badvars --arg time=30 | fix-lua-bt - | stackcollapse-stap.pl | flamegraph.pl > /vagrant/graph.svg
 ```

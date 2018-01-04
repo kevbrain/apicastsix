@@ -37,18 +37,22 @@ Vagrant.configure("2") do |config|
 
   # View the documentation for the provider you are using for more
   # information on available options.
+  config.vm.synced_folder ".", "/vagrant", type: 'virtualbox'
 
-  config.vm.synced_folder ".", "/home/vagrant/app"
+  config.vm.synced_folder ".", "/home/vagrant/app", type: 'rsync',
+    rsync__exclude: %w[lua_modules .git .vagrant],
+    rsync__args: %w[--verbose --archive --delete -z --links ]
 
   config.vm.provision "shell", inline: <<-'SHELL'
      set -x -e
-     yum -y install yum-utils
+     yum -y install yum-utils rsync
      # Install OpenResty and other tools
      yum-config-manager --add-repo https://openresty.org/package/centos/openresty.repo
 
-     yum -y install openresty-resty openresty-debuginfo openresty-pcre-debuginfo
+     yum -y install openresty-resty openresty-debug openresty-debug-debuginfo openresty-pcre-debuginfo
      yum -y install systemtap git epel-release httpd-tools
      yum -y install luarocks
+     yum -y install perl-local-lib perl-App-cpanminus redis
 
      yum -y groupinstall 'Development Tools'
      yum -y install openssl-devel
@@ -75,23 +79,28 @@ Vagrant.configure("2") do |config|
      echo 'pathmunge lua_modules/bin' > /etc/profile.d/rover.sh
      chmod +x /etc/profile.d/rover.sh
 
+     echo 'eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)' > /etc/profile.d/perl.sh
+     chmod +x /etc/profile.d/perl.sh
+
      mkdir -p /usr/share/lua/5.1/luarocks/
      curl -L https://raw.githubusercontent.com/3scale/s2i-openresty/ffb1c55533be866a97466915d7ef31c12bae688c/site_config.lua > /usr/share/lua/5.1/luarocks/site_config.lua
 
      # Install APIcast dependencies
-     (cd app && make dependencies)
+     (cd app && make dependencies cpan)
 
      # Add various utilites to the PATH
      ln -sf /usr/local/openresty/luajit/bin/luajit /usr/local/bin/luajit
      ln -sf /usr/local/flamegraph/*.pl /usr/local/bin/
      ln -sf /usr/local/stapxx/samples/*.sxx /usr/local/bin/
-     ln -sf /usr/local/openresty-systemtap-toolkit/fix-lua-bt /usr/local/bin/
-     ln -sf /usr/local/openresty-systemtap-toolkit/ngx-pcre* /usr/local/bin/
+     ln -sf `find -O0 /usr/local/openresty-systemtap-toolkit/ -maxdepth 1 -type f -executable -print` /usr/local/bin/
 
      # Allow vagrant user to use systemtap
      usermod -a -G stapusr,stapdev vagrant
 
      # Raise opened files limit for vagrant user
      echo -e 'vagrant\t\t\t-\tnofile\t\t1000000' > /etc/security/limits.d/90-nofile.conf
+
+     # Start redis needed for tests
+     systemctl  start redis
   SHELL
 end

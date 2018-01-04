@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix loading renamed APIcast code [PR #525](https://github.com/3scale/apicast/pull/525)
 - Fix `apicast` command when installed from luarocks [PR #527](https://github.com/3scale/apicast/pull/527)
 - Fix lua docs formatting in the CORS policy [PR #530](https://github.com/3scale/apicast/pull/530)
+- `post_action` phase not being called in the policy_chain [PR #539](https://github.com/3scale/apicast/pull/539)
 
 ## Changed
 
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add `src` directory to the Lua load path when using CLI [PR #533](https://github.com/3scale/apicast/pull/533)
 - Move rejection reason parsing from CacheHandler to Proxy [PR #541](https://github.com/3scale/apicast/pull/541)
 - Propagate full package.path and cpath from the CLI to Nginx [PR #538](https://github.com/3scale/apicast/pull/538)
+- `post_action` phase now shares `ngx.ctx` with the main request [PR #539](https://github.com/3scale/apicast/pull/539)
 
 ## [3.2.0-alpha2] - 2017-11-30
 

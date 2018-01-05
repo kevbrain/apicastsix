@@ -1,3 +1,6 @@
+local http_ng_response = require('resty.http_ng.response')
+local lrucache = require('resty.lrucache')
+
 local configuration_store = require 'apicast.configuration_store'
 local Service = require 'apicast.configuration.service'
 
@@ -107,6 +110,18 @@ describe('Proxy', function()
       proxy:authorize(service, { foo = 0 }, { client_id = 'blah' })
 
       assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo=0', response, nil)
+    end)
+  end)
+
+  describe('.handle_backend_response', function()
+    it('returns a rejection reason when given', function()
+      local authorized, rejection_reason = proxy:handle_backend_response(
+        lrucache.new(1),
+        http_ng_response.new(nil, 403, { ['3scale-rejection-reason'] = 'some_reason' }, ''),
+        nil)
+
+      assert.falsy(authorized)
+      assert.equal('some_reason', rejection_reason)
     end)
   end)
 end)

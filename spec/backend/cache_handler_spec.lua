@@ -1,12 +1,7 @@
-
 local _M = require('apicast.backend.cache_handler')
 local lrucache = require('resty.lrucache')
 
-local response = require('resty.http_ng.response')
-
-
 describe('Cache Handler', function()
-
   describe('.new', function()
     it('has a default handler', function()
       local handler = _M.new()
@@ -37,7 +32,7 @@ describe('Cache Handler', function()
       local cache = lrucache.new(1)
       ngx.var = { cached_key = nil }
 
-      assert.truthy(handler(cache, 'foobar', { status = 200 }))
+      handler(cache, 'foobar', { status = 200 })
 
       assert.equal(200, cache:get('foobar'))
     end)
@@ -46,7 +41,7 @@ describe('Cache Handler', function()
       local cache = lrucache.new(1)
       ngx.var = { cached_key = 'foobar' } -- means it is performed in post_action
 
-      assert.truthy(handler(cache, 'foobar', { status = 200 }))
+      handler(cache, 'foobar', { status = 200 })
 
       assert.falsy(cache:get('foobar'))
     end)
@@ -55,7 +50,7 @@ describe('Cache Handler', function()
       local cache = lrucache.new(1)
       cache:set('foobar', 200)
 
-      assert.falsy(handler(cache, 'foobar', { status = 403 }))
+      handler(cache, 'foobar', { status = 403 })
 
       assert.falsy(cache:get('foobar'))
     end)
@@ -64,23 +59,11 @@ describe('Cache Handler', function()
       local cache = lrucache.new(1)
       cache:set('foobar', 200)
 
-      assert.falsy(handler(cache, 'foobar', { status = 503 }))
+      handler(cache, 'foobar', { status = 503 })
 
-      assert.falsy(cache:get('foobar'))
-    end)
-
-    it('returns a rejection reason when given', function()
-      local cache = lrucache.new(1)
-
-      local authorized, rejection_reason = handler(
-        cache, 'foobar', response.new(nil, 403, { ['3scale-rejection-reason'] = 'some_reason' }, ''))
-
-      assert.falsy(authorized)
-      assert.equal('some_reason', rejection_reason)
       assert.falsy(cache:get('foobar'))
     end)
   end)
-
 
   describe('resilient', function()
     local handler = _M.handlers.resilient
@@ -88,7 +71,7 @@ describe('Cache Handler', function()
     it('caches successful response', function()
       local cache = lrucache.new(1)
 
-      assert.truthy(handler(cache, 'foobar', { status = 200 }))
+      handler(cache, 'foobar', { status = 200 })
 
       assert.equal(200, cache:get('foobar'))
     end)
@@ -96,7 +79,7 @@ describe('Cache Handler', function()
     it('caches forbidden response', function()
       local cache = lrucache.new(1)
 
-      assert.falsy(handler(cache, 'foobar', { status = 403 }))
+      handler(cache, 'foobar', { status = 403 })
 
       assert.equal(403, cache:get('foobar'))
     end)
@@ -104,7 +87,7 @@ describe('Cache Handler', function()
     it('not caches server errors', function()
       local cache = lrucache.new(1)
 
-      assert.falsy(handler(cache, 'foobar', { status = 503 }))
+      handler(cache, 'foobar', { status = 503 })
 
       assert.falsy(cache:get('foobar'))
     end)
@@ -114,20 +97,9 @@ describe('Cache Handler', function()
 
       cache:set('foobar', 200)
 
-      assert.falsy(handler(cache, 'foobar', { status = 503 }))
+      handler(cache, 'foobar', { status = 503 })
 
       assert.equal(200, cache:get('foobar'))
-    end)
-
-    it('returns a rejection reason when given', function()
-      local cache = lrucache.new(1)
-
-      local authorized, rejection_reason = handler(
-        cache, 'foobar', response.new(nil, 403, { ['3scale-rejection-reason'] = 'some_reason' }, ''))
-
-      assert.falsy(authorized)
-      assert.equal('some_reason', rejection_reason)
-      assert.equal(403, cache:get('foobar'))
     end)
   end)
 

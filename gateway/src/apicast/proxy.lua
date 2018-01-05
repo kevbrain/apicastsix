@@ -359,10 +359,23 @@ function _M:post_action(force)
   end
 end
 
+-- Returns the rejection reason from the headers of a 3scale backend response.
+-- The header is set only when the authrep call to backend enables the option
+-- to get the rejection reason. This is specified in the '3scale-options'
+-- header of the request.
+local function rejection_reason(response_headers)
+  return response_headers and response_headers['3scale-rejection-reason']
+end
+
 function _M:handle_backend_response(cached_key, response, ttl)
   ngx.log(ngx.DEBUG, '[backend] response status: ', response.status, ' body: ', response.body)
 
-  return self.cache_handler(self.cache, cached_key, response, ttl)
+  self.cache_handler(self.cache, cached_key, response, ttl)
+
+  local authorized = (response.status == 200)
+  local unauthorized_reason = not authorized and rejection_reason(response.headers)
+
+  return authorized, unauthorized_reason
 end
 
 if custom_config then

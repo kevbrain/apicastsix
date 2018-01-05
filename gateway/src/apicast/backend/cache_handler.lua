@@ -18,14 +18,6 @@ local mt = {
   end,
 }
 
--- Returns the rejection reason from the headers of a 3scale backend response.
--- The header is set only when the authrep call to backend enables the option
--- to get the rejection reason. This is specified in the '3scale-options'
--- header of the request.
-local function rejection_reason(response_headers)
-  return response_headers and response_headers['3scale-rejection-reason']
-end
-
 function _M.new(handler)
   local name = handler or _M.handlers.default
   ngx.log(ngx.DEBUG, 'backend cache handler: ', name)
@@ -51,12 +43,9 @@ function _M.handlers.strict(cache, cached_key, response, ttl)
       ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ', ttl: ', ttl, ' sub: ')
       cache:set(cached_key, 200, ttl or 0)
     end
-
-    return true
   else
     ngx.log(ngx.NOTICE, 'apicast cache delete key: ', cached_key, ' cause status ', response.status)
     cache:delete(cached_key)
-    return false, rejection_reason(response.headers)
   end
 end
 
@@ -67,9 +56,6 @@ function _M.handlers.resilient(cache, cached_key, response, ttl)
     ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ' status: ', status, ', ttl: ', ttl )
 
     cache:set(cached_key, status, ttl or 0)
-
-    local authorized = (status == 200)
-    return authorized, (not authorized and rejection_reason(response.headers))
   end
 end
 

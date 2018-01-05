@@ -56,7 +56,7 @@ cpan:
 ifeq ($(CPANM),)
 	$(error Missing cpanminus. Install it by running `curl -L https://cpanmin.us | perl - App::cpanminus`)
 endif
-	$(CPANM) --installdeps ./gateway
+	$(CPANM) --notest --installdeps ./gateway
 
 prove: HARNESS ?= TAP::Harness
 prove: export TEST_NGINX_RANDOMIZE=1

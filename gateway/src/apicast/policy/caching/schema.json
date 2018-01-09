@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Caching policy configuration",
+  "type": "object",
+  "properties": {
+    "exit": {
+      "type": "caching_type",
+      "enum": ["resilient", "strict"]
+    }
+  }
+}

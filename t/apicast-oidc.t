@@ -66,12 +66,12 @@ __DATA__
 GET /test
 --- error_code: 200
 --- more_headers eval
-use JSON::WebToken;
-my $jwt = JSON::WebToken->encode({
+use Crypt::JWT qw(encode_jwt);
+my $jwt = encode_jwt(payload => {
   aud => 'appid',
   nbf => 0,
   iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 10 }, $::rsa, 'RS256');
+  exp => time + 10 }, key => \$::rsa, alg => 'RS256');
 "Authorization: Bearer $jwt"
 --- no_error_log
 [error]

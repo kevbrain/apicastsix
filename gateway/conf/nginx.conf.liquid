@@ -42,7 +42,8 @@ http {
   log_format time '[$time_local] $host:$server_port $remote_addr:$remote_port "$request" $status $body_bytes_sent ($request_time) $post_action_impact';
   access_log off;
 
-  lua_package_path ";;{{prefix}}/?.lua;{{prefix}}/src/?.lua;";
+  lua_package_path "{{ lua_path | default: package.path }}";
+  lua_package_cpath "{{ lua_cpath | default: package.cpath }}";
 
   {% if nameservers %}
     resolver {{ nameservers | join: " " }};

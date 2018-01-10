@@ -36,20 +36,23 @@ _LUA_
         return (
             $rock . '/bin',
             $rock . '/conf',
-            $rock =~ s{/lib/luarocks/rocks/apicast/.+?/?$}[/share/lua/@{[ detect_lua_version ]}]r
+            $rock =~ s{/lib/luarocks/rocks/apicast/.+?/?$}[/share/lua/@{[ detect_lua_version ]}]r,
+            $rock =~ s{/lib/luarocks/rocks/apicast/.+?/?$}[/lib/lua/@{[ detect_lua_version ]}]r,
         );
     } else {
         return (
             $apicast_dir . '/bin',
             $apicast_dir,
-            $apicast_dir . '/src'
+            $apicast_dir . '/src',
+            $apicast_dir . '/lib',
         )
     }
 }
 
-my ($apicast_bin, $apicast_conf, $apicast_src) = detect_apicast_paths();
+my ($apicast_bin, $apicast_conf, $apicast_src, $apicast_lib) = detect_apicast_paths();
 
 my $lua_path = $ENV{LUA_PATH};
+my $lua_lib = $ENV{LUA_CPATH};
 my $cwd = getcwd();
 
 $ENV{PATH} .= ":$cwd/lua_modules/bin";
@@ -61,18 +64,19 @@ if ($rover && !$lua_path) {
     exec '/usr/bin/env', $rover, 'exec', $0, @ARGV
 } else {
     $lua_path ||= ';';
+    $lua_lib ||= ';';
 }
 
 $ENV{APICAST_DIR} = $apicast_conf;
 
 $ENV{LUA_PATH} = sprintf('%1$s/?.lua;', $apicast_src) . $lua_path;
+$ENV{LUA_CPATH} = sprintf('%1$s/?.so;', $apicast_lib) . $lua_lib;
+
 $ENV{PWD} = $cwd;
 
 my $bin = "$apicast_bin/cli";
 
 if (! -f $bin) {
-    warn "$bin does not exist";
-
     my ($lua, $lua_file) = tempfile();
 
     print $lua <<_LUA_;

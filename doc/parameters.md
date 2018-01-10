@@ -47,7 +47,7 @@ Resilient will do so only on getting authorization denied from backend.
 
 Specifies the name of the main Lua module that implements the API gateway logic. Custom modules can override the functionality of the default `apicast.lua` module. See [an example](../examples/custom-module) of how to use modules.
 
-### `APICAST_PATH_ROUTING_ENABLED`
+### `APICAST_PATH_ROUTING`
 
 **Values:**
 - `true` or `1` for _true_
@@ -66,7 +66,7 @@ When this parameter is set to _true_, the gateway will use path-based routing in
 When set to _true_, APIcast will log the response code of the response returned by the API backend in 3scale. In some plans this information can later be consulted from the 3scale admin portal.
 Find more information about the Response Codes feature on the [3scale support site](https://support.3scale.net/docs/analytics/response-codes-tracking).
 
-### `APICAST_SERVICES`
+### `APICAST_SERVICES_LIST`
 **Value:** a comma-separated list of service IDs
 
 Used to filter the services configured in the 3scale API Manager, and only use the configuration for specific services in the gateway, discarding those services IDs of which are not specified in the list.

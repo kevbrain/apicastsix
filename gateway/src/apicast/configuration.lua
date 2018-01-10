@@ -182,7 +182,7 @@ end
 
 function _M.services_limit()
   local services = {}
-  local subset = env.get('APICAST_SERVICES_LIST') or env.get('APICAST_SERVICES')
+  local subset = env.value('APICAST_SERVICES_LIST') or env.value('APICAST_SERVICES', ngx.log(ngx.WARN, 'DEPRECATION NOTICE: Use APICAST_SERVICES_LIST not APICAST_SERVICES as this will soon be unsupported'))
   if not subset or subset == '' then return services end
 
   local ids = re.split(subset, ',', 'oj')

@@ -100,6 +100,28 @@ describe('Configuration Remote Loader V2', function()
       assert.equal(1, #services)
       assert.same({ { service = { id = 1 } } }, services)
     end)
+    
+    it('ignores APICAST_SERVICES when empty and returns a list of services when APICAST_SERVICES_LIST is set', function()
+      env.set('APICAST_SERVICES', '')
+      env.set('APICAST_SERVICES_LIST', '11,42')
+    
+      local services = loader:services()
+    
+      assert.truthy(services)
+      assert.equal(2, #services)
+      assert.same({ { service = { id = 11 } }, { service = { id = 42 } } }, services)
+    end)
+    
+    it('ignores APICAST_SERVICES_LIST when empty and returns a list of services when APICAST_SERVICES is set', function()
+      env.set('APICAST_SERVICES_LIST', '')
+      env.set('APICAST_SERVICES', '11,42')
+    
+      local services = loader:services()
+    
+      assert.truthy(services)
+      assert.equal(2, #services)
+      assert.same({ { service = { id = 11 } }, { service = { id = 42 } } }, services)
+    end)
   end)
 
   describe(':config', function()

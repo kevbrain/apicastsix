@@ -142,6 +142,24 @@ describe('Configuration object', function()
 
       assert.same({}, services)
     end)
+    
+    it('reads from environment', function()
+      env.set('APICAST_SERVICES_LIST', '42,21')
+      env.set('APICAST_SERVICES', '')
+      
+      local services = services_limit()
+      
+      assert.same({ ['42'] = true, ['21'] = true }, services)
+    end)
+    
+    it('reads from environment', function()
+      env.set('APICAST_SERVICES', '42,21')
+      env.set('APICAST_SERVICES_LIST', '')
+      
+      local services = services_limit()
+      
+      assert.same({ ['42'] = true, ['21'] = true }, services)
+    end)
   end)
 
 end)

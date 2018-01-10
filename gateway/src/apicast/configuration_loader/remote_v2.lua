@@ -183,7 +183,7 @@ function _M:call(environment)
 end
 
 local services_subset = function()
-  local services = resty_env.get('APICAST_SERVICES_LIST') or resty_env.get('APICAST_SERVICES')
+  local services = resty_env.value('APICAST_SERVICES_LIST') or resty_env.value('APICAST_SERVICES', ngx.log(ngx.WARN, 'DEPRECATION NOTICE: Use APICAST_SERVICES_LIST not APICAST_SERVICES as this will soon be unsupported' ))
 
   if services and len(services) > 0 then
     local ids = re.split(services, ',', 'oj')

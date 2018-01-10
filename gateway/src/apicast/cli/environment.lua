@@ -51,11 +51,17 @@ _M.default_environment = 'production'
 -- @tfield ?string ca_bundle path to CA store file
 -- @tfield ?policy_chain policy_chain @{policy_chain} instance
 -- @tfield ?{string,...} nameservers list of nameservers
+-- @tfield ?string package.path path to load Lua files
+-- @tfield ?string package.cpath path to load libraries
 -- @table environment.default_config default configuration
 _M.default_config = {
     ca_bundle = resty_env.value('SSL_CERT_FILE'),
     policy_chain = require('apicast.policy_chain').default(),
     nameservers = parse_nameservers(),
+    package = {
+        path = package.path,
+        cpath = package.cpath,
+    }
 }
 
 local mt = { __index = _M }

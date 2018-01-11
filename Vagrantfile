@@ -21,6 +21,8 @@ Vagrant.configure("2") do |config|
   # your network.
   config.vm.network "private_network", type: 'dhcp'
 
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true
+
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
@@ -41,10 +43,10 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant", type: 'virtualbox'
 
   config.vm.synced_folder ".", "/home/vagrant/app", type: 'rsync',
-    rsync__exclude: %w[lua_modules .git .vagrant],
+    rsync__exclude: %w[lua_modules .git .vagrant node_modules t/servroot t/servroot* ],
     rsync__args: %w[--verbose --archive --delete -z --links ]
 
-  config.vm.provision "shell", inline: <<-'SHELL'
+  config.vm.provision "shell", inline: <<~'SHELL'
      set -x -e
      dnf -y install dnf-plugins-core
 
@@ -58,6 +60,8 @@ Vagrant.configure("2") do |config|
 
      yum -y groupinstall 'Development Tools'
      yum -y install openssl-devel libev-devel
+
+     dnf debuginfo-install -y kernel-core-$(uname -r)
 
      # Clone various utilities
      git clone https://github.com/openresty/stapxx.git /usr/local/stapxx || (cd /usr/local/stapxx && git pull)
@@ -111,14 +115,25 @@ Vagrant.configure("2") do |config|
 
      # Start redis needed for tests
      systemctl  start redis
+     systemctl disable openresty
+     systemctl stop openresty
 SHELL
 
-  config.vm.provision 'shell', privileged: false, name: "Install APIcast dependencies", inline: <<-'SHELL'
+  config.vm.provision 'shell', privileged: false, name: "Install APIcast dependencies", inline: <<~'SHELL'
     set -x -e
     pip install --user hererocks
     pushd app
     hererocks lua_modules -r^ -l 5.1 --no-readline
     curl -L https://raw.githubusercontent.com/3scale/s2i-openresty/ffb1c55533be866a97466915d7ef31c12bae688c/site_config.lua -o lua_modules/share/lua/5.1/luarocks/site_config.lua
     make dependencies cpan
+
+    mkdir -p ~/.systemtap
+    # needed for complete backtraces
+    # increase this if you start seeing stacks collapsed in impossible ways
+    # also try https://github.com/openresty/stapxx/commit/59ba231efba8725a510cd8d1d585aedf94670404
+    # to avoid MAXACTTION problems
+    cat <<- EOF > ~/.systemtap/rc
+    -D MAXSTRINGLEN=1024
+    EOF
 SHELL
 end

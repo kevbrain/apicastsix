@@ -17,7 +17,7 @@ bin/apicast
 For profiling with stapxx it is recommended to start just one process and worker:
 
 ```shell
-bin/apicast -m off -w 1 -c examples/configuration/echo.json  > /dev/null
+bin/apicast -c examples/configuration/echo.json  > /dev/null
 ```
 
 Then by opening another terminal you can use vegeta to create traffic:
@@ -35,5 +35,5 @@ wrk --connections 100 --threads 10 --duration 300 'http://localhost:8080/?user_k
 And in another terminal you can create flamegraphs:
 
 ```shell
-lj-lua-stacks.sxx  -x `pgrep openresty` --skip-badvars --arg time=30 | fix-lua-bt - | stackcollapse-stap.pl | flamegraph.pl > /vagrant/graph.svg
+lj-lua-stacks.sxx  -x `pgrep -f 'nginx: worker'` --skip-badvars --arg time=10 | fix-lua-bt - | stackcollapse-stap.pl | flamegraph.pl > /vagrant/graph.svg
 ```

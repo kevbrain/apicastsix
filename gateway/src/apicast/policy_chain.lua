@@ -143,6 +143,7 @@ end
 local function call_chain(phase_name)
     return function(self, ...)
         for i=1, #self do
+            ngx.log(ngx.DEBUG, 'policy chain execute phase: ', phase_name, ', policy: ', self[i]._NAME, ', i: ', i)
             self[i][phase_name](self[i], ...)
         end
     end

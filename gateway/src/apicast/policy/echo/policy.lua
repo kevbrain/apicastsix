@@ -19,12 +19,14 @@ function _M.new(configuration)
   return policy
 end
 
+function _M.content()
+  ngx.say(ngx.var.request)
+end
+
 function _M:rewrite()
   if self.status then
     ngx.status = self.status
   end
-
-  ngx.say(ngx.var.request)
 
   if self.exit == 'request' then
     return ngx.exit(ngx.status)

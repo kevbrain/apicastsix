@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Liquid template can find files in current folder too [PR #533](https://github.com/3scale/apicast/pull/533)
 - `bin/apicast` respects `APICAST_OPENRESTY_BINARY` and `TEST_NGINX_BINARY` environment [PR #540](https://github.com/3scale/apicast/pull/540)
 - Caching policy [PR #546](https://github.com/3scale/apicast/pull/546)
+- New phase: `content` for generating content or getting the upstream response [PR #535](https://github.com/3scale/apicast/pull/535)
 
 ## Fixed
 
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Propagate full package.path and cpath from the CLI to Nginx [PR #538](https://github.com/3scale/apicast/pull/538)
 - `post_action` phase now shares `ngx.ctx` with the main request [PR #539](https://github.com/3scale/apicast/pull/539)
 - Decrease nginx timer resolution to improve performance and enable PCRE JIT [PR #543](https://github.com/3scale/apicast/pull/543)
+- Moved `proxy_pass` into new internal location `@upstream` [PR #535](https://github.com/3scale/apicast/pull/535)
 
 ## [3.2.0-alpha2] - 2017-11-30
 

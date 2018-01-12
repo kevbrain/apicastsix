@@ -8,11 +8,8 @@ __DATA__
 === TEST 1: custom policy chain
 This test uses the phase logger policy to verify that all of its phases are run
 when we use a policy chain that contains it. The policy chain also contains the
-normal apicast policy, so we can check that the authorize flow continues
-working. Notice that 'post_action' and 'log' are not ran. There's no
-post_action defined and log only runs when post_action runs.
-init and init_worker are not run either. They are not executed in policies
-defined at the service level.
+normal apicast policy, so we can check that the authorize flow continues working.
+Phases init and init_worker are not executed for policies defined at the service level.
 
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -66,3 +63,4 @@ running phase: balancer
 running phase: header_filter
 running phase: body_filter
 running phase: post_action
+running phase: log

@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Loading installed luarocks from outside rover [PR #503](https://github.com/3scale/apicast/pull/503)
 - Support IPv6 addresses in `/etc/resolv.conf` [PR #511](https://github.com/3scale/apicast/pull/511)
+- Fix possible 100% CPU usage when starting APIcast and manipulating filesystem [PR #547](https://github.com/3scale/apicast/pull/547)
 
 ## [3.2.0-alpha1]
 

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Definition of JSON schemas for policy configurations [PR #522](https://github.com/3scale/apicast/pull/522)
 - URL rewriting policy [PR #529](https://github.com/3scale/apicast/pull/529)
 - Liquid template can find files in current folder too [PR #533](https://github.com/3scale/apicast/pull/533)
+- `bin/apicast` respects `APICAST_OPENRESTY_BINARY` and `TEST_NGINX_BINARY` environment [PR #540](https://github.com/3scale/apicast/pull/540)
 
 ## Fixed
 
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix loading renamed APIcast code [PR #525](https://github.com/3scale/apicast/pull/525)
 - Fix `apicast` command when installed from luarocks [PR #527](https://github.com/3scale/apicast/pull/527)
 - Fix lua docs formatting in the CORS policy [PR #530](https://github.com/3scale/apicast/pull/530)
+- `post_action` phase not being called in the policy_chain [PR #539](https://github.com/3scale/apicast/pull/539)
 
 ## Changed
 
@@ -30,6 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add `src` directory to the Lua load path when using CLI [PR #533](https://github.com/3scale/apicast/pull/533)
 - Move rejection reason parsing from CacheHandler to Proxy [PR #541](https://github.com/3scale/apicast/pull/541)
 - Propagate full package.path and cpath from the CLI to Nginx [PR #538](https://github.com/3scale/apicast/pull/538)
+- `post_action` phase now shares `ngx.ctx` with the main request [PR #539](https://github.com/3scale/apicast/pull/539)
 - Decrease nginx timer resolution to improve performance and enable PCRE JIT [PR #543](https://github.com/3scale/apicast/pull/543)
 
 ## [3.2.0-alpha2] - 2017-11-30

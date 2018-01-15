@@ -108,7 +108,7 @@ Content-Type: text/plain; charset=utf-8
 no mapping rules!
 --- error_code: 404
 --- error_log
-could not find proxy for request
+skipping after action, no cached key
 
 === TEST 5: no mapping rules matched configurable error
 The message is configurable and status also.
@@ -136,7 +136,7 @@ GET /?user_key=value
 no mapping rules!
 --- error_code: 412
 --- error_log
-could not find proxy for request
+skipping after action, no cached key
 
 === TEST 6: authentication credentials invalid default error
 There are defaults defined for the error message, the content-type, and the

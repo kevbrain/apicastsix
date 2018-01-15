@@ -86,7 +86,13 @@ _LUA_
     $bin = $lua_file;
 }
 
+
 my @resty_args = ();
+
+my $nginx = $ENV{APICAST_OPENRESTY_BINARY} || $ENV{TEST_NGINX_BINARY};
+if (defined $nginx) {
+    push @resty_args, '--nginx', $nginx;
+}
 
 # Add directories to the lua load path.
 # APIcast source and a local src directory.

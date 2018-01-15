@@ -2,13 +2,14 @@
 -- Configures a cache for the authentication calls against the 3scale backend.
 -- The 3scale backend can authorize (status code = 200) and deny (status code =
 -- 4xx) calls. When it fails, it returns a 5xx code.
--- This policy support two kinds of caching:
+-- This policy support three kinds of caching:
 --   - Strict: it only caches authorized calls. Denied and failed calls
 --     invalidate the cache entry.
 --   - Resilient: caches authorized and denied calls. Failed calls do not
 --     invalidate the cache. This allows us to authorize and deny calls
 --     according to the result of the last request made even when backend is
 --     down.
+--   - None: disables caching.
 
 local policy = require('apicast.policy')
 local _M = policy.new('Caching policy')
@@ -37,22 +38,27 @@ local function resilient_handler(cache, cached_key, response, ttl)
   end
 end
 
+local function disabled_cache_handler()
+  ngx.log(ngx.DEBUG, 'Caching is disabled. Skipping cache handler.')
+end
+
 local handlers = {
   resilient = resilient_handler,
-  strict = strict_handler
+  strict = strict_handler,
+  none = disabled_cache_handler
 }
 
 local function handler(config)
   if not config.caching_type then
-    ngx.log(ngx.ERR, 'Caching type not specified, falling back to strict.')
-    return handlers.strict
+    ngx.log(ngx.ERR, 'Caching type not specified. Disabling cache.')
+    return handlers.none
   end
 
   local res = handlers[config.caching_type]
 
   if not res then
-    ngx.log(ngx.ERR, 'Invalid caching type, falling back to strict.')
-    res = handlers.strict
+    ngx.log(ngx.ERR, 'Invalid caching type. Disabling cache.')
+    res = handlers.none
   end
 
   return res

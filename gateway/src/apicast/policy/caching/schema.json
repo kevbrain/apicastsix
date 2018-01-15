@@ -5,7 +5,7 @@
   "properties": {
     "exit": {
       "type": "caching_type",
-      "enum": ["resilient", "strict"]
+      "enum": ["resilient", "strict", "none"]
     }
   }
 }

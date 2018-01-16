@@ -1,5 +1,6 @@
 local executor = require 'apicast.executor'
 local policy_chain = require 'apicast.policy_chain'
+local Policy = require 'apicast.policy'
 
 describe('executor', function()
   local phases = {
@@ -40,5 +41,41 @@ describe('executor', function()
 
     executor.new(chain)
     assert.truthy(chain.frozen)
+  end)
+
+  describe('.context', function()
+    it('returns what the policies of the chain export', function()
+      local policy_1 = Policy.new('1')
+      policy_1.export = function() return { p1 = '1'} end
+
+      local policy_2 = Policy.new('2')
+      policy_2.export = function() return { p2 = '2' } end
+
+      local chain = policy_chain.new({ policy_1, policy_2 })
+      local context = executor.new(chain):context('rewrite')
+
+      assert.equal('1', context.p1)
+      assert.equal('2', context.p2)
+    end)
+
+    it('works with policy chains that contain other chains', function()
+      local policy_1 = Policy.new('1')
+      policy_1.export = function() return { p1 = '1'} end
+
+      local policy_2 = Policy.new('2')
+      policy_2.export = function() return { p2 = '2' } end
+
+      local policy_3 = Policy.new('3')
+      policy_3.export = function() return { p3 = '3' } end
+
+      local inner_chain = policy_chain.new({ policy_2, policy_3 })
+      local outer_chain = policy_chain.new({ policy_1, inner_chain })
+
+      local context = executor.new(outer_chain):context('rewrite')
+
+      assert.equal('1', context.p1)
+      assert.equal('2', context.p2)
+      assert.equal('3', context.p3)
+    end)
   end)
 end)

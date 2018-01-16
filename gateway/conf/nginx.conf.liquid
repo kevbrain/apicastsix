@@ -14,7 +14,9 @@ env OPENSSL_VERIFY;
 daemon {{ daemon | default: 'off' }};
 master_process {{ master_process | default: 'on' }};
 worker_processes {{ worker_processes | default: 'auto' }};
+pcre_jit on;
 pid {{ pid | default: 'nginx.pid' }};
+timer_resolution {{ timer_resolution | default: '100ms' }};
 
 {% for file in "main.d/*.conf" | filesystem %}
   {% include file %}

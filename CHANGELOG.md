@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - URL rewriting policy [PR #529](https://github.com/3scale/apicast/pull/529)
 - Liquid template can find files in current folder too [PR #533](https://github.com/3scale/apicast/pull/533)
 - `bin/apicast` respects `APICAST_OPENRESTY_BINARY` and `TEST_NGINX_BINARY` environment [PR #540](https://github.com/3scale/apicast/pull/540)
+- Caching policy [PR #546](https://github.com/3scale/apicast/pull/546)
 
 ## Fixed
 

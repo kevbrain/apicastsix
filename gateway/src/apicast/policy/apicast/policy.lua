@@ -45,6 +45,11 @@ function _M:rewrite(context)
   -- because the module is reloaded and has to be configured again
 
   local p = context.proxy
+
+  if context.cache_handler then
+    p.cache_handler = context.cache_handler
+  end
+
   p.set_upstream(context.service)
   ngx.ctx.proxy = p
 end

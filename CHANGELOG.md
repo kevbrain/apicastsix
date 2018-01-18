@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix lua docs formatting in the CORS policy [PR #530](https://github.com/3scale/apicast/pull/530)
 - `post_action` phase not being called in the policy_chain [PR #539](https://github.com/3scale/apicast/pull/539)
 - Failing to execute `libexec/boot` on some systems [PR #544](https://github.com/3scale/apicast/pull/544)
+- Detect number of CPU cores in containers by using `nproc` [PR #554](https://github.com/3scale/apicast/pull/554)
 - Running with development config in Docker [PR #555](https://github.com/3scale/apicast/pull/555)
 
 ## Changed

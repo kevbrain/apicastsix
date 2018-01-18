@@ -50,7 +50,17 @@ function _M:rewrite(context)
     p.cache_handler = context.cache_handler
   end
 
-  p.set_upstream(context.service)
+  local service = context.service
+
+  if service then
+    ngx.ctx.service = service
+
+    -- it is possible that proxy:rewrite will terminate the request
+    p:rewrite(service)
+  end
+
+  p.set_upstream(service)
+
   ngx.ctx.proxy = p
 end
 
@@ -66,20 +76,12 @@ function _M:post_action(context)
 end
 
 function _M:access(context)
-  local p = context and context.proxy or ngx.ctx.proxy or self.proxy
-  ngx.ctx.service = context.service
+  local ctx = ngx.ctx
+  local p = context and context.proxy or ctx.proxy or self.proxy
 
-  local access, handler = p:call(context.service) -- proxy:access() or oauth handler
-
-  local ok, err
-
-  if access then
-    ok, err = access()
-  elseif handler then
-    ok, err = handler()
+  if p then
+    return p:access(context.service, context.usage, context.credentials, context.ttl)
   end
-
-  return ok, err
 end
 
 _M.content = function()

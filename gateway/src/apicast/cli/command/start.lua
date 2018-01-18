@@ -179,7 +179,7 @@ local function configure(cmd)
     cmd:flag("-d --daemon", "Daemonize.")
     cmd:option("-w --workers",
         "Number of worker processes to start.",
-        resty_env.value('APICAST_WORKERS') or 1)
+        resty_env.value('APICAST_WORKERS') or Environment.default_config.worker_processes)
     cmd:option("-p --pid", "Path to the PID file.")
     cmd:mutex(
         cmd:flag('-b --boot',

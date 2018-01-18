@@ -1,10 +1,24 @@
-#!/usr/bin/env sh
+#!/usr/bin/env perl
+use Cwd qw(getcwd abs_path);
+use File::Basename qw(dirname basename);
+use File::Temp qw(tempfile);
+use File::Spec::Functions qw(catfile);
 
-ssl=$(mktemp -q)
+my $libexec = abs_path(dirname(abs_path(__FILE__)));
+my $apicast = $ENV{APICAST_DIR} || catfile($libexec, '..');
 
-certificate=${SSL_CERT_FILE:-"$(pwd)/conf/ca-bundle.crt"}
+my $ssl_cert_file = $ENV{SSL_CERT_FILE} || catfile($apicast, 'conf', 'ca-bundle.crt');
+my $lua_file = catfile($libexec, basename(__FILE__) . '.lua');
+my $errlog_level = $ENV{APICAST_LOG_LEVEL} || 'warn';
 
-echo "lua_ssl_verify_depth 5;" >> "${ssl}"
-echo "lua_ssl_trusted_certificate \"${certificate}\";" >> "${ssl}"
+my ($fh, $ssl_conf_file) = tempfile();
 
-exec resty --http-include "${ssl}" "libexec/$(basename "$0").lua" "$@"
+print $fh <<_NGINX_;
+lua_ssl_verify_depth 5;
+lua_ssl_trusted_certificate "${ssl_cert_file}";
+_NGINX_
+
+exec 'resty',
+    '--errlog-level', $errlog_level,
+    '--http-include', $ssl_conf_file,
+    $lua_file, @ARGV;

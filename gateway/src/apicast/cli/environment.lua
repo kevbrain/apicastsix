@@ -6,6 +6,7 @@
 local pl_path = require('pl.path')
 local resty_env = require('resty.env')
 local linked_list = require('apicast.linked_list')
+local util = require('apicast.util')
 local setmetatable = setmetatable
 local loadfile = loadfile
 local pcall = pcall
@@ -40,6 +41,13 @@ local function parse_nameservers()
     end
 end
 
+local function cpus()
+    -- TODO: support /sys/fs/cgroup/cpuset/cpuset.cpus
+    -- see https://github.com/sclorg/rhscl-dockerfiles/blob/ff912d8764af9a41096e63064bbc325395afa608/rhel7.sti-base/bin/cgroup-limits#L55-L75
+    local nproc = util.system('nproc')
+    return tonumber(nproc)
+end
+
 
 local _M = {}
 ---
@@ -58,6 +66,7 @@ _M.default_config = {
     ca_bundle = resty_env.value('SSL_CERT_FILE'),
     policy_chain = require('apicast.policy_chain').default(),
     nameservers = parse_nameservers(),
+    worker_processes = cpus() or 'auto',
     package = {
         path = package.path,
         cpath = package.cpath,

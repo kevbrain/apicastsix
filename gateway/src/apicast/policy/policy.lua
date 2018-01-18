@@ -10,7 +10,8 @@ local _M = { }
 
 local PHASES = {
     'init', 'init_worker',
-    'rewrite', 'access', 'balancer',
+    'rewrite', 'access',
+    'content', 'balancer',
     'header_filter', 'body_filter',
     'post_action',  'log'
 }

@@ -3,7 +3,8 @@ local policy = require 'apicast.policy'
 describe('policy', function()
   local phases = {
     'init', 'init_worker',
-    'rewrite', 'access', 'balancer',
+    'rewrite', 'access',
+    'content', 'balancer',
     'header_filter', 'body_filter',
     'post_action',  'log'
   }

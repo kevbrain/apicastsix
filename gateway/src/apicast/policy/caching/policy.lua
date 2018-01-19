@@ -9,6 +9,12 @@
 --     invalidate the cache. This allows us to authorize and deny calls
 --     according to the result of the last request made even when backend is
 --     down.
+--   - Allow: caches authorized and denied calls. When backend is unavailable,
+--     it will cache an authorization. In practice, this means that when
+--     backend is down _any_ request will be authorized unless last call to
+--     backend for that request returned 'deny' (status code = 4xx).
+--     Make sure to understand the implications of that before using this mode.
+--     It makes sense only in very specific use cases.
 --   - None: disables caching.
 
 local policy = require('apicast.policy')
@@ -38,6 +44,31 @@ local function resilient_handler(cache, cached_key, response, ttl)
   end
 end
 
+local function handle_500_allow_mode(cache, cached_key, ttl)
+  local current_value = cache:get(cached_key)
+  local cached_4xx = current_value and current_value >= 400 and current_value < 500
+
+  if not cached_4xx then
+    ngx.log(ngx.WARN, 'Backend seems to be unavailable. "Allow" mode is ',
+                      'enabled in the cache policy, so next request will be ',
+                      'authorized')
+    cache:set(cached_key, 200, ttl)
+  end
+end
+
+local function allow_handler(cache, cached_key, response, ttl)
+  local status = response.status
+
+  if status and status < 500 then
+    ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key,
+                      ' status: ', status, ', ttl: ', ttl)
+
+    cache:set(cached_key, status, ttl or 0)
+  else
+    handle_500_allow_mode(cache, cached_key, ttl or 0)
+  end
+end
+
 local function disabled_cache_handler()
   ngx.log(ngx.DEBUG, 'Caching is disabled. Skipping cache handler.')
 end
@@ -45,6 +76,7 @@ end
 local handlers = {
   resilient = resilient_handler,
   strict = strict_handler,
+  allow = allow_handler,
   none = disabled_cache_handler
 }
 
@@ -66,7 +98,7 @@ end
 
 --- Initialize a Caching policy.
 -- @tparam[opt] table config
--- @field caching_type Caching type (strict, resilient)
+-- @field caching_type Caching type (strict, resilient, allow, none)
 function _M.new(config)
   local self = new()
   self.cache_handler = handler(config or {})

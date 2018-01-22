@@ -45,15 +45,13 @@ local function resilient_handler(cache, cached_key, response, ttl)
 end
 
 local function handle_500_allow_mode(cache, cached_key, ttl)
-  local current_value = cache:get(cached_key)
-  local cached_4xx = current_value and current_value >= 400 and current_value < 500
-
-  if not cached_4xx then
-    ngx.log(ngx.WARN, 'Backend seems to be unavailable. "Allow" mode is ',
-                      'enabled in the cache policy, so next request will be ',
-                      'authorized')
-    cache:set(cached_key, 200, ttl)
-  end
+  -- There is no cas operation in ngx.shared.dict, so getting the value and
+  -- then setting it according to it, would generate a race condition.
+  -- `add()` works in this case because:
+  -- If there's already a 2XX, we do not need to write anything.
+  -- If there's a 4XX, we do not need to overwrite it.
+  -- Else, there's a nil and we need to write a 200.
+  cache:add(cached_key, 200, ttl)
 end
 
 local function allow_handler(cache, cached_key, response, ttl)

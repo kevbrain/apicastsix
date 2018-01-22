@@ -1,9 +1,21 @@
 local resty_lrucache = require('resty.lrucache')
 
 describe('policy', function()
-  describe('.new', function()
-    local cache = resty_lrucache.new(1)
+  local cache
 
+  before_each(function()
+    cache = resty_lrucache.new(1)
+
+    -- The code uses ngx.shared.dict and it defines .add(), resty_lrucache
+    -- does not, so we need to implement it for these tests.
+    cache.add = function(self, key, value)
+      if not self:get(key) then
+        return self:set(key, value)
+      end
+    end
+  end)
+
+  describe('.new', function()
     it('disables caching when caching type is not specified', function()
       local caching_policy = require('apicast.policy.caching').new({})
       local ctx = {}
@@ -27,7 +39,6 @@ describe('policy', function()
   describe('.access', function()
     describe('when configured as strict', function()
       local caching_policy
-      local cache
       local ctx  -- the caching policy will add the handler here
 
       before_each(function()
@@ -35,7 +46,6 @@ describe('policy', function()
         caching_policy = require('apicast.policy.caching').new(config)
         ctx = { }
         caching_policy:rewrite(ctx)
-        cache = resty_lrucache.new(1)
       end)
 
       it('caches authorized requests', function()
@@ -60,7 +70,6 @@ describe('policy', function()
 
     describe('when configured as resilient', function()
       local caching_policy
-      local cache
       local ctx  -- the caching policy will add the handler here
 
       before_each(function()
@@ -68,7 +77,6 @@ describe('policy', function()
         caching_policy = require('apicast.policy.caching').new(config)
         ctx = { }
         caching_policy:rewrite(ctx)
-        cache = resty_lrucache.new(1)
       end)
 
       it('caches authorized requests', function()
@@ -91,7 +99,6 @@ describe('policy', function()
 
     describe('when configured as allow', function()
       local caching_policy
-      local cache
       local ctx  -- the caching policy will add the handler here
 
       before_each(function()
@@ -99,7 +106,6 @@ describe('policy', function()
         caching_policy = require('apicast.policy.caching').new(config)
         ctx = { }
         caching_policy:rewrite(ctx)
-        cache = resty_lrucache.new(1)
       end)
 
       it('caches authorized requests', function()
@@ -134,7 +140,6 @@ describe('policy', function()
 
     describe('when disabled', function()
       local caching_policy
-      local cache
       local ctx
 
       setup(function()
@@ -142,7 +147,6 @@ describe('policy', function()
         caching_policy = require('apicast.policy.caching').new(config)
         ctx = {}
         caching_policy:rewrite(ctx)
-        cache = resty_lrucache.new(1)
       end)
 
       it('does not cache anything', function()

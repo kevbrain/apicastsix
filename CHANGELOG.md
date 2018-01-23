@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `bin/apicast` respects `APICAST_OPENRESTY_BINARY` and `TEST_NGINX_BINARY` environment [PR #540](https://github.com/3scale/apicast/pull/540)
 - Caching policy [PR #546](https://github.com/3scale/apicast/pull/546), [PR #558](https://github.com/3scale/apicast/pull/558)
 - New phase: `content` for generating content or getting the upstream response [PR #535](https://github.com/3scale/apicast/pull/535)
+- Upstream policy [PR #562](https://github.com/3scale/apicast/pull/562)
 
 ## Fixed
 

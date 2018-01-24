@@ -153,6 +153,12 @@ doc/lua/index.html: $(shell find gateway/src -name '*.lua') | dependencies $(ROV
 
 doc: doc/lua/index.html ## Generate documentation
 
+lint-schema: apicast-source
+	@ docker run --volumes-from ${COMPOSE_PROJECT_NAME}-source --workdir /opt/app-root/src \
+	    3scale/ajv validate \
+		-s /usr/local/lib/node_modules/ajv-cli/node_modules/ajv/lib/refs/json-schema-draft-07.json \
+		$(addprefix -d ,$(shell find gateway/src/apicast/policy -name 'schema.json'))
+
 node_modules/.bin/markdown-link-check:
 	yarn install
 

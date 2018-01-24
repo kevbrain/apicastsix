@@ -3,8 +3,8 @@
   "title": "Caching policy configuration",
   "type": "object",
   "properties": {
-    "exit": {
-      "type": "caching_type",
+    "caching_type": {
+      "type": "string",
       "enum": ["resilient", "strict", "allow", "none"]
     }
   }

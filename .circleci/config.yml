@@ -35,6 +35,7 @@ jobs:
       - run: make builder-image
       - run: make test-builder-image gateway-logs --keep-going
       - run: make prove-docker
+      - run: make lint-schema
   build:
     docker:
       - image: quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover3

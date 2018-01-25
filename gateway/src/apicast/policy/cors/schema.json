@@ -1,15 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "CORS policy configuration",
+  "description": "This policy enables CORS (Cross Origin Resource Sharing) request handling.",
   "type": "object",
   "properties": {
     "allow_headers": {
+      "description": "Allowed headers",
       "type": "array",
       "items": {
         "type": "string"
       }
     },
     "allow_methods": {
+      "description": "Allowed methods",
       "type": "array",
       "items": {
         "type": "string",
@@ -27,9 +30,11 @@
       }
     },
     "allow_origin": {
+      "description": "Origins for which the response can be shared with",
       "type": "string"
     },
     "allow_credentials": {
+      "description": "Whether the request can be made using credentials",
       "type": "boolean"
     }
   }

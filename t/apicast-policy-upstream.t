@@ -316,3 +316,40 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+
+
+=== TEST 6: without apicast policy
+Upstream policy should work if used standalone without apicast policy.
+--- configuration
+{
+  "services": [
+    {
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.upstream",
+            "configuration":
+              {
+                "rules": [ { "regex": "/", "url": "http://test:$TEST_NGINX_SERVER_PORT" } ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location /a_path {
+     content_by_lua_block {
+       require('luassert').are.equal('GET /a_path? HTTP/1.1',
+                                     ngx.var.request)
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /a_path?
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

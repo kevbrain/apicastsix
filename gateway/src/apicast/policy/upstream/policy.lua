@@ -68,7 +68,10 @@ function _M:content()
 
   for _, rule in ipairs(self.rules) do
     if match(req_uri, rule.regex) then
+      ngx.log(ngx.DEBUG, 'upstream policy uri: ', req_uri, ' regex: ', rule.regex, ' match: true')
       return change_upstream(rule.url)
+    elseif ngx.config.debug then
+      ngx.log(ngx.DEBUG, 'upstream policy uri: ', req_uri, ' regex: ', rule.regex, ' match: false')
     end
   end
 end

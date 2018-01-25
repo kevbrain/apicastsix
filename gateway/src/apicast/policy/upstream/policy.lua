@@ -8,6 +8,8 @@ local ipairs = ipairs
 local match = ngx.re.match
 local table = table
 
+local balancer = require('apicast.balancer')
+
 local _M = require('apicast.policy').new('Upstream policy')
 
 local new = _M.new
@@ -63,16 +65,23 @@ function _M.new(config)
   return self
 end
 
-function _M:content()
+function _M:content(context)
   local req_uri = ngx.var.uri
 
   for _, rule in ipairs(self.rules) do
     if match(req_uri, rule.regex) then
       ngx.log(ngx.DEBUG, 'upstream policy uri: ', req_uri, ' regex: ', rule.regex, ' match: true')
+      context.upstream_changed = true
       return change_upstream(rule.url)
     elseif ngx.config.debug then
       ngx.log(ngx.DEBUG, 'upstream policy uri: ', req_uri, ' regex: ', rule.regex, ' match: false')
     end
+  end
+end
+
+function _M.balancer(_, context)
+  if context.upstream_changed then
+    balancer.call()
   end
 end
 

@@ -20,7 +20,16 @@
             "op": {
               "description": "Operation to be applied (sub or gsub)",
               "type": "string",
-              "enum": ["sub", "gsub"]
+              "oneOf": [
+                {
+                  "const": "sub",
+                  "description": "Substitutes the first match of the regex applied."
+                },
+                {
+                  "const": "gsub",
+                  "description": "Substitutes all the matches of the regex applied."
+                }
+              ]
             },
             "regex": {
               "description": "Regular expression to be matched",

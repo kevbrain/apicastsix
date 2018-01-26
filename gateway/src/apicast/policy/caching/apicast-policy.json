@@ -24,7 +24,24 @@
       "caching_type": {
         "description": "Caching mode",
         "type": "string",
-        "enum": ["resilient", "strict", "allow", "none"]
+        "oneOf": [
+          {
+            "const": "resilient",
+            "description": "Authorize according to last request when backend is down."
+          },
+          {
+            "const": "strict",
+            "description": "It only caches authorized calls."
+          },
+          {
+            "const": "allow",
+            "description": "When backend is down, allow everything unless seen before and denied."
+          },
+          {
+            "const": "none",
+            "description": "Disables caching."
+          }
+        ]
       }
     }
   }

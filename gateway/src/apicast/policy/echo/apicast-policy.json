@@ -13,9 +13,18 @@
         "type": "integer"
       },
       "exit": {
-        "description": "Exit mode. 'request' interrupts the processing of the request, 'phase' only skips the rewrite phase.",
+        "description": "Exit mode",
         "type": "string",
-        "enum": ["request", "phase"]
+        "oneOf": [
+          {
+            "const": "request",
+            "description": "Interrupts the processing of the request."
+          },
+          {
+            "const": "set",
+            "description": "Only skips the rewrite phase."
+          }
+        ]
       }
     }
   }

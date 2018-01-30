@@ -14,7 +14,7 @@ chdir "$dirname/..";
 my $apicast = getcwd();
 
 exec '/usr/bin/env', 'resty',
-    '--errlog-level', 'alert',
+    '--errlog-level', $ENV{APICAST_LOG_LEVEL} || 'alert',
     '--http-include', "$apicast/spec/fixtures/echo.conf",
     "$apicast/bin/busted.lua",
     '--config-file', "$apicast/.busted",

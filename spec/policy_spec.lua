@@ -49,6 +49,62 @@ describe('policy', function()
     end)
   end)
 
+  describe('module equality', function()
+    it('equals when name and version are the same', function()
+      local p1 = policy.new('NAME', 'VERSION')
+      local p2 = policy.new('NAME', 'VERSION')
+
+      assert.are.equal(p1, p2)
+      assert.not_same(p1, p2)
+    end)
+
+    it('is not equal when names are different', function()
+      local p1 = policy.new('NAME', 'VERSION')
+      local p2 = policy.new('NAME2', 'VERSION')
+
+      assert.are.not_equal(p1, p2)
+    end)
+
+    it('is not equal when versions are different', function()
+      local p1 = policy.new('NAME', 'VERSION')
+      local p2 = policy.new('NAME', 'VERSION2')
+
+      assert.are.not_equal(p1, p2)
+    end)
+
+    it('equals itself', function()
+      local p = policy.new('NAME', 'VERSION')
+
+      assert.are.equal(p, p)
+      assert.are.same(p, p)
+    end)
+  end)
+
+  describe('module tostring', function()
+    it('shows name and version', function()
+      local p1 = policy.new('NAME', 'VERSION')
+
+      assert.equal('Policy: NAME (VERSION)', tostring(p1))
+    end)
+  end)
+
+  describe('instance metatable', function()
+    local p = policy.new('NAME', 'VERSION')
+
+    it('has a policy property', function()
+      local mt = getmetatable(p.new())
+      assert.are.equal(mt.policy, p)
+    end)
+  end)
+
+  describe('instance tostring', function()
+    it('shows name and version', function()
+      local p1 = policy.new('NAME', 'VERSION').new()
+
+      assert.equal('Policy: NAME (VERSION)', tostring(p1))
+    end)
+  end)
+
   describe('.phases', function()
     it('returns the nginx phases where policies can run, sorted by order of execution', function()
       local res = {}

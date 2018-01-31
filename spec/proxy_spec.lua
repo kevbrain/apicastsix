@@ -17,39 +17,7 @@ describe('Proxy', function()
     assert.same('function', type(proxy.access))
   end)
 
-  describe(':call', function()
-    local service
-    before_each(function()
-      ngx.var = { backend_endpoint = 'http://localhost:1853' }
-      service = Service.new({ id = 42, hosts = { 'localhost' }})
-    end)
-
-    it('has authorize function after call', function()
-      proxy:call(service)
-
-      assert.truthy(proxy.authorize)
-      assert.same('function', type(proxy.authorize))
-    end)
-
-    it('returns access function', function()
-      local access = proxy:call(service)
-
-      assert.same('function', type(access))
-    end)
-
-    it('returns oauth handler when matches oauth route', function()
-      service.backend_version = 'oauth'
-      stub(ngx.req, 'get_method', function() return 'GET' end)
-      ngx.var.uri = '/authorize'
-
-      local access, handler = proxy:call(service)
-
-      assert.equal(nil, access)
-      assert.same('function', type(handler))
-    end)
-  end)
-
-  describe(':access', function()
+  describe(':rewrite', function()
     local service
     before_each(function()
       ngx.var = { backend_endpoint = 'http://localhost:1853', uri = '/a/uri' }
@@ -61,7 +29,7 @@ describe('Proxy', function()
       service.credentials = { location = 'headers' }
       service.backend_version = 2
       ngx.var.http_app_key = 'key'
-      assert.falsy(proxy:access(service))
+      assert.falsy(proxy:rewrite(service))
     end)
   end)
 

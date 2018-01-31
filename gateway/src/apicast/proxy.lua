@@ -126,6 +126,8 @@ local function output_debug_headers(service, usage, credentials)
 end
 
 function _M:authorize(service, usage, credentials, ttl)
+  if not usage or not credentials then return nil, 'missing usage or credentials' end
+
   local encoded_usage = encode_args(usage)
   if encoded_usage == '' then
     return error_no_match(service)
@@ -206,36 +208,31 @@ function _M.set_upstream(service)
   ngx.req.set_header('Host', upstream.host or ngx.var.host)
 end
 
------
--- call the proxy and return a handler function
--- that will perform an action based on the path and backend version
--- @tparam service service service object
--- @treturn nil|function access function (when the request needs to be authenticated with this)
--- @treturn nil|function handler function (when the request is not authenticated and has some own action)
-function _M:call(service)
-  service = _M.set_service(service or ngx.ctx.service)
+local function handle_oauth(service)
+  local oauth = service:oauth()
 
-  self.oauth = service:oauth()
+  if oauth then
+    ngx.log(ngx.DEBUG, 'using OAuth: ', oauth)
+  end
 
-  ngx.log(ngx.DEBUG, 'using OAuth: ', self.oauth)
-
-  -- means that OAuth integration has own router
-  if self.oauth and self.oauth.call then
-    local f, params = self.oauth:call(service)
+  if oauth and oauth.call then
+    local f, params = oauth:call(service)
 
     if f then
-      ngx.log(ngx.DEBUG, 'apicast oauth flow')
-      return nil, function() return f(params) end
+      ngx.log(ngx.DEBUG, 'OAuth matched route')
+      return f(params) -- not really about the return value but showing something will call ngx.exit
     end
   end
 
-  return function()
-    -- call access phase
-    return self:access(service)
-  end
+  return oauth
 end
 
-function _M:access(service)
+function _M:rewrite(service)
+  service = _M.set_service(service or ngx.ctx.service)
+
+  -- handle_oauth can terminate the request
+  self.oauth = handle_oauth(service)
+
   ngx.var.secret_token = service.secret_token
 
   local credentials, err = service:extract_credentials()
@@ -285,9 +282,14 @@ function _M:access(service)
       return error_authorization_failed(service)
     end
     ctx.credentials = credentials
+    ctx.ttl = ttl
   end
+end
 
-  return self:authorize(service, usage_params, credentials, ttl)
+function _M:access(service, usage, credentials, ttl)
+  local ctx = ngx.ctx
+
+  return self:authorize(service, usage or ctx.usage, credentials or ctx.credentials, ttl or ctx.ttl)
 end
 
 local function response_codes_data()

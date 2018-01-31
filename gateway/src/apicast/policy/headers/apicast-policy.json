@@ -1,0 +1,55 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Headers policy",
+  "description":
+    ["This policy allows to include custom headers that will be sent to the ",
+     "upstream as well as modify or delete the ones included in the original ",
+     "request. Similarly, this policy also allows to add, modify, and delete ",
+     "the headers included in the response."],
+  "version": "0.1",
+  "configuration": {
+    "type": "object",
+    "definitions": {
+      "commands": {
+        "description": "List of operations to apply to the headers",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "op": {
+              "description": "Operation to be applied",
+              "type": "string",
+              "oneOf": [
+                {
+                  "const": "add",
+                  "description": "Adds a value to an existing header."
+                },
+                {
+                  "const": "set",
+                  "description": "Creates the header when not set, replaces its value when set."
+                },
+                {
+                  "const": "push",
+                  "description": "Creates the header when not set, adds the value when set."
+                }
+              ]
+            },
+            "header": {
+              "description": "Header to be modified",
+              "type": "string"
+            },
+            "value": {
+              "description": "Value that will be added, set or pushed in the header",
+              "type": "string"
+            }
+          },
+          "required": ["op", "header", "value"]
+        }
+      }
+    },
+    "properties": {
+      "request": { "$ref": "#/definitions/commands" },
+      "response": { "$ref": "#/definitions/commands" }
+    }
+  }
+}

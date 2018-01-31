@@ -1,0 +1,31 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Echo policy",
+  "description":
+    ["This policy prints the request back to the client and optionally sets ",
+     "a status code."],
+  "version": "0.1",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "description": "HTTP status code to be returned",
+        "type": "integer"
+      },
+      "exit": {
+        "description": "Exit mode",
+        "type": "string",
+        "oneOf": [
+          {
+            "const": "request",
+            "description": "Interrupts the processing of the request."
+          },
+          {
+            "const": "set",
+            "description": "Only skips the rewrite phase."
+          }
+        ]
+      }
+    }
+  }
+}

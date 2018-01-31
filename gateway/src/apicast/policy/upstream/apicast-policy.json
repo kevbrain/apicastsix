@@ -1,0 +1,29 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Upstream policy",
+  "description": "This policy allows to modify the host of a request based on its path.",
+  "version": "0.1",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "rules": {
+        "description": "list of rules to be applied",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "regex": {
+              "description": "regular expression to be matched",
+              "type": "string"
+            },
+            "url": {
+              "description": "new URL in case of match",
+              "type": "string"
+            }
+          },
+          "required": ["regex", "url"]
+        }
+      }
+    }
+  }
+}

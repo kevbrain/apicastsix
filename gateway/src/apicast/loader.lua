@@ -8,6 +8,7 @@
 -- Policies can be packaged as `some_name/policy.lua` so the directory also contains the JSON spec.
 
 local loadfile = loadfile
+local find = string.find
 
 local map = {
   ['apicast'] = 'apicast.policy.apicast'
@@ -25,6 +26,8 @@ end
 
 --- Try to load a policy. Policies can have a `.policy` suffix.
 local function policy_loader(name, path)
+  if not find(name, '.policy.', 1, true) then return end
+
   local policy = name .. '.policy'
 
   return loader(policy, path or package.path)

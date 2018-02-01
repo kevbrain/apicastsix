@@ -60,8 +60,8 @@ local function set_cors_headers(config)
   set_access_control_allow_credentials(config.allow_credentials)
 end
 
-local function cors_preflight_response(config)
-  set_cors_headers(config)
+local function cors_preflight_response()
+  -- with ngx.exit(204), header_filter is run. CORS headers will be set there.
   ngx.status = 204
   ngx.exit(ngx.status)
 end
@@ -72,9 +72,9 @@ local function is_cors_preflight()
          ngx.var.http_access_control_request_method
 end
 
-function _M:rewrite()
+function _M.rewrite(_)
   if is_cors_preflight() then
-    return cors_preflight_response(self.config)
+    return cors_preflight_response()
   end
 end
 

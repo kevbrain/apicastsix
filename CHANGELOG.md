@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Failing to execute `libexec/boot` on some systems [PR #544](https://github.com/3scale/apicast/pull/544)
 - Detect number of CPU cores in containers by using `nproc` [PR #554](https://github.com/3scale/apicast/pull/554)
 - Running with development config in Docker [PR #555](https://github.com/3scale/apicast/pull/555)
+- Fix setting twice the headers in a pre-flight request in the CORS policy [PR #570](https://github.com/3scale/apicast/pull/570)
 
 ## Changed
 

@@ -1,0 +1,112 @@
+--- Mapping rule
+-- @module mapping_rule
+-- A mapping rule consists of a pattern used to match requests. It also defines
+-- a metric and a value that indicates how to increase the usage of a metric
+-- when there is a match.
+
+local setmetatable = setmetatable
+local pairs = pairs
+local error = error
+local type = type
+local re_match = ngx.re.match
+local insert = table.insert
+
+local _M = {}
+
+local mt = { __index = _M }
+
+local function hash_to_array(hash)
+  local array = {}
+
+  for k,v in pairs(hash or {}) do
+    insert(array, { k, v })
+  end
+
+  return array
+end
+
+local function regexpify(path)
+  return path:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
+end
+
+local regex_variable = '\\{[-\\w_]+\\}'
+
+local function check_querystring_params(params, args)
+  local match = true
+
+  for i=1, #params do
+    local param = params[i][1]
+    local expected = params[i][2]
+    local m, err = re_match(expected, regex_variable, 'oj')
+    local value = args[param]
+
+    if m then
+      if not value then -- regex variable have to have some value
+        ngx.log(ngx.DEBUG, 'check query params ', param,
+          ' value missing ', expected)
+        match = false
+        break
+      end
+    else
+      if err then ngx.log(ngx.ERR, 'check match error ', err) end
+
+      -- if many values were passed use the last one
+      if type(value) == 'table' then
+        value = value[#value]
+      end
+
+      if value ~= expected then -- normal variables have to have exact value
+        ngx.log(ngx.DEBUG, 'check query params does not match ',
+          param, ' value ' , value, ' == ', expected)
+        match = false
+        break
+      end
+    end
+  end
+
+  return match
+end
+
+local function new(http_method, pattern, params, querystring_params, metric, delta)
+  local self = setmetatable({}, mt)
+
+  local querystring_parameters = hash_to_array(querystring_params)
+
+  self.method = http_method
+  self.pattern = pattern
+  self.regexpified_pattern = regexpify(pattern)
+  self.parameters = params
+  self.system_name = metric or error('missing metric name of rule')
+  self.delta = delta
+
+  self.querystring_params = function(args)
+    return check_querystring_params(querystring_parameters, args)
+  end
+
+  return self
+end
+
+--- Initializes a mapping rule from a proxy rule of the service configuration.
+--
+-- @tparam table proxy_rule Proxy rule from the service configuration.
+-- @tfield string http_method HTTP method (GET, POST, etc.).
+-- @tfield string pattern Pattern used to match a request.
+-- @tfield table parameters Parameters of the pattern.
+-- @tfield table querystring_parameters Table with the params of the request
+--         and its values.
+-- @tfield string metric_system_name Name of the metric.
+-- @tfield integer delta The usage of the metric will be increased by this
+--         value.
+-- @treturn mapping_rule New mapping rule.
+function _M.from_proxy_rule(proxy_rule)
+  return new(
+    proxy_rule.http_method,
+    proxy_rule.pattern,
+    proxy_rule.parameters,
+    proxy_rule.querystring_parameters,
+    proxy_rule.metric_system_name,
+    proxy_rule.delta
+  )
+end
+
+return _M

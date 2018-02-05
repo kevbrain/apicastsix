@@ -18,8 +18,17 @@ local PHASES = {
 
 local setmetatable = setmetatable
 local ipairs = ipairs
+local format = string.format
 
 local noop = function() end
+
+local function __tostring(policy)
+    return format("Policy: %s (%s)", policy._NAME, policy._VERSION)
+end
+
+local function __eq(policy, other)
+    return policy._NAME == other._NAME and policy._VERSION == other._VERSION
+end
 
 --- Initialize new policy
 -- Returns a new policy that you can extend however you want.
@@ -31,7 +40,7 @@ function _M.new(name, version)
         _NAME = name,
         _VERSION = version or '0.0',
     }
-    local mt = { __index = policy }
+    local mt = { __index = policy, __tostring = __tostring, policy = policy }
 
     function policy.new()
         return setmetatable({}, mt)
@@ -41,7 +50,7 @@ function _M.new(name, version)
         policy[phase] = noop
     end
 
-    return policy
+    return setmetatable(policy, { __tostring = __tostring, __eq = __eq })
 end
 
 function _M.phases()

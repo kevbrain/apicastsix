@@ -72,7 +72,7 @@ replaceable with custom ones.
 ## Write your own policy
 
 To write your own policy you need to write a Lua module that instantiates a
-[Policy](../gateway/src/apicast/policy/policy.lua) and defines a method for
+[Policy](../gateway/src/apicast/policy.lua) and defines a method for
 each of the phases where it needs to execute something.
 
 Suppose that we wanted to run a policy that logged a message in the `rewrite`

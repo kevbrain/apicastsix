@@ -8,6 +8,7 @@ local setmetatable = setmetatable
 local pairs = pairs
 local error = error
 local type = type
+local format = string.format
 local re_match = ngx.re.match
 local insert = table.insert
 
@@ -25,13 +26,13 @@ local function hash_to_array(hash)
   return array
 end
 
-local function regexpify(path)
-  return path:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
+local function regexpify(pattern)
+  return pattern:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
 end
 
 local regex_variable = '\\{[-\\w_]+\\}'
 
-local function check_querystring_params(params, args)
+local function matches_querystring_params(params, args)
   local match = true
 
   for i=1, #params do
@@ -67,6 +68,10 @@ local function check_querystring_params(params, args)
   return match
 end
 
+local function matches_uri(rule_pattern, uri)
+  return re_match(uri, format("^%s", rule_pattern), 'oj')
+end
+
 local function new(http_method, pattern, params, querystring_params, metric, delta)
   local self = setmetatable({}, mt)
 
@@ -80,7 +85,7 @@ local function new(http_method, pattern, params, querystring_params, metric, del
   self.delta = delta
 
   self.querystring_params = function(args)
-    return check_querystring_params(querystring_parameters, args)
+    return matches_querystring_params(querystring_parameters, args)
   end
 
   return self
@@ -107,6 +112,21 @@ function _M.from_proxy_rule(proxy_rule)
     proxy_rule.metric_system_name,
     proxy_rule.delta
   )
+end
+
+--- Checks if the mapping rule matches a given request method, URI, and args
+--
+-- @tparam string method HTTP method (GET, POST, etc.).
+-- @tparam string uri URI of an HTTP request.
+-- @tparam table args Table with the args and values of an HTTP request.
+-- @treturn boolean Whether the mapping rule matches the given request.
+function _M:matches(method, uri, args)
+  local match = self.method == method and
+      matches_uri(self.regexpified_pattern, uri) and
+      self.querystring_params(args)
+
+  -- match can be nil. Convert to boolean.
+  return match == true
 end
 
 return _M

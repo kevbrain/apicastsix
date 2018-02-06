@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Detect number of CPU cores in containers by using `nproc` [PR #554](https://github.com/3scale/apicast/pull/554)
 - Running with development config in Docker [PR #555](https://github.com/3scale/apicast/pull/555)
 - Fix setting twice the headers in a pre-flight request in the CORS policy [PR #570](https://github.com/3scale/apicast/pull/570)
+- Fix case where debug headers are returned without enabling the option [PR #577](https://github.com/3scale/apicast/pull/577)
 
 ## Changed
 

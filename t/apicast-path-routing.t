@@ -80,7 +80,8 @@ apicast cache miss key: 42:one-key:usage%5Bone%5D=1
 apicast cache write key: 42:one-key:usage%5Bone%5D=1
 apicast cache miss key: 21:two-id:two-key:usage%5Btwo%5D=2
 apicast cache write key: 21:two-id:two-key:usage%5Btwo%5D=2
-
+--- no_error_log
+[error]
 
 === TEST 2: multi service configuration with path based routing defaults to host routing
 If none of the services match it goes for the host.
@@ -136,5 +137,6 @@ env APICAST_PATH_ROUTING_ENABLED;
 --- request eval
 ["GET /foo?user_key=1","GET /foo?user_key=2"]
 --- no_error_log
+[error]
 --- error_code eval
 [ 412, 412 ]

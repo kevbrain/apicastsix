@@ -110,14 +110,15 @@ local function error_service_not_found(host)
 end
 -- End Error Codes
 
-local function get_debug_value(service)
-  return ngx.var.http_x_3scale_debug == service.backend_authentication.value
+local function debug_header_enabled(service)
+  local debug_header_value = ngx.var.http_x_3scale_debug
+  return debug_header_value and debug_header_value == service.backend_authentication.value
 end
 
 local function output_debug_headers(service, usage, credentials)
   ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
 
-  if get_debug_value(service) then
+  if debug_header_enabled(service) then
     ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_patterns
     ngx.header["X-3scale-credentials"]   = credentials
     ngx.header["X-3scale-usage"]         = usage

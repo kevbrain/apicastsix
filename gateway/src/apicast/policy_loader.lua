@@ -275,7 +275,7 @@ function _M:call(name, version, dir)
 
   -- passing the "exclusive" flag for the require so it does not fallback to native require
   -- it should load only policies and not other code and fail if there is no such policy
-  return loader('policy', true)
+  return loader('init', true)
 end
 
 function _M:pcall(name, version, dir)

@@ -17,8 +17,8 @@ describe('APIcast Policy Loader', function()
       local ok, ret = pcall(_M.call, _M, 'unknown', '0.1')
 
       assert.falsy(ok)
-      assert.match([[module 'policy' not found:
-%s+no file '%g+/gateway/policies/unknown/0.1/policy.lua']], ret)
+      assert.match([[module 'init' not found:
+%s+no file '%g+/gateway/policies/unknown/0.1/init.lua']], ret)
     end)
 
     it('loads two instances of the same policy', function()

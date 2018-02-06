@@ -60,7 +60,7 @@ local function build_policy_chain(policies)
   local chain = {}
 
   for i=1, #policies do
-    chain[i] = policy_chain.load(policies[i].name, policies[i].configuration)
+    chain[i] = policy_chain.load_policy(policies[i].name, policies[i].version, policies[i].configuration)
   end
 
   return policy_chain.new(chain)

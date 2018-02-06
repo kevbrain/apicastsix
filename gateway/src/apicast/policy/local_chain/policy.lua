@@ -9,7 +9,7 @@ local function build_default_chain()
 
   if resty_env.get('APICAST_MODULE') then
     -- Needed to keep compatibility with the old module system.
-    module = 'apicast.module'
+    module = assert(require('apicast.module'), 'could not load custom module')
   else
     module = 'apicast.policy.apicast'
   end

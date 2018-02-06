@@ -1,2 +1,2 @@
-requires 'Test::APIcast', '0.03';
+requires 'Test::APIcast', '0.06';
 requires 'Crypt::JWT';

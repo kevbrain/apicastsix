@@ -21,6 +21,7 @@ local concat = table.concat
 local gsub = string.gsub
 local tonumber = tonumber
 local setmetatable = setmetatable
+local ipairs = ipairs
 local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
 local semaphore = require('ngx.semaphore')
@@ -124,6 +125,31 @@ local function output_debug_headers(service, usage, credentials)
     ngx.header["X-3scale-usage"]         = usage
     ngx.header["X-3scale-hostname"]      = ngx.var.hostname
   end
+end
+
+-- Converts a usage to the format expected by the 3scale backend client.
+local function format_usage(usage)
+  local res = {}
+
+  local usage_metrics = usage.metrics
+  local usage_deltas = usage.deltas
+
+  for _, metric in ipairs(usage_metrics) do
+    local delta = usage_deltas[metric]
+    res['usage[' .. metric .. ']'] = delta
+  end
+
+  return res
+end
+
+local function matched_patterns(matched_rules)
+  local patterns = {}
+
+  for _, rule in ipairs(matched_rules) do
+    insert(patterns, rule.pattern)
+  end
+
+  return patterns
 end
 
 function _M:authorize(service, usage, credentials, ttl)
@@ -243,7 +269,7 @@ function _M:rewrite(service)
     return error_no_credentials(service)
   end
 
-  local _, matched_patterns, usage_params = service:get_usage(ngx.req.get_method(), ngx.var.uri)
+  local usage, matched_rules = service:get_usage(ngx.req.get_method(), ngx.var.uri)
   local cached_key = { service.id }
 
   -- remove integer keys for serialization
@@ -263,15 +289,21 @@ function _M:rewrite(service)
   local ctx = ngx.ctx
   local var = ngx.var
 
+  local parsed_usage = format_usage(usage)
+
   -- save those tables in context so they can be used in the backend client
-  ctx.usage = usage_params
+  ctx.usage = parsed_usage
   ctx.credentials = credentials
-  ctx.matched_patterns = matched_patterns
 
   self.credentials = credentials
-  self.usage = usage_params
+  self.usage = parsed_usage
 
   var.cached_key = concat(cached_key, ':')
+
+  if debug_header_enabled(service) then
+    local patterns = matched_patterns(matched_rules)
+    ctx.matched_patterns = concat(patterns, ', ')
+  end
 
   local ttl
 

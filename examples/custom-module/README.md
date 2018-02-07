@@ -15,7 +15,7 @@ There is another example of custom module implementation for IP blacklisting in 
 APICAST_MODULE=$(pwd)/verbose.lua ../../bin/apicast -c $(pwd)/../configuration/local.json
 ```
 
-This starts APIcast with module `verbose.lua` instead of the default [`apicast.lua`](../../gateway/src/apicast/policy/apicast/policy.lua). Local configuration file is used, so no 3scale account is needed.
+This starts APIcast with module `verbose.lua` instead of the default [`apicast.lua`](../../gateway/src/apicast/policy/apicast/apicast.lua). Local configuration file is used, so no 3scale account is needed.
 
 ## Testing
 

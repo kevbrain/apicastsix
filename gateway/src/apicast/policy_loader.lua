@@ -13,6 +13,7 @@ local getenv = os.getenv
 local insert = table.insert
 local setmetatable = setmetatable
 local concat = table.concat
+local pcall = pcall
 
 local _G = _G
 local _M = {}
@@ -274,7 +275,17 @@ function _M:call(name, version, dir)
 
   -- passing the "exclusive" flag for the require so it does not fallback to native require
   -- it should load only policies and not other code and fail if there is no such policy
-  return loader('policy', true)
+  return loader('init', true)
+end
+
+function _M:pcall(name, version, dir)
+  local ok, ret = pcall(self.call, self, name, version, dir)
+
+  if ok then
+    return ret
+  else
+    return nil, ret
+  end
 end
 
 return setmetatable(_M, { __call = _M.call })

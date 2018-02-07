@@ -17,8 +17,8 @@ describe('APIcast Policy Loader', function()
       local ok, ret = pcall(_M.call, _M, 'unknown', '0.1')
 
       assert.falsy(ok)
-      assert.match([[module 'policy' not found:
-%s+no file '%g+/gateway/policies/unknown/0.1/policy.lua']], ret)
+      assert.match([[module 'init' not found:
+%s+no file '%g+/gateway/policies/unknown/0.1/init.lua']], ret)
     end)
 
     it('loads two instances of the same policy', function()
@@ -39,6 +39,21 @@ describe('APIcast Policy Loader', function()
 
       assert.are.same({ '1.0 dependency' }, test.dependency)
       assert.are.same({ '2.0 dependency' }, test2.dependency)
+    end)
+  end)
+
+  describe(':pcall', function()
+    it('returns the existing module', function()
+      assert(_M:call('apicast'))
+    end)
+
+    it('returns nil and error for invalid module', function()
+      local ok, err = _M:pcall('invalid', '0.1')
+
+      assert.is_nil(ok)
+      assert.is_string(err)
+      assert.match([[module 'init' not found:
+%s+no file '%g+/gateway/policies/invalid/0.1/init.lua']], err)
     end)
   end)
 end)

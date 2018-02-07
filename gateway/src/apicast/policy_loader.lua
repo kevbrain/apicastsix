@@ -8,8 +8,8 @@
 local format = string.format
 local error = error
 local type = type
+local ipairs = ipairs
 local loadfile = loadfile
-local getenv = os.getenv
 local insert = table.insert
 local setmetatable = setmetatable
 local concat = table.concat
@@ -24,6 +24,9 @@ local root_loaded = package.loaded
 local root_require = require
 
 local preload = package.preload
+
+local resty_env = require('resty.env')
+local re = require('ngx.re')
 
 --- create a require function not using the global namespace
 -- loading code from policy namespace should have no effect on the global namespace
@@ -211,16 +214,24 @@ local mt = {
   __call = function(loader, ...) return loader.env.require(...) end
 }
 
-function _M.new(name, version, dir)
-  local apicast_dir = dir or getenv('APICAST_DIR') or '.'
+do
+  local apicast_dir = resty_env.value('APICAST_DIR') or '.'
+  local policy_load_path = resty_env.value('APICAST_POLICY_LOAD_PATH') or
+      format('%s/policies', apicast_dir)
 
-  local path = {
-    -- first path contains
-    format('%s/policies/%s/%s/?.lua', apicast_dir, name, version),
-  }
+  _M.policy_load_paths = re.split(policy_load_path, ':', 'oj')
+  _M.builtin_policy_load_path = format('%s/src/apicast/policy', apicast_dir)
+end
+
+function _M.new(name, version, paths)
+  local load_paths = {}
+
+  for _, path in ipairs(paths or _M.policy_load_paths) do
+    insert(load_paths, format('%s/%s/%s/?.lua', path, name, version))
+  end
 
   if version == 'builtin' then
-    insert(path, format('%s/src/apicast/policy/%s/?.lua', apicast_dir, name))
+    insert(load_paths, format('%s/%s/?.lua', _M.builtin_policy_load_path, name))
   end
 
   -- need to create global variable package that mimics the native one
@@ -229,7 +240,7 @@ function _M.new(name, version, dir)
     preload = preload,
     searchers = {}, -- http://www.lua.org/manual/5.2/manual.html#pdf-package.searchers
     searchpath = searchpath,
-    path = concat(path, ';'),
+    path = concat(load_paths, ';'),
     cpath = '', -- no C libraries allowed in policies
   }
 

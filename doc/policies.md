@@ -106,6 +106,12 @@ Lets say the policy needs some 3rd party dependency. Those can be put anywhere i
 
 The policy has access to only code it provides and shared code in `APICAST_DIR/src/`.
 
+You can start APIcast with different policy load path parameter (`--policy-load-path` or `APICAST_POLICY_LOAD_PATH`) to load
+policies from different than the default path. Example:
+```shell
+bin/apicast start --policy-load-path examples/policies:spec/fixtures/policies
+```
+
 ### Policy code
 
 To write your own policy you need to write a Lua module that instantiates a

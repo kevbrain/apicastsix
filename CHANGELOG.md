@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Upstream policy [PR #562](https://github.com/3scale/apicast/pull/562)
 - Policy JSON manifest [PR #565](https://github.com/3scale/apicast/pull/565)
 - SOAP policy [PR #567](https://github.com/3scale/apicast/pull/567)
+- Ability to set custom directories to load policies from [PR #581](https://github.com/3scale/apicast/pull/581)
 
 ## Fixed
 

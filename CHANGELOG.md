@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Extract `mapping_rule` module from the `configuration` module [PR #571](https://github.com/3scale/apicast/pull/571)
 - Renamed `apicast/policy/policy.lua` to `apicast/policy.lua` [PR #569](https://github.com/3scale/apicast/pull/569)
 - Sandbox loading policies [PR #566](https://github.com/3scale/apicast/pull/566)
+- Extracted `usage` and `mapping_rules_matcher` modules so they can be used from policies [PR #580](https://github.com/3scale/apicast/pull/580)
 
 ## [3.2.0-alpha2] - 2017-11-30
 

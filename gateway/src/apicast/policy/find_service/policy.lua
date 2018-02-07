@@ -1,8 +1,7 @@
-local next = next
-
 local policy = require('apicast.policy')
 local _M = policy.new('Find Service Policy')
 local configuration_store = require 'apicast.configuration_store'
+local mapping_rules_matcher = require 'apicast.mapping_rules_matcher'
 local new = _M.new
 
 local function find_service_strict(configuration, host)
@@ -39,10 +38,14 @@ local function find_service_cascade(configuration, host)
       if hosts[h] == host then
         local name = service.system_name or service.id
         ngx.log(ngx.DEBUG, 'service ', name, ' matched host ', hosts[h])
-        local usage, matched_patterns = service:get_usage(method, uri)
 
-        if next(usage) and matched_patterns ~= '' then
-          ngx.log(ngx.DEBUG, 'service ', name, ' matched patterns ', matched_patterns)
+        local matches = mapping_rules_matcher.matches(method, uri, {}, service.rules)
+        -- matches() also returns the index of the first rule that matched.
+        -- As a future optimization, in the part of the code that calculates
+        -- the usage, we could use this to avoid trying to match again all the
+        -- rules before the one that matched.
+
+        if matches then
           found = service
           break
         end

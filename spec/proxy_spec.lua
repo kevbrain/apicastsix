@@ -3,6 +3,7 @@ local lrucache = require('resty.lrucache')
 
 local configuration_store = require 'apicast.configuration_store'
 local Service = require 'apicast.configuration.service'
+local Usage = require 'apicast.usage'
 
 describe('Proxy', function()
   local configuration, proxy
@@ -63,9 +64,12 @@ describe('Proxy', function()
 
       stub(proxy, 'cache_handler').returns(true)
 
-      proxy:authorize(service, { foo = 0 }, { client_id = 'blah' }, ttl)
+      local usage = Usage.new()
+      usage:add('foo', 0)
+      proxy:authorize(service, usage, { client_id = 'blah' }, ttl)
 
-      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo=0', response, ttl)
+      assert.spy(proxy.cache_handler).was.called_with(
+        proxy.cache, 'client_id=blah:usage%5Bfoo%5D=0', response, ttl)
     end)
 
     it('works with no ttl', function()
@@ -75,9 +79,12 @@ describe('Proxy', function()
       stub(ngx_backend, 'send', function() return response end)
       stub(proxy, 'cache_handler').returns(true)
 
-      proxy:authorize(service, { foo = 0 }, { client_id = 'blah' })
+      local usage = Usage.new()
+      usage:add('foo', 0)
+      proxy:authorize(service, usage, { client_id = 'blah' })
 
-      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo=0', response, nil)
+      assert.spy(proxy.cache_handler).was.called_with(
+        proxy.cache, 'client_id=blah:usage%5Bfoo%5D=0', response, nil)
     end)
   end)
 

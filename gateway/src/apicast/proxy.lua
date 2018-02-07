@@ -11,6 +11,7 @@ local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local util = require('apicast.util')
 local resty_lrucache = require('resty.lrucache')
 local backend_cache_handler = require('apicast.backend.cache_handler')
+local Usage = require('apicast.usage')
 
 local resty_url = require 'resty.url'
 
@@ -21,6 +22,7 @@ local concat = table.concat
 local gsub = string.gsub
 local tonumber = tonumber
 local setmetatable = setmetatable
+local ipairs = ipairs
 local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
 local semaphore = require('ngx.semaphore')
@@ -126,10 +128,37 @@ local function output_debug_headers(service, usage, credentials)
   end
 end
 
+-- Converts a usage to the format expected by the 3scale backend client.
+local function format_usage(usage)
+  local res = {}
+
+  local usage_metrics = usage.metrics
+  local usage_deltas = usage.deltas
+
+  for _, metric in ipairs(usage_metrics) do
+    local delta = usage_deltas[metric]
+    res['usage[' .. metric .. ']'] = delta
+  end
+
+  return res
+end
+
+local function matched_patterns(matched_rules)
+  local patterns = {}
+
+  for _, rule in ipairs(matched_rules) do
+    insert(patterns, rule.pattern)
+  end
+
+  return patterns
+end
+
 function _M:authorize(service, usage, credentials, ttl)
   if not usage or not credentials then return nil, 'missing usage or credentials' end
 
-  local encoded_usage = encode_args(usage)
+  local formatted_usage = format_usage(usage)
+
+  local encoded_usage = encode_args(formatted_usage)
   if encoded_usage == '' then
     return error_no_match(service)
   end
@@ -152,7 +181,7 @@ function _M:authorize(service, usage, credentials, ttl)
     ngx.var.cached_key = nil
 
     local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
-    local res = backend:authrep(usage, credentials)
+    local res = backend:authrep(formatted_usage, credentials)
 
     local authorized, rejection_reason = self:handle_backend_response(cached_key, res, ttl)
     if not authorized then
@@ -228,7 +257,7 @@ local function handle_oauth(service)
   return oauth
 end
 
-function _M:rewrite(service)
+function _M:rewrite(service, context)
   service = _M.set_service(service or ngx.ctx.service)
 
   -- handle_oauth can terminate the request
@@ -243,7 +272,7 @@ function _M:rewrite(service)
     return error_no_credentials(service)
   end
 
-  local _, matched_patterns, usage_params = service:get_usage(ngx.req.get_method(), ngx.var.uri)
+  local usage, matched_rules = service:get_usage(ngx.req.get_method(), ngx.var.uri)
   local cached_key = { service.id }
 
   -- remove integer keys for serialization
@@ -264,14 +293,21 @@ function _M:rewrite(service)
   local var = ngx.var
 
   -- save those tables in context so they can be used in the backend client
-  ctx.usage = usage_params
+  context.usage = context.usage or Usage.new()
+  context.usage:merge(usage)
+
+  ctx.usage = usage
   ctx.credentials = credentials
-  ctx.matched_patterns = matched_patterns
 
   self.credentials = credentials
-  self.usage = usage_params
+  self.usage = usage
 
   var.cached_key = concat(cached_key, ':')
+
+  if debug_header_enabled(service) then
+    local patterns = matched_patterns(matched_rules)
+    ctx.matched_patterns = concat(patterns, ', ')
+  end
 
   local ttl
 
@@ -319,7 +355,8 @@ end
 
 local function capture_post_action(self, cached_key, service)
   local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
-  local res = backend:authrep(self.usage, self.credentials, response_codes_data())
+  local formatted_usage = format_usage(self.usage)
+  local res = backend:authrep(formatted_usage, self.credentials, response_codes_data())
 
   self:handle_backend_response(cached_key, res)
 end
@@ -332,7 +369,8 @@ local function timer_post_action(self, cached_key, service)
   if ok then
     -- TODO: try to do this in different phase and use semaphore to limit number of background threads
     -- TODO: Also it is possible to use sets in shared memory to enqueue work
-    ngx.timer.at(0, post_action, self, cached_key, backend, self.usage, self.credentials, response_codes_data())
+    local formatted_usage = format_usage(self.usage)
+    ngx.timer.at(0, post_action, self, cached_key, backend, formatted_usage, self.credentials, response_codes_data())
   else
     ngx.log(ngx.ERR, 'failed to acquire timer: ', err)
     return capture_post_action(self, cached_key, service)

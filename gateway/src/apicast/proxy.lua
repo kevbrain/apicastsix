@@ -254,7 +254,7 @@ local function handle_oauth(service)
   return oauth
 end
 
-function _M:rewrite(service)
+function _M:rewrite(service, context)
   service = _M.set_service(service or ngx.ctx.service)
 
   -- handle_oauth can terminate the request

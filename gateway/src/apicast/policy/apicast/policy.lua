@@ -56,7 +56,7 @@ function _M:rewrite(context)
     ngx.ctx.service = service
 
     -- it is possible that proxy:rewrite will terminate the request
-    p:rewrite(service)
+    p:rewrite(service, context)
   end
 
   p.set_upstream(service)

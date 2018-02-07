@@ -11,6 +11,7 @@ local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local util = require('apicast.util')
 local resty_lrucache = require('resty.lrucache')
 local backend_cache_handler = require('apicast.backend.cache_handler')
+local Usage = require('apicast.usage')
 
 local resty_url = require 'resty.url'
 
@@ -155,7 +156,9 @@ end
 function _M:authorize(service, usage, credentials, ttl)
   if not usage or not credentials then return nil, 'missing usage or credentials' end
 
-  local encoded_usage = encode_args(usage)
+  local formatted_usage = format_usage(usage)
+
+  local encoded_usage = encode_args(formatted_usage)
   if encoded_usage == '' then
     return error_no_match(service)
   end
@@ -178,7 +181,7 @@ function _M:authorize(service, usage, credentials, ttl)
     ngx.var.cached_key = nil
 
     local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
-    local res = backend:authrep(usage, credentials)
+    local res = backend:authrep(formatted_usage, credentials)
 
     local authorized, rejection_reason = self:handle_backend_response(cached_key, res, ttl)
     if not authorized then
@@ -289,14 +292,15 @@ function _M:rewrite(service, context)
   local ctx = ngx.ctx
   local var = ngx.var
 
-  local parsed_usage = format_usage(usage)
-
   -- save those tables in context so they can be used in the backend client
-  ctx.usage = parsed_usage
+  context.usage = context.usage or Usage.new()
+  context.usage:merge(usage)
+
+  ctx.usage = usage
   ctx.credentials = credentials
 
   self.credentials = credentials
-  self.usage = parsed_usage
+  self.usage = usage
 
   var.cached_key = concat(cached_key, ':')
 
@@ -351,7 +355,8 @@ end
 
 local function capture_post_action(self, cached_key, service)
   local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
-  local res = backend:authrep(self.usage, self.credentials, response_codes_data())
+  local formatted_usage = format_usage(self.usage)
+  local res = backend:authrep(formatted_usage, self.credentials, response_codes_data())
 
   self:handle_backend_response(cached_key, res)
 end
@@ -364,7 +369,8 @@ local function timer_post_action(self, cached_key, service)
   if ok then
     -- TODO: try to do this in different phase and use semaphore to limit number of background threads
     -- TODO: Also it is possible to use sets in shared memory to enqueue work
-    ngx.timer.at(0, post_action, self, cached_key, backend, self.usage, self.credentials, response_codes_data())
+    local formatted_usage = format_usage(self.usage)
+    ngx.timer.at(0, post_action, self, cached_key, backend, formatted_usage, self.credentials, response_codes_data())
   else
     ngx.log(ngx.ERR, 'failed to acquire timer: ', err)
     return capture_post_action(self, cached_key, service)

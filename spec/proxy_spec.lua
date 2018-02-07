@@ -64,7 +64,9 @@ describe('Proxy', function()
 
       stub(proxy, 'cache_handler').returns(true)
 
-      proxy:authorize(service, { ['usage[foo]'] = 0 }, { client_id = 'blah' }, ttl)
+      local usage = Usage.new()
+      usage:add('foo', 0)
+      proxy:authorize(service, usage, { client_id = 'blah' }, ttl)
 
       assert.spy(proxy.cache_handler).was.called_with(
         proxy.cache, 'client_id=blah:usage%5Bfoo%5D=0', response, ttl)
@@ -77,7 +79,9 @@ describe('Proxy', function()
       stub(ngx_backend, 'send', function() return response end)
       stub(proxy, 'cache_handler').returns(true)
 
-      proxy:authorize(service, { ['usage[foo]'] = 0 }, { client_id = 'blah' })
+      local usage = Usage.new()
+      usage:add('foo', 0)
+      proxy:authorize(service, usage, { client_id = 'blah' })
 
       assert.spy(proxy.cache_handler).was.called_with(
         proxy.cache, 'client_id=blah:usage%5Bfoo%5D=0', response, nil)

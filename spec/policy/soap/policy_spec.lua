@@ -4,9 +4,13 @@ describe('policy', function()
   describe('.rewrite', function()
     local context -- Context shared between policies
 
-    -- Define a config with 2 rules. One increases hits by 10 and the other by
-    -- 20. Their patterns have values that allow us to easily associate them
-    -- with a SOAP action receive via SOAPAction header or via Content-Type.
+    local full_url = "http://www.example.com:80/path/to/myfile.html?" ..
+        "key1=value1&key2=value2#SomewhereInTheDocument"
+
+    -- Define a config with 3 rules. Their patterns have values that allow us
+    -- to easily associate them with a SOAP action receive via SOAPAction
+    -- header or via Content-Type. The third one is used to tests matching of
+    -- full URLs.
     local policy_config = {
       mapping_rules = {
         {
@@ -18,7 +22,12 @@ describe('policy', function()
           pattern = '/soap_action_ctype$',
           metric_system_name = 'hits',
           delta = 20
-        }
+        },
+        {
+          pattern = full_url,
+          metric_system_name = 'hits',
+          delta = 30
+        },
       }
     }
 
@@ -96,6 +105,18 @@ describe('policy', function()
 
             assert.equals(21, context.usage.deltas['hits'])
           end
+        end)
+      end)
+
+      describe('and the action is a full URL', function()
+        it('calculates the usage and merges it with the one in the context', function()
+          ngx.req.get_headers = function()
+            return { ["Content-Type"] = 'application/soap+xml;action=' .. full_url }
+          end
+
+          soap_policy:rewrite(context)
+
+          assert.equals(31, context.usage.deltas['hits'])
         end)
       end)
     end)

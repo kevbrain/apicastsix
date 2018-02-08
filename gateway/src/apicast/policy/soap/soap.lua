@@ -25,7 +25,7 @@ local policy = require('apicast.policy')
 local _M = policy.new('SOAP policy')
 
 local soap_action_header = 'SOAPAction'
-local soap_action_ctype = 'application/soap+xml;'
+local soap_action_ctype = 'application/soap+xml'
 
 local new = _M.new
 
@@ -39,43 +39,45 @@ local function soap_action_in_header(headers)
   return headers[soap_action_header]
 end
 
-local regex_del_leading_spaces = [[^\s*]]
-local regex_del_spaces_around_semicolon = [[\s*;\s*]]
+local MimeType = {}
 
--- There can be spaces in the Content-Type, values can be wrapped with '"',
--- etc.
--- See: https://tools.ietf.org/html/rfc7231#section-3.1.1.1
-local regex_action_from_ctype = [[action=(?:"(.+)"|([^;"]+))\s*(?:;|$)]]
+do
+  local re = require('ngx.re')
+  local format = string.format
 
--- Extracts the SOAP action from a string that contains the parameters of a
--- Content-Type header. The string has this format:
--- a_param=x;action=soap_action;another_param=y
--- This method returns the value of 'action' or nil when it's not present.
-local function soap_action_from_ctype_params(ctype_params)
-  local params = ngx.re.sub(
-    ctype_params, regex_del_leading_spaces, '', 'oj')
+  local MimeType_mt = { __index = MimeType }
+  local setmetatable = setmetatable
 
-  local params_without_blanks = ngx.re.gsub(
-    params, regex_del_spaces_around_semicolon, ';', 'oj')
+  function MimeType.new(media_type)
+    local match = re.split(media_type, [[\s*;\s*]], 'oj', nil, 2)
 
-  local matches = ngx.re.match(
-    lower(params_without_blanks), regex_action_from_ctype, 'oj')
+    local self = {}
 
-  if not matches then return nil end
-  return matches[1] or matches[2] -- There are 2 paranthesized captures
+    self.media_type = match[1]
+    self.parameters = match[2]
+
+    return setmetatable(self, MimeType_mt)
+  end
+
+  function MimeType:parameter(name)
+    local parameters = self.parameters
+
+    local matches = ngx.re.match(parameters, format([[%s=(?:"(.+)"|([^;"]+))\s*(?:;|$)]], name), 'oji')
+
+    if not matches then return nil end
+
+    return matches[1] or matches[2]
+  end
 end
 
 -- Extracts a SOAP action from the Content-Type header. In SOAP, the
 -- type/subtype is application/soap+xml, and the action is specified as a
 -- param in that header. When there is no SOAP action, this method returns nil.
 local function soap_action_in_ctype(headers)
-  local ctype = headers['Content-Type']
+  local mime_type = MimeType.new(headers['Content-Type'])
 
-  -- The Content-Type can be a mix of upper and lower-case chars. Convert it to
-  -- include only lower-case chars to be able to compare it.
-  if ctype and starts_with(lower(ctype), soap_action_ctype) then
-    local header_params = sub(ctype, len(soap_action_ctype) + 1, -1)
-    return soap_action_from_ctype_params(header_params)
+  if mime_type.media_type == soap_action_ctype then
+    return mime_type:parameter('action')
   else
     return nil
   end

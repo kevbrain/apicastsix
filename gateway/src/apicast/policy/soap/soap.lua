@@ -53,7 +53,9 @@ do
 
     local self = {}
 
-    self.media_type = match[1]
+    -- The RFC defines that the type can include upper and lower-case chars.
+    -- Let's convert it to lower-case for easier comparisons.
+    self.media_type = lower(match[1])
     self.parameters = match[2]
 
     return setmetatable(self, MimeType_mt)

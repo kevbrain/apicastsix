@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - New phase: `content` for generating content or getting the upstream response [PR #535](https://github.com/3scale/apicast/pull/535)
 - Upstream policy [PR #562](https://github.com/3scale/apicast/pull/562)
 - Policy JSON manifest [PR #565](https://github.com/3scale/apicast/pull/565)
+- SOAP policy [PR #567](https://github.com/3scale/apicast/pull/567)
 
 ## Fixed
 

@@ -71,6 +71,33 @@ describe('policy', function()
           assert.equals(21, context.usage.deltas['hits'])
         end)
       end)
+
+      describe('and the params contain some upper-case chars or spaces', function()
+        it('calculates the usage and merges it with the one in the context', function()
+          local header_vals = {
+            -- Upper-case chars in type/subtype
+            "Application/SOAP+xml;action=/soap_action_ctype",
+            -- Upper-case chars in 'Action'
+            "application/soap+xml;Action=/soap_action_ctype",
+            -- "" in action value
+            'application/soap+xml;action="/soap_action_ctype"',
+            -- Spaces
+            "application/soap+xml; action=/soap_action_ctype; a_param=x"
+          }
+
+          for _, header_val in ipairs(header_vals) do
+            ngx.req.get_headers = function()
+              return { ["Content-Type"] = header_val }
+            end
+
+            context = { usage = Usage.new() }
+            context.usage:add('hits', 1)
+            soap_policy:rewrite(context)
+
+            assert.equals(21, context.usage.deltas['hits'])
+          end
+        end)
+      end)
     end)
 
     describe('when the SOAP action is in the SOAPAction and the Content-Type headers', function()

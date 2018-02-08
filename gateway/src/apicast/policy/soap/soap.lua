@@ -12,9 +12,9 @@
 
 local sub = string.sub
 local len = string.len
+local lower = string.lower
 local ipairs = ipairs
 local insert = table.insert
-local re = require('ngx.re')
 
 local MappingRule = require('apicast.mapping_rule')
 local Usage = require('apicast.usage')
@@ -39,23 +39,30 @@ local function soap_action_in_header(headers)
   return headers[soap_action_header]
 end
 
+local regex_del_leading_spaces = [[^\s*]]
+local regex_del_spaces_around_semicolon = [[\s*;\s*]]
+
+-- There can be spaces in the Content-Type, values can be wrapped with '"',
+-- etc.
+-- See: https://tools.ietf.org/html/rfc7231#section-3.1.1.1
+local regex_action_from_ctype = [[action=(?:"(.+)"|([^;"]+))\s*(?:;|$)]]
+
 -- Extracts the SOAP action from a string that contains the parameters of a
 -- Content-Type header. The string has this format:
 -- a_param=x;action=soap_action;another_param=y
 -- This method returns the value of 'action' or nil when it's not present.
-local function soap_action_from_ctype_params(params)
-  local params_split = re.split(params, ";")
+local function soap_action_from_ctype_params(ctype_params)
+  local params = ngx.re.sub(
+    ctype_params, regex_del_leading_spaces, '', 'oj')
 
-  for _, param in ipairs(params_split) do
-    local header_param_split = re.split(param, "=")
-    local name = header_param_split[1]
-    local value = header_param_split[2]
-    if name == "action" then
-      return value
-    end
-  end
+  local params_without_blanks = ngx.re.gsub(
+    params, regex_del_spaces_around_semicolon, ';', 'oj')
 
-  return nil
+  local matches = ngx.re.match(
+    lower(params_without_blanks), regex_action_from_ctype, 'oj')
+
+  if not matches then return nil end
+  return matches[1] or matches[2] -- There are 2 paranthesized captures
 end
 
 -- Extracts a SOAP action from the Content-Type header. In SOAP, the
@@ -64,7 +71,9 @@ end
 local function soap_action_in_ctype(headers)
   local ctype = headers['Content-Type']
 
-  if ctype and starts_with(ctype, soap_action_ctype) then
+  -- The Content-Type can be a mix of upper and lower-case chars. Convert it to
+  -- include only lower-case chars to be able to compare it.
+  if ctype and starts_with(lower(ctype), soap_action_ctype) then
     local header_params = sub(ctype, len(soap_action_ctype) + 1, -1)
     return soap_action_from_ctype_params(header_params)
   else

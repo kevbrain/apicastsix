@@ -72,6 +72,12 @@ http {
     {% include "conf.d/backend.conf" %}
   }
 
+  upstream echo {
+    server 127.0.0.1:{{ port.echo | default: 8081 }};
+
+    keepalive 1024;
+  }
+
   server {
     listen {{ port.echo | default: 8081 }} default_server;
 

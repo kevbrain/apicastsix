@@ -353,3 +353,38 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+
+
+=== TEST 7: using echo
+Upstream policy should work with internal echo API.
+--- configuration
+{
+  "services": [
+    {
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.upstream",
+            "configuration":
+              {
+                "rules": [ { "regex": "/", "url": "http://echo:$TEST_NGINX_SERVER_PORT" } ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- request
+GET /a_path?
+--- response_body eval
+<<"HTTP"
+GET /a_path? HTTP/1.1\x{0d}
+X-Real-IP: 127.0.0.1\x{0d}
+Host: echo\x{0d}
+\x{0d}
+\x{0d}\x{0a}
+HTTP
+--- error_code: 200
+--- no_error_log
+[error]

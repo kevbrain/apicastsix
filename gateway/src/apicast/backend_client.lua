@@ -32,7 +32,7 @@ local mt = { __index = _M }
 -- @tparam http_ng.backend http_client async/test/custom http backend
 -- @treturn backend_client
 function _M:new(service, http_client)
-  local endpoint = self.endpoint or service.backend.endpoint or error('missing endpoint')
+  local endpoint = self.endpoint or (service and service.backend and service.backend.endpoint) or error('missing endpoint')
   local service_id = service.id
 
   if not endpoint then

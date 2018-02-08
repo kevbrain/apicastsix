@@ -1,0 +1,31 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Ngx example policy",
+  "description":
+  ["This policy is meant to be just an example.",
+    "It sets request headers based on the configuration.",
+    "And prints a log entry for each header set. " ],
+  "version": "0.1",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "set_header": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "HTTP header name"
+            },
+            "value": {
+              "type": "string",
+              "description": "HTTP header value"
+            }
+          },
+          "required": ["name", "value"]
+        }
+      }
+    }
+  }
+}

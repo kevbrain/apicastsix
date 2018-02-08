@@ -112,6 +112,8 @@ policies from different than the default path. Example:
 bin/apicast start --policy-load-path examples/policies:spec/fixtures/policies
 ```
 
+For more details see [examples/policies/README.md](../examples/policies/README.md).
+
 ### Policy code
 
 To write your own policy you need to write a Lua module that instantiates a

@@ -1,0 +1,46 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "SOAP policy",
+  "description":
+  ["This policy adds support for a very small subset of SOAP. \n",
+   "It expects a SOAP action URI in the SOAPAction header or the Content-Type ",
+   "header. The SOAPAction header is used in v1.1 of the SOAP standard: ",
+   "https://www.w3.org/TR/2000/NOTE-SOAP-20000508/#_Toc478383528 , whereas ",
+   "the Content-Type header is used in v1.2 of the SOAP standard: ",
+   "https://www.w3.org/TR/soap12-part2/#ActionFeature \n",
+   "The SOAPAction URI is matched against the mapping rules defined in the ",
+   "policy and calculates a usage based on that so it can be authorized and ",
+   "reported against 3scale's backend."],
+  "version": "0.1",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "mapping_rules": {
+        "description": "Mapping rules.",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "pattern": {
+              "description": "Pattern to match against the request.",
+              "type": "string"
+            },
+            "metric_system_name": {
+              "description": "Metric.",
+              "type": "string"
+            },
+            "delta": {
+              "description": "Value.",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "pattern",
+            "metric_system_name",
+            "delta"
+          ]
+        }
+      }
+    }
+  }
+}

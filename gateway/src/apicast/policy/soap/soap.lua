@@ -10,8 +10,6 @@
 -- policy and calculates a usage based on that so it can be authorized and
 -- reported against 3scale's backend.
 
-local sub = string.sub
-local len = string.len
 local lower = string.lower
 local ipairs = ipairs
 local insert = table.insert
@@ -28,10 +26,6 @@ local soap_action_header = 'SOAPAction'
 local soap_action_ctype = 'application/soap+xml'
 
 local new = _M.new
-
-local function starts_with(str, start)
-  return sub(str, 1, len(start)) == start
-end
 
 -- Extracts a SOAP action from the SOAPAction header. Returns nil when not
 -- present.

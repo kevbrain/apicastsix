@@ -220,7 +220,7 @@ do
       format('%s/policies', apicast_dir)
 
   _M.policy_load_paths = re.split(policy_load_path, ':', 'oj')
-  _M.builtin_policy_load_path = format('%s/src/apicast/policy', apicast_dir)
+  _M.builtin_policy_load_path = resty_env.value('APICAST_BUILTIN_POLICY_LOAD_PATH') or format('%s/src/apicast/policy', apicast_dir)
 end
 
 function _M.new(name, version, paths)

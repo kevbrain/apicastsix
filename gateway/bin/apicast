@@ -56,6 +56,7 @@ my $lua_lib = $ENV{LUA_CPATH};
 my $cwd = getcwd();
 
 $ENV{PATH} .= ":$cwd/lua_modules/bin";
+$ENV{APICAST_BUILTIN_POLICY_LOAD_PATH} ||= "$apicast_src/apicast/policy";
 
 chomp(my $rover = `command -v rover 2>/dev/null`);
 if ($rover) { $rover = abs_path($rover) }

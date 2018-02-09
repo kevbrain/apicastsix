@@ -95,6 +95,10 @@ if (defined $nginx) {
     push @resty_args, '--nginx', $nginx;
 }
 
+if (defined $ENV{APICAST_LOG_LEVEL}) {
+    push @resty_args, '--errlog-level', $ENV{APICAST_LOG_LEVEL};
+}
+
 # Add directories to the lua load path.
 # APIcast source and a local src directory.
 for my $inc ($apicast_src, 'src') {

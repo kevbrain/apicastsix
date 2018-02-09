@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Policy JSON manifest [PR #565](https://github.com/3scale/apicast/pull/565)
 - SOAP policy [PR #567](https://github.com/3scale/apicast/pull/567)
 - Ability to set custom directories to load policies from [PR #581](https://github.com/3scale/apicast/pull/581)
+- CLI is running with proper log level set by `APICAST_LOG_LEVEL` [PR #585](https://github.com/3scale/apicast/pull/585)
 
 ## Fixed
 

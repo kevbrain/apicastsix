@@ -1,6 +1,6 @@
 local _M = require 'apicast.policy.apicast'
 
-describe('APIcast module', function()
+describe('APIcast policy', function()
 
   it('has a name', function()
     assert.truthy(_M._NAME)

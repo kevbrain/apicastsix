@@ -1,6 +1,6 @@
 local Usage = require('apicast.usage')
 
-describe('policy', function()
+describe('SOAP policy', function()
   describe('.rewrite', function()
     local context -- Context shared between policies
 

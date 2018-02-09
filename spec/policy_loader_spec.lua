@@ -22,8 +22,8 @@ describe('APIcast Policy Loader', function()
     end)
 
     it('loads two instances of the same policy', function()
-      local test = _M:call('test', '1.0.0-0', 'spec/fixtures')
-      local test2 = _M:call('test', '1.0.0-0', 'spec/fixtures')
+      local test = _M:call('test', '1.0.0-0', { 'spec/fixtures/policies' })
+      local test2 = _M:call('test', '1.0.0-0', { 'spec/fixtures/policies' })
 
       test.one = 1
       assert.falsy(test2.one)
@@ -34,8 +34,8 @@ describe('APIcast Policy Loader', function()
     end)
 
     it('loads two versions of the same policy', function()
-      local test = _M:call('test', '1.0.0-0', 'spec/fixtures')
-      local test2 = _M:call('test', '2.0.0-0', 'spec/fixtures')
+      local test = _M:call('test', '1.0.0-0', { 'spec/fixtures/policies' })
+      local test2 = _M:call('test', '2.0.0-0', { 'spec/fixtures/policies' })
 
       assert.are.same({ '1.0 dependency' }, test.dependency)
       assert.are.same({ '2.0 dependency' }, test2.dependency)

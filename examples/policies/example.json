@@ -1,0 +1,20 @@
+{
+  "services": [
+    {
+      "proxy": {
+        "policy_chain": [
+          { "name": "ngx-example", "version": "1.0.0",
+            "configuration": { "set_header": [{"name": "Example", "value": "Value" }] } },
+          { "name": "apicast.policy.upstream",
+            "configuration": {
+              "rules": [{
+                "regex": "/",
+                "url": "http://echo:8081"
+              }]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

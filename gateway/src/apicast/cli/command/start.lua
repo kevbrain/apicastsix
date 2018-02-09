@@ -4,6 +4,7 @@ local min = math.min
 local max = math.max
 local insert = table.insert
 local concat = table.concat
+local format = string.format
 
 local exec = require('resty.execvp')
 local resty_env = require('resty.env')
@@ -109,6 +110,7 @@ local function build_env(options, config)
         APICAST_CONFIGURATION_LOADER = options.boot and 'boot' or 'lazy',
         APICAST_CONFIGURATION_CACHE = options.cache,
         THREESCALE_DEPLOYMENT_ENV = config.name,
+        APICAST_POLICY_LOAD_PATH = options.policy_load_path,
     }
 end
 
@@ -193,6 +195,10 @@ local function configure(cmd)
         "Cache configuration for N seconds. Using 0 will reload on every request (not for production).",
         resty_env.value('APICAST_CONFIGURATION_CACHE'))
 
+    cmd:option("--policy-load-path",
+        "Load path where to find policies. Entries separated by `:`.",
+        resty_env.value('APICAST_POLICY_LOAD_PATH') or format('%s/policies', apicast_root())
+    )
     cmd:mutex(
         cmd:flag('-v --verbose',
             "Increase logging verbosity (can be repeated).")

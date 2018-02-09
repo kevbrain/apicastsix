@@ -384,7 +384,7 @@ function _M:post_action(force)
 
   local cached_key = ngx.var.cached_key
 
-  if cached_key and cached_key ~= "null" then
+  if cached_key and cached_key ~= "null" and cached_key ~= '' then
     ngx.log(ngx.INFO, '[async] reporting to backend asynchronously, cached_key: ', cached_key)
 
     local service_id = ngx.var.service_id

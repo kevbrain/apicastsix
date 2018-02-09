@@ -182,3 +182,12 @@ This is a new **experimental** feature for increasing performance. Client
 won't see the backend latency and everything will be processed asynchronously.
 This value determines how many asynchronous reports can be running simultaneously
 before the client is throttled by adding latency.
+
+### `APICAST_POLICY_LOAD_PATH`
+
+**Default**: APICAST_DIR/policies
+**Value:**: string\[:<string>\]
+**Example**: ~/apicast/policies:$PWD/policies
+
+Double colon (`:`) separated list of paths where APIcast should look for policies.
+It can be used to first load policies from a development directory or to load examples.

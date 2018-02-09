@@ -296,11 +296,11 @@ function _M:rewrite(service, context)
   context.usage = context.usage or Usage.new()
   context.usage:merge(usage)
 
-  ctx.usage = usage
+  ctx.usage = context.usage
   ctx.credentials = credentials
 
   self.credentials = credentials
-  self.usage = usage
+  self.usage = context.usage
 
   var.cached_key = concat(cached_key, ':')
 

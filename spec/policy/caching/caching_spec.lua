@@ -1,6 +1,6 @@
 local resty_lrucache = require('resty.lrucache')
 
-describe('policy', function()
+describe('Caching policy', function()
   local cache
 
   before_each(function()

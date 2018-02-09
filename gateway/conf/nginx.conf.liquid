@@ -5,12 +5,6 @@ env RESOLVER;
 env BACKEND_ENDPOINT_OVERRIDE;
 env OPENSSL_VERIFY;
 
-{% for env in env -%}
-  {%- if env.name | starts_with: 'APICAST_', 'THREESCALE_' %}
-    env {{ env.name }}={{ env.value }};
-  {%- endif -%}
-{%- endfor %}
-
 daemon {{ daemon | default: 'off' }};
 master_process {{ master_process | default: 'on' }};
 worker_processes {{ worker_processes | default: 'auto' }};
@@ -51,6 +45,15 @@ http {
     resolver {{ nameservers | join: " " }};
   {% endif %}
 
+  {%- capture ENV -%}
+    {
+      {%- for env in env -%}
+      {%- if env.name | starts_with: 'APICAST_', 'THREESCALE_' %}
+      [ [[{{ env.name }}]] ] = [[{{ env.value }}]],
+      {%- endif -%}
+    {%- endfor %}
+    }
+  {%- endcapture -%}
 
   {% for file in "http.d/*.conf" | filesystem %}
     {% include file %}

@@ -36,8 +36,8 @@ _LUA_
         return (
             $rock . '/bin',
             $rock . '/conf',
-            $rock =~ s{/lib/luarocks/rocks/apicast/.+?/?$}[/share/lua/@{[ detect_lua_version ]}]r,
-            $rock =~ s{/lib/luarocks/rocks/apicast/.+?/?$}[/lib/lua/@{[ detect_lua_version ]}]r,
+            $rock =~ s{/(lib/)?luarocks/rocks/apicast/.+?/?$}[/share/lua/@{[ detect_lua_version ]}]r,
+            $rock =~ s{/(lib/)?luarocks/rocks/apicast/.+?/?$}[/lib/lua/@{[ detect_lua_version ]}]r,
         );
     } else {
         return (

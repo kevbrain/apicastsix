@@ -7,7 +7,7 @@ local _M = policy.new('Local Policy Chain')
 local function build_default_chain()
   local module
 
-  if resty_env.get('APICAST_MODULE') then
+  if resty_env.value('APICAST_MODULE') then
     -- Needed to keep compatibility with the old module system.
     module = assert(require('apicast.module'), 'could not load custom module')
   else

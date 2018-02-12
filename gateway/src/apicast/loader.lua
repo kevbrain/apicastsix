@@ -52,10 +52,10 @@ end
 
 local function rename_loader(name, path)
   local new = map[name]
-  local found, err = loader(new, path)
+  local found, err = policy_searcher(new)
 
   if not found then
-    found = policy_searcher(new)
+    found = loader(new, path)
   end
 
   if found then

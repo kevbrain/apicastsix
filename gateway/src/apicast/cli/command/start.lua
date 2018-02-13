@@ -8,6 +8,7 @@ local format = string.format
 
 local exec = require('resty.execvp')
 local resty_env = require('resty.env')
+local re = require('ngx.re')
 
 local Template = require('apicast.cli.template')
 local Environment = require('apicast.cli.environment')
@@ -109,7 +110,7 @@ local function build_env(options, config)
         APICAST_CONFIGURATION = options.configuration,
         APICAST_CONFIGURATION_LOADER = options.boot and 'boot' or 'lazy',
         APICAST_CONFIGURATION_CACHE = options.cache,
-        THREESCALE_DEPLOYMENT_ENV = config.name,
+        THREESCALE_DEPLOYMENT_ENV = options.channel or config.name,
         APICAST_POLICY_LOAD_PATH = options.policy_load_path,
     }
 end
@@ -164,12 +165,29 @@ function mt:__call(options)
     return exec(openresty, cmd, env)
 end
 
+local function split_by(pattern)
+  return function(str)
+    return re.split(str or '', pattern, 'oj')
+  end
+end
+
+local load_env = split_by(':')
+
 local function configure(cmd)
     cmd:usage("Usage: apicast-cli start [OPTIONS]")
     cmd:option("--template", "Nginx config template.", 'conf/nginx.conf.liquid')
 
+    local channel = resty_env.value('THREESCALE_DEPLOYMENT_ENV') or 'production'
+    local loaded_env = Environment.loaded()
 
-    cmd:option('-e --environment', "Deployment to start. Can also be a path to a Lua file.", resty_env.value('THREESCALE_DEPLOYMENT_ENV') or 'production'):count('*')
+    insert(loaded_env, 1, channel)
+
+    cmd:option('-3 --channel', "3scale configuration channel to use.", channel):action(function(args, name, chan)
+      args.environment[1] = chan
+      args[name] = chan
+    end):count('0-1')
+    cmd:option('-e --environment', "Deployment to start. Can also be a path to a Lua file.", resty_env.value('APICAST_ENVIRONMENT'))
+      :count('*'):init(loaded_env):action('concat'):convert(load_env)
     cmd:flag('--dev', 'Start in development environment')
 
     cmd:flag("-m --master", "Test the nginx config"):args('?')

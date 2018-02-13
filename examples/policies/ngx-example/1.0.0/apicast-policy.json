@@ -5,7 +5,7 @@
   ["This policy is meant to be just an example.",
     "It sets request headers based on the configuration.",
     "And prints a log entry for each header set. " ],
-  "version": "0.1",
+  "version": "1.0.0",
   "configuration": {
     "type": "object",
     "properties": {

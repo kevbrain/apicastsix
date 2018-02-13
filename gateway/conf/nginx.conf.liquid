@@ -62,7 +62,7 @@ http {
   server {
     listen {{ port.management | default: 8090 }};
 
-    server_name management _;
+    server_name {{ server_name.management | default: 'management _' }};
 
     {% include "conf.d/management.conf" %}
   }

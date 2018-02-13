@@ -8,6 +8,9 @@ local configuration_loader = require('apicast.configuration_loader')
 local inspect = require('inspect')
 local resolver_cache = require('resty.resolver.cache')
 local env = require('resty.env')
+local policy_manifests_loader = require('apicast.policy_manifests_loader')
+
+local setmetatable = setmetatable
 
 local live = { status = 'live', success = true }
 
@@ -124,6 +127,12 @@ function _M.info()
   })
 end
 
+function _M.get_all_policy_manifests()
+  local manifests = policy_manifests_loader.get_all()
+  setmetatable(manifests, cjson.array_mt)
+  return json_response({ policies = manifests })
+end
+
 local routes = {}
 
 function routes.disabled(r)
@@ -134,6 +143,8 @@ function routes.status(r)
   r:get('/status/info', _M.info)
   r:get('/status/ready', _M.ready)
   r:get('/status/live', _M.live)
+
+  routes.policies(r)
 end
 
 function routes.debug(r)
@@ -147,6 +158,12 @@ function routes.debug(r)
   r:get('/dns/cache', _M.dns_cache)
 
   r:post('/boot', _M.boot)
+
+  routes.policies(r)
+end
+
+function routes.policies(r)
+  r:get('/policies/', _M.get_all_policy_manifests)
 end
 
 function _M.router()

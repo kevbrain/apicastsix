@@ -5,6 +5,8 @@ local max = math.max
 local insert = table.insert
 local concat = table.concat
 local format = string.format
+local tostring = tostring
+local tonumber = tonumber
 
 local exec = require('resty.execvp')
 local resty_env = require('resty.env')
@@ -42,7 +44,7 @@ end
 
 local function update_env(env)
     for name, value in pairs(env) do
-        resty_env.set(name, value)
+        resty_env.set(name, tostring(value))
     end
 end
 
@@ -105,13 +107,13 @@ local function openresty_binary(candidates)
         find_openresty_command(candidates)
 end
 
-local function build_env(options, config)
+local function build_env(options, config, context)
     return {
         APICAST_CONFIGURATION = options.configuration,
-        APICAST_CONFIGURATION_LOADER = options.boot and 'boot' or 'lazy',
-        APICAST_CONFIGURATION_CACHE = options.cache,
-        THREESCALE_DEPLOYMENT_ENV = options.channel or config.name,
-        APICAST_POLICY_LOAD_PATH = options.policy_load_path,
+        APICAST_CONFIGURATION_LOADER = tostring(options.configuration_loader or context.configuration_loader or 'lazy'),
+        APICAST_CONFIGURATION_CACHE = tostring(options.cache or context.configuration_cache or 0),
+        THREESCALE_DEPLOYMENT_ENV = context.configuration_channel or options.channel or config.name,
+        APICAST_POLICY_LOAD_PATH = options.policy_load_path or context.policy_load_path,
     }
 end
 
@@ -139,7 +141,7 @@ function mt:__call(options)
     local openresty = openresty_binary(self.openresty)
     local config = build_environment_config(options)
     local context = build_context(options, config)
-    local env = build_env(options, config)
+    local env = build_env(options, config, context)
 
     local template_path = options.template
 
@@ -188,9 +190,11 @@ local function configure(cmd)
     end):count('0-1')
     cmd:option('-e --environment', "Deployment to start. Can also be a path to a Lua file.", resty_env.value('APICAST_ENVIRONMENT'))
       :count('*'):init(loaded_env):action('concat'):convert(load_env)
-    cmd:flag('--dev', 'Start in development environment')
+    cmd:flag('--development --dev', 'Start in development environment'):action(function(arg, name)
+      insert(arg.environment, name)
+    end)
 
-    cmd:flag("-m --master", "Test the nginx config"):args('?')
+    cmd:flag("-m --master", "Control nginx master process.", 'on'):args('?')
     cmd:flag("-t --test", "Test the nginx config")
     cmd:flag("--debug", "Debug mode. Prints more information.")
     cmd:option("-c --configuration",
@@ -201,17 +205,26 @@ local function configure(cmd)
         "Number of worker processes to start.",
         resty_env.value('APICAST_WORKERS') or Environment.default_config.worker_processes)
     cmd:option("-p --pid", "Path to the PID file.")
-    cmd:mutex(
-        cmd:flag('-b --boot',
-            "Load configuration on boot.",
-            resty_env.value('APICAST_CONFIGURATION_LOADER') == 'boot'),
-        cmd:flag('-l --lazy',
-            "Load configuration on demand.",
-            resty_env.value('APICAST_CONFIGURATION_LOADER') == 'lazy')
-    )
+
+    do
+      local target = 'configuration_loader'
+      local configuration_loader = resty_env.value('APICAST_CONFIGURATION_LOADER')
+      local function set_configuration_loader(value)
+        return function(args) args[target] = value end
+      end
+
+      cmd:mutex(
+          cmd:flag('-b --boot',
+              "Load configuration on boot.",
+              configuration_loader == 'boot'):action(set_configuration_loader('boot')):target('configuration_loader'):init(configuration_loader),
+          cmd:flag('-l --lazy',
+              "Load configuration on demand.",
+              configuration_loader == 'lazy'):action(set_configuration_loader('lazy')):target('configuration_loader'):init(configuration_loader)
+      )
+    end
     cmd:option("-i --refresh-interval",
         "Cache configuration for N seconds. Using 0 will reload on every request (not for production).",
-        resty_env.value('APICAST_CONFIGURATION_CACHE'))
+        resty_env.value('APICAST_CONFIGURATION_CACHE')):convert(tonumber)
 
     cmd:option("--policy-load-path",
         "Load path where to find policies. Entries separated by `:`.",

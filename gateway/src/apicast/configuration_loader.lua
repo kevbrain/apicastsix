@@ -122,7 +122,7 @@ function boot.init(configuration)
   if config and init then
     ngx.log(ngx.DEBUG, 'downloaded configuration: ', config)
   else
-    ngx.log(ngx.EMERG, 'failed to load configuration, exiting (code ', code, ')\n',  err)
+    ngx.log(ngx.EMERG, 'failed to load configuration, exiting (code ', code, ')\n',  err or ngx.config.debug and debug.traceback())
     os.exit(1)
   end
 

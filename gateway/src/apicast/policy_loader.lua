@@ -215,23 +215,33 @@ local mt = {
 }
 
 do
-  local apicast_dir = resty_env.value('APICAST_DIR') or '.'
-  local policy_load_path = resty_env.value('APICAST_POLICY_LOAD_PATH') or
-      format('%s/policies', apicast_dir)
+  local function apicast_dir()
+    return resty_env.value('APICAST_DIR') or '.'
+  end
 
-  _M.policy_load_paths = re.split(policy_load_path, ':', 'oj')
-  _M.builtin_policy_load_path = resty_env.value('APICAST_BUILTIN_POLICY_LOAD_PATH') or format('%s/src/apicast/policy', apicast_dir)
+  local function policy_load_path()
+    return resty_env.value('APICAST_POLICY_LOAD_PATH') or
+      format('%s/policies', apicast_dir())
+  end
+
+  function _M.policy_load_paths()
+    return re.split(policy_load_path(), ':', 'oj')
+  end
+
+  function _M.builtin_policy_load_path()
+    return resty_env.value('APICAST_BUILTIN_POLICY_LOAD_PATH') or format('%s/src/apicast/policy', apicast_dir())
+  end
 end
 
 function _M.new(name, version, paths)
   local load_paths = {}
 
-  for _, path in ipairs(paths or _M.policy_load_paths) do
+  for _, path in ipairs(paths or _M.policy_load_paths()) do
     insert(load_paths, format('%s/%s/%s/?.lua', path, name, version))
   end
 
   if version == 'builtin' then
-    insert(load_paths, format('%s/%s/?.lua', _M.builtin_policy_load_path, name))
+    insert(load_paths, format('%s/%s/?.lua', _M.builtin_policy_load_path(), name))
   end
 
   -- need to create global variable package that mimics the native one

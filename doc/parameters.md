@@ -191,3 +191,13 @@ before the client is throttled by adding latency.
 
 Double colon (`:`) separated list of paths where APIcast should look for policies.
 It can be used to first load policies from a development directory or to load examples.
+
+### `APICAST_ENVIRONMENT`
+
+**Default**:
+**Value:**: string\[:<string>\]
+**Example**: production:cloud-hosted
+
+Double colon (`:`) separated list of environments (or paths) APIcast should load.
+It can be used instead of `-e` or `---environment` parameter on the CLI and for example
+stored in the container image as default environment. Any value passed on the CLI overrides this variable.

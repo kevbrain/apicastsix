@@ -75,17 +75,22 @@ _M.default_config = {
 
 local mt = { __index = _M }
 
+--- Return loaded environments defined as environment variable.
+-- @treturn {string,...}
+function _M.loaded()
+    local value = resty_env.value('APICAST_LOADED_ENVIRONMENTS')
+    return re.split(value or '', [[\|]], 'jo')
+end
+
 --- Load an environment from files in ENV.
 -- @treturn Environment
 function _M.load()
-    local value = resty_env.value('APICAST_LOADED_ENVIRONMENTS')
     local env = _M.new()
+    local environments = _M.loaded()
 
-    if not value then
+    if not environments then
         return env
     end
-
-    local environments = re.split(value, '\\|', 'jo')
 
     for i=1,#environments do
         assert(env:add(environments[i]))
@@ -143,7 +148,7 @@ function _M:add(env)
 
     local config = loadfile(path, 't', {
         print = print, inspect = require('inspect'), context = self._context,
-        tonumber = tonumber, tostring = tostring,
+        tonumber = tonumber, tostring = tostring, os = { getenv = resty_env.value },
         pcall = pcall, require = require, assert = assert, error = error,
     })
 

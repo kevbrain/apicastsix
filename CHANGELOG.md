@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - SOAP policy [PR #567](https://github.com/3scale/apicast/pull/567)
 - Ability to set custom directories to load policies from [PR #581](https://github.com/3scale/apicast/pull/581)
 - CLI is running with proper log level set by `APICAST_LOG_LEVEL` [PR #585](https://github.com/3scale/apicast/pull/585)
+- 3scale configuration (staging/production) can be passed as `-3` or `--channel` on the CLI [PR #590](https://github.com/3scale/apicast/pull/590)
+- APIcast CLI loads environments defined by `APICAST_ENVIRONMENT` variable [PR #590](https://github.com/3scale/apicast/pull/590)
 
 ## Fixed
 
@@ -53,6 +55,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Sandbox loading policies [PR #566](https://github.com/3scale/apicast/pull/566)
 - Extracted `usage` and `mapping_rules_matcher` modules so they can be used from policies [PR #580](https://github.com/3scale/apicast/pull/580)
 - Renamed all `apicast/policy/*/policy.lua` to `apicast/policy/*/init.lua` to match Lua naming [PR #579](https://github.com/3scale/apicast/pull/579)
+- Environment configuration can now define the configuration loader or cache [PR #590](https://github.com/3scale/apicast/pull/590).
+- APIcast starts with "boot" configuration loader by default (because production is the default environment) [PR #590](https://github.com/3scale/apicast/pull/590).
 
 ## [3.2.0-alpha2] - 2017-11-30
 

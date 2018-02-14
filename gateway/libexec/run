@@ -5,7 +5,7 @@ use File::Temp qw(tempfile);
 use File::Spec::Functions qw(catfile);
 
 my $libexec = abs_path(dirname(abs_path(__FILE__)));
-my $apicast = $ENV{APICAST_DIR} || catfile($libexec, '..');
+my $apicast = abs_path($ENV{APICAST_DIR} || catfile($libexec, '..'));
 
 my $ssl_cert_file = $ENV{SSL_CERT_FILE} || catfile($apicast, 'conf', 'ca-bundle.crt');
 my $lua_file = catfile($libexec, basename(__FILE__) . '.lua');

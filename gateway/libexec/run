@@ -18,7 +18,16 @@ lua_ssl_verify_depth 5;
 lua_ssl_trusted_certificate "${ssl_cert_file}";
 _NGINX_
 
-exec 'resty',
+my @resty_args = (
     '--errlog-level', $errlog_level,
     '--http-include', $ssl_conf_file,
+);
+
+my $nginx = $ENV{APICAST_OPENRESTY_BINARY} || $ENV{TEST_NGINX_BINARY};
+if (defined $nginx) {
+    push @resty_args, '--nginx', $nginx;
+}
+
+exec 'resty',
+    @resty_args,
     $lua_file, @ARGV;

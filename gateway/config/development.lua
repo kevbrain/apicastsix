@@ -1,7 +1,32 @@
+local cjson = require('cjson')
+
+local configuration = cjson.encode(cjson.decode([[{
+  "services": [
+    {
+      "proxy": {
+        "hosts": [
+          "localhost",
+          "127.0.0.1"
+        ],
+        "policy_chain": [
+          { "name": "apicast.policy.echo" }
+        ]
+      }
+    }
+  ]
+}
+]]))
+
+-- See https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs
+local function data_url(mime_type, content)
+  return string.format([[data:%s,%s]],mime_type, ngx.escape_uri(content))
+end
+
 return {
     worker_processes = '1',
     master_process = 'off',
-    lua_code_cache = 'off',
+    lua_code_cache = 'on',
     configuration_loader = 'lazy',
     configuration_cache = 0,
+    configuration = data_url('application/json', configuration)
 }

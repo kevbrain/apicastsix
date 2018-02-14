@@ -2,6 +2,7 @@ local configuration_store = require('apicast.configuration_store')
 local configuration_parser = require 'apicast.configuration_parser'
 local mock_loader = require 'apicast.configuration_loader.mock'
 local file_loader = require 'apicast.configuration_loader.file'
+local data_url_loader = require 'apicast.configuration_loader.data_url'
 local remote_loader_v1 = require 'apicast.configuration_loader.remote_v1'
 local remote_loader_v2 = require 'apicast.configuration_loader.remote_v2'
 local util = require 'apicast.util'
@@ -24,7 +25,7 @@ local _M = {
 
 function _M.load(host)
   local configuration = env.get('APICAST_CONFIGURATION')
-  local uri = resty_url.parse(configuration)
+  local uri = resty_url.parse(configuration, [[\w+]])
 
   if uri then
     local scheme = uri.scheme
@@ -33,10 +34,18 @@ function _M.load(host)
       env.set('THREESCALE_CONFIG_FILE', uri.path)
     elseif scheme == 'http' or scheme == 'https' then
       env.set('THREESCALE_PORTAL_ENDPOINT', uri)
+    elseif scheme == 'data' then -- TODO: this requires upgrading lua-resty-env
+      return data_url_loader.call(configuration)
     else
       ngx.log(ngx.WARN, 'unknown configuration URI: ', uri)
     end
   elseif configuration then
+    do -- TODO: this will be not necessary upgrading lua-resty-env
+      local config = data_url_loader.call(configuration)
+
+      if config then return config end
+    end
+
     ngx.log(ngx.DEBUG, 'falling back to file system path for configuration')
     env.set('THREESCALE_CONFIG_FILE', configuration)
   end

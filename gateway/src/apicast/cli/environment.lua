@@ -149,7 +149,7 @@ function _M:add(env)
     local config = loadfile(path, 't', {
         print = print, inspect = require('inspect'), context = self._context,
         tonumber = tonumber, tostring = tostring, os = { getenv = resty_env.value },
-        pcall = pcall, require = require, assert = assert, error = error,
+        pcall = pcall, require = require, assert = assert, error = error, string = string, ngx = ngx,
     })
 
     if not config then

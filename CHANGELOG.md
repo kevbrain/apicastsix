@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - 3scale configuration (staging/production) can be passed as `-3` or `--channel` on the CLI [PR #590](https://github.com/3scale/apicast/pull/590)
 - APIcast CLI loads environments defined by `APICAST_ENVIRONMENT` variable [PR #590](https://github.com/3scale/apicast/pull/590)
 - Endpoint in management API to retrieve all the JSON manifests of the policies [PR #592](https://github.com/3scale/apicast/pull/592)
+- Development environment (`--dev`) starts with Echo policy unless some configuration is passed [PR #593](https://github.com/3scale/apicast/pull/593)
+- Added support for passing whole configuration as Data URL [PR #593](https://github.com/3scale/apicast/pull/593)
 
 ## Fixed
 

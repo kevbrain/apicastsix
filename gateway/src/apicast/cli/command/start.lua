@@ -86,6 +86,8 @@ end
 local function build_environment_config(options)
     local config = Environment.new()
 
+    resty_env.set('APICAST_POLICY_LOAD_PATH', concat(options.policy_load_path,':'))
+
     for i=1, #options.environment do
         local ok, err = config:add(options.environment[i])
 
@@ -113,7 +115,7 @@ local function build_env(options, config, context)
         APICAST_CONFIGURATION_LOADER = tostring(options.configuration_loader or context.configuration_loader or 'lazy'),
         APICAST_CONFIGURATION_CACHE = tostring(options.cache or context.configuration_cache or 0),
         THREESCALE_DEPLOYMENT_ENV = context.configuration_channel or options.channel or config.name,
-        APICAST_POLICY_LOAD_PATH = options.policy_load_path or context.policy_load_path,
+        APICAST_POLICY_LOAD_PATH = concat(options.policy_load_path or context.policy_load_path, ':'),
     }
 end
 
@@ -229,7 +231,7 @@ local function configure(cmd)
     cmd:option("--policy-load-path",
         "Load path where to find policies. Entries separated by `:`.",
         resty_env.value('APICAST_POLICY_LOAD_PATH') or format('%s/policies', apicast_root())
-    )
+    ):init({}):count('*')
     cmd:mutex(
         cmd:flag('-v --verbose',
             "Increase logging verbosity (can be repeated).")

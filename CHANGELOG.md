@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - CLI is running with proper log level set by `APICAST_LOG_LEVEL` [PR #585](https://github.com/3scale/apicast/pull/585)
 - 3scale configuration (staging/production) can be passed as `-3` or `--channel` on the CLI [PR #590](https://github.com/3scale/apicast/pull/590)
 - APIcast CLI loads environments defined by `APICAST_ENVIRONMENT` variable [PR #590](https://github.com/3scale/apicast/pull/590)
+- Endpoint in management API to retrieve all the JSON manifests of the policies [PR #592](https://github.com/3scale/apicast/pull/592)
 
 ## Fixed
 

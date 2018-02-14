@@ -213,8 +213,10 @@ function lazy.rewrite(configuration, host)
   return configuration
 end
 
+local test = { init = noop, init_worker = noop, rewrite = noop }
+
 local modes = {
-  boot = boot, lazy = lazy, default = 'lazy'
+  boot = boot, lazy = lazy, default = 'lazy', test = test
 }
 
 function _M.new(mode)

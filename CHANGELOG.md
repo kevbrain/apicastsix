@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Endpoint in management API to retrieve all the JSON manifests of the policies [PR #592](https://github.com/3scale/apicast/pull/592)
 - Development environment (`--dev`) starts with Echo policy unless some configuration is passed [PR #593](https://github.com/3scale/apicast/pull/593)
 - Added support for passing whole configuration as Data URL [PR #593](https://github.com/3scale/apicast/pull/593)
+- More complete global environment when loading environment policies [PR #596](https://github.com/3scale/apicast/pull/596)
 
 ## Fixed
 
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Running with development config in Docker [PR #555](https://github.com/3scale/apicast/pull/555)
 - Fix setting twice the headers in a pre-flight request in the CORS policy [PR #570](https://github.com/3scale/apicast/pull/570)
 - Fix case where debug headers are returned without enabling the option [PR #577](https://github.com/3scale/apicast/pull/577)
+- Fix errors loading openresty libraries when rover is active [PR #598](https://github.com/3scale/apicast/pull/598)
 
 ## Changed
 

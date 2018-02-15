@@ -91,13 +91,23 @@ _M.default_environment = 'production'
 
 --- Default configuration.
 -- @tfield ?string ca_bundle path to CA store file
+-- @tfield ?string proxy_ssl_certificate path to SSL certificate
+-- @tfield ?string proxy_ssl_certificate_key path to SSL certificate key
+-- @tfield ?string proxy_ssl_session_reuse whether SSL sessions can be reused
+-- @tfield ?string proxy_ssl_password_file path to a file with passphrases for the certificate keys
 -- @tfield ?policy_chain policy_chain @{policy_chain} instance
 -- @tfield ?{string,...} nameservers list of nameservers
 -- @tfield ?string package.path path to load Lua files
 -- @tfield ?string package.cpath path to load libraries
 -- @table environment.default_config default configuration
+
 _M.default_config = {
     ca_bundle = env_value_ref('SSL_CERT_FILE'),
+
+    proxy_ssl_certificate = env_value_ref('APICAST_PROXY_HTTPS_CERTIFICATE'),
+    proxy_ssl_certificate_key = env_value_ref('APICAST_PROXY_HTTPS_CERTIFICATE_KEY'),
+    proxy_ssl_session_reuse = env_value_ref('APICAST_PROXY_HTTPS_SESSION_REUSE'),
+    proxy_ssl_password_file = env_value_ref('APICAST_PROXY_HTTPS_PASSWORD_FILE'),
 
     policy_chain = require('apicast.policy_chain').default(),
     nameservers = parse_nameservers(),

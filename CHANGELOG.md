@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Allow configuration of the echo/management/fake backend ports [PR #506](https://github.com/3scale/apicast/pull/506)
 - Headers policy [PR #497](https://github.com/3scale/apicast/pull/497)
 - CORS policy [PR #487](https://github.com/3scale/apicast/pull/487)
+- Detect number of CPU shares when running on Kubernetes [PR #600](https://github.com/3scale/apicast/pull/600)
 
 ## Changed
 

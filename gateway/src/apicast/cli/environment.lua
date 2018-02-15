@@ -17,6 +17,8 @@ local pairs = pairs
 local ipairs = ipairs
 local tostring = tostring
 local tonumber = tonumber
+local open = io.open
+local ceil = math.ceil
 local insert = table.insert
 local concat = table.concat
 local re = require('ngx.re')
@@ -40,7 +42,33 @@ local function parse_nameservers()
     end
 end
 
+local function detect_kubernetes()
+  local secrets = open('/run/secrets/kubernetes.io')
+
+  if secrets then secrets:close() end
+
+  return secrets or resty_env.value('KUBERNETES_PORT')
+end
+
+local function cpu_shares()
+  if not detect_kubernetes() then return end
+
+  local shares
+  local file = open('/sys/fs/cgroup/cpu/cpu.shares')
+
+  if file then
+    shares = file:read('*n')
+
+    file:close()
+  end
+
+  return shares
+end
+
 local function cpus()
+    local shares = cpu_shares()
+    if shares then return ceil(shares / 1024) end
+
     -- TODO: support /sys/fs/cgroup/cpuset/cpuset.cpus
     -- see https://github.com/sclorg/rhscl-dockerfiles/blob/ff912d8764af9a41096e63064bbc325395afa608/rhel7.sti-base/bin/cgroup-limits#L55-L75
     local nproc = util.system('nproc')

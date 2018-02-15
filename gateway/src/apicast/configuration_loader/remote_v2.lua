@@ -16,6 +16,8 @@ local resty_env = require 'resty.env'
 local re = require 'ngx.re'
 local configuration = require 'apicast.configuration'
 
+local oidc_log_level = ngx[string.upper(resty_env.value('APICAST_OIDC_LOG_LEVEL') or 'err')] or ngx.ERR
+
 local _M = {
   _VERSION = '0.1'
 }
@@ -251,28 +253,28 @@ function _M:oidc_issuer_configuration(service)
   local res = http_client.get(uri)
 
   if res.status ~= 200 then
-    ngx.log(ngx.ERR, 'failed to get OIDC Provider from ', uri, ' status: ', res.status, ' body: ', res.body)
+    ngx.log(oidc_log_level, 'failed to get OIDC Provider from ', uri, ' status: ', res.status, ' body: ', res.body)
     return nil, 'could not get OpenID Connect configuration'
   end
 
   local config = res.headers.content_type == 'application/json' and cjson.decode(res.body)
 
   if not config then
-    ngx.log(ngx.ERR, 'invalid OIDC Provider, expected application/json got:  ', res.headers.content_type, ' body: ', res.body)
+    ngx.log(oidc_log_level, 'invalid OIDC Provider, expected application/json got:  ', res.headers.content_type, ' body: ', res.body)
     return nil, 'invalid JSON'
   end
 
   res = http_client.get(config.issuer)
 
   if res.status ~= 200 then
-    ngx.log(ngx.ERR, 'failed to get OIDC Issuer from ', uri, ' status: ', res.status, ' body: ', res.body)
+    ngx.log(oidc_log_level, 'failed to get OIDC Issuer from ', uri, ' status: ', res.status, ' body: ', res.body)
     return nil, 'could not get OpenID Connect Issuer'
   end
 
   local issuer = res.headers.content_type == 'application/json' and cjson.decode(res.body)
 
   if not issuer then
-    ngx.log(ngx.ERR, 'invalid OIDC Issuer, expected application/json got:  ', res.headers.content_type, ' body: ', res.body)
+    ngx.log(oidc_log_level, 'invalid OIDC Issuer, expected application/json got:  ', res.headers.content_type, ' body: ', res.body)
     return nil, 'invalid JSON'
   end
 

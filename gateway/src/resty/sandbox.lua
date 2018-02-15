@@ -209,6 +209,8 @@ local mt = {
   __call = function(loader, ...) return loader.env.require(...) end
 }
 
+local empty_t = {}
+
 function _M.new(load_paths)
   -- need to create global variable package that mimics the native one
   local package = {
@@ -216,7 +218,7 @@ function _M.new(load_paths)
     preload = preload,
     searchers = {}, -- http://www.lua.org/manual/5.2/manual.html#pdf-package.searchers
     searchpath = searchpath,
-    path = concat(load_paths, ';'),
+    path = concat(load_paths or empty_t, ';'),
     cpath = '', -- no C libraries allowed in sandbox
   }
 

@@ -10,13 +10,13 @@
 -- policy and calculates a usage based on that so it can be authorized and
 -- reported against 3scale's backend.
 
-local lower = string.lower
 local ipairs = ipairs
 local insert = table.insert
 
 local MappingRule = require('apicast.mapping_rule')
 local Usage = require('apicast.usage')
 local mapping_rules_matcher = require('apicast.mapping_rules_matcher')
+local MimeType = require('resty.mime')
 
 local policy = require('apicast.policy')
 
@@ -33,38 +33,6 @@ local function soap_action_in_header(headers)
   return headers[soap_action_header]
 end
 
-local MimeType = {}
-
-do
-  local re = require('ngx.re')
-  local format = string.format
-
-  local MimeType_mt = { __index = MimeType }
-  local setmetatable = setmetatable
-
-  function MimeType.new(media_type)
-    local match = re.split(media_type, [[\s*;\s*]], 'oj', nil, 2)
-
-    local self = {}
-
-    -- The RFC defines that the type can include upper and lower-case chars.
-    -- Let's convert it to lower-case for easier comparisons.
-    self.media_type = lower(match[1])
-    self.parameters = match[2]
-
-    return setmetatable(self, MimeType_mt)
-  end
-
-  function MimeType:parameter(name)
-    local parameters = self.parameters
-
-    local matches = ngx.re.match(parameters, format([[%s=(?:"(.+)"|([^;"]+))\s*(?:;|$)]], name), 'oji')
-
-    if not matches then return nil end
-
-    return matches[1] or matches[2]
-  end
-end
 
 -- Extracts a SOAP action from the Content-Type header. In SOAP, the
 -- type/subtype is application/soap+xml, and the action is specified as a

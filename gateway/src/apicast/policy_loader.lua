@@ -195,7 +195,7 @@ _M.env = export([[
  table.insert table.maxn table.move table.pack
  table.remove table.sort table.unpack
 
- ngx
+ ngx arg
 ]], {})
 
 _M.env._G = _M.env

@@ -147,7 +147,7 @@ function _M:add(env)
     end
 
     local config = loadfile(path, 't', {
-        print = print, inspect = require('inspect'), context = self._context,
+        print = print, inspect = require('inspect'), context = self._context, arg = arg, cli = arg,
         tonumber = tonumber, tostring = tostring, os = { getenv = resty_env.value },
         pcall = pcall, require = require, assert = assert, error = error,
     })

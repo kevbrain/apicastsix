@@ -1,7 +1,9 @@
 use lib 't';
 use Test::APIcast::Blackbox 'no_plan';
 
+# Can't run twice because the deprecation msg shows only once per require.
 repeat_each(1);
+
 run_tests();
 
 __DATA__

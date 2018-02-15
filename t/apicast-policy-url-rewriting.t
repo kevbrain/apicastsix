@@ -1,6 +1,5 @@
 use Test::APIcast::Blackbox 'no_plan';
 
-repeat_each(2);
 run_tests();
 
 __DATA__

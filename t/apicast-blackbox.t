@@ -1,7 +1,10 @@
 use lib 't';
 use Test::APIcast::Blackbox 'no_plan';
 
+# Can't run twice because one of the test checks the contents of the cache, and
+# those change between runs (cache miss in first run, cache hit in second).
 repeat_each(1);
+
 run_tests();
 
 __DATA__

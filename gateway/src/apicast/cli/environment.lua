@@ -6,13 +6,12 @@
 local pl_path = require('pl.path')
 local resty_env = require('resty.env')
 local linked_list = require('apicast.linked_list')
+local sandbox = require('resty.sandbox')
 local util = require('apicast.util')
 local setmetatable = setmetatable
 local loadfile = loadfile
-local pcall = pcall
 local require = require
 local assert = assert
-local error = error
 local print = print
 local pairs = pairs
 local ipairs = ipairs
@@ -146,11 +145,15 @@ function _M:add(env)
         return nil, 'no configuration found'
     end
 
-    local config = loadfile(path, 't', {
-        print = print, inspect = require('inspect'), context = self._context,
-        tonumber = tonumber, tostring = tostring, os = { getenv = resty_env.value },
-        pcall = pcall, require = require, assert = assert, error = error,
-    })
+    -- using sandbox is not strictly needed,
+    -- but it is a nice way to add some extra env to the loaded code
+    -- and not using global variables
+    local box = sandbox.new()
+    local config = loadfile(path, 't', setmetatable({
+        inspect = require('inspect'), context = self._context,
+        arg = arg, cli = arg,
+        os = { getenv = resty_env.value },
+    }, { __index = box.env }))
 
     if not config then
         return nil, 'invalid config'

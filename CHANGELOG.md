@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Added
 
-- Definition of JSON schemas for policy configurations [PR #522](https://github.com/3scale/apicast/pull/522)
+- Definition of JSON schemas for policy configurations [PR #522](https://github.com/3scale/apicast/pull/522), [PR #601](https://github.com/3scale/apicast/pull/601)
 - URL rewriting policy [PR #529](https://github.com/3scale/apicast/pull/529)
 - Liquid template can find files in current folder too [PR #533](https://github.com/3scale/apicast/pull/533)
 - `bin/apicast` respects `APICAST_OPENRESTY_BINARY` and `TEST_NGINX_BINARY` environment [PR #540](https://github.com/3scale/apicast/pull/540)

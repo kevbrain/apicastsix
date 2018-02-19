@@ -6,6 +6,7 @@
 -- Each object returned by the loader is new table and shares only shared APIcast code.
 
 local sandbox = require('resty.sandbox')
+local cjson = require('cjson')
 
 local format = string.format
 local ipairs = ipairs
@@ -37,19 +38,70 @@ do
   end
 end
 
+local function read_manifest(path)
+  local handle = io.open(format('%s/%s', path, 'apicast-policy.json'))
+
+  if handle then
+    local contents = handle:read('*a')
+
+    handle:close()
+
+    return cjson.decode(contents)
+  end
+end
+
+local function lua_load_path(load_path)
+  return format('%s/?.lua', load_path)
+end
+
+local function load_manifest(name, version, path)
+  local manifest = read_manifest(path)
+
+  if manifest then
+      if manifest.version ~= version then
+        ngx.log(ngx.ERR, 'Not loading policy: ', name,
+          ' path: ', path,
+          ' version: ', version, '~= ', manifest.version)
+        return
+      end
+
+    return manifest, lua_load_path(path)
+  end
+
+  return nil, lua_load_path(path)
+end
+
+function _M:load_path(name, version, paths)
+  local failures = {}
+
+  for _, path in ipairs(paths or self.policy_load_paths()) do
+    local ok, load_path = load_manifest(name, version, format('%s/%s/%s', path, name, version) )
+
+    if ok then
+      return load_path
+    else
+      insert(failures, load_path)
+    end
+  end
+
+  if version == 'builtin' then
+    local ok, load_path = load_manifest(name, version, format('%s/%s', self.builtin_policy_load_path(), name) )
+
+    if ok then
+      return load_path
+    else
+      insert(failures, load_path)
+    end
+  end
+
+  return nil, failures
+end
+
 function _M:call(name, version, dir)
   local v = version or 'builtin'
-  local load_paths = {}
+  local load_path, invalid_paths = self:load_path(name, v, dir)
 
-  for _, path in ipairs(dir or self.policy_load_paths()) do
-    insert(load_paths, format('%s/%s/%s/?.lua', path, name, v))
-  end
-
-  if v == 'builtin' then
-    insert(load_paths, format('%s/%s/?.lua', self.builtin_policy_load_path(), name))
-  end
-
-  local loader = sandbox.new(load_paths)
+  local loader = sandbox.new(load_path and { load_path } or invalid_paths)
 
   ngx.log(ngx.DEBUG, 'loading policy: ', name, ' version: ', v)
 

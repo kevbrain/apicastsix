@@ -2,6 +2,14 @@ local _M = require 'apicast.policy_loader'
 
 describe('APIcast Policy Loader', function()
 
+  describe(':load_path', function()
+    it('finds builtin policies', function()
+      local path = _M:load_path('apicast', 'builtin')
+
+      assert.match([[%g+/gateway/src/apicast/policy/apicast/%?.lua]], path)
+    end)
+  end)
+
   describe(':call', function()
     it('finds apicast builtin policy', function()
       local root = require('apicast.policy.apicast')

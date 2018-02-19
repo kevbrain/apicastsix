@@ -11,10 +11,15 @@ local rawset = rawset
 local type = type
 local require = require
 local insert = table.insert
+local sub = string.sub
+local format = string.format
 local noop = function() end
+
+require('apicast.loader')
 
 local linked_list = require('apicast.linked_list')
 local policy_phases = require('apicast.policy').phases
+local policy_loader = require('apicast.policy_loader')
 
 local _M = {
 
@@ -44,7 +49,7 @@ function _M.build(modules)
 
     for i=1, #list do
         -- TODO: make this error better, possibly not crash and just log and skip the module
-        chain[i] = _M.load(list[i]) or error("module " .. list[i] .. ' could not be loaded')
+        chain[i] = _M.load_policy(list[i]) or error(format('module %q could not be loaded', list[i]))
     end
 
     return _M.new(chain)
@@ -70,10 +75,14 @@ end
 -- @tparam string|table module the module or its name
 -- @tparam ?table ... params needed to initialize the module
 -- @treturn object The module instantiated
-function _M.load(module, ...)
+function _M.load_policy(module, version, ...)
     if type(module) == 'string' then
-        ngx.log(ngx.DEBUG, 'loading policy module: ', module)
-        local mod = require(module)
+        if sub(module, 1, 14) == 'apicast.policy' then
+            module = sub(module, 16)
+            version = 'builtin'
+        end
+
+        local mod = policy_loader(module, version or 'builtin')
 
         if mod then
             return mod.new(...)
@@ -141,6 +150,7 @@ end
 local function call_chain(phase_name)
     return function(self, ...)
         for i=1, #self do
+            ngx.log(ngx.DEBUG, 'policy chain execute phase: ', phase_name, ', policy: ', self[i]._NAME, ', i: ', i)
             self[i][phase_name](self[i], ...)
         end
     end

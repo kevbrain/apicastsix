@@ -180,4 +180,20 @@ describe('Service object', function()
 
     end)
   end)
+
+  describe(':get_usage', function()
+    describe('when the old and deprecated extract_usage method is defined', function()
+      it('is called. To keep backwards compatibility', function()
+        local service = Service.new({
+          extract_usage = function() return 42 end
+        })
+
+        -- Used in the code, need to initialize it.
+        ngx.var = { request = 'GET /' }
+
+        local usage = service:get_usage('GET', '/')
+        assert.equal(42, usage)
+      end)
+    end)
+  end)
 end)

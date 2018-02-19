@@ -2,6 +2,7 @@ local configuration_store = require('apicast.configuration_store')
 local configuration_parser = require 'apicast.configuration_parser'
 local mock_loader = require 'apicast.configuration_loader.mock'
 local file_loader = require 'apicast.configuration_loader.file'
+local data_url_loader = require 'apicast.configuration_loader.data_url'
 local remote_loader_v1 = require 'apicast.configuration_loader.remote_v1'
 local remote_loader_v2 = require 'apicast.configuration_loader.remote_v2'
 local util = require 'apicast.util'
@@ -24,7 +25,7 @@ local _M = {
 
 function _M.load(host)
   local configuration = env.get('APICAST_CONFIGURATION')
-  local uri = resty_url.parse(configuration)
+  local uri = resty_url.parse(configuration, [[\w+]])
 
   if uri then
     local scheme = uri.scheme
@@ -33,10 +34,18 @@ function _M.load(host)
       env.set('THREESCALE_CONFIG_FILE', uri.path)
     elseif scheme == 'http' or scheme == 'https' then
       env.set('THREESCALE_PORTAL_ENDPOINT', uri)
+    elseif scheme == 'data' then -- TODO: this requires upgrading lua-resty-env
+      return data_url_loader.call(configuration)
     else
       ngx.log(ngx.WARN, 'unknown configuration URI: ', uri)
     end
   elseif configuration then
+    do -- TODO: this will be not necessary upgrading lua-resty-env
+      local config = data_url_loader.call(configuration)
+
+      if config then return config end
+    end
+
     ngx.log(ngx.DEBUG, 'falling back to file system path for configuration')
     env.set('THREESCALE_CONFIG_FILE', configuration)
   end
@@ -90,8 +99,9 @@ end
 -- Cosocket API is not available in the init_by_lua* context (see more here: https://github.com/openresty/lua-nginx-module#cosockets-not-available-everywhere)
 -- For this reason a new process needs to be started to download the configuration through 3scale API
 function _M.run_external_command(cmd, cwd)
-  local config, err, code = util.system(format('cd %s && libexec/%s',
-    cwd or env.get('TEST_NGINX_APICAST_PATH') or '.',
+  local config, err, code = util.system(format('cd %s && %s/libexec/%s',
+    cwd or  '.',
+    env.get('APICAST_DIR') or env.get('TEST_NGINX_APICAST_PATH') or '.',
     cmd or 'boot'))
 
   -- Try to read the file in current working directory before changing to the prefix.
@@ -121,7 +131,7 @@ function boot.init(configuration)
   if config and init then
     ngx.log(ngx.DEBUG, 'downloaded configuration: ', config)
   else
-    ngx.log(ngx.EMERG, 'failed to load configuration, exiting (code ', code, ')\n',  err)
+    ngx.log(ngx.EMERG, 'failed to load configuration, exiting (code ', code, ')\n',  err or ngx.config.debug and debug.traceback())
     os.exit(1)
   end
 
@@ -212,8 +222,10 @@ function lazy.rewrite(configuration, host)
   return configuration
 end
 
+local test = { init = noop, init_worker = noop, rewrite = noop }
+
 local modes = {
-  boot = boot, lazy = lazy, default = 'lazy'
+  boot = boot, lazy = lazy, default = 'lazy', test = test
 }
 
 function _M.new(mode)

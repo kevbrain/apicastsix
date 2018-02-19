@@ -1,7 +1,7 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$TestAPIcast::path/http.d/*.conf";
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$Test::APIcast::path/http.d/*.conf";
 $ENV{TEST_NGINX_RESOLVER} = '127.0.1.1:5353';
 
 $ENV{TEST_NGINX_RESOLV_CONF} = "$Test::Nginx::Util::HtmlDir/resolv.conf";

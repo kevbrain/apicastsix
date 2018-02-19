@@ -1,12 +1,32 @@
-local lr_path, lr_cpath, lr_bin = require('luarocks.cfg').package_paths()
+local cjson = require('cjson')
+
+local configuration = cjson.encode(cjson.decode([[{
+  "services": [
+    {
+      "proxy": {
+        "hosts": [
+          "localhost",
+          "127.0.0.1"
+        ],
+        "policy_chain": [
+          { "name": "apicast.policy.echo" }
+        ]
+      }
+    }
+  ]
+}
+]]))
+
+-- See https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs
+local function data_url(mime_type, content)
+  return string.format([[data:%s,%s]],mime_type, ngx.escape_uri(content))
+end
 
 return {
     worker_processes = '1',
     master_process = 'off',
-    lua_code_cache = 'off',
-    lua_path = "./src/?.lua;./src/?/init.lua;"..lr_path,
-    lua_cpath = lr_cpath,
-    env = {
-        PATH = lr_bin -- this probably also needs to use the previous value
-    }
+    lua_code_cache = 'on',
+    configuration_loader = 'lazy',
+    configuration_cache = 0,
+    configuration = data_url('application/json', configuration)
 }

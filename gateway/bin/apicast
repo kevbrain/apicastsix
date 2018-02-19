@@ -36,23 +36,27 @@ _LUA_
         return (
             $rock . '/bin',
             $rock . '/conf',
-            $rock =~ s{/lib/luarocks/rocks/apicast/.+?/?$}[/share/lua/@{[ detect_lua_version ]}]r
+            $rock =~ s{/(lib/)?luarocks/rocks/apicast/.+?/?$}[/share/lua/@{[ detect_lua_version ]}]r,
+            $rock =~ s{/(lib/)?luarocks/rocks/apicast/.+?/?$}[/lib/lua/@{[ detect_lua_version ]}]r,
         );
     } else {
         return (
             $apicast_dir . '/bin',
             $apicast_dir,
-            $apicast_dir . '/src'
+            $apicast_dir . '/src',
+            $apicast_dir . '/lib',
         )
     }
 }
 
-my ($apicast_bin, $apicast_conf, $apicast_src) = detect_apicast_paths();
+my ($apicast_bin, $apicast_conf, $apicast_src, $apicast_lib) = detect_apicast_paths();
 
 my $lua_path = $ENV{LUA_PATH};
+my $lua_lib = $ENV{LUA_CPATH};
 my $cwd = getcwd();
 
 $ENV{PATH} .= ":$cwd/lua_modules/bin";
+$ENV{APICAST_BUILTIN_POLICY_LOAD_PATH} ||= "$apicast_src/apicast/policy";
 
 chomp(my $rover = `command -v rover 2>/dev/null`);
 if ($rover) { $rover = abs_path($rover) }
@@ -61,28 +65,108 @@ if ($rover && !$lua_path) {
     exec '/usr/bin/env', $rover, 'exec', $0, @ARGV
 } else {
     $lua_path ||= ';';
+    $lua_lib ||= ';';
 }
 
 $ENV{APICAST_DIR} = $apicast_conf;
 
-# src/?/policy.lua allows us to require apicast.policy.apolicy
-$ENV{LUA_PATH} = sprintf('%1$s/?.lua;%1$s/?/policy.lua;', $apicast_src) . $lua_path;
+$ENV{LUA_PATH} = sprintf('%1$s/?.lua;', $apicast_src) . $lua_path;
+$ENV{LUA_CPATH} = sprintf('%1$s/?.so;', $apicast_lib) . $lua_lib;
+
 $ENV{PWD} = $cwd;
 
-my $bin = "$apicast_bin/cli";
-
-if (! -f $bin) {
-    warn "$bin does not exist";
-
+sub lua_file {
     my ($lua, $lua_file) = tempfile();
 
-    print $lua <<_LUA_;
-require('apicast.cli')(arg)
-_LUA_
+    print { $lua } <DATA>;
+    close DATA;
+    close $lua;
 
-    $bin = $lua_file;
+    return $lua_file;
 }
 
-my @args = ('resty', $bin, @ARGV);
+my @resty_args = ();
+
+my $nginx = $ENV{APICAST_OPENRESTY_BINARY} || $ENV{TEST_NGINX_BINARY};
+if (defined $nginx) {
+    push @resty_args, '--nginx', $nginx;
+}
+
+if (defined $ENV{APICAST_LOG_LEVEL}) {
+    push @resty_args, '--errlog-level', $ENV{APICAST_LOG_LEVEL};
+}
+
+# Add directories to the lua load path.
+# APIcast source and a local src directory.
+for my $inc ($apicast_src, 'src') {
+    if (-d $inc) {
+        push @resty_args, '-I', $inc;
+    }
+}
+my @args = ('resty', @resty_args, lua_file(), @ARGV);
 
 exec '/usr/bin/env', @args;
+
+# This Lua helper is going to be executed by resty to detect if lua-rover is available.
+# And if so then run setup and lock down load paths to what is defined in the Roverfile + openresty libraries.
+__DATA__
+#!/usr/bin/env resty
+local ok, setup = pcall(require, 'rover.setup')
+local re = require('ngx.re')
+
+-- detect the full path to resty binary this has been started with
+local function resty(code)
+    local cmd
+    do
+        local i = 0
+
+        while not cmd do
+            if not arg[i-1] then cmd = arg[i] end
+            i = i - 1
+        end
+    end
+
+    if not cmd then return nil, 'could not find resty' end
+
+    local handle = io.popen(([[/usr/bin/env -i %q -e %q]]):format(cmd, code))
+    local result = handle:read("*l")
+
+    handle:close()
+
+    return result
+end
+
+-- get the default package.path and strip out paths for shared code
+local function default_package_path()
+    local sep = ';'
+    local filtered = {}
+    local LUA_DEFAULT_PATH = resty('print(package.path)')
+    local contains = function(str, pattern) return str:find(pattern, 1, true) end
+    local paths = re.split(LUA_DEFAULT_PATH or '', sep, 'oj')
+
+    for i=1,#paths do
+        local path = paths[i]
+
+        if not contains(path, '/site/') and
+           not contains(path, '/share/') and
+           path:find('^/') then
+            table.insert(filtered, path)
+        end
+    end
+
+    return table.concat(filtered, sep)
+end
+
+if ok then
+    setup()
+    -- Use not only rover paths but also code shipped with OpenResty.
+    -- Rover sets it up to Roverfile defined dependencies only.
+    -- But APIcast needs to access libraries distributed with OpenResty.
+    package.path = package.path ..';' .. default_package_path()
+    -- Load APIcast and dependencies
+    require('apicast.executor')
+else
+    package.path = './src/?.lua;' .. package.path
+end
+
+require('apicast.cli')(arg)

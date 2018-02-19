@@ -4,7 +4,8 @@
 Vagrant.configure("2") do |config|
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "centos/7"
+  config.vm.box = "fedora/26-cloud-base"
+  config.vm.box_version = "20170705"
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
@@ -19,6 +20,8 @@ Vagrant.configure("2") do |config|
   # Bridged networks make the machine appear as another physical device on
   # your network.
   config.vm.network "private_network", type: 'dhcp'
+
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true
 
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is
@@ -37,21 +40,28 @@ Vagrant.configure("2") do |config|
 
   # View the documentation for the provider you are using for more
   # information on available options.
+  config.vm.synced_folder ".", "/vagrant", type: 'virtualbox'
 
-  config.vm.synced_folder ".", "/home/vagrant/app"
+  config.vm.synced_folder ".", "/home/vagrant/app", type: 'rsync',
+    rsync__exclude: %w[lua_modules .git .vagrant node_modules t/servroot t/servroot* ],
+    rsync__args: %w[--verbose --archive --delete -z --links ]
 
-  config.vm.provision "shell", inline: <<-'SHELL'
+  config.vm.provision "shell", inline: <<~'SHELL'
      set -x -e
-     yum -y install yum-utils
-     # Install OpenResty and other tools
-     yum-config-manager --add-repo https://openresty.org/package/centos/openresty.repo
+     dnf -y install dnf-plugins-core
 
-     yum -y install openresty-resty openresty-debuginfo openresty-pcre-debuginfo
-     yum -y install systemtap git epel-release httpd-tools
+     dnf config-manager --add-repo https://openresty.org/package/fedora/openresty.repo
+
+     yum -y install rsync
+     yum -y install openresty-resty openresty-debug openresty-debug-debuginfo openresty-pcre-debuginfo
+     yum -y install systemtap git httpd-tools
      yum -y install luarocks
+     yum -y install perl-local-lib perl-App-cpanminus redis perl-open expect
 
      yum -y groupinstall 'Development Tools'
-     yum -y install openssl-devel
+     yum -y install openssl-devel libev-devel
+
+     dnf debuginfo-install -y kernel-core-$(uname -r)
 
      # Clone various utilities
      git clone https://github.com/openresty/stapxx.git /usr/local/stapxx || (cd /usr/local/stapxx && git pull)
@@ -61,6 +71,9 @@ Vagrant.configure("2") do |config|
 
      git clone https://github.com/wg/wrk.git /usr/local/wrk || (cd /usr/local/wrk && git pull)
      ( cd /usr/local/wrk && make && mv wrk /usr/local/bin/ )
+
+     git clone https://github.com/lighttpd/weighttp.git /usr/local/weighttp || (cd /usr/local/weighttp && git pull)
+     ( cd /usr/local/weighttp && gcc -O2 -DPACKAGE_VERSION='"0.4"' src/*.c -o weighttp -lev -lpthread && ln -sf $(pwd)/weighttp /usr/local/bin/ )
 
      # Utility to resolve builtin functions
      echo '#!/usr/bin/env luajit' > /usr/local/bin/ljff
@@ -75,23 +88,52 @@ Vagrant.configure("2") do |config|
      echo 'pathmunge lua_modules/bin' > /etc/profile.d/rover.sh
      chmod +x /etc/profile.d/rover.sh
 
-     mkdir -p /usr/share/lua/5.1/luarocks/
+     echo 'eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)' > /etc/profile.d/perl.sh
+     chmod +x /etc/profile.d/perl.sh
+
+     mkdir -p /usr/share/lua/5.{1,3}/luarocks/
      curl -L https://raw.githubusercontent.com/3scale/s2i-openresty/ffb1c55533be866a97466915d7ef31c12bae688c/site_config.lua > /usr/share/lua/5.1/luarocks/site_config.lua
+     ln -sf /usr/share/lua/5.{1,3}/luarocks/site_config.lua
 
      # Install APIcast dependencies
-     (cd app && make dependencies)
+     yum -y install python2-pip
 
      # Add various utilites to the PATH
      ln -sf /usr/local/openresty/luajit/bin/luajit /usr/local/bin/luajit
      ln -sf /usr/local/flamegraph/*.pl /usr/local/bin/
      ln -sf /usr/local/stapxx/samples/*.sxx /usr/local/bin/
-     ln -sf /usr/local/openresty-systemtap-toolkit/fix-lua-bt /usr/local/bin/
-     ln -sf /usr/local/openresty-systemtap-toolkit/ngx-pcre* /usr/local/bin/
+     ln -sf `find -O0 /usr/local/openresty-systemtap-toolkit/ -maxdepth 1 -type f -executable -print` /usr/local/bin/
 
      # Allow vagrant user to use systemtap
      usermod -a -G stapusr,stapdev vagrant
 
      # Raise opened files limit for vagrant user
      echo -e 'vagrant\t\t\t-\tnofile\t\t1000000' > /etc/security/limits.d/90-nofile.conf
-  SHELL
+
+     echo 'kernel.perf_event_paranoid = -1' > /etc/sysctl.d/perf.conf
+     echo -1 > /proc/sys/kernel/perf_event_paranoid
+
+     # Start redis needed for tests
+     systemctl  start redis
+     systemctl disable openresty
+     systemctl stop openresty
+SHELL
+
+  config.vm.provision 'shell', privileged: false, name: "Install APIcast dependencies", inline: <<~'SHELL'
+    set -x -e
+    pip install --user hererocks
+    pushd app
+    hererocks lua_modules -r^ -l 5.1 --no-readline
+    curl -L https://raw.githubusercontent.com/3scale/s2i-openresty/ffb1c55533be866a97466915d7ef31c12bae688c/site_config.lua -o lua_modules/share/lua/5.1/luarocks/site_config.lua
+    make dependencies cpan
+
+    mkdir -p ~/.systemtap
+    # needed for complete backtraces
+    # increase this if you start seeing stacks collapsed in impossible ways
+    # also try https://github.com/openresty/stapxx/commit/59ba231efba8725a510cd8d1d585aedf94670404
+    # to avoid MAXACTTION problems
+    cat <<- EOF > ~/.systemtap/rc
+    -D MAXSTRINGLEN=1024
+    EOF
+SHELL
 end

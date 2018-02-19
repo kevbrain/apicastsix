@@ -1,7 +1,6 @@
 use lib 't';
-use TestAPIcastBlackbox 'no_plan';
+use Test::APIcast::Blackbox 'no_plan';
 
-repeat_each(1);
 run_tests();
 
 __DATA__

@@ -2,15 +2,8 @@ local policy = require 'apicast.policy'
 local _M = require 'apicast.policy_chain'
 
 describe('policy_chain', function()
-  local phases = {
-    'init', 'init_worker',
-    'rewrite', 'access', 'balancer',
-    'header_filter', 'body_filter',
-    'post_action',  'log'
-  }
-
   it('defines a method for each of the nginx phases supported', function()
-    for _, phase in ipairs(phases) do
+    for _, phase in policy.phases() do
       assert.equals('function', type(_M[phase]))
     end
   end)
@@ -45,18 +38,8 @@ describe('policy_chain', function()
   end)
 
   it('uses APIcast as default when no policies are specified', function()
-    local apicast = require 'apicast.policy.apicast'
-
-    -- Stub apicast methods to avoid calling them. We are just interested in
-    -- knowing whether they were called.
-    for _, phase in ipairs(phases) do
-      stub(apicast, phase)
-    end
-
-    for _, phase in ipairs(phases) do
-      _M[phase](_M)
-      assert.stub(apicast[phase]).was_called()
-    end
+    assert.equal(1, #_M)
+    assert.equal('APIcast', _M[1]._NAME)
   end)
 
   it('calls the policies in the order specified when building the chain', function()
@@ -79,7 +62,7 @@ describe('policy_chain', function()
   end)
 
   it('does not allow to modify phase methods after the chain has been built', function()
-    for _, phase in ipairs(phases) do
+    for _, phase in policy.phases() do
       assert.has_error(function()
         _M[phase] = function() end
       end, 'readonly table')

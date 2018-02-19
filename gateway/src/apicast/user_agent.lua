@@ -2,6 +2,7 @@ local ffi = require 'ffi'
 local env = require 'resty.env'
 
 local setmetatable = setmetatable
+local format = string.format
 
 local _M = {
   _VERSION = require('apicast.version')
@@ -15,7 +16,7 @@ end
 -- User-Agent: Mozilla/<version> (<system-information>) <platform> (<platform-details>) <extensions>
 
 function _M.call()
-  return 'APIcast/' .. _M._VERSION .. ' (' .. _M.system_information() .. ') ' .. (_M.platform() or '')
+  return format('APIcast/%s (%s) %s', _M._VERSION, _M.system_information(), _M.platform() or 'Unknown')
 end
 
 function _M.system_information()

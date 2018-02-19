@@ -11,6 +11,7 @@ local custom_config = env.get('APICAST_CUSTOM_CONFIG')
 local util = require('apicast.util')
 local resty_lrucache = require('resty.lrucache')
 local backend_cache_handler = require('apicast.backend.cache_handler')
+local Usage = require('apicast.usage')
 
 local resty_url = require 'resty.url'
 
@@ -21,6 +22,7 @@ local concat = table.concat
 local gsub = string.gsub
 local tonumber = tonumber
 local setmetatable = setmetatable
+local ipairs = ipairs
 local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
 local semaphore = require('ngx.semaphore')
@@ -110,14 +112,15 @@ local function error_service_not_found(host)
 end
 -- End Error Codes
 
-local function get_debug_value(service)
-  return ngx.var.http_x_3scale_debug == service.backend_authentication.value
+local function debug_header_enabled(service)
+  local debug_header_value = ngx.var.http_x_3scale_debug
+  return debug_header_value and debug_header_value == service.backend_authentication.value
 end
 
 local function output_debug_headers(service, usage, credentials)
   ngx.log(ngx.INFO, 'usage: ', usage, ' credentials: ', credentials)
 
-  if get_debug_value(service) then
+  if debug_header_enabled(service) then
     ngx.header["X-3scale-matched-rules"] = ngx.ctx.matched_patterns
     ngx.header["X-3scale-credentials"]   = credentials
     ngx.header["X-3scale-usage"]         = usage
@@ -125,8 +128,37 @@ local function output_debug_headers(service, usage, credentials)
   end
 end
 
+-- Converts a usage to the format expected by the 3scale backend client.
+local function format_usage(usage)
+  local res = {}
+
+  local usage_metrics = usage.metrics
+  local usage_deltas = usage.deltas
+
+  for _, metric in ipairs(usage_metrics) do
+    local delta = usage_deltas[metric]
+    res['usage[' .. metric .. ']'] = delta
+  end
+
+  return res
+end
+
+local function matched_patterns(matched_rules)
+  local patterns = {}
+
+  for _, rule in ipairs(matched_rules) do
+    insert(patterns, rule.pattern)
+  end
+
+  return patterns
+end
+
 function _M:authorize(service, usage, credentials, ttl)
-  local encoded_usage = encode_args(usage)
+  if not usage or not credentials then return nil, 'missing usage or credentials' end
+
+  local formatted_usage = format_usage(usage)
+
+  local encoded_usage = encode_args(formatted_usage)
   if encoded_usage == '' then
     return error_no_match(service)
   end
@@ -149,7 +181,7 @@ function _M:authorize(service, usage, credentials, ttl)
     ngx.var.cached_key = nil
 
     local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
-    local res = backend:authrep(usage, credentials)
+    local res = backend:authrep(formatted_usage, credentials)
 
     local authorized, rejection_reason = self:handle_backend_response(cached_key, res, ttl)
     if not authorized then
@@ -206,37 +238,30 @@ function _M.set_upstream(service)
   ngx.req.set_header('Host', upstream.host or ngx.var.host)
 end
 
------
--- call the proxy and return a handler function
--- that will perform an action based on the path and backend version
--- @tparam service service service object
--- @treturn nil|function access function (when the request needs to be authenticated with this)
--- @treturn nil|function handler function (when the request is not authenticated and has some own action)
-function _M:call(service)
-  service = _M.set_service(service or ngx.ctx.service)
+local function handle_oauth(service)
+  local oauth = service:oauth()
 
-  self.oauth = service:oauth()
+  if oauth then
+    ngx.log(ngx.DEBUG, 'using OAuth: ', oauth)
+  end
 
-  ngx.log(ngx.DEBUG, 'using OAuth: ', self.oauth)
-
-  -- means that OAuth integration has own router
-  if self.oauth and self.oauth.call then
-    local f, params = self.oauth:call(service)
+  if oauth and oauth.call then
+    local f, params = oauth:call(service)
 
     if f then
-      ngx.log(ngx.DEBUG, 'apicast oauth flow')
-      return nil, function() return f(params) end
+      ngx.log(ngx.DEBUG, 'OAuth matched route')
+      return f(params) -- not really about the return value but showing something will call ngx.exit
     end
   end
 
-  return function()
-    -- call access phase
-    return self:access(service)
-  end
+  return oauth
 end
 
-function _M:access(service)
-  local request = ngx.var.request -- NYI: return to lower frame
+function _M:rewrite(service, context)
+  service = _M.set_service(service or ngx.ctx.service)
+
+  -- handle_oauth can terminate the request
+  self.oauth = handle_oauth(service)
 
   ngx.var.secret_token = service.secret_token
 
@@ -247,7 +272,7 @@ function _M:access(service)
     return error_no_credentials(service)
   end
 
-  local _, matched_patterns, usage_params = service:extract_usage(request)
+  local usage, matched_rules = service:get_usage(ngx.req.get_method(), ngx.var.uri)
   local cached_key = { service.id }
 
   -- remove integer keys for serialization
@@ -268,14 +293,21 @@ function _M:access(service)
   local var = ngx.var
 
   -- save those tables in context so they can be used in the backend client
-  ctx.usage = usage_params
+  context.usage = context.usage or Usage.new()
+  context.usage:merge(usage)
+
+  ctx.usage = context.usage
   ctx.credentials = credentials
-  ctx.matched_patterns = matched_patterns
 
   self.credentials = credentials
-  self.usage = usage_params
+  self.usage = context.usage
 
   var.cached_key = concat(cached_key, ':')
+
+  if debug_header_enabled(service) then
+    local patterns = matched_patterns(matched_rules)
+    ctx.matched_patterns = concat(patterns, ', ')
+  end
 
   local ttl
 
@@ -287,9 +319,14 @@ function _M:access(service)
       return error_authorization_failed(service)
     end
     ctx.credentials = credentials
+    ctx.ttl = ttl
   end
+end
 
-  return self:authorize(service, usage_params, credentials, ttl)
+function _M:access(service, usage, credentials, ttl)
+  local ctx = ngx.ctx
+
+  return self:authorize(service, usage or ctx.usage, credentials or ctx.credentials, ttl or ctx.ttl)
 end
 
 local function response_codes_data()
@@ -318,7 +355,8 @@ end
 
 local function capture_post_action(self, cached_key, service)
   local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
-  local res = backend:authrep(self.usage, self.credentials, response_codes_data())
+  local formatted_usage = format_usage(self.usage)
+  local res = backend:authrep(formatted_usage, self.credentials, response_codes_data())
 
   self:handle_backend_response(cached_key, res)
 end
@@ -331,7 +369,8 @@ local function timer_post_action(self, cached_key, service)
   if ok then
     -- TODO: try to do this in different phase and use semaphore to limit number of background threads
     -- TODO: Also it is possible to use sets in shared memory to enqueue work
-    ngx.timer.at(0, post_action, self, cached_key, backend, self.usage, self.credentials, response_codes_data())
+    local formatted_usage = format_usage(self.usage)
+    ngx.timer.at(0, post_action, self, cached_key, backend, formatted_usage, self.credentials, response_codes_data())
   else
     ngx.log(ngx.ERR, 'failed to acquire timer: ', err)
     return capture_post_action(self, cached_key, service)
@@ -345,7 +384,7 @@ function _M:post_action(force)
 
   local cached_key = ngx.var.cached_key
 
-  if cached_key and cached_key ~= "null" then
+  if cached_key and cached_key ~= "null" and cached_key ~= '' then
     ngx.log(ngx.INFO, '[async] reporting to backend asynchronously, cached_key: ', cached_key)
 
     local service_id = ngx.var.service_id
@@ -361,10 +400,23 @@ function _M:post_action(force)
   end
 end
 
+-- Returns the rejection reason from the headers of a 3scale backend response.
+-- The header is set only when the authrep call to backend enables the option
+-- to get the rejection reason. This is specified in the '3scale-options'
+-- header of the request.
+local function rejection_reason(response_headers)
+  return response_headers and response_headers['3scale-rejection-reason']
+end
+
 function _M:handle_backend_response(cached_key, response, ttl)
   ngx.log(ngx.DEBUG, '[backend] response status: ', response.status, ' body: ', response.body)
 
-  return self.cache_handler(self.cache, cached_key, response, ttl)
+  self.cache_handler(self.cache, cached_key, response, ttl)
+
+  local authorized = (response.status == 200)
+  local unauthorized_reason = not authorized and rejection_reason(response.headers)
+
+  return authorized, unauthorized_reason
 end
 
 if custom_config then

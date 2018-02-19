@@ -31,6 +31,8 @@ ifeq ($(ROVER),)
 ROVER := lua_modules/bin/rover
 endif
 
+CPANM ?= $(shell command -v cpanm 2> /dev/null)
+
 export COMPOSE_PROJECT_NAME
 
 test: ## Run all tests
@@ -50,9 +52,15 @@ busted: dependencies $(ROVER) ## Test Lua.
 nginx:
 	@ ($(NGINX) -V 2>&1) > /dev/null
 
+cpan:
+ifeq ($(CPANM),)
+	$(error Missing cpanminus. Install it by running `curl -L https://cpanmin.us | perl - App::cpanminus`)
+endif
+	$(CPANM) --notest --installdeps ./gateway
+
 prove: HARNESS ?= TAP::Harness
 prove: export TEST_NGINX_RANDOMIZE=1
-prove: $(ROVER) nginx ## Test nginx
+prove: $(ROVER) nginx cpan ## Test nginx
 	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source
@@ -88,6 +96,8 @@ test-builder-image: builder-image clean-containers ## Smoke test the builder ima
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --test
 	@echo -e $(SEPARATOR)
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --test --dev
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --daemon
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test bash -c 'for i in {1..5}; do curl --fail http://gateway:8090/status/live && break || sleep 1; done'
@@ -111,7 +121,7 @@ gateway-logs:
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
 test-runtime-image: runtime-image clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -l -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_CONFIGURATION_LOADER=boot -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d
 	@echo -e $(SEPARATOR)
@@ -142,6 +152,12 @@ doc/lua/index.html: $(shell find gateway/src -name '*.lua') | dependencies $(ROV
 	$(ROVER) exec ldoc -c doc/config.ld .
 
 doc: doc/lua/index.html ## Generate documentation
+
+lint-schema: apicast-source
+	@ docker run --volumes-from ${COMPOSE_PROJECT_NAME}-source --workdir /opt/app-root/src \
+		3scale/ajv validate \
+		-s gateway/src/apicast/policy/manifest-schema.json \
+		$(addprefix -d ,$(shell find gateway/src/apicast/policy -name 'apicast-policy.json'))
 
 node_modules/.bin/markdown-link-check:
 	yarn install

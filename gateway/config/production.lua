@@ -1,5 +1,6 @@
 return {
-    worker_processes = 'auto',
     master_process = 'on',
     lua_code_cache = 'on',
+    configuration_loader = 'boot',
+    configuration_cache = os.getenv('APICAST_CONFIGURATION_CACHE') or 5*60,
 }

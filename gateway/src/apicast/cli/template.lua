@@ -4,9 +4,11 @@ local setmetatable = setmetatable
 local insert = table.insert
 local assert = assert
 local pairs = pairs
+local ipairs = ipairs
 local sub = string.sub
 local len = string.len
 local pack = table.pack
+local fs = require('apicast.cli.filesystem')
 local pl = { dir = require('pl.dir'), path = require('pl.path'), file = require('pl.file') }
 local Liquid = require 'liquid'
 local resty_env = require('resty.env')
@@ -71,11 +73,17 @@ function _M:interpret(str)
 
     filter_set:add_filter('filesystem', function(pattern)
         local files = {}
+        local included = {}
 
-        for filename, dir in pl.dir.dirtree(self.root) do
-            local file = pl.path.relpath(filename, self.root)
-            if pl.dir.fnmatch(file, pattern) and not dir then
-                insert(files, file)
+        for _, root in ipairs({ self.root, pl.path.currentdir() }) do
+            for filename in fs(root) do
+                local file = pl.path.relpath(filename, root)
+
+                if pl.dir.fnmatch(file, pattern) and not included[filename] and not included[file] then
+                    insert(files, filename)
+                    included[filename] = true
+                    included[file] = true
+                end
             end
         end
 

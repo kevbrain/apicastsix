@@ -1,14 +1,13 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
-$ENV{TEST_NGINX_HTTP_CONFIG} = "$TestAPIcast::path/http.d/*.conf";
+$ENV{TEST_NGINX_HTTP_CONFIG} = "$Test::APIcast::path/http.d/*.conf";
 $ENV{RESOLVER} = '127.0.1.1:5353';
 
 env_to_nginx(
     'RESOLVER'
 );
 master_on();
-repeat_each(1);
 run_tests();
 
 __DATA__

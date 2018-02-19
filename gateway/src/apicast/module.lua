@@ -3,6 +3,8 @@ local require = require
 local dofile = dofile
 local type = type
 
+require('apicast.loader')
+
 local env = require 'resty.env'
 
 local function error_message(error)
@@ -32,7 +34,7 @@ local prequire = function(file)
   return ok, ret
 end
 
-local name = env.get('APICAST_MODULE') or 'apicast.policy.apicast'
+local name = env.value('APICAST_MODULE') or 'apicast.policy.apicast'
 
 local ok, mod = prequire(name)
 

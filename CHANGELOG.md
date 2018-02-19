@@ -8,21 +8,62 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Added
 
-- Definition of JSON schemas for policy configurations [PR #522](https://github.com/3scale/apicast/pull/522)
+- Definition of JSON schemas for policy configurations [PR #522](https://github.com/3scale/apicast/pull/522), [PR #601](https://github.com/3scale/apicast/pull/601)
 - URL rewriting policy [PR #529](https://github.com/3scale/apicast/pull/529)
+- Liquid template can find files in current folder too [PR #533](https://github.com/3scale/apicast/pull/533)
+- `bin/apicast` respects `APICAST_OPENRESTY_BINARY` and `TEST_NGINX_BINARY` environment [PR #540](https://github.com/3scale/apicast/pull/540)
+- Caching policy [PR #546](https://github.com/3scale/apicast/pull/546), [PR #558](https://github.com/3scale/apicast/pull/558)
+- New phase: `content` for generating content or getting the upstream response [PR #535](https://github.com/3scale/apicast/pull/535)
+- Upstream policy [PR #562](https://github.com/3scale/apicast/pull/562)
+- Policy JSON manifest [PR #565](https://github.com/3scale/apicast/pull/565)
+- SOAP policy [PR #567](https://github.com/3scale/apicast/pull/567)
+- Ability to set custom directories to load policies from [PR #581](https://github.com/3scale/apicast/pull/581)
+- CLI is running with proper log level set by `APICAST_LOG_LEVEL` [PR #585](https://github.com/3scale/apicast/pull/585)
+- 3scale configuration (staging/production) can be passed as `-3` or `--channel` on the CLI [PR #590](https://github.com/3scale/apicast/pull/590)
+- APIcast CLI loads environments defined by `APICAST_ENVIRONMENT` variable [PR #590](https://github.com/3scale/apicast/pull/590)
+- Endpoint in management API to retrieve all the JSON manifests of the policies [PR #592](https://github.com/3scale/apicast/pull/592)
+- Development environment (`--dev`) starts with Echo policy unless some configuration is passed [PR #593](https://github.com/3scale/apicast/pull/593)
+- Added support for passing whole configuration as Data URL [PR #593](https://github.com/3scale/apicast/pull/593)
+- More complete global environment when loading environment policies [PR #596](https://github.com/3scale/apicast/pull/596)
 
 ## Fixed
 
 - Detecting local rover installation from the CLI [PR #519](https://github.com/3scale/apicast/pull/519)
 - Use more `command` instead of `which` to work in plain shell [PR #521](https://github.com/3scale/apicast/pull/521)
-- Fixed rockspec so APIcast can be installed by luarocks [PR #523](https://github.com/3scale/apicast/pull/523)
+- Fixed rockspec so APIcast can be installed by luarocks [PR #523](https://github.com/3scale/apicast/pull/523), [PR #538](https://github.com/3scale/apicast/pull/538)
 - Fix loading renamed APIcast code [PR #525](https://github.com/3scale/apicast/pull/525)
 - Fix `apicast` command when installed from luarocks [PR #527](https://github.com/3scale/apicast/pull/527)
 - Fix lua docs formatting in the CORS policy [PR #530](https://github.com/3scale/apicast/pull/530)
+- `post_action` phase not being called in the policy_chain [PR #539](https://github.com/3scale/apicast/pull/539)
+- Failing to execute `libexec/boot` on some systems [PR #544](https://github.com/3scale/apicast/pull/544)
+- Detect number of CPU cores in containers by using `nproc` [PR #554](https://github.com/3scale/apicast/pull/554)
+- Running with development config in Docker [PR #555](https://github.com/3scale/apicast/pull/555)
+- Fix setting twice the headers in a pre-flight request in the CORS policy [PR #570](https://github.com/3scale/apicast/pull/570)
+- Fix case where debug headers are returned without enabling the option [PR #577](https://github.com/3scale/apicast/pull/577)
+- Fix errors loading openresty libraries when rover is active [PR #598](https://github.com/3scale/apicast/pull/598)
 
 ## Changed
 
 - Consolidate apicast-0.1-0.rockspec into apicast-scm-1.rockspec [PR #526](https://github.com/3scale/apicast/pull/526)
+- Deprecated `Configuration.extract_usage` in favor of `Service.get_usage` [PR #531](https://github.com/3scale/apicast/pull/531)
+- Extract Test::APIcast to own package on CPAN [PR #528](https://github.com/3scale/apicast/pull/528)
+- Load policies by the APIcast loader instead of changing load path [PR #532](https://github.com/3scale/apicast/pull/532), [PR #536](https://github.com/3scale/apicast/pull/536)
+- Add `src` directory to the Lua load path when using CLI [PR #533](https://github.com/3scale/apicast/pull/533)
+- Move rejection reason parsing from CacheHandler to Proxy [PR #541](https://github.com/3scale/apicast/pull/541)
+- Propagate full package.path and cpath from the CLI to Nginx [PR #538](https://github.com/3scale/apicast/pull/538)
+- `post_action` phase now shares `ngx.ctx` with the main request [PR #539](https://github.com/3scale/apicast/pull/539)
+- Decrease nginx timer resolution to improve performance and enable PCRE JIT [PR #543](https://github.com/3scale/apicast/pull/543)
+- Moved `proxy_pass` into new internal location `@upstream` [PR #535](https://github.com/3scale/apicast/pull/535)
+- Split 3scale authorization to rewrite and access phase [PR #556](https://github.com/3scale/apicast/pull/556)
+- Extract `mapping_rule` module from the `configuration` module [PR #571](https://github.com/3scale/apicast/pull/571)
+- Renamed `apicast/policy/policy.lua` to `apicast/policy.lua` [PR #569](https://github.com/3scale/apicast/pull/569)
+- Sandbox loading policies [PR #566](https://github.com/3scale/apicast/pull/566)
+- Extracted `usage` and `mapping_rules_matcher` modules so they can be used from policies [PR #580](https://github.com/3scale/apicast/pull/580)
+- Renamed all `apicast/policy/*/policy.lua` to `apicast/policy/*/init.lua` to match Lua naming [PR #579](https://github.com/3scale/apicast/pull/579)
+- Environment configuration can now define the configuration loader or cache [PR #590](https://github.com/3scale/apicast/pull/590).
+- APIcast starts with "boot" configuration loader by default (because production is the default environment) [PR #590](https://github.com/3scale/apicast/pull/590).
+- Deprecated `APICAST_SERVICES` in favor of `APICAST_SERVICES_LIST` but provides backwards compatibility [PR #549](https://github.com/3scale/apicast/pull/549)
+- Deprecated `APICAST_PATH_ROUTING_ENABLED` in favor of `APICAST_PATH_ROUTING` but provides backwards compatibility [PR #549](https://github.com/3scale/apicast/pull/549)
 
 ## [3.2.0-alpha2] - 2017-11-30
 
@@ -39,6 +80,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Allow configuration of the echo/management/fake backend ports [PR #506](https://github.com/3scale/apicast/pull/506)
 - Headers policy [PR #497](https://github.com/3scale/apicast/pull/497)
 - CORS policy [PR #487](https://github.com/3scale/apicast/pull/487)
+- Detect number of CPU shares when running on Kubernetes [PR #600](https://github.com/3scale/apicast/pull/600)
 
 ## Changed
 
@@ -49,6 +91,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Loading installed luarocks from outside rover [PR #503](https://github.com/3scale/apicast/pull/503)
 - Support IPv6 addresses in `/etc/resolv.conf` [PR #511](https://github.com/3scale/apicast/pull/511)
+- Fix possible 100% CPU usage when starting APIcast and manipulating filesystem [PR #547](https://github.com/3scale/apicast/pull/547)
 
 ## [3.2.0-alpha1]
 

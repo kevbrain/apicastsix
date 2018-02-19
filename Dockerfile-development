@@ -1,4 +1,4 @@
-FROM quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover2
+FROM quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover6
 LABEL maintainer="dortiz@redhat.com"
 
 USER root
@@ -19,11 +19,13 @@ RUN mkdir -p ${USER_HOME}/gateway \
 
 COPY gateway/Roverfile ${USER_HOME}/gateway
 COPY gateway/Roverfile.lock ${USER_HOME}/gateway
+COPY gateway/cpanfile ${USER_HOME}/gateway
 COPY Makefile ${USER_HOME}
 
 WORKDIR ${USER_HOME}
 
 RUN make dependencies
+RUN cpanm --installdeps ./gateway
 
 COPY . ${USER_HOME}
 

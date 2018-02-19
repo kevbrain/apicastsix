@@ -4,9 +4,20 @@ services:
     image: ${IMAGE_NAME:-apicast-test}
     depends_on:
     - redis
+    - echo
     env_file: .env
+    environment:
+      THREESCALE_PORTAL_ENDPOINT: http://echo:8081/config/
+  echo:
+    image: ${IMAGE_NAME:-apicast-test}
+    environment:
+      APICAST_CONFIGURATION_LOADER: test
+      APICAST_MANAGEMENT_API: debug
+    command: bin/apicast
+    ports:
+      - '8081'
   dev:
-    image: ${IMAGE_NAME}
+    image: ${IMAGE_NAME:-apicast-test}
     depends_on:
     - redis
     ports:
@@ -28,22 +39,23 @@ services:
     dns: 127.0.0.1
     environment:
       APICAST_MANAGEMENT_API: debug
+      APICAST_LOG_LEVEL: debug
+      APICAST_CONFIGURATION_LOADER: test
     dns_search:
       - example.com
   prove:
     image: ${IMAGE_NAME:-apicast-test}
     user: root
-    entrypoint: "bash -ec"
     environment:
       TEST_NGINX_BINARY: openresty
       TEST_NGINX_REDIS_HOST: redis
-    command: "'$$TEST_NGINX_BINARY -V; cd ; make prove; exit $$?'"
+    command: "sh -ec '$$TEST_NGINX_BINARY -V; cd ; /usr/libexec/s2i/entrypoint make prove; exit $$?'"
     dns_search:
       - example.com
     depends_on:
       - redis
     volumes_from:
-    - container:${COMPOSE_PROJECT_NAME}-source
+    - container:${COMPOSE_PROJECT_NAME:-apicast_build_0}-source
   redis:
     image: redis
   keycloak:

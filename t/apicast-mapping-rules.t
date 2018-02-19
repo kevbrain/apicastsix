@@ -1,5 +1,5 @@
 use lib 't';
-use TestAPIcast 'no_plan';
+use Test::APIcast 'no_plan';
 
 run_tests();
 
@@ -62,6 +62,8 @@ url params in a POST call are taken into account when matching mapping rules.
         {
           id = 42,
           backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'my-token',
           proxy = {
             api_backend = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/',
             proxy_rules = {
@@ -88,6 +90,8 @@ url params in a POST call are taken into account when matching mapping rules.
   }
 --- request
 POST /foo?bar=baz&user_key=somekey
+--- more_headers
+X-3scale-Debug: my-token
 --- response_body
 api response
 --- error_code: 200
@@ -107,6 +111,8 @@ request body params in a POST call are taken into account when matching mapping 
         {
           id = 42,
           backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'my-token',
           proxy = {
             api_backend = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/',
             proxy_rules = {
@@ -134,6 +140,8 @@ request body params in a POST call are taken into account when matching mapping 
 --- request
 POST /foo?user_key=somekey
 bar=baz
+--- more_headers
+X-3scale-Debug: my-token
 --- response_body
 api response
 --- error_code: 200
@@ -155,6 +163,8 @@ precedence.
         {
           id = 42,
           backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'my-token',
           proxy = {
             api_backend = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/',
             proxy_rules = {
@@ -182,6 +192,8 @@ precedence.
 --- request
 POST /foo?a_param=val3&another_param=val2&user_key=somekey
 a_param=val1
+--- more_headers
+X-3scale-Debug: my-token
 --- response_body
 api response
 --- error_code: 200

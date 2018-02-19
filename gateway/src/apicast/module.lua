@@ -34,7 +34,7 @@ local prequire = function(file)
   return ok, ret
 end
 
-local name = env.get('APICAST_MODULE') or 'apicast.policy.apicast'
+local name = env.value('APICAST_MODULE') or 'apicast.policy.apicast'
 
 local ok, mod = prequire(name)
 

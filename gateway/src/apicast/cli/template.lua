@@ -8,6 +8,7 @@ local ipairs = ipairs
 local sub = string.sub
 local len = string.len
 local pack = table.pack
+local fs = require('apicast.cli.filesystem')
 local pl = { dir = require('pl.dir'), path = require('pl.path'), file = require('pl.file') }
 local Liquid = require 'liquid'
 local resty_env = require('resty.env')
@@ -75,10 +76,10 @@ function _M:interpret(str)
         local included = {}
 
         for _, root in ipairs({ self.root, pl.path.currentdir() }) do
-            for filename, dir in pl.dir.dirtree(root) do
+            for filename in fs(root) do
                 local file = pl.path.relpath(filename, root)
 
-                if pl.dir.fnmatch(file, pattern) and not dir and not included[filename] and not included[file] then
+                if pl.dir.fnmatch(file, pattern) and not included[filename] and not included[file] then
                     insert(files, filename)
                     included[filename] = true
                     included[file] = true

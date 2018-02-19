@@ -40,7 +40,7 @@ function _M.handlers.strict(cache, cached_key, response, ttl)
     -- so to not write the cache twice lets write it just in authorize
 
     if fetch_cached_key(cached_key) ~= cached_key then
-      ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ', ttl: ', ttl, ' sub: ')
+      ngx.log(ngx.INFO, 'apicast cache write key: ', cached_key, ', ttl: ', ttl)
       cache:set(cached_key, 200, ttl or 0)
     end
   else

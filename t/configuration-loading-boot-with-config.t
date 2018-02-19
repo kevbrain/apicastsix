@@ -1,10 +1,8 @@
 use lib 't';
 use Test::APIcast::Blackbox 'no_plan';
 
-$ENV{APICAST_CONFIGURATION_LOADER} = 'boot';
-
-env_to_nginx(
-    'APICAST_CONFIGURATION_LOADER',
+env_to_apicast(
+    'APICAST_CONFIGURATION_LOADER' => 'boot'
 );
 
 log_level('warn');

@@ -12,7 +12,6 @@ env_to_nginx(
     'THREESCALE_PORTAL_ENDPOINT'
 );
 
-repeat_each(1);
 run_tests();
 
 __DATA__

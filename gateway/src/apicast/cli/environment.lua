@@ -6,12 +6,12 @@
 local pl_path = require('pl.path')
 local resty_env = require('resty.env')
 local linked_list = require('apicast.linked_list')
+local sandbox = require('resty.sandbox')
+local util = require('apicast.util')
 local setmetatable = setmetatable
 local loadfile = loadfile
-local pcall = pcall
 local require = require
 local assert = assert
-local error = error
 local print = print
 local pairs = pairs
 local ipairs = ipairs
@@ -40,6 +40,13 @@ local function parse_nameservers()
     end
 end
 
+local function cpus()
+    -- TODO: support /sys/fs/cgroup/cpuset/cpuset.cpus
+    -- see https://github.com/sclorg/rhscl-dockerfiles/blob/ff912d8764af9a41096e63064bbc325395afa608/rhel7.sti-base/bin/cgroup-limits#L55-L75
+    local nproc = util.system('nproc')
+    return tonumber(nproc)
+end
+
 
 local _M = {}
 ---
@@ -58,6 +65,7 @@ _M.default_config = {
     ca_bundle = resty_env.value('SSL_CERT_FILE'),
     policy_chain = require('apicast.policy_chain').default(),
     nameservers = parse_nameservers(),
+    worker_processes = cpus() or 'auto',
     package = {
         path = package.path,
         cpath = package.cpath,
@@ -66,17 +74,22 @@ _M.default_config = {
 
 local mt = { __index = _M }
 
+--- Return loaded environments defined as environment variable.
+-- @treturn {string,...}
+function _M.loaded()
+    local value = resty_env.value('APICAST_LOADED_ENVIRONMENTS')
+    return re.split(value or '', [[\|]], 'jo')
+end
+
 --- Load an environment from files in ENV.
 -- @treturn Environment
 function _M.load()
-    local value = resty_env.value('APICAST_LOADED_ENVIRONMENTS')
     local env = _M.new()
+    local environments = _M.loaded()
 
-    if not value then
+    if not environments then
         return env
     end
-
-    local environments = re.split(value, '\\|', 'jo')
 
     for i=1,#environments do
         assert(env:add(environments[i]))
@@ -132,11 +145,15 @@ function _M:add(env)
         return nil, 'no configuration found'
     end
 
-    local config = loadfile(path, 't', {
-        print = print, inspect = require('inspect'), context = self._context,
-        tonumber = tonumber, tostring = tostring,
-        pcall = pcall, require = require, assert = assert, error = error,
-    })
+    -- using sandbox is not strictly needed,
+    -- but it is a nice way to add some extra env to the loaded code
+    -- and not using global variables
+    local box = sandbox.new()
+    local config = loadfile(path, 't', setmetatable({
+        inspect = require('inspect'), context = self._context,
+        arg = arg, cli = arg,
+        os = { getenv = resty_env.value },
+    }, { __index = box.env }))
 
     if not config then
         return nil, 'invalid config'

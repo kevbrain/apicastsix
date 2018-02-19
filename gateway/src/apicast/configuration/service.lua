@@ -7,16 +7,13 @@ local tostring = tostring
 local rawget = rawget
 local lower = string.lower
 local gsub = string.gsub
-local format = string.format
 local select = select
-local concat = table.concat
-local insert = table.insert
 local re = require 'ngx.re'
-local re_match = ngx.re.match
 
 local http_authorization = require 'resty.http_authorization'
 
 local oauth = require('apicast.oauth')
+local mapping_rules_matcher = require('apicast.mapping_rules_matcher')
 
 local _M = { }
 local mt = { __index = _M  }
@@ -165,35 +162,6 @@ function backend_version_credentials.version_oauth(config)
   return setmetatable({ access_token, access_token = access_token }, credentials_oauth_mt)
 end
 
-local function set_or_inc(t, name, delta)
-  return (t[name] or 0) + (delta or 0)
-end
-
-local function check_rule(req, rule, usage_t, matched_rules, params)
-  local pattern = rule.regexpified_pattern
-  local match = re_match(req.path, format("^%s", pattern), 'oj')
-
-  if match and req.method == rule.method then
-    local args = req.args
-
-    if rule.querystring_params(args) then -- may return an empty table
-      local system_name = rule.system_name
-      -- FIXME: this had no effect, what is it supposed to do?
-      -- when no querystringparams
-      -- in the rule. it's fine
-      -- for i,p in ipairs(rule.parameters or {}) do
-      --   param[p] = match[i]
-      -- end
-
-      local value = set_or_inc(usage_t, system_name, rule.delta)
-
-      usage_t[system_name] = value
-      params['usage[' .. system_name .. ']'] = value
-      insert(matched_rules, rule.pattern)
-    end
-  end
-end
-
 local function get_auth_params(method)
   local params = ngx.req.get_uri_args()
 
@@ -254,22 +222,12 @@ function _M:oauth()
 end
 
 local function extract_usage_v2(config, method, path)
-  local usage_t =  {}
-  local matched_rules = {}
-  local params = {}
   local rules = config.rules
-
-  local args = get_auth_params(method)
 
   ngx.log(ngx.DEBUG, '[mapping] service ', config.id, ' has ', #rules, ' rules')
 
-  for i = 1, #rules do
-    check_rule({path=path, method=method, args=args}, rules[i], usage_t, matched_rules, params)
-  end
-
-  -- if there was no match, usage is set to nil and it will respond a 404, this
-  -- behavior can be changed
-  return usage_t, concat(matched_rules, ", "), params
+  local args = get_auth_params(method)
+  return mapping_rules_matcher.get_usage_from_matches(method, path, args, rules)
 end
 
 -- Deprecated

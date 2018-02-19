@@ -15,7 +15,7 @@ APIcast.
 ## Policies
 
 A policy tells APIcast what it should do in each of the nginx phases: `init`,
-`init_worker`, `rewrite`, `access`, `balancer`, `header_filter`, `body_filter`,
+`init_worker`, `rewrite`, `access`,`content`, `balancer`, `header_filter`, `body_filter`,
 `post_action`, and `log`.
 
 Policies can share data between them. They do that through what we call the
@@ -35,6 +35,7 @@ policy B. When APIcast receives a request, it will check the policy chain
 described to see what it should run on each phase:
 - rewrite: execute the function policy A provides for this phase.
 - access: execute the function policy B provides for this phase.
+- content: do nothing. Neither policy A nor B describe what to do.
 - balancer: do nothing. Neither policy A nor B describe what to do.
 - header_filter: execute first the function policy A provides for this phase
   and then the function policy B provides for this phase. Remember that policy
@@ -68,11 +69,55 @@ matching, authorization and reporting against 3scale backend, etc.). In the
 future, this policy will be split and each of the resulting policies will be
 replaceable with custom ones.
 
-
 ## Write your own policy
 
+### Policy structure
+
+Policy is expected to have some structure, so APIcast can find it. Minimal policy structure consists of two files: `init.lua` and `apicast-manifest.json`.
+
+Custom policies are expected to be on following paths:
+
+* `APICAST_DIR/policies/${name}/${version}/`
+
+And builtin ones also on:
+
+* `APICAST_DIR/src/apicast/policy/${name}/`
+
+All files in the policy directory are namespaced, so you can vendor dependencies.  Consider following structure:
+
+```
+APICAST_DIR/policies/my_stuff/1.0/
+APICAST_DIR/policies/my_stuff/1.0/init.lua
+APICAST_DIR/policies/my_stuff/1.0/my_stuff.lua
+APICAST_DIR/policies/my_stuff/1.0/vendor/dependency.lua
+APICAST_DIR/policies/my_stuff/1.0/apicast-manifest.json
+```
+
+First file to be loaded will be `init.lua`. That is the only Lua file APIcast cares about.
+For better code organization we recommend that file to have just very simple implementation like:
+
+```lua
+return require('my_stuff')
+```
+
+And actually implement everything in `my_stuff.lua`. This makes the policy file easier to find by humans.
+
+Lets say the policy needs some 3rd party dependency. Those can be put anywhere in the policy structure and will be available. Try to imagine it as UNIX `chroot`. So for example `require('vendor/dependency')` will load `APICAST_DIR/policies/my_stuff/1.0/vendor/dependency.lua` when loading your policy.
+
+The policy has access to only code it provides and shared code in `APICAST_DIR/src/`.
+
+You can start APIcast with different policy load path parameter (`--policy-load-path` or `APICAST_POLICY_LOAD_PATH`) to load
+policies from different than the default path. Example:
+```shell
+bin/apicast start --policy-load-path examples/policies:spec/fixtures/policies
+```
+
+For more details see [examples/policies/README.md](../examples/policies/README.md).
+
+### Policy code
+
 To write your own policy you need to write a Lua module that instantiates a
-[Policy](../gateway/src/apicast/policy/policy.lua) and defines a method for
+[Policy](../gateway/src/apicast/policy.lua) and defines a method for
 each of the phases where it needs to execute something.
 
 Suppose that we wanted to run a policy that logged a message in the `rewrite`
@@ -158,7 +203,7 @@ policies can be configured:
       "proxy":{
         "policy_chain":[
           {
-            "name":"apicast.policy.cors",
+            "name":"cors", "version": "builtin",
             "configuration":{
               "allow_headers":["X-Custom-Header-1","X-Custom-Header-2"],
               "allow_methods":["POST","GET","OPTIONS"],
@@ -167,7 +212,7 @@ policies can be configured:
             }
           },
           {
-            "name":"apicast.policy.apicast"
+            "name":"apicast", "version": "builtin",
           }
         ]
       }

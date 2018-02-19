@@ -8,7 +8,6 @@ env_to_nginx(
     'RESOLVER'
 );
 master_on();
-repeat_each(1);
 run_tests();
 
 __DATA__

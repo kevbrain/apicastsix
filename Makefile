@@ -96,6 +96,8 @@ test-builder-image: builder-image clean-containers ## Smoke test the builder ima
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --test
 	@echo -e $(SEPARATOR)
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --test --dev
+	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --daemon
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test bash -c 'for i in {1..5}; do curl --fail http://gateway:8090/status/live && break || sleep 1; done'
@@ -119,7 +121,7 @@ gateway-logs:
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
 test-runtime-image: runtime-image clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
-	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -d
+	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -l -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_CONFIGURATION_LOADER=boot -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d
 	@echo -e $(SEPARATOR)
@@ -150,6 +152,12 @@ doc/lua/index.html: $(shell find gateway/src -name '*.lua') | dependencies $(ROV
 	$(ROVER) exec ldoc -c doc/config.ld .
 
 doc: doc/lua/index.html ## Generate documentation
+
+lint-schema: apicast-source
+	@ docker run --volumes-from ${COMPOSE_PROJECT_NAME}-source --workdir /opt/app-root/src \
+		3scale/ajv validate \
+		-s gateway/src/apicast/policy/manifest-schema.json \
+		$(addprefix -d ,$(shell find gateway/src/apicast/policy -name 'apicast-policy.json'))
 
 node_modules/.bin/markdown-link-check:
 	yarn install

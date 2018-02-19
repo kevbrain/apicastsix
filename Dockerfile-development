@@ -1,4 +1,4 @@
-FROM quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover3
+FROM quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover6
 LABEL maintainer="dortiz@redhat.com"
 
 USER root

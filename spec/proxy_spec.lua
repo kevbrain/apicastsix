@@ -3,6 +3,7 @@ local lrucache = require('resty.lrucache')
 
 local configuration_store = require 'apicast.configuration_store'
 local Service = require 'apicast.configuration.service'
+local Usage = require 'apicast.usage'
 
 describe('Proxy', function()
   local configuration, proxy
@@ -17,39 +18,7 @@ describe('Proxy', function()
     assert.same('function', type(proxy.access))
   end)
 
-  describe(':call', function()
-    local service
-    before_each(function()
-      ngx.var = { backend_endpoint = 'http://localhost:1853' }
-      service = Service.new({ id = 42, hosts = { 'localhost' }})
-    end)
-
-    it('has authorize function after call', function()
-      proxy:call(service)
-
-      assert.truthy(proxy.authorize)
-      assert.same('function', type(proxy.authorize))
-    end)
-
-    it('returns access function', function()
-      local access = proxy:call(service)
-
-      assert.same('function', type(access))
-    end)
-
-    it('returns oauth handler when matches oauth route', function()
-      service.backend_version = 'oauth'
-      stub(ngx.req, 'get_method', function() return 'GET' end)
-      ngx.var.uri = '/authorize'
-
-      local access, handler = proxy:call(service)
-
-      assert.equal(nil, access)
-      assert.same('function', type(handler))
-    end)
-  end)
-
-  describe(':access', function()
+  describe(':rewrite', function()
     local service
     before_each(function()
       ngx.var = { backend_endpoint = 'http://localhost:1853', uri = '/a/uri' }
@@ -61,7 +30,7 @@ describe('Proxy', function()
       service.credentials = { location = 'headers' }
       service.backend_version = 2
       ngx.var.http_app_key = 'key'
-      assert.falsy(proxy:access(service))
+      assert.falsy(proxy:rewrite(service))
     end)
   end)
 
@@ -95,9 +64,12 @@ describe('Proxy', function()
 
       stub(proxy, 'cache_handler').returns(true)
 
-      proxy:authorize(service, { foo = 0 }, { client_id = 'blah' }, ttl)
+      local usage = Usage.new()
+      usage:add('foo', 0)
+      proxy:authorize(service, usage, { client_id = 'blah' }, ttl)
 
-      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo=0', response, ttl)
+      assert.spy(proxy.cache_handler).was.called_with(
+        proxy.cache, 'client_id=blah:usage%5Bfoo%5D=0', response, ttl)
     end)
 
     it('works with no ttl', function()
@@ -107,9 +79,12 @@ describe('Proxy', function()
       stub(ngx_backend, 'send', function() return response end)
       stub(proxy, 'cache_handler').returns(true)
 
-      proxy:authorize(service, { foo = 0 }, { client_id = 'blah' })
+      local usage = Usage.new()
+      usage:add('foo', 0)
+      proxy:authorize(service, usage, { client_id = 'blah' })
 
-      assert.spy(proxy.cache_handler).was.called_with(proxy.cache, 'client_id=blah:foo=0', response, nil)
+      assert.spy(proxy.cache_handler).was.called_with(
+        proxy.cache, 'client_id=blah:usage%5Bfoo%5D=0', response, nil)
     end)
   end)
 

@@ -107,8 +107,6 @@ No Mapping Rule matched
 Content-Type: text/plain; charset=utf-8
 no mapping rules!
 --- error_code: 404
---- error_log
-could not find proxy for request
 
 === TEST 5: no mapping rules matched configurable error
 The message is configurable and status also.
@@ -135,8 +133,6 @@ GET /?user_key=value
 --- response_body chomp
 no mapping rules!
 --- error_code: 412
---- error_log
-could not find proxy for request
 
 === TEST 6: authentication credentials invalid default error
 There are defaults defined for the error message, the content-type, and the
@@ -313,6 +309,8 @@ When mapping rule has a parameter with fixed value it has to be matched.
         {
           id = 42,
           backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'my-token',
           proxy = {
             api_backend = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/',
             proxy_rules = {
@@ -337,6 +335,8 @@ When mapping rule has a parameter with fixed value it has to be matched.
   }
 --- request
 GET /foo?bar=baz&user_key=somekey
+--- more_headers
+X-3scale-Debug: my-token
 --- response_body
 api response
 --- response_headers
@@ -356,6 +356,8 @@ When mapping rule has a parameter with variable value it has to exist.
         {
           id = 42,
           backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'my-token',
           proxy = {
             api_backend = 'http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api/',
             proxy_rules = {
@@ -380,6 +382,8 @@ When mapping rule has a parameter with variable value it has to exist.
   }
 --- request
 GET /foo?bar={foo}&user_key=somekey
+--- more_headers
+X-3scale-Debug: my-token
 --- response_body
 api response
 --- error_code: 200

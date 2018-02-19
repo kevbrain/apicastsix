@@ -5,16 +5,12 @@ env RESOLVER;
 env BACKEND_ENDPOINT_OVERRIDE;
 env OPENSSL_VERIFY;
 
-{% for env in env -%}
-  {%- if env.name | starts_with: 'APICAST_', 'THREESCALE_' %}
-    env {{ env.name }}={{ env.value }};
-  {%- endif -%}
-{%- endfor %}
-
 daemon {{ daemon | default: 'off' }};
 master_process {{ master_process | default: 'on' }};
 worker_processes {{ worker_processes | default: 'auto' }};
+pcre_jit on;
 pid {{ pid | default: 'nginx.pid' }};
+timer_resolution {{ timer_resolution | default: '100ms' }};
 
 {% for file in "main.d/*.conf" | filesystem %}
   {% include file %}
@@ -49,6 +45,15 @@ http {
     resolver {{ nameservers | join: " " }};
   {% endif %}
 
+  {%- capture ENV -%}
+    {
+      {%- for env in env -%}
+      {%- if env.name | starts_with: 'APICAST_', 'THREESCALE_' %}
+      [ [[{{ env.name }}]] ] = [[{{ env.value }}]],
+      {%- endif -%}
+    {%- endfor %}
+    }
+  {%- endcapture -%}
 
   {% for file in "http.d/*.conf" | filesystem %}
     {% include file %}
@@ -57,7 +62,7 @@ http {
   server {
     listen {{ port.management | default: 8090 }};
 
-    server_name management _;
+    server_name {{ server_name.management | default: 'management _' }};
 
     {% include "conf.d/management.conf" %}
   }
@@ -68,6 +73,12 @@ http {
     server_name backend;
 
     {% include "conf.d/backend.conf" %}
+  }
+
+  upstream echo {
+    server 127.0.0.1:{{ port.echo | default: 8081 }};
+
+    keepalive 1024;
   }
 
   server {

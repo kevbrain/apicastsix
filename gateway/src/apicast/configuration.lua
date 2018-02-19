@@ -5,20 +5,18 @@ local _M = {
 local len = string.len
 local pairs = pairs
 local type = type
-local error = error
 local tostring = tostring
 local next = next
 local lower = string.lower
 local insert = table.insert
 local setmetatable = setmetatable
-local re_match = ngx.re.match
 
-local inspect = require 'inspect'
 local re = require 'ngx.re'
 local env = require 'resty.env'
 local resty_url = require 'resty.url'
 local util = require 'apicast.util'
 local policy_chain = require 'apicast.policy_chain'
+local mapping_rule = require 'apicast.mapping_rule'
 
 local mt = { __index = _M, __tostring = function() return 'Configuration' end }
 
@@ -28,54 +26,6 @@ local function map(func, tbl)
     newtbl[i] = func(v)
   end
   return newtbl
-end
-
-local function regexpify(path)
-  return path:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
-end
-
-local regex_variable = '\\{[-\\w_]+\\}'
-
-local function hash_to_array(hash)
-  local array = {}
-  for k,v in pairs(hash or {}) do
-    insert(array, { k, v })
-  end
-  return array
-end
-
-local function check_querystring_params(params, args)
-  local match = true
-
-  for i=1, #params do
-    local param = params[i][1]
-    local expected = params[i][2]
-    local m, err = re_match(expected, regex_variable, 'oj')
-    local value = args[param]
-
-    if m then
-      if not value then -- regex variable have to have some value
-        ngx.log(ngx.DEBUG, 'check query params ', param, ' value missing ', expected)
-        match = false
-        break
-      end
-    else
-      if err then ngx.log(ngx.ERR, 'check match error ', err) end
-
-      -- if many values were passed use the last one
-      if type(value) == 'table' then
-        value = value[#value]
-      end
-
-      if value ~= expected then -- normal variables have to have exact value
-        ngx.log(ngx.DEBUG, 'check query params does not match ', param, ' value ' , value, ' == ', expected)
-        match = false
-        break
-      end
-    end
-  end
-
-  return match
 end
 
 local Service = require 'apicast.configuration.service'
@@ -110,7 +60,7 @@ local function build_policy_chain(policies)
   local chain = {}
 
   for i=1, #policies do
-    chain[i] = policy_chain.load(policies[i].name, policies[i].configuration)
+    chain[i] = policy_chain.load_policy(policies[i].name, policies[i].version, policies[i].configuration)
   end
 
   return policy_chain.new(chain)
@@ -158,21 +108,7 @@ function _M.parse_service(service)
         app_id = lower(proxy.auth_app_id or 'app_id'),
         app_key = lower(proxy.auth_app_key or 'app_key') -- TODO: use App-Key if location is headers
       },
-      rules = map(function(proxy_rule)
-        local querystring_parameters = hash_to_array(proxy_rule.querystring_parameters)
-
-        return {
-          method = proxy_rule.http_method,
-          pattern = proxy_rule.pattern,
-          regexpified_pattern = regexpify(proxy_rule.pattern),
-          parameters = proxy_rule.parameters,
-          querystring_params = function(args)
-            return check_querystring_params(querystring_parameters, args)
-          end,
-          system_name = proxy_rule.metric_system_name or error('missing metric name of rule ' .. inspect(proxy_rule)),
-          delta = proxy_rule.delta
-        }
-      end, proxy.proxy_rules or {}),
+      rules = map(mapping_rule.from_proxy_rule, proxy.proxy_rules or {}),
 
       -- I'm not happy about this, but we need a way how to serialize back the object for the management API.
       -- And returning the original back is the easiest option for now.

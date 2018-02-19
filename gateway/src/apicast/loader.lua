@@ -8,6 +8,9 @@
 -- Policies can be packaged as `some_name/policy.lua` so the directory also contains the JSON spec.
 
 local loadfile = loadfile
+local sub = string.sub
+
+local policy_loader = require 'apicast.policy_loader'
 
 local map = {
   ['apicast'] = 'apicast.policy.apicast'
@@ -23,18 +26,13 @@ local function loader(name, path)
   return file, err
 end
 
---- Try to load a policy. Policies can have a `.policy` suffix.
-local function policy_loader(name, path)
-  local policy = name .. '.policy'
-
-  return loader(policy, path or package.path)
-end
-
 --- Searcher has to return the loader or an error message.
-local function policy_searcher(name, path)
-  local found, err = policy_loader(name, path)
+local function policy_searcher(name)
+  if sub(name, 1, 15) == 'apicast.policy.' then
+    local mod = policy_loader:pcall(sub(name, 16), 'builtin')
 
-  return found or err
+    if mod then return function () return mod end end
+  end
 end
 
 local function prefix_loader(name, path)
@@ -42,7 +40,7 @@ local function prefix_loader(name, path)
   local found, err = loader(prefixed, path)
 
   if not found then
-    found = policy_loader(prefixed, path)
+    found = policy_searcher(prefixed)
   end
 
   if found then
@@ -54,10 +52,10 @@ end
 
 local function rename_loader(name, path)
   local new = map[name]
-  local found, err = loader(new, path)
+  local found, err = policy_searcher(new)
 
   if not found then
-    found = policy_loader(new, path)
+    found = loader(new, path)
   end
 
   if found then

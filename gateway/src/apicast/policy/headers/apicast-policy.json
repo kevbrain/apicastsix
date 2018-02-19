@@ -6,7 +6,7 @@
      "upstream as well as modify or delete the ones included in the original ",
      "request. Similarly, this policy also allows to add, modify, and delete ",
      "the headers included in the response."],
-  "version": "0.1",
+  "version": "builtin",
   "configuration": {
     "type": "object",
     "definitions": {

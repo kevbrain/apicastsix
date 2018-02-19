@@ -7,7 +7,7 @@
      "ngx.re.gsub provided by OpenResty. Please check ",
      "https://github.com/openresty/lua-nginx-module for more details on how ",
      "to define regular expressions and learn the options supported."],
-  "version": "0.1",
+  "version": "builtin",
   "configuration": {
     "type": "object",
     "properties": {

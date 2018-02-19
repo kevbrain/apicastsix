@@ -17,7 +17,7 @@
      "Make sure to understand the implications of that before using this ",
      "mode. It makes sense only in very specific use cases.\n",
      "- None: disables caching."],
-  "version": "0.1",
+  "version": "builtin",
   "configuration": {
     "type": "object",
     "properties": {

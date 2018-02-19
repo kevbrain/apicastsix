@@ -4,7 +4,7 @@
   "description":
     ["This policy prints the request back to the client and optionally sets ",
      "a status code."],
-  "version": "0.1",
+  "version": "builtin",
   "configuration": {
     "type": "object",
     "properties": {

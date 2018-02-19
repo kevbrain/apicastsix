@@ -2,7 +2,7 @@
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
   "name": "APIcast policy",
   "description": "Main functionality of APIcast.",
-  "version": "0.1",
+  "version": "builtin",
   "configuration": {
     "type": "object",
     "properties": { }

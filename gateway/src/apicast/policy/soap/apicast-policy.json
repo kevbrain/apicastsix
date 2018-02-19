@@ -11,7 +11,7 @@
    "The SOAPAction URI is matched against the mapping rules defined in the ",
    "policy and calculates a usage based on that so it can be authorized and ",
    "reported against 3scale's backend."],
-  "version": "0.1",
+  "version": "builtin",
   "configuration": {
     "type": "object",
     "properties": {

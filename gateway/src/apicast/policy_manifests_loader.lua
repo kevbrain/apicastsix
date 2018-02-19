@@ -6,7 +6,14 @@ local pl_dir = require('pl.dir')
 local pl_path = require('pl.path')
 local cjson = require('cjson')
 local format = string.format
+local reverse = string.reverse
+local find = string.find
+local sub = string.sub
+local rawset = rawset
+local setmetatable = setmetatable
+local dir_sep = string.sub(package.config, 1, 1)
 local ipairs = ipairs
+local pairs = pairs
 local insert = table.insert
 local policy_loader = require('apicast.policy_loader')
 
@@ -17,18 +24,30 @@ local policy_load_paths = policy_loader.policy_load_paths
 
 local policy_manifest_name = 'apicast-policy.json'
 
+local empty_t = {}
+
 local function dir_iter(dir)
-  return ipairs(pl_dir.getdirectories(dir))
+  return ipairs(pl_path.exists(dir) and pl_dir.getdirectories(dir) or empty_t)
+end
+
+local manifests_mt = { __index = function(t,k) local v = {}; rawset(t,k, v); return v end }
+
+local function extract_policy_name(dir)
+  local reversed = reverse(dir)
+  local sep = find(reversed, dir_sep, 1, true)
+
+  return sub(dir, -1*sep + #dir_sep)
 end
 
 -- Returns the manifests for all the built-in policies.
 local function all_builtin_policy_manifests()
-  local manifests = {}
+  local manifests = setmetatable({}, manifests_mt)
 
   for _, policy_dir in dir_iter(builtin_policy_load_path()) do
     local manifest_file = format('%s/%s', policy_dir, policy_manifest_name)
     local manifest = pl_file.read(manifest_file)
-    if manifest then insert(manifests, cjson.decode(manifest)) end
+    local policy_name = extract_policy_name(policy_dir)
+    if manifest then insert(manifests[policy_name], cjson.decode(manifest)) end
   end
 
   return manifests
@@ -65,16 +84,16 @@ end
 -- These paths always follow the same pattern. It contains a directory for each
 -- policy, and each of those contain a directory for each version of that
 -- policy. The json manifest is in that 'version' directory.
+
 local function all_loaded_policy_manifests()
-  local manifests = {}
+  local manifests = setmetatable({}, manifests_mt)
 
   for _, load_path in ipairs(policy_load_paths()) do
-    if pl_path.exists(load_path) then
-      for _, policy_dir in dir_iter(load_path) do
-        for _, version_dir in dir_iter(policy_dir) do
-          local manifest = get_manifest_from_version_dir(version_dir)
-          if manifest then insert(manifests, manifest) end
-        end
+    for _, policy_dir in dir_iter(load_path) do
+      local name = extract_policy_name(policy_dir)
+      for _, version_dir in dir_iter(policy_dir) do
+        local manifest = get_manifest_from_version_dir(version_dir)
+        if manifest then insert(manifests[name], manifest) end
       end
     end
   end
@@ -89,8 +108,11 @@ end
 function _M.get_all()
   local manifests = all_builtin_policy_manifests()
 
-  for _, manifest in ipairs(all_loaded_policy_manifests()) do
-    insert(manifests, manifest)
+  for policy_name, custom_manifests in pairs(all_loaded_policy_manifests()) do
+
+    for _,manifest in ipairs(custom_manifests) do
+      insert(manifests[policy_name], manifest)
+    end
   end
 
   return manifests

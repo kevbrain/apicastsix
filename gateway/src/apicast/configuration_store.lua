@@ -10,9 +10,11 @@ local lrucache = require 'resty.lrucache'
 
 local _M = {
   _VERSION = '0.1',
-  path_routing = env.enabled('APICAST_PATH_ROUTING_ENABLED'),
+  path_routing = env.enabled('APICAST_PATH_ROUTING') or env.enabled('APICAST_PATH_ROUTING_ENABLED'),
   cache_size = 1000
 }
+
+if env.enabled('APICAST_PATH_ROUTING_ENABLED') then ngx.log(ngx.WARN, 'DEPRECATION NOTICE: Use APICAST_PATH_ROUTING not APICAST_PATH_ROUTING_ENABLED as this will soon be unsupported') end
 
 local mt = { __index = _M, __tostring = function() return 'Configuration Store' end }
 

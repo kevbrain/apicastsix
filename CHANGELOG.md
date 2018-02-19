@@ -62,6 +62,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Renamed all `apicast/policy/*/policy.lua` to `apicast/policy/*/init.lua` to match Lua naming [PR #579](https://github.com/3scale/apicast/pull/579)
 - Environment configuration can now define the configuration loader or cache [PR #590](https://github.com/3scale/apicast/pull/590).
 - APIcast starts with "boot" configuration loader by default (because production is the default environment) [PR #590](https://github.com/3scale/apicast/pull/590).
+- Deprecated `APICAST_SERVICES` in favor of `APICAST_SERVICES_LIST` but provides backwards compatibility [PR #549](https://github.com/3scale/apicast/pull/549)
+- Deprecated `APICAST_PATH_ROUTING_ENABLED` in favor of `APICAST_PATH_ROUTING` but provides backwards compatibility [PR #549](https://github.com/3scale/apicast/pull/549)
 
 ## [3.2.0-alpha2] - 2017-11-30
 

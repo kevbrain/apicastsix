@@ -35,6 +35,28 @@
           }
         ]
       }
+    },
+    {
+      "id": "client-cert",
+      "backend_version": 1,
+      "proxy": {
+        "api_backend": "https://client.badssl.com",
+        "backend": {
+          "endpoint": "https://echo-api.3scale.net"
+        },
+        "hosts": [
+          "client.badssl.com",
+          "localhost"
+        ],
+        "proxy_rules": [
+          {
+            "http_method": "GET",
+            "pattern": "/",
+            "metric_system_name": "hits",
+            "delta": 1
+          }
+        ]
+      }
     }
   ]
 }

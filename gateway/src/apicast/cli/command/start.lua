@@ -134,7 +134,7 @@ local function build_context(options, config)
 
 
     context.prefix = apicast_root()
-    context.ca_bundle = pl.path.abspath(context.ca_bundle or pl.path.join(context.prefix, 'conf', 'ca-bundle.crt'))
+    context.ca_bundle = pl.path.abspath(tostring(context.ca_bundle) or pl.path.join(context.prefix, 'conf', 'ca-bundle.crt'))
 
     return context
 end

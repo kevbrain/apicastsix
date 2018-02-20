@@ -219,7 +219,7 @@ local function new_server(answer, port)
   return setmetatable({
     address = answer.address,
     ttl = answer.ttl,
-    port = answer.port or port
+    port = port or answer.port,
   }, server_mt)
 end
 

@@ -166,7 +166,8 @@ POST /boot
 --- response_body
 {"status":"ok","config":{"services":[{"id":42}]}}
 --- error_code: 200
---- udp_listen random_port
+--- udp_listen random_port env chomp
+$TEST_NGINX_RANDOM_PORT
 --- udp_reply dns
 [ "localhost.local", "127.0.0.1", 60 ]
 --- no_error_log
@@ -195,7 +196,8 @@ POST /test
 {"status":"ok","config":{"services":[{"id":42}]}}
 {"status":"ok","config":{"services":[{"id":42}]}}
 --- error_code: 200
---- udp_listen random_port
+--- udp_listen random_port env chomp
+$TEST_NGINX_RANDOM_PORT
 --- udp_reply dns
 [ "localhost.local", "127.0.0.1", 60 ]
 --- no_error_log

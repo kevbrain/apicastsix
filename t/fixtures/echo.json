@@ -1,0 +1,10 @@
+{
+  "services": [{
+    "proxy": {
+      "policy_chain": [
+        { "name": "apicast.policy.upstream",
+          "configuration": { "rules": [ { "regex": "/", "url": "http://echo" } ] } }
+      ]
+    }
+  }]
+}

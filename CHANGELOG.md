@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Development environment (`--dev`) starts with Echo policy unless some configuration is passed [PR #593](https://github.com/3scale/apicast/pull/593)
 - Added support for passing whole configuration as Data URL [PR #593](https://github.com/3scale/apicast/pull/593)
 - More complete global environment when loading environment policies [PR #596](https://github.com/3scale/apicast/pull/596)
+- Support for Client Certificate authentication with upstream servers [PR #610](https://github.com/3scale/apicast/pull/596)
 
 ## Fixed
 

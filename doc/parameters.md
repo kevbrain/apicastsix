@@ -201,3 +201,39 @@ It can be used to first load policies from a development directory or to load ex
 Double colon (`:`) separated list of environments (or paths) APIcast should load.
 It can be used instead of `-e` or `---environment` parameter on the CLI and for example
 stored in the container image as default environment. Any value passed on the CLI overrides this variable.
+
+### `APICAST_PROXY_HTTPS_CERTIFICATE`
+
+**Default:**
+**Value:** string
+**Example:** /home/apicast/my_certificate.crt
+
+The path to the client SSL certificate that APIcast will use when connecting
+with the upstream. Notice that this certificate will be used for all the
+services in the configuration.
+
+
+### `APICAST_PROXY_HTTPS_CERTIFICATE_KEY`
+
+**Default:**
+**Value:** string
+**Example:** /home/apicast/my_certificate.key
+
+The path to the key of the client SSL certificate.
+
+### `APICAST_PROXY_HTTPS_SESSION_REUSE`
+
+**Default:** 'on'
+**Values:**
+- `on`: reuses SSL sessions.
+- `off`: does not reuse SSL sessions.
+
+
+### `APICAST_PROXY_HTTPS_PASSWORD_FILE`
+
+**Default:**
+**Value:** string
+**Example:** /home/apicast/passwords.txt
+
+Path to a file with passphrases for the SSL cert keys specified with
+`APICAST_PROXY_HTTPS_CERTIFICATE_KEY`.

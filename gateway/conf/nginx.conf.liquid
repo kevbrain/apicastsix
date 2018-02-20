@@ -41,6 +41,8 @@ http {
   lua_package_path "{{ lua_path | default: package.path }}";
   lua_package_cpath "{{ lua_cpath | default: package.cpath }}";
 
+  ignore_invalid_headers off;
+
   {% if nameservers %}
     resolver {{ nameservers | join: " " }};
   {% endif %}
@@ -95,7 +97,6 @@ http {
     listen {{ port.apicast | default: 8080 }};
 
     server_name _;
-    underscores_in_headers on;
 
     {% include "http.d/ssl.conf" %}
 

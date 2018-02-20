@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix setting twice the headers in a pre-flight request in the CORS policy [PR #570](https://github.com/3scale/apicast/pull/570)
 - Fix case where debug headers are returned without enabling the option [PR #577](https://github.com/3scale/apicast/pull/577)
 - Fix errors loading openresty libraries when rover is active [PR #598](https://github.com/3scale/apicast/pull/598)
+- Passthrough "invalid" headers [PR #612](https://github.com/3scale/apicast/pull/612)
 
 ## Changed
 

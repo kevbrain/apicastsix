@@ -7,7 +7,7 @@ __DATA__
 
 === TEST 1: multi service configuration limited to specific service
 --- main_config
-env APICAST_SERVICES=42,21;
+env APICAST_SERVICES_LIST=42,21;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";

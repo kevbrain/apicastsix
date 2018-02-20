@@ -75,6 +75,13 @@ local function cpus()
     return tonumber(nproc)
 end
 
+local env_value_mt = {
+    __tostring = function(t) return resty_env.value(t.name) end
+}
+
+local function env_value_ref(name)
+    return setmetatable({ name = name }, env_value_mt)
+end
 
 local _M = {}
 ---
@@ -90,7 +97,8 @@ _M.default_environment = 'production'
 -- @tfield ?string package.cpath path to load libraries
 -- @table environment.default_config default configuration
 _M.default_config = {
-    ca_bundle = resty_env.value('SSL_CERT_FILE'),
+    ca_bundle = env_value_ref('SSL_CERT_FILE'),
+
     policy_chain = require('apicast.policy_chain').default(),
     nameservers = parse_nameservers(),
     worker_processes = cpus() or 'auto',

@@ -62,10 +62,17 @@ local function starts_with(string, match)
     return sub(string,1,len(match)) == match
 end
 
-function _M:interpret(str)
+local function build_interpreter(str)
     local lexer = Lexer:new(str)
     local parser = Parser:new(lexer)
     local interpreter = Interpreter:new(parser)
+
+    return interpreter
+end
+
+function _M:interpret(str)
+    local interpreter = build_interpreter(str)
+
     local context = self.context
     local filesystem = self.filesystem
     local filter_set = FilterSet:new()

@@ -31,7 +31,8 @@ location /t {
     ngx.say(require('cjson').encode(upstream))
   }
 }
---- udp_listen random_port
+--- udp_listen random_port env chomp
+$TEST_NGINX_RANDOM_PORT
 --- udp_reply dns
 [ "localhost", "127.0.0.1" ]
 --- request
@@ -124,7 +125,8 @@ location /t {
 
   proxy_pass http://upstream/api;
 }
---- udp_listen random_port
+--- udp_listen random_port env chomp
+$TEST_NGINX_RANDOM_PORT
 --- udp_reply dns
 [ "localhost", "127.0.0.1" ]
 --- request

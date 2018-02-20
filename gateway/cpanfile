@@ -1,4 +1,4 @@
-requires 'Test::APIcast', '0.08';
+requires 'Test::APIcast', '0.09';
 requires 'Crypt::JWT';
 requires 'Test::Deep';
 requires 'File::Slurp';

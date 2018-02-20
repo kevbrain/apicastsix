@@ -609,7 +609,8 @@ GET /t?user_key=val
 --- response_body
 all ok
 --- error_code: 200
---- udp_listen random_port
+--- udp_listen random_port env chomp
+$TEST_NGINX_RANDOM_PORT
 --- udp_reply dns
 [ "localhost.example.com", "127.0.0.1", 3600 ]
 --- no_error_log

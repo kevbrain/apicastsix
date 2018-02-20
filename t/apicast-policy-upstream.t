@@ -377,14 +377,10 @@ Upstream policy should work with internal echo API.
 }
 --- request
 GET /a_path?
---- response_body eval
-<<"HTTP"
-GET /a_path? HTTP/1.1\x{0d}
-X-Real-IP: 127.0.0.1\x{0d}
-Host: echo\x{0d}
-\x{0d}
-\x{0d}\x{0a}
-HTTP
+--- response_body
+GET /a_path? HTTP/1.1
+X-Real-IP: 127.0.0.1
+Host: echo
 --- error_code: 200
 --- no_error_log
 [error]

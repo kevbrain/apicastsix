@@ -68,13 +68,8 @@ called oauth_authorize.xml
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
       local expected = "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri"
-      if ngx.var.args == expected then
-        ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized></status>')
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' does not match ', ngx.var.args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+      ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized></status>')
     }
   }
 --- request
@@ -108,13 +103,9 @@ Location: http://example.com/redirect\?response_type=code&client_id=id&state=[a-
 
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
-      if ngx.var.args == "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri" then
-        ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized></status>')
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' does not match ', ngx.var.args)
-        ngx.exit(403)
-      end
+      local expected = "provider_key=fookey&service_id=42&app_id=id&redirect_uri=otheruri"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+      ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized></status>')
     }
   }
 --- request
@@ -339,13 +330,8 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         local expected = "provider_key=fookey&service_id=42&app_key=client_secret&app_id=client_id&redirect_uri=redirect_uri"
-        if ngx.var.args == expected then
-          ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>client_secret</key></application></status>')
-          ngx.exit(200)
-        else
-          ngx.log(ngx.ERR, 'expected: ' .. expected .. ' got: ' .. ngx.var.args)
-          ngx.exit(403)
-        end
+        require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+        ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>client_secret</key></application></status>')
       }
     }
 
@@ -610,13 +596,8 @@ Regression test for CVE-2017-7512
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=&app_id=client_id&redirect_uri=redirect_uri"
-        if ngx.var.args == expected then
+        require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
         ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>client_secret</key></application></status>')
-          ngx.exit(200)
-        else
-          ngx.log(ngx.ERR, 'expected: ' .. expected .. ' got: ' .. ngx.var.args)
-          ngx.exit(403)
-        end
       }
     }
 
@@ -677,13 +658,8 @@ GET /t
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
-        if ngx.var.args == expected then
-          ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
-          ngx.exit(200)
-        else
-          ngx.log(ngx.ERR, 'expected: ' .. expected .. ' got: ' .. ngx.var.args)
-          ngx.exit(403)
-        end
+        require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+        ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
       }
     }
 
@@ -747,13 +723,8 @@ GET /t
     location = /backend/transactions/oauth_authorize.xml {
       content_by_lua_block {
         expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
-        if ngx.var.args == expected then
-          ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
-          ngx.exit(200)
-        else
-          ngx.log(ngx.ERR, 'expected: ' .. expected .. ' got: ' .. ngx.var.args)
-          ngx.exit(403)
-        end
+        require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+        ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
       }
     }
 
@@ -769,9 +740,6 @@ GET /t
           ngx.log(ngx.ERR, 'Invalid Content-Type: ', ngx.var.http_content_type)
           ngx.status = 400
           ngx.print('invalid content-type')
-          ngx.exit(400)
-        else
-          ngx.exit(200)
         end
       }
     }
@@ -835,13 +803,9 @@ When a token TTL is not specified, it applies a default of 7 days (604800 s)
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
       expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
-      if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
-        ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, 'expected: ' .. expected .. ' got: ' .. ngx.var.args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+      require('luassert').same(ngx.var.backend_host, ngx.var.host)
+      ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
     }
   }
 
@@ -917,13 +881,9 @@ When an empty token TTL is received, Apicast applies a default of 7 days (604800
   location = /backend/transactions/oauth_authorize.xml {
     content_by_lua_block {
       expected = "provider_key=fookey&service_id=42&app_key=bar&app_id=foo&redirect_uri=redirect"
-      if ngx.var.args == expected and ngx.var.host == ngx.var.backend_host then
-        ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, 'expected: ' .. expected .. ' got: ' .. ngx.var.args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+      require('luassert').same(ngx.var.backend_host, ngx.var.host)
+      ngx.say('<?xml version="1.0" encoding="UTF-8"?><status><authorized>true</authorized><application><key>bar</key></application></status>')
     }
   }
 

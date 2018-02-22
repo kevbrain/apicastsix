@@ -6,7 +6,9 @@ run_tests();
 __DATA__
 
 === TEST 1: CORS preflight request
-Returns 204 and sets the appropriate headers.
+Returns 204 and sets the appropriate headers. This test does not configure the
+CORS policy with custom headers, so the response headers will be set to accept
+the request received.
 --- configuration
 {
   "services": [
@@ -34,6 +36,9 @@ OPTIONS /
 Origin: localhost
 Access-Control-Request-Method: GET
 --- error_code: 204
+--- response_headers
+Access-Control-Allow-Methods: GET
+Access-Control-Allow-Origin: localhost
 --- no_error_log
 [error]
 

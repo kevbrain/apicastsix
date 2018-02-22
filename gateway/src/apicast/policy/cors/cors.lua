@@ -46,7 +46,7 @@ end
 
 local function set_access_control_allow_credentials(allow_credentials)
   local value = allow_credentials
-  if value == nil then value = 'true' end
+  if value == nil then value = true end
   ngx.header['Access-Control-Allow-Credentials'] = value
 end
 

@@ -122,7 +122,18 @@ http {
 
     access_log {{ access_log_file | default: "/dev/stdout" }} time;
 
-    listen {{ port.apicast | default: 8080 }};
+    {%- assign http_port = port.apicast | default: 8080 %}
+    {%- assign https_port = env.APICAST_HTTPS_PORT %}
+
+    {% if http_port != https_port -%}
+      listen {{ http_port }};
+    {% endif %}
+
+    {% if https_port -%}
+    listen {{ https_port }} ssl;
+    ssl_certificate {{ env.APICAST_HTTPS_CERTIFICATE }};
+    ssl_certificate_key {{ env.APICAST_HTTPS_CERTIFICATE_KEY }};
+    {%- endif %}
 
     server_name _;
 

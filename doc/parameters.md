@@ -285,3 +285,21 @@ You can choose to mount a different configuration than the provided by default b
 
 This environment variable controls the HTTP header used for forwarding opentracing information, this HTTP header will be forwarded to upstream servers.
 
+
+### `APICAST_HTTPS_PORT`
+
+**Default:** no value
+
+Controls on which port APIcast should start listening for HTTPS connections. If this clashes with HTTP port it will be used only for HTTPS.
+
+### `APICAST_HTTPS_CERTIFICATE`
+
+**Default:** no value
+
+Path to a file with X.509 certificate in the PEM format for HTTPS.
+
+### `APICAST_HTTPS_CERTIFICATE_KEY`
+
+**Default:** no value
+
+Path to a file with the X.509 certificate secret key in the PEM format.

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Default credentials policy [PR #741](https://github.com/3scale/apicast/pull/741), [THREESCALE-586](https://issues.jboss.org/browse/THREESCALE-586)
 - Configurable caching for the token introspection policy [PR #656](https://github.com/3scale/apicast/pull/656)
 - `APICAST_ACCESS_LOG_FILE` env to make the access log location configurable [THREESCALE-743](https://github.com/3scale/apicast/pull/743)
+- ENV variables to make APIcast listen on HTTPS port [PR #622](https://github.com/3scale/apicast/pull/622) 
 
 ### Changed
 

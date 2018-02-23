@@ -4,6 +4,7 @@
 -- the whole processing of the request.
 
 local _M = require('apicast.policy').new('Echo Policy')
+local cjson = require('cjson')
 
 local tonumber = tonumber
 local new = _M.new
@@ -20,7 +21,13 @@ function _M.new(configuration)
 end
 
 function _M.content()
-  ngx.say(ngx.var.request)
+  local accept = ngx.var.http_accept
+
+  if accept == 'application/json' then
+    ngx.say(cjson.encode({ request = ngx.var.request }))
+  else
+    ngx.say(ngx.var.request)
+  end
 end
 
 function _M:rewrite()

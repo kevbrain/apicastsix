@@ -111,8 +111,9 @@ describe('Headers policy', function()
     local response_headers = 'response' -- header_filter() only modifies resp headers
 
     before_each(function()
-      local headers = {}
-      stub(ngx.header, function() return headers end)
+      -- Replace original ngx.header. Openresty does not allow to modify it when
+      -- running busted tests.
+      ngx.header = {}
     end)
 
     describe('the push operation', function()

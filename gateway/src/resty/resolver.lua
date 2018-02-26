@@ -113,13 +113,6 @@ function _M.parse_nameservers(path)
 
   local search = { }
   local nameservers = { search = search }
-  local domains = match(resolv_conf, 'search%s+([^\n]+)')
-
-  ngx.log(ngx.DEBUG, 'search ', domains)
-  for domain in gmatch(domains or '', '([^%s]+)') do
-    ngx.log(ngx.DEBUG, 'search domain: ', domain)
-    insert(search, domain)
-  end
 
   local resolver
   resolver, err = _M.parse_resolver(resty_env.value('RESOLVER'))
@@ -131,10 +124,23 @@ function _M.parse_nameservers(path)
     -- see https://github.com/3scale/apicast/issues/321 for more details
     insert(nameservers, resolver)
   end
+  
+  for _,line in ipairs(re.split(resolv_conf, "\n+")) do
+    
+    local domains = match(line, '^search%s+([^\n]+)')
+    
+    if domains then
+      ngx.log(ngx.DEBUG, 'search ', domains)
 
-  for server in gmatch(resolv_conf, 'nameserver%s+([^%s]+)') do
+      for domain in gmatch(domains or '', '([^%s]+)') do
+        ngx.log(ngx.DEBUG, 'search domain: ', domain)
+        insert(search, domain)
+      end
+    end
+
+    local server = match(line, '^nameserver%s+([^%s]+)')
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
-    if server ~= resolver then
+    if server and server ~= resolver then
       insert(nameservers, nameserver.new(server))
     end
   end

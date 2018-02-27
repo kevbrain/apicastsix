@@ -25,6 +25,8 @@ end
 
 local get_status = getlocal(register_getter, 'ngx_magic_key_getters').status
 local set_status = getlocal(register_setter, 'ngx_magic_key_setters').status
+local get_headers_sent = getlocal(register_getter, 'ngx_magic_key_getters').headers_sent
+local set_headers_sent = getlocal(register_setter, 'ngx_magic_key_setters').headers_sent
 
 local function reset_ngx_state()
   ngx.var = deepcopy(ngx_var_original)
@@ -36,17 +38,27 @@ end
 local function cleanup()
   register_getter('status', get_status)
   register_setter('status', set_status)
+  register_getter('headers_sent', get_headers_sent)
+  register_setter('headers_sent', set_headers_sent)
   reset_ngx_state()
 end
 
 local function setup()
-  local status
+  -- Register getters and setters for ngx vars used in the tests.
+
+  local status, headers_sent
 
   register_setter('status', function(newstatus)
     status = newstatus
   end)
 
   register_getter('status', function() return status end)
+
+  register_setter('headers_sent', function(new_headers_sent)
+    headers_sent = new_headers_sent
+  end)
+
+  register_getter('headers_sent', function() return headers_sent end)
 end
 
 busted.after_each(cleanup)

@@ -12,6 +12,10 @@ local new = _M.new
 function _M.new(config)
   local self = new()
   self.config = config or {}
+  --- authorization for the token introspection endpoint.
+  -- https://tools.ietf.org/html/rfc7662#section-2.2
+  self.credential = 'Basic ' .. ngx.encode_base64(table.concat({ self.config.client_id or '', self.config.client_secret or '' }, ':'))
+  self.introspection_url = config.introspection_url
   self.http_client = http_ng.new{
     backend = config.client,
     options = {
@@ -22,42 +26,38 @@ function _M.new(config)
   return self
 end
 
+--- OAuth 2.0 Token Introspection defined in RFC7662.
+-- https://tools.ietf.org/html/rfc7662
 local function introspect_token(self, token)
-  local config = self.config
-  if not config then
-    return false
-  end
-
-  local introspection_url = config.introspection_url
-  local client = config.client_id
-  local secret = config.client_secret
-  local credential = 'Basic ' .. ngx.encode_base64(table.concat({ client or '', secret or '' }, ':'))
   local opts = {
     headers = {
-      ['Authorization'] = credential
+      ['Authorization'] = self.credential
     }
   }
-
-  local res, err = self.http_client.post(introspection_url , { token = token, token_type_hint = 'access_token'}, opts)
+  --- Parameters for the token introspection endpoint.
+  -- https://tools.ietf.org/html/rfc7662#section-2.1
+  local res, err = self.http_client.post(self.introspection_url , { token = token, token_type_hint = 'access_token'}, opts)
   if res and err then
-    ngx.log(ngx.WARN, 'token introspection error: ', err, ' url: ', introspection_url)
-    return false
+    ngx.log(ngx.WARN, 'token introspection error: ', err, ' url: ', self.introspection_url)
+    return { active = false }
   end
 
   if res.status == 200 then
     local token_info = cjson.decode(res.body)
-    return token_info.active
+    return token_info
   else
     ngx.log(ngx.WARN, 'failed to execute token introspection. status: ', res.status)
-    return false
+    return { active = false }
   end
 end
 
 function _M:access(context)
-  if self.config.introspection_url then
+  if self.introspection_url then
     local authorization = http_authorization.new(ngx.var.http_authorization)
     local access_token = authorization.token
-    if not introspect_token(self, access_token) then
+    --- Introspection Response must have an "active" boolean value.
+    -- https://tools.ietf.org/html/rfc7662#section-2.2
+    if not introspect_token(self, access_token).active then
       ngx.status = context.service.auth_failed_status
       ngx.say(context.service.error_auth_failed)
       return ngx.exit(ngx.status)

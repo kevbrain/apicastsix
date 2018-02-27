@@ -58,6 +58,16 @@ describe('Configuration object', function()
       assert.equals(429, config.limits_exceeded_status)
     end)
 
+
+    describe('policy_chain', function()
+
+      it('works with null', function()
+        local config = configuration.parse_service({ proxy = { policy_chain = ngx.null }})
+
+        assert(config)
+      end)
+    end)
+
     describe('backend', function()
       it('defaults to fake backend', function()
         local config = configuration.parse_service({ proxy = {

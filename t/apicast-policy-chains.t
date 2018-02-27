@@ -126,3 +126,53 @@ running phase: header_filter
 running phase: body_filter
 running phase: post_action
 running phase: log
+
+
+=== TEST 3: null policy chain
+When policy chain is null, the default Apicast plugin is used and authorizes
+as expected.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'token-value',
+          proxy = {
+            policy_chain = ngx.null,
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              {
+                http_method = "GET",
+                pattern = "/test",
+                metric_system_name = "hits",
+                delta = 1
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+
+  location /api-backend/ {
+     echo 'yay, api backend';
+  }
+--- request
+GET /test?user_key=abc
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

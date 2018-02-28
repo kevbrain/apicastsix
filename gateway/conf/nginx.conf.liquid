@@ -106,6 +106,24 @@ http {
     {% include "conf.d/apicast.conf" %}
   }
 
+  {% if port.metrics %}
+    lua_shared_dict prometheus_metrics 16M;
+    server {
+      access_log off;
+      listen {{ port.metrics }};
+      server_name metrics prometheus _;
+
+      location /metrics {
+        content_by_lua_block { require('apicast.executor'):metrics() }
+      }
+
+      location /nginx_status {
+        internal;
+        stub_status;
+      }
+    }
+  {% endif %}
+
   {% for file in "sites.d/*.conf" | filesystem %}
     {% include file %}
   {% endfor %}

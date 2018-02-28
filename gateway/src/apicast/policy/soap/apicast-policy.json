@@ -1,6 +1,6 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
-  "name": "SOAP policy",
+  "name": "SOAP",
   "description":
   ["This policy adds support for a very small subset of SOAP. \n",
    "It expects a SOAP action URI in the SOAPAction header or the Content-Type ",

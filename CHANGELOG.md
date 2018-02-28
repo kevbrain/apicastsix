@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## Added
+
+- New property `summary` in the policy manifests [PR #633](https://github.com/3scale/apicast/pull/633)
+
 ## Fixed
 
 - Error loading policy chain configuration JSON with null value [PR #626](https://github.com/3scale/apicast/pull/626)

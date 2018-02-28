@@ -108,7 +108,7 @@ For developing and testing APIcast the following tools are needed:
  brew install apitools/openresty/luarocks
 ```
 
-- [busted](http://olivinelabs.com/busted/) - unit testing framework, used for unit testing.
+- [busted](https://github.com/Olivine-Labs/busted) - unit testing framework, used for unit testing.
 ```shell
  luarocks install busted
 ```

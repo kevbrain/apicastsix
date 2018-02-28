@@ -1,7 +1,11 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
   "name": "CORS",
-  "description": "This policy enables CORS (Cross Origin Resource Sharing) request handling.",
+  "summary": "Enables CORS (Cross Origin Resource Sharing) request handling.",
+  "description":
+    ["This policy enables CORS (Cross Origin Resource Sharing) request ",
+     "handling. It allows to define CORS headers such as ",
+     "Access-Control-Allow-Headers, Access-Control-Allow-Methods, etc."],
   "version": "builtin",
   "configuration": {
     "type": "object",

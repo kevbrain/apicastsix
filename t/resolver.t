@@ -101,3 +101,29 @@ GET /t
 nameservers: 1 [dead::beef]:5353
 --- user_files
 >>> resolv.conf
+
+
+=== TEST 4: do not duplicate nameserver from RESOLVER
+nameservers should not repeat if already configured
+--- main_config
+env RESOLVER='127.0.1.1:53';
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_worker_by_lua_block {
+    require('resty.resolver').init('$TEST_NGINX_RESOLV_CONF')
+  }
+--- config
+  location = /t {
+    content_by_lua_block {
+      local nameservers = require('resty.resolver').nameservers()
+      ngx.say('nameservers: ', #nameservers, ' ', nameservers[1], ' ', nameservers[2])
+    }
+  }
+--- request
+GET /t
+--- response_body
+nameservers: 2 127.0.1.153 1.2.3.453
+--- user_files
+>>> resolv.conf
+nameserver 127.0.1.1
+nameserver 1.2.3.4

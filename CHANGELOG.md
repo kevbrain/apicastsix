@@ -8,7 +8,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Added
 
+- New property `summary` in the policy manifests [PR #633](https://github.com/3scale/apicast/pull/633)
 - OAuth2.0 Token Introspection policy [PR #619](https://github.com/3scale/apicast/pull/619)
+
+## Fixed
+
+- Error loading policy chain configuration JSON with null value [PR #626](https://github.com/3scale/apicast/pull/626)
+- Splitted `resolv.conf` in lines,to avoid commented lines  [PR #618](https://github.com/3scale/apicast/pull/618)
+
+## Added
+
+- New `metrics` phase that runs when prometheus is collecting metrics [PR #629](https://github.com/3scale/apicast/pull/629)
 
 ## [3.2.0-beta1] - 2018-02-20
 

@@ -9,6 +9,7 @@ require('apicast.loader') -- to load code from deprecated paths
 local PolicyChain = require('apicast.policy_chain')
 local policy = require('apicast.policy')
 local linked_list = require('apicast.linked_list')
+local prometheus = require('apicast.prometheus')
 
 local setmetatable = setmetatable
 
@@ -56,6 +57,13 @@ function _M:context(phase)
     end
 
     return shared_build_context(self)
+end
+
+local metrics = _M.metrics
+--- Render metrics from all policies.
+function _M:metrics(...)
+    metrics(self, ...)
+    return prometheus:collect()
 end
 
 return _M.new(PolicyChain.default())

@@ -13,7 +13,9 @@ run_tests();
 __DATA__
 
 === TEST 1: uses all resolvers
-both RESOLVER env variable and resolvers in resolv.conf should be used
+both RESOLVER env variable and resolvers in resolv.conf should be used.
+checking if commented 'nameserver' and 'search' keywords impact on the 
+resolv.conf file parsing.
 --- main_config
 env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
@@ -34,6 +36,15 @@ GET /t
 nameservers: 3 127.0.1.15353 1.2.3.453 4.5.6.753
 --- user_files
 >>> resolv.conf
+# nameserver updated  in comentary
+#nameserver updated  in comentary
+#comentary nameserver 1.2.3.4
+#comentary nameserver
+# search updated.example.com  in comentary
+#search updated  in comentary
+#search nameserver 1.2.3.4
+#search nameserver
+search localdomain.example.com local
 nameserver 1.2.3.4
 nameserver 4.5.6.7
 

@@ -39,14 +39,7 @@ include $TEST_NGINX_APICAST_CONFIG;
 location /transactions/authrep.xml {
   content_by_lua_block {
     local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-    local args = ngx.var.args
-    ngx.log(ngx.INFO, 'backend got ', args, ' expected ', expected)
-    if args == expected then
-      ngx.exit(200)
-    else
-      ngx.log(ngx.ERR, expected, ' did not match: ', args)
-      ngx.exit(403)
-    end
+    require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
   }
 }
 
@@ -58,8 +51,6 @@ GET /?user_key=value
 --- response_body
 yay, api backend: 127.0.0.1
 --- error_code: 200
---- error_log
-backend got service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value
 --- no_error_log
 [error]
 
@@ -106,7 +97,6 @@ location /api/ {
 
 location /transactions/authrep.xml {
   content_by_lua_block {
-    ngx.log(ngx.INFO, 'backend got: ', ngx.var.args)
     ngx.exit(200)
   }
 }

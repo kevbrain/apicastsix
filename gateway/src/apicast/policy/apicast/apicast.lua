@@ -4,12 +4,7 @@ local setmetatable = setmetatable
 
 local user_agent = require('apicast.user_agent')
 
-local noop = function() end
-
-local _M = {
-  _VERSION = require('apicast.version'),
-  _NAME = 'APIcast'
-}
+local _M = require('apicast.policy').new('APIcast', require('apicast.version'))
 
 local mt = {
   __index = _M
@@ -27,9 +22,6 @@ function _M.init()
   math.randomseed(ngx.now())
   -- First calls to math.random after a randomseed tend to be similar; discard them
   for _=1,3 do math.random() end
-end
-
-function _M.init_worker()
 end
 
 function _M.cleanup()
@@ -90,11 +82,6 @@ _M.content = function()
   end
 end
 
-_M.body_filter = noop
-_M.header_filter = noop
-
 _M.balancer = balancer.call
-
-_M.log = noop
 
 return _M

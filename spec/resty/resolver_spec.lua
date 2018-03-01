@@ -163,9 +163,19 @@ describe('resty.resolver', function()
     before_each(function()
       tmpname = io.tmpfile()
 
-      tmpname:write('search localdomain.example.com local\n')
-      tmpname:write('nameserver 127.0.0.2\n')
-      tmpname:write('nameserver 127.0.0.1\n')
+      tmpname:write([[
+# nameserver updated  in comentary
+#nameserver updated  in comentary
+#comentary nameserver 1.2.3.4
+#comentary nameserver
+# search updated.example.com  in comentary
+#search updated  in comentary
+#search nameserver 1.2.3.4
+#search nameserver
+search localdomain.example.com local
+nameserver 127.0.0.2
+nameserver 127.0.0.1
+]])
     end)
 
     it('returns nameserver touples', function()

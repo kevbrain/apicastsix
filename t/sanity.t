@@ -1,6 +1,7 @@
 use lib 't';
 use Test::APIcast::Blackbox 'no_plan';
 
+filters { configuration => 'fixture=echo.json' };
 
 run_tests();
 
@@ -9,16 +10,6 @@ __DATA__
 === TEST 1: underscores in headers
 HTTP headers with underscores allowed and passed upstream.
 --- configuration
-{
-  "services": [{
-    "proxy": {
-      "policy_chain": [
-        { "name": "apicast.policy.upstream",
-          "configuration": { "rules": [ { "regex": "/", "url": "http://echo" } ] } }
-      ]
-    }
-  }]
-}
 --- request
 GET /test
 --- more_headers
@@ -37,16 +28,6 @@ API_KEY: somekey
 === TEST 2 dots in headers
 Dots in headers are allowed and passed upstream.
 --- configuration
-{
-  "services": [{
-    "proxy": {
-      "policy_chain": [
-        { "name": "apicast.policy.upstream",
-          "configuration": { "rules": [ { "regex": "/", "url": "http://echo" } ] } }
-      ]
-    }
-  }]
-}
 --- request
 GET /test
 --- more_headers

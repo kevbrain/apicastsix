@@ -59,9 +59,10 @@ endif
 	$(CPANM) --notest --installdeps ./gateway
 
 prove: HARNESS ?= TAP::Harness
+prove: PROVE_FILES ?= $(shell find t examples  -type f -name "*.t")
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) nginx cpan ## Test nginx
-	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
+	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source
 prove-docker: export IMAGE_NAME = apicast-test

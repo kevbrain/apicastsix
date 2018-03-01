@@ -10,6 +10,7 @@ local next = next
 local lower = string.lower
 local insert = table.insert
 local setmetatable = setmetatable
+local null = ngx.null
 
 local re = require 'ngx.re'
 local env = require 'resty.env'
@@ -55,7 +56,7 @@ local function backend_endpoint(proxy)
 end
 
 local function build_policy_chain(policies)
-  if not policies then return nil, 'no policy chain' end
+  if not policies or policies == null then return nil, 'no policy chain' end
 
   local chain = {}
 

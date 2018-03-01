@@ -21,6 +21,10 @@ describe('Proxy', function()
   describe(':rewrite', function()
     local service
     before_each(function()
+      -- Replace original ngx.header. Openresty does not allow to modify it when
+      -- running busted tests.
+      ngx.header = {}
+
       ngx.var = { backend_endpoint = 'http://localhost:1853', uri = '/a/uri' }
       ngx.req = { get_method = function () return 'GET' end}
       service = Service.new({ extract_usage = function() end })

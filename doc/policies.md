@@ -16,11 +16,15 @@ APIcast.
 
 A policy tells APIcast what it should do in each of the nginx phases: `init`,
 `init_worker`, `rewrite`, `access`,`content`, `balancer`, `header_filter`, `body_filter`,
-`post_action`, and `log`.
+`post_action`, `log`, and `metrics`.
 
 Policies can share data between them. They do that through what we call the
 `context`. Policies can read from and modify that context in every phase.
 
+All phases except `init`, `init_worker` and `metrics` can be evaluated when
+proxying a request. `metrics` is evaluated when [Prometheus](https://prometheus.io)
+gets data from the metrics endpoint. `init` and `init_worker` are evaluated
+when starting the gateway.
 
 ## Policy chains
 

@@ -16,13 +16,7 @@ We test 4 things:
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -94,13 +88,7 @@ We test 3 things:
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -170,13 +158,7 @@ We test 3 things:
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -243,13 +225,7 @@ We test 3 things:
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -313,13 +289,7 @@ We test 2 things:
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -383,13 +353,7 @@ We test 3 things:
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -448,13 +412,7 @@ configuration.
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration

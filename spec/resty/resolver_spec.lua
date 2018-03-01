@@ -179,6 +179,14 @@ nameserver 127.0.0.1
     end)
 
     it('returns nameserver touples', function()
+      local nameservers = resty_resolver.parse_nameservers(tmpname)
+
+      assert.equal(2, #nameservers)
+      assert.same({ '127.0.0.2', 53 }, nameservers[1])
+      assert.same({ '127.0.0.1', 53 }, nameservers[2])
+    end)
+
+    it('do not replicates nameservers from resolver env var', function()
       resty_env.set('RESOLVER', '127.0.0.1')
       local nameservers = resty_resolver.parse_nameservers(tmpname)
 
@@ -186,7 +194,7 @@ nameserver 127.0.0.1
       assert.same({ '127.0.0.1', 53 }, nameservers[1])
       assert.same({ '127.0.0.2', 53 }, nameservers[2])
     end)
-
+    
     it('returns search domains', function()
       local search = resty_resolver.parse_nameservers(tmpname).search
 

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## Added
+
+- OAuth2.0 Token Introspection policy [PR #619](https://github.com/3scale/apicast/pull/619)
+
 ## [3.2.0-beta1] - 2018-02-20
 
 ## Added

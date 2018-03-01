@@ -1,7 +1,7 @@
 local policy = require('apicast.policy')
 local _M = policy.new('Token Introspection Policy')
 
-local cjson = require('cjson')
+local cjson = require('cjson.safe')
 local http_authorization = require 'resty.http_authorization'
 local http_ng = require 'resty.http_ng'
 local user_agent = require 'apicast.user_agent'
@@ -35,13 +35,17 @@ local function introspect_token(self, token)
   --- Parameters for the token introspection endpoint.
   -- https://tools.ietf.org/html/rfc7662#section-2.1
   local res, err = self.http_client.post(self.introspection_url , { token = token, token_type_hint = 'access_token'})
-  if res and err then
+  if err then
     ngx.log(ngx.WARN, 'token introspection error: ', err, ' url: ', self.introspection_url)
     return { active = false }
   end
 
   if res.status == 200 then
-    local token_info = cjson.decode(res.body)
+    local token_info, decode_err = cjson.decode(res.body)
+    if decode_err then
+      ngx.log(ngx.ERR, 'failed to parse token introspection response:', decode_err)
+      return { active = false }
+    end
     return token_info
   else
     ngx.log(ngx.WARN, 'failed to execute token introspection. status: ', res.status)

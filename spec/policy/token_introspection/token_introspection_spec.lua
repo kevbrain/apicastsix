@@ -21,7 +21,7 @@ describe("token introspection policy", function()
       }
     end)
 
-    it('execute token introspection success', function()
+    it('success with valid token', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
         client = test_backend,
@@ -49,7 +49,7 @@ describe("token introspection policy", function()
       token_policy:access(context)
     end)
 
-    it('execute token introspection failed', function()
+    it('failed with invalid token', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
         client = test_backend,
@@ -78,12 +78,10 @@ describe("token introspection policy", function()
 
       local token_policy = require('apicast.policy.token_introspection').new(policy_config)
       token_policy:access(context)
-      assert.same(ngx.status, 403)
-      assert.stub(ngx.say).was.called_with("auth failed")
-      assert.stub(ngx.exit).was.called_with(403)
+      assert_authentication_failed()
     end)
 
-    it('execute token introspection request failed', function()
+    it('failed with bad status code', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
         client = test_backend,
@@ -109,10 +107,45 @@ describe("token introspection policy", function()
 
       local token_policy = require('apicast.policy.token_introspection').new(policy_config)
       token_policy:access(context)
+      assert_authentication_failed()
+    end)
+
+    it('failed with bad response', function()
+      local introspection_url = "http://example/token/introspection"
+      local policy_config = {
+        client = test_backend,
+        introspection_url = introspection_url,
+        client_id = "client",
+        client_secret = "secret"
+      }
+
+      test_backend
+        .expect{
+
+          url = introspection_url,
+          method = 'POST',
+          body = 'token='..test_access_token..'&token_type_hint=access_token',
+          headers = {
+            ['Authorization'] = test_basic_auth
+          }
+        }
+        .respond_with{
+          status = 200,
+          body = "<html></html>"
+        }
+      stub(ngx, 'say')
+      stub(ngx, 'exit')
+
+      local token_policy = require('apicast.policy.token_introspection').new(policy_config)
+      token_policy:access(context)
+      assert_authentication_failed()
+    end)
+
+    function assert_authentication_failed()
       assert.same(ngx.status, 403)
       assert.stub(ngx.say).was.called_with("auth failed")
       assert.stub(ngx.exit).was.called_with(403)
-    end)
+    end
 
     after_each(function()
       test_backend.verify_no_outstanding_expectations()

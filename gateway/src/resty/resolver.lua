@@ -140,7 +140,8 @@ function _M.parse_nameservers(path)
 
     local server = match(line, '^nameserver%s+([^%s]+)')
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
-    if server and server ~= resolver then
+    --       meanwhile assuming default port 53.
+    if server and format("%s:%s", server, default_resolver_port) ~= tostring(resolver) then
       insert(nameservers, nameserver.new(server))
     end
   end

@@ -237,3 +237,10 @@ The path to the key of the client SSL certificate.
 
 Path to a file with passphrases for the SSL cert keys specified with
 `APICAST_PROXY_HTTPS_CERTIFICATE_KEY`.
+
+### `APICAST_WORKERS`
+
+**Default:** auto  
+**Values:** _number_ | auto
+
+This is the value that will be used in the nginx `worker_processes` [directive](http://nginx.org/en/docs/ngx_core_module.html#worker_processes). By default, APIcast uses `auto`, except for the development environment where `1` is used.

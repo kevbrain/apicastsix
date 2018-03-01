@@ -12,7 +12,9 @@ describe('URL rewriting policy', function()
 
     it('can rewrite URLs using sub', function()
       local config_with_sub = {
-        { op = 'sub', regex = 'to_be_replaced', replace = 'new' }
+        commands = {
+          { op = 'sub', regex = 'to_be_replaced', replace = 'new' }
+        }
       }
       local url_rewriting = URLRewriting.new(config_with_sub)
 
@@ -24,7 +26,9 @@ describe('URL rewriting policy', function()
 
     it('can rewrite URLs using gsub', function()
       local config_with_gsub = {
-        { op = 'gsub', regex = 'to_be_replaced', replace = 'new' }
+        commands = {
+          { op = 'gsub', regex = 'to_be_replaced', replace = 'new' }
+        }
       }
       local url_rewriting = URLRewriting.new(config_with_gsub)
 
@@ -35,9 +39,11 @@ describe('URL rewriting policy', function()
 
     it('applies the commands in order', function()
       local config_with_several_ops = {
-        { op = 'gsub', regex = 'to_be_replaced', replace = 'abc' },
-        { op = 'gsub', regex = 'abc', replace = 'def' },
-        { op = 'gsub', regex = 'def', replace = 'ghi' }
+        commands = {
+          { op = 'gsub', regex = 'to_be_replaced', replace = 'abc' },
+          { op = 'gsub', regex = 'abc', replace = 'def' },
+          { op = 'gsub', regex = 'def', replace = 'ghi' }
+        }
       }
       local url_rewriting = URLRewriting.new(config_with_several_ops)
 
@@ -48,8 +54,10 @@ describe('URL rewriting policy', function()
 
     it('when there is a break, stops at the first match', function()
       local config_with_break = {
-        { op = 'gsub', regex = 'to_be_replaced', replace = 'abc', ['break'] = '1' },
-        { op = 'gsub', regex = 'abc', replace = 'def' } -- Not applied
+        commands = {
+          { op = 'gsub', regex = 'to_be_replaced', replace = 'abc', ['break'] = '1' },
+          { op = 'gsub', regex = 'abc', replace = 'def' } -- Not applied
+        }
       }
       local url_rewriting = URLRewriting.new(config_with_break)
 
@@ -60,7 +68,9 @@ describe('URL rewriting policy', function()
 
     it('accepts options for the regexes, same as ngx.req.{sub, gsub}', function()
       local config_with_regex_opts = {
-        { op = 'gsub', regex = 'TO_BE_REPLACED', replace = 'new', options = 'i' }
+        commands = {
+          { op = 'gsub', regex = 'TO_BE_REPLACED', replace = 'new', options = 'i' }
+        }
       }
       local url_rewriting = URLRewriting.new(config_with_regex_opts)
 

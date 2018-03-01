@@ -8,7 +8,7 @@
   "configuration": {
     "type": "object",
     "properties": {
-      "introspectionUrl": {
+      "introspection_url": {
         "description": "Introspection Endpoint URL",
         "type": "string"
       },

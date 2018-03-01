@@ -12,11 +12,11 @@
         "description": "Introspection Endpoint URL",
         "type": "string"
       },
-      "clientId": {
-        "description": "Clilent ID for the Token Introspection Endpoint",
+      "client_id": {
+        "description": "Client ID for the Token Introspection Endpoint",
         "type": "string"
       },
-      "clientSecret": {
+      "client_secret": {
         "description": "Client Secret for the Token Introspection Endpoint",
         "type": "string"
       }

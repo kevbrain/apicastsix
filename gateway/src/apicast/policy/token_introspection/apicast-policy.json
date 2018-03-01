@@ -1,0 +1,25 @@
+{
+  "$schema": "http://apicast.io/poolicy-v1/schema#manifest#",
+  "name": "oauth2 token introspection policy",
+  "description": 
+  ["This policy executes OAuth 2.0 Token Introspection",
+   "(https://tools.ietf.org/html/rfc7662) for every API calls."],
+  "version": "builtin",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "introspection_url": {
+        "description": "Introspection Endpoint URL",
+        "type": "string"
+      },
+      "client_id": {
+        "description": "Client ID for the Token Introspection Endpoint",
+        "type": "string"
+      },
+      "client_secret": {
+        "description": "Client Secret for the Token Introspection Endpoint",
+        "type": "string"
+      }
+    }
+  }
+}

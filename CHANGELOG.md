@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Added
 
 - New property `summary` in the policy manifests [PR #633](https://github.com/3scale/apicast/pull/633)
+- OAuth2.0 Token Introspection policy [PR #619](https://github.com/3scale/apicast/pull/619)
 
 ## Fixed
 

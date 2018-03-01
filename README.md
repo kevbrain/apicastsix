@@ -164,10 +164,6 @@ make help
 # Contributing
 For details on how to contribute to this repo see [CONTRIBUTING](.github/CONTRIBUTING.md)
 
-
-# Contributing
-For details on how to contribute to this repo see [CONTRIBUTING](.github/CONTRIBUTING.md)
-
 # Releasing
 
 To build a release run:

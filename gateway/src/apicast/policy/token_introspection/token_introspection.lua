@@ -14,12 +14,15 @@ function _M.new(config)
   self.config = config or {}
   --- authorization for the token introspection endpoint.
   -- https://tools.ietf.org/html/rfc7662#section-2.2
-  self.credential = 'Basic ' .. ngx.encode_base64(table.concat({ self.config.client_id or '', self.config.client_secret or '' }, ':'))
+  local credential = 'Basic ' .. ngx.encode_base64(table.concat({ self.config.client_id or '', self.config.client_secret or '' }, ':'))
   self.introspection_url = config.introspection_url
   self.http_client = http_ng.new{
     backend = config.client,
     options = {
-      header = { ['User-Agent'] = user_agent() },
+      headers = { 
+        ['User-Agent'] = user_agent(),
+        ['Authorization'] = credential
+      },
       ssl = { verify = resty_env.enabled('OPENSSL_VERIFY') }
     }
   }
@@ -29,14 +32,9 @@ end
 --- OAuth 2.0 Token Introspection defined in RFC7662.
 -- https://tools.ietf.org/html/rfc7662
 local function introspect_token(self, token)
-  local opts = {
-    headers = {
-      ['Authorization'] = self.credential
-    }
-  }
   --- Parameters for the token introspection endpoint.
   -- https://tools.ietf.org/html/rfc7662#section-2.1
-  local res, err = self.http_client.post(self.introspection_url , { token = token, token_type_hint = 'access_token'}, opts)
+  local res, err = self.http_client.post(self.introspection_url , { token = token, token_type_hint = 'access_token'})
   if res and err then
     ngx.log(ngx.WARN, 'token introspection error: ', err, ' url: ', self.introspection_url)
     return { active = false }

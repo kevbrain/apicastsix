@@ -9,6 +9,12 @@ describe("token introspection policy", function()
     local test_client_secret = "secret"
     local test_basic_auth = 'Basic '..ngx.encode_base64(test_client_id..':'..test_client_secret)
 
+    local function assert_authentication_failed()
+      assert.same(ngx.status, 403)
+      assert.stub(ngx.say).was.called_with("auth failed")
+      assert.stub(ngx.exit).was.called_with(403)
+    end
+
     before_each(function()
       test_backend = test_backend_client.new()
       ngx.var = {}
@@ -140,12 +146,6 @@ describe("token introspection policy", function()
       token_policy:access(context)
       assert_authentication_failed()
     end)
-
-    function assert_authentication_failed()
-      assert.same(ngx.status, 403)
-      assert.stub(ngx.say).was.called_with("auth failed")
-      assert.stub(ngx.exit).was.called_with(403)
-    end
 
     after_each(function()
       test_backend.verify_no_outstanding_expectations()

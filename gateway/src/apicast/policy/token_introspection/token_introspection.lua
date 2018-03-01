@@ -19,7 +19,7 @@ function _M.new(config)
   self.http_client = http_ng.new{
     backend = config.client,
     options = {
-      headers = { 
+      headers = {
         ['User-Agent'] = user_agent(),
         ['Authorization'] = credential
       },

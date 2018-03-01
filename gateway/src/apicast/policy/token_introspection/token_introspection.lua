@@ -42,11 +42,12 @@ local function introspect_token(self, token)
 
   if res.status == 200 then
     local token_info, decode_err = cjson.decode(res.body)
-    if decode_err then
+    if type(token_info) == 'table' then
+      return token_info
+    else 
       ngx.log(ngx.ERR, 'failed to parse token introspection response:', decode_err)
       return { active = false }
     end
-    return token_info
   else
     ngx.log(ngx.WARN, 'failed to execute token introspection. status: ', res.status)
     return { active = false }
@@ -59,7 +60,7 @@ function _M:access(context)
     local access_token = authorization.token
     --- Introspection Response must have an "active" boolean value.
     -- https://tools.ietf.org/html/rfc7662#section-2.2
-    if not introspect_token(self, access_token).active then
+    if not introspect_token(self, access_token).active == true then
       ngx.status = context.service.auth_failed_status
       ngx.say(context.service.error_auth_failed)
       return ngx.exit(ngx.status)

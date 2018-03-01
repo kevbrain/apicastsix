@@ -116,7 +116,7 @@ describe("token introspection policy", function()
       assert_authentication_failed()
     end)
 
-    it('failed with bad response', function()
+    it('failed with null response', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
         client = test_backend,
@@ -127,7 +127,36 @@ describe("token introspection policy", function()
 
       test_backend
         .expect{
+          url = introspection_url,
+          method = 'POST',
+          body = 'token='..test_access_token..'&token_type_hint=access_token',
+          headers = {
+            ['Authorization'] = test_basic_auth
+          }
+        }
+        .respond_with{
+          status = 200,
+          body = 'null'
+        }
+      stub(ngx, 'say')
+      stub(ngx, 'exit')
 
+      local token_policy = require('apicast.policy.token_introspection').new(policy_config)
+      token_policy:access(context)
+      assert_authentication_failed()
+    end)
+
+    it('failed with bad contents type', function()
+      local introspection_url = "http://example/token/introspection"
+      local policy_config = {
+        client = test_backend,
+        introspection_url = introspection_url,
+        client_id = "client",
+        client_secret = "secret"
+      }
+
+      test_backend
+        .expect{
           url = introspection_url,
           method = 'POST',
           body = 'token='..test_access_token..'&token_type_hint=access_token',

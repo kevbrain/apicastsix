@@ -52,7 +52,7 @@ describe('CORS policy', function()
 
       it('sets those headers', function()
         local policy_config = {
-          allow_headers = 'Content-Type',
+          allow_headers = { 'Content-Type' },
           allow_methods = { 'GET', 'POST' },
           allow_origin = '*',
           allow_credentials = true

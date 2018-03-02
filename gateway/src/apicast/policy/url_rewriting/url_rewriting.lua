@@ -58,12 +58,12 @@ end
 --     the URL, it will be the last command applied.
 function _M.new(config)
   local self = new()
-  self.config = config or {}
+  self.commands = (config and config.commands) or {}
   return self
 end
 
 function _M:rewrite()
-  for _, command in ipairs(self.config) do
+  for _, command in ipairs(self.commands) do
     local rewritten = apply_rewrite_command(command)
 
     if rewritten and command['break'] then

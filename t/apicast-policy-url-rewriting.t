@@ -29,10 +29,11 @@ __DATA__
           { "name": "apicast.policy.apicast" },
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "sub", "regex": "original", "replace": "new" }
               ]
+            }
           }
         ]
       }
@@ -78,10 +79,11 @@ yay, api backend
           { "name": "apicast.policy.apicast" },
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "gsub", "regex": "original", "replace": "new" }
               ]
+            }
           }
         ]
       }
@@ -128,12 +130,13 @@ Substitutions are applied in the order specified.
           { "name": "apicast.policy.apicast" },
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "gsub", "regex": "aaa", "replace": "bbb", "options": "i" },
                 { "op": "sub", "regex": "bbb", "replace": "ccc" },
                 { "op": "sub", "regex": "ccc", "replace": "ddd" }
               ]
+            }
           }
         ]
       }
@@ -182,13 +185,14 @@ We need to test 2 things:
           { "name": "apicast.policy.apicast" },
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "sub", "regex": "does_not_match", "replace": "a", "break": true },
                 { "op": "sub", "regex": "aaa", "replace": "bbb" },
                 { "op": "sub", "regex": "bbb", "replace": "ccc", "break": true },
                 { "op": "sub", "regex": "ccc", "replace": "ddd" }
               ]
+            }
           }
         ]
       }
@@ -236,10 +240,11 @@ rules.
         "policy_chain": [
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "sub", "regex": "original", "replace": "new" }
               ]
+            }
           },
           { "name": "apicast.policy.apicast" }
         ]

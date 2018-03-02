@@ -55,7 +55,7 @@ describe('URL rewriting policy', function()
     it('when there is a break, stops at the first match', function()
       local config_with_break = {
         commands = {
-          { op = 'gsub', regex = 'to_be_replaced', replace = 'abc', ['break'] = '1' },
+          { op = 'gsub', regex = 'to_be_replaced', replace = 'abc', ['break'] = true },
           { op = 'gsub', regex = 'abc', replace = 'def' } -- Not applied
         }
       }

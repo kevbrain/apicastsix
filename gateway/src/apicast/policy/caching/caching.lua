@@ -98,7 +98,7 @@ end
 -- @tparam[opt] table config
 -- @field caching_type Caching type (strict, resilient, allow, none)
 function _M.new(config)
-  local self = new()
+  local self = new(config)
   self.cache_handler = handler(config or {})
   return self
 end

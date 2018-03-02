@@ -57,7 +57,7 @@ end
 --   - break[opt]: defaults to false. When set to true, if the command rewrote
 --     the URL, it will be the last command applied.
 function _M.new(config)
-  local self = new()
+  local self = new(config)
   self.commands = (config and config.commands) or {}
   return self
 end

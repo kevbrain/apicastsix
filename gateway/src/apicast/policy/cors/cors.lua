@@ -25,7 +25,7 @@ local new = _M.new
 -- @field[opt] allow_origin Allowed origins (e.g. 'http://example.com', '*')
 -- @field[opt] allow_credentials Boolean
 function _M.new(config)
-  local self = new()
+  local self = new(config)
   self.config = config or {}
   return self
 end

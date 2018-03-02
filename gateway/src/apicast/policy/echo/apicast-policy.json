@@ -18,11 +18,11 @@
         "type": "string",
         "oneOf": [
           {
-            "const": "request",
+            "enum": ["request"],
             "description": "Interrupts the processing of the request."
           },
           {
-            "const": "set",
+            "enum": ["set"],
             "description": "Only skips the rewrite phase."
           }
         ]

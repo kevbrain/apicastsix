@@ -27,19 +27,19 @@
         "type": "string",
         "oneOf": [
           {
-            "const": "resilient",
+            "enum": ["resilient"],
             "description": "Authorize according to last request when backend is down."
           },
           {
-            "const": "strict",
+            "enum": ["strict"],
             "description": "It only caches authorized calls."
           },
           {
-            "const": "allow",
+            "enum": ["allow"],
             "description": "When backend is down, allow everything unless seen before and denied."
           },
           {
-            "const": "none",
+            "enum": ["none"],
             "description": "Disables caching."
           }
         ]

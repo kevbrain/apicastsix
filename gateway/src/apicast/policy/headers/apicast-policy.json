@@ -22,15 +22,15 @@
               "type": "string",
               "oneOf": [
                 {
-                  "const": "add",
+                  "enum": ["add"],
                   "description": "Adds a value to an existing header."
                 },
                 {
-                  "const": "set",
+                  "enum": ["set"],
                   "description": "Creates the header when not set, replaces its value when set."
                 },
                 {
-                  "const": "push",
+                  "enum": ["push"],
                   "description": "Creates the header when not set, adds the value when set."
                 }
               ]

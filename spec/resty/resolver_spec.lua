@@ -164,6 +164,25 @@ describe('resty.resolver', function()
       tmpname = io.tmpfile()
 
       tmpname:write([[
+search localdomain.example.com local
+nameserver 127.0.0.2
+nameserver 127.0.0.1
+]])
+    end)
+
+    it('returns nameserver tuples', function()
+      local nameservers = resty_resolver.parse_nameservers(tmpname)
+
+      assert.equal(2, #nameservers)
+      assert.same({ '127.0.0.2', 53 }, nameservers[1])
+      assert.same({ '127.0.0.1', 53 }, nameservers[2])
+    end)
+
+    it('returns nameserver tuples ignoring commentaries', function()
+
+      local resolvconf = io.tmpfile()
+
+      resolvconf:write([[
 # nameserver updated  in comentary
 #nameserver updated  in comentary
 #comentary nameserver 1.2.3.4
@@ -176,13 +195,28 @@ search localdomain.example.com local
 nameserver 127.0.0.2
 nameserver 127.0.0.1
 ]])
-    end)
 
-    it('returns nameserver touples', function()
-      local nameservers = resty_resolver.parse_nameservers(tmpname)
+      local nameservers = resty_resolver.parse_nameservers(resolvconf)
 
       assert.equal(2, #nameservers)
-      assert.same({ '127.0.0.2', 53 }, nameservers[1])
+      assert.same({ '127.0.0.2', 53 },  nameservers[1])
+      assert.same({ '127.0.0.1', 53 }, nameservers[2])
+    end)
+
+    it('returns nameserver touples ignoring commentaries after nameserver and search', function()
+
+      local resolvconf = io.tmpfile()
+
+      resolvconf:write([[
+search localdomain.example.com local #search nameserver
+nameserver 127.0.0.2 #search nameserver
+nameserver 127.0.0.1 # nameserver search
+]])
+
+      local nameservers = resty_resolver.parse_nameservers(resolvconf)
+
+      assert.equal(2, #nameservers)
+      assert.same({ '127.0.0.2', 53 },  nameservers[1])
       assert.same({ '127.0.0.1', 53 }, nameservers[2])
     end)
 
@@ -194,7 +228,7 @@ nameserver 127.0.0.1
       assert.same({ '127.0.0.1', 53 }, nameservers[1])
       assert.same({ '127.0.0.2', 53 }, nameservers[2])
     end)
-    
+
     it('returns search domains', function()
       local search = resty_resolver.parse_nameservers(tmpname).search
 

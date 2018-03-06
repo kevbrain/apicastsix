@@ -124,15 +124,16 @@ function _M.parse_nameservers(path)
     -- see https://github.com/3scale/apicast/issues/321 for more details
     insert(nameservers, resolver)
   end
-  
+
   for _,line in ipairs(re.split(resolv_conf, "\n+")) do
-    
+
     local domains = match(line, '^search%s+([^\n]+)')
-    
+
     if domains then
       ngx.log(ngx.DEBUG, 'search ', domains)
 
       for domain in gmatch(domains or '', '([^%s]+)') do
+        if match(domain, '^%#') then break end
         ngx.log(ngx.DEBUG, 'search domain: ', domain)
         insert(search, domain)
       end

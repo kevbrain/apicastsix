@@ -44,9 +44,9 @@ apicast-source: ## Create Docker Volume container with APIcast source code
 	docker create --rm -v /opt/app-root/src --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
 	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app-root/src
 
-
+BUSTED_FILES ?=
 busted: dependencies $(ROVER) ## Test Lua.
-	@$(ROVER) exec bin/busted
+	@$(ROVER) exec bin/busted $(BUSTED_FILES)
 	@- luacov
 
 nginx:

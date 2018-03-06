@@ -44,9 +44,9 @@ nameservers: 3 127.0.1.15353 1.2.3.453 4.5.6.753
 #search updated  in comentary
 #search nameserver 1.2.3.4
 #search nameserver
-search localdomain.example.com local
-nameserver 1.2.3.4
-nameserver 4.5.6.7
+search localdomain.example.com local #search nameserver
+nameserver 1.2.3.4  #search nameserver
+nameserver 4.5.6.7  #nameserver search
 
 
 === TEST 2: uses upstream peers

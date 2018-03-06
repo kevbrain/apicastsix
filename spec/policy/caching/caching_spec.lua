@@ -24,16 +24,6 @@ describe('Caching policy', function()
       ctx.cache_handler(cache, 'a_key', { status = 200 }, nil)
       assert.is_nil(cache:get('a_key'))
     end)
-
-    it('disables caching when invalid caching type is specified', function()
-      local config = { caching_type = 'invalid_caching_type' }
-      local caching_policy = require('apicast.policy.caching').new(config)
-      local ctx = {}
-      caching_policy:rewrite(ctx)
-
-      ctx.cache_handler(cache, 'a_key', { status = 200 }, nil)
-      assert.is_nil(cache:get('a_key'))
-    end)
   end)
 
   describe('.access', function()

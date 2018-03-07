@@ -40,6 +40,15 @@ do
   end
 end
 
+-- Returns true if config validation has been enabled via ENV or if we are
+-- running Test::Nginx integration tests. We know that the framework always
+-- sets TEST_NGINX_BINARY so we can use it to detect whether we are running the
+-- tests.
+local function policy_config_validation_is_enabled()
+  return resty_env.enabled('APICAST_VALIDATE_POLICY_CONFIGS')
+    or resty_env.value('TEST_NGINX_BINARY')
+end
+
 local function read_manifest(path)
   local handle = io.open(format('%s/%s', path, 'apicast-policy.json'))
 
@@ -131,7 +140,11 @@ function _M:call(name, version, dir)
   -- it should load only policies and not other code and fail if there is no such policy
   local res = loader('init', true)
 
-  return with_config_validator(res, policy_config_schema)
+  if policy_config_validation_is_enabled() then
+    return with_config_validator(res, policy_config_schema)
+  else
+    return res
+  end
 end
 
 function _M:pcall(name, version, dir)

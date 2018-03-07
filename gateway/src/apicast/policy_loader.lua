@@ -14,6 +14,8 @@ local insert = table.insert
 local setmetatable = setmetatable
 local pcall = pcall
 
+local policy_config_validator = require('apicast.policy_config_validator')
+
 local _M = {}
 
 local resty_env = require('resty.env')
@@ -36,6 +38,15 @@ do
   function _M.builtin_policy_load_path()
     return resty_env.value('APICAST_BUILTIN_POLICY_LOAD_PATH') or format('%s/src/apicast/policy', apicast_dir())
   end
+end
+
+-- Returns true if config validation has been enabled via ENV or if we are
+-- running Test::Nginx integration tests. We know that the framework always
+-- sets TEST_NGINX_BINARY so we can use it to detect whether we are running the
+-- tests.
+local function policy_config_validation_is_enabled()
+  return resty_env.enabled('APICAST_VALIDATE_POLICY_CONFIGS')
+    or resty_env.value('TEST_NGINX_BINARY')
 end
 
 local function read_manifest(path)
@@ -71,35 +82,55 @@ local function load_manifest(name, version, path)
   return nil, lua_load_path(path)
 end
 
+local function with_config_validator(policy, policy_config_schema)
+  local original_new = policy.new
+
+  local new_with_validator = function(config)
+    local is_valid, err = policy_config_validator.validate_config(
+      config, policy_config_schema)
+
+    if not is_valid then
+      error(format('Invalid config for policy: %s', err))
+    end
+
+    return original_new(config)
+  end
+
+  return setmetatable(
+    { new = new_with_validator },
+    { __index = policy }
+  )
+end
+
 function _M:load_path(name, version, paths)
   local failures = {}
 
   for _, path in ipairs(paths or self.policy_load_paths()) do
-    local ok, load_path = load_manifest(name, version, format('%s/%s/%s', path, name, version) )
+    local manifest, load_path = load_manifest(name, version, format('%s/%s/%s', path, name, version) )
 
-    if ok then
-      return load_path
+    if manifest then
+      return load_path, manifest.configuration
     else
       insert(failures, load_path)
     end
   end
 
   if version == 'builtin' then
-    local ok, load_path = load_manifest(name, version, format('%s/%s', self.builtin_policy_load_path(), name) )
+    local manifest, load_path = load_manifest(name, version, format('%s/%s', self.builtin_policy_load_path(), name) )
 
-    if ok then
-      return load_path
+    if manifest then
+      return load_path, manifest.configuration
     else
       insert(failures, load_path)
     end
   end
 
-  return nil, failures
+  return nil, nil, failures
 end
 
 function _M:call(name, version, dir)
   local v = version or 'builtin'
-  local load_path, invalid_paths = self:load_path(name, v, dir)
+  local load_path, policy_config_schema, invalid_paths = self:load_path(name, v, dir)
 
   local loader = sandbox.new(load_path and { load_path } or invalid_paths)
 
@@ -107,7 +138,13 @@ function _M:call(name, version, dir)
 
   -- passing the "exclusive" flag for the require so it does not fallback to native require
   -- it should load only policies and not other code and fail if there is no such policy
-  return loader('init', true)
+  local res = loader('init', true)
+
+  if policy_config_validation_is_enabled() then
+    return with_config_validator(res, policy_config_schema)
+  else
+    return res
+  end
 end
 
 function _M:pcall(name, version, dir)

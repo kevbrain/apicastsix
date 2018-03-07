@@ -23,11 +23,11 @@
               "type": "string",
               "oneOf": [
                 {
-                  "const": "sub",
+                  "enum": ["sub"],
                   "description": "Substitutes the first match of the regex applied."
                 },
                 {
-                  "const": "gsub",
+                  "enum": ["gsub"],
                   "description": "Substitutes all the matches of the regex applied."
                 }
               ]

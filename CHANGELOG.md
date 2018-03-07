@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - New property `summary` in the policy manifests [PR #633](https://github.com/3scale/apicast/pull/633)
 - OAuth2.0 Token Introspection policy [PR #619](https://github.com/3scale/apicast/pull/619)
+- New `metrics` phase that runs when prometheus is collecting metrics [PR #629](https://github.com/3scale/apicast/pull/629)
+- Validation of policy configs both in integration and unit tests [PR #646](https://github.com/3scale/apicast/pull/646)
 
 ## Fixed
 
@@ -18,10 +20,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Avoid `nameserver` repetion from `RESOLVER` variable and `resolv.conf` file [PR #636](https://github.com/3scale/apicast/pull/636)
 - Bug in URL rewriting policy that ignored the `commands` attribute in the policy manifest [PR #641](https://github.com/3scale/apicast/pull/641)
 - Skip comentaries after `search` values in resolv.conf [PR #635](https://github.com/3scale/apicast/pull/635)
-
-## Added
-
-- New `metrics` phase that runs when prometheus is collecting metrics [PR #629](https://github.com/3scale/apicast/pull/629)
 
 ## [3.2.0-beta1] - 2018-02-20
 

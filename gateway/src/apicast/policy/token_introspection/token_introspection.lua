@@ -10,7 +10,7 @@ local resty_env = require('resty.env')
 local new = _M.new
 
 function _M.new(config)
-  local self = new()
+  local self = new(config)
   self.config = config or {}
   --- authorization for the token introspection endpoint.
   -- https://tools.ietf.org/html/rfc7662#section-2.2

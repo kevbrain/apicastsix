@@ -1,0 +1,24 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "rate limiting to service policy",
+  "description": 
+  ["This policy adds rate limiting to the entire Service."],
+  "version": "builtin",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "limit": {
+        "description": "Limit",
+        "type": "integer"
+      },
+      "period": {
+        "description": "Period (second)",
+        "type": "integer"
+      },
+      "service_name": {
+        "description": "Service name (Redis key)",
+        "type": "string"
+      }
+    }
+  }
+}

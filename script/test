@@ -5,11 +5,15 @@ PROJECT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 ROVER="/usr/local/openresty/luajit/bin/rover"
 
 function run_busted_tests {
+    sudo cp -R /tmp/lua_modules .
+
     cd "${PROJECT_PATH}" || exit; ${ROVER} exec ./bin/busted
 }
 
 function run_nginx_unit_tests {
     cd "${PROJECT_PATH}" || exit
+
+    sudo cp -R /tmp/lua_modules .
 
     sudo TEST_NGINX_APICAST_PATH="${PROJECT_PATH}/gateway" \
          TEST_NGINX_BINARY=openresty \

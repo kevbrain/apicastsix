@@ -161,6 +161,26 @@ To see additional test targets (such as testing produced Docker images) use:
 make help
 ```
 
+## Development using Docker
+
+This option requires a single step:
+
+```shell
+make development
+```
+
+That will create a Docker container and run bash inside it. This command will
+take care of installing all dependencies.
+
+The project's source code will be available in the container and sync'ed with
+your local `apicast` directory, so you can edit files in your preferred
+environment and still be able to run whatever you need inside the Docker container.
+
+To run the tests inside the container, just run:
+```shell
+script/test
+```
+
 # Contributing
 For details on how to contribute to this repo see [CONTRIBUTING](.github/CONTRIBUTING.md)
 

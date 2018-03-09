@@ -25,6 +25,8 @@ COPY Makefile ${USER_HOME}
 WORKDIR ${USER_HOME}
 
 RUN make dependencies
+RUN mv lua_modules /tmp/lua_modules
+
 RUN cpanm --installdeps ./gateway
 
 COPY . ${USER_HOME}

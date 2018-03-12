@@ -88,7 +88,7 @@ When configured to authenticate using OAuth, this param specifies the TTL (in se
 - `true` or `1` for _true_
 - `false`, `0` or empty for _false_
 
-When this parameter is set to _true_, the gateway will use path-based routing instead of the default host-based routing.
+When this parameter is set to _true_, the gateway will use path-based routing in addition to the default host-based routing. The API request will be routed to the first service that has a matching mapping rule, from the list of services for which the value of the `Host` header of the request matches the _Public Base URL_.
 
 ### `APICAST_POLICY_LOAD_PATH`
 

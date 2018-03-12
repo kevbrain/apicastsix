@@ -110,10 +110,15 @@ local function openresty_binary(candidates)
 end
 
 local function build_env(options, config, context)
+    local configuration_cache = options.cache or context.configuration_cache
+    if configuration_cache then -- Avoid calling tostring() on nil, would return "nil".
+        configuration_cache = tostring(configuration_cache)
+    end
+
     return {
         APICAST_CONFIGURATION = options.configuration or context.configuration,
         APICAST_CONFIGURATION_LOADER = tostring(options.configuration_loader or context.configuration_loader or 'lazy'),
-        APICAST_CONFIGURATION_CACHE = tostring(options.cache or context.configuration_cache or 0),
+        APICAST_CONFIGURATION_CACHE = configuration_cache,
         THREESCALE_DEPLOYMENT_ENV = context.configuration_channel or options.channel or config.name,
         APICAST_POLICY_LOAD_PATH = concat(options.policy_load_path or context.policy_load_path, ':'),
     }

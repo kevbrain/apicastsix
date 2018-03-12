@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Avoid `nameserver` repetion from `RESOLVER` variable and `resolv.conf` file [PR #636](https://github.com/3scale/apicast/pull/636)
 - Bug in URL rewriting policy that ignored the `commands` attribute in the policy manifest [PR #641](https://github.com/3scale/apicast/pull/641)
 - Skip comentaries after `search` values in resolv.conf [PR #635](https://github.com/3scale/apicast/pull/635)
+- Bug that prevented using `CONFIGURATION_CACHE_LOADER=boot` without specifying `APICAST_CONFIGURATION_CACHE` in staging [PR #651](https://github.com/3scale/apicast/pull/651).
 
 ## [3.2.0-beta1] - 2018-02-20
 

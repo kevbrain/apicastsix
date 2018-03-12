@@ -60,7 +60,7 @@ end
 _M.mock = mock_loader.save
 
 local function ttl()
-  return tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10)
+  return tonumber(env.value('APICAST_CONFIGURATION_CACHE') or 0, 10)
 end
 
 function _M.global(contents)
@@ -121,7 +121,7 @@ end
 
 local boot = {
   rewrite = noop,
-  ttl = function() return tonumber(env.get('APICAST_CONFIGURATION_CACHE'), 10) end
+  ttl = function() return tonumber(env.value('APICAST_CONFIGURATION_CACHE'), 10) end
 }
 
 function boot.init(configuration)
@@ -135,7 +135,7 @@ function boot.init(configuration)
     os.exit(1)
   end
 
-  if ttl() == 0 then
+  if boot.ttl() == 0 then
     ngx.log(ngx.EMERG, 'cache is off, cannot store configuration, exiting')
     os.exit(0)
   end
@@ -153,7 +153,7 @@ local function refresh_configuration(configuration)
 end
 
 function boot.init_worker(configuration)
-  local interval = ttl() or 0
+  local interval = boot.ttl() or 0
 
   local function schedule(...)
     local ok, err = ngx.timer.at(...)

@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Bug in URL rewriting policy that ignored the `commands` attribute in the policy manifest [PR #641](https://github.com/3scale/apicast/pull/641)
 - Skip comentaries after `search` values in resolv.conf [PR #635](https://github.com/3scale/apicast/pull/635)
 
+
+## Changed
+
+- `summary` is now required in policy manifests [PR #655](https://github.com/3scale/apicast/pull/655)
+
 ## [3.2.0-beta1] - 2018-02-20
 
 ## Added

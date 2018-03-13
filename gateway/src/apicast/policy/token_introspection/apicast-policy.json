@@ -1,9 +1,10 @@
 {
   "$schema": "http://apicast.io/poolicy-v1/schema#manifest#",
   "name": "oauth2 token introspection policy",
+  "summary": "Configures OAuth 2.0 Token Introspection.",
   "description": 
-  ["This policy executes OAuth 2.0 Token Introspection",
-   "(https://tools.ietf.org/html/rfc7662) for every API calls."],
+  ["This policy executes OAuth 2.0 Token Introspection ",
+   "(https://tools.ietf.org/html/rfc7662) for every API call."],
   "version": "builtin",
   "configuration": {
     "type": "object",

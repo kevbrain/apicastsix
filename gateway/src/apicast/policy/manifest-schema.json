@@ -64,5 +64,5 @@
       "$ref": "#/definitions/schema"
     }
   },
-  "required": ["name", "version", "configuration"]
+  "required": ["name", "version", "configuration", "summary"]
 }

@@ -6,7 +6,7 @@ ldoc 1.4.6-2||development
 liquid 0.1.0-1||production
 ljsonschema 0.1.0-1||testing
 lua-resty-env 0.4.0-1||production
-lua-resty-execvp 0.1.0-1||production
+lua-resty-execvp 0.1.1-1||production
 lua-resty-http 0.12-0||production
 lua-resty-iputils 0.3.0-1||development
 lua-resty-jwt 0.1.11-0||production

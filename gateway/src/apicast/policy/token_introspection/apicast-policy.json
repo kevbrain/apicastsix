@@ -20,6 +20,14 @@
       "client_secret": {
         "description": "Client Secret for the Token Introspection Endpoint",
         "type": "string"
+      },
+      "max_ttl_tokens": {
+        "description": "Max TTL for cached tokens",
+        "type": "integer"
+      },
+      "max_cached_tokens": {
+        "description": "Max number of tokens to cache",
+        "type": "integer"
       }
     }
   }

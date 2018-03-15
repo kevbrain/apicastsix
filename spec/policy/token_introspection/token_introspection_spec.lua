@@ -1,3 +1,5 @@
+local TokenIntrospection = require('apicast.policy.token_introspection')
+
 local test_backend_client = require('resty.http_ng.backend.test')
 local cjson = require('cjson')
 describe("token introspection policy", function()
@@ -50,7 +52,7 @@ describe("token introspection policy", function()
               active = true
           })
         }
-      local token_policy = require('apicast.policy.token_introspection').new(policy_config)
+      local token_policy = TokenIntrospection.new(policy_config)
       token_policy.http_client.backend = test_backend
       token_policy:access(context)
     end)
@@ -81,7 +83,7 @@ describe("token introspection policy", function()
       stub(ngx, 'say')
       stub(ngx, 'exit')
 
-      local token_policy = require('apicast.policy.token_introspection').new(policy_config)
+      local token_policy = TokenIntrospection.new(policy_config)
       token_policy.http_client.backend = test_backend
       token_policy:access(context)
       assert_authentication_failed()
@@ -110,7 +112,7 @@ describe("token introspection policy", function()
       stub(ngx, 'say')
       stub(ngx, 'exit')
 
-      local token_policy = require('apicast.policy.token_introspection').new(policy_config)
+      local token_policy = TokenIntrospection.new(policy_config)
       token_policy.http_client.backend = test_backend
       token_policy:access(context)
       assert_authentication_failed()
@@ -140,7 +142,7 @@ describe("token introspection policy", function()
       stub(ngx, 'say')
       stub(ngx, 'exit')
 
-      local token_policy = require('apicast.policy.token_introspection').new(policy_config)
+      local token_policy = TokenIntrospection.new(policy_config)
       token_policy.http_client.backend = test_backend
       token_policy:access(context)
       assert_authentication_failed()
@@ -170,7 +172,7 @@ describe("token introspection policy", function()
       stub(ngx, 'say')
       stub(ngx, 'exit')
 
-      local token_policy = require('apicast.policy.token_introspection').new(policy_config)
+      local token_policy = TokenIntrospection.new(policy_config)
       token_policy.http_client.backend = test_backend
       token_policy:access(context)
       assert_authentication_failed()

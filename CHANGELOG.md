@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - OAuth2.0 Token Introspection policy [PR #619](https://github.com/3scale/apicast/pull/619)
 - New `metrics` phase that runs when prometheus is collecting metrics [PR #629](https://github.com/3scale/apicast/pull/629)
 - Validation of policy configs both in integration and unit tests [PR #646](https://github.com/3scale/apicast/pull/646)
+- Option to avoid refreshing the config when using the lazy loader with `APICAST_CONFIGURATION_CACHE` < 0 [PR #657](https://github.com/3scale/apicast/pull/657)
 
 ## Fixed
 

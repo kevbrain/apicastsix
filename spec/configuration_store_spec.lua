@@ -151,20 +151,24 @@ describe('Configuration Store', function()
 
     it('returns stale records by default', function()
       local store = configuration.new()
-      local service =  { id = '21', hosts = { 'example.com', 'localhost' } }
+      local service =  { id = '21', hosts = { 'example.com' } }
 
-      store:add(service, -1)
+      -- Can't add stale info with config.add. Need to do it through the
+      -- internals of the object.
+      store.cache:set('example.com', { service }, -1)
 
       assert.same({ service }, store:find_by_host('example.com'))
     end)
 
     it('does not return stale records when disabled', function()
       local store = configuration.new()
-      local service =  { id = '21', hosts = { 'example.com', 'localhost' } }
+      local service =  { id = '21', hosts = { 'example.com' } }
 
-      store:add(service, -1)
+      -- Can't add stale info with config.add. Need to do it through the
+      -- internals of the object.
+      store.cache:set('example.com', { service }, -1)
 
-      assert.same({ }, store:find_by_host('example.com', false))
+      assert.same({}, store:find_by_host('example.com', false))
     end)
 
     it('normalizes hosts to lowercase', function()

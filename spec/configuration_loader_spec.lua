@@ -57,7 +57,10 @@ insulate('Configuration object', function()
 
     it('returns false when configuration is stale', function()
       local config = configuration_store.new()
-      config:add({ id = 42, hosts = { 'example.com' } }, -1)
+
+      -- Can't add stale info with config.add. Need to do it through the
+      -- internals of the object.
+      config.cache:set('example.com', { { id = 42, hosts = { 'example.com' } } }, -1)
 
       assert.falsy(_M.configured(config, 'example.com'))
     end)

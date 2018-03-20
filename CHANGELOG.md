@@ -6,14 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## Added
+## [3.2.0-beta2] - 2018-03-19
+
+### Added
 
 - New property `summary` in the policy manifests [PR #633](https://github.com/3scale/apicast/pull/633)
 - OAuth2.0 Token Introspection policy [PR #619](https://github.com/3scale/apicast/pull/619)
 - New `metrics` phase that runs when prometheus is collecting metrics [PR #629](https://github.com/3scale/apicast/pull/629)
 - Validation of policy configs both in integration and unit tests [PR #646](https://github.com/3scale/apicast/pull/646)
 
-## Fixed
+### Fixed
 
 - Error loading policy chain configuration JSON with null value [PR #626](https://github.com/3scale/apicast/pull/626)
 - Splitted `resolv.conf` in lines,to avoid commented lines  [PR #618](https://github.com/3scale/apicast/pull/618)
@@ -23,7 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Bug that prevented using `CONFIGURATION_CACHE_LOADER=boot` without specifying `APICAST_CONFIGURATION_CACHE` in staging [PR #651](https://github.com/3scale/apicast/pull/651).
 - `typ` is verified when it's present in keycloak tokens [PR #658](https://github.com/3scale/apicast/pull/658)
 
-## Changed
+### Changed
 
 - `summary` is now required in policy manifests [PR #655](https://github.com/3scale/apicast/pull/655)
 
@@ -356,7 +358,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.2.0-beta1...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.2.0-beta2...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -373,3 +375,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.2.0-alpha1]: https://github.com/3scale/apicast/compare/v3.1.0...v3.2.0-alpha1
 [3.2.0-alpha2]: https://github.com/3scale/apicast/compare/v3.2.0-alpha1...v3.2.0-alpha2
 [3.2.0-beta1]: https://github.com/3scale/apicast/compare/v3.2.0-alpha2...v3.2.0-beta1
+[3.2.0-beta2]: https://github.com/3scale/apicast/compare/v3.2.0-beta1...v3.2.0-beta2

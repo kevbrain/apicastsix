@@ -1,1 +1,1 @@
-return "3.2.0-beta2"
+return "3.2.0-beta3"

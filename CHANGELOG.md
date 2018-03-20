@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `ljsonschema` is only used in testing but was required in production also [PR #660](https://github.com/3scale/apicast/pull/660)
+
 ## [3.2.0-beta2] - 2018-03-19
 
 ### Added

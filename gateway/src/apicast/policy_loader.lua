@@ -14,8 +14,6 @@ local insert = table.insert
 local setmetatable = setmetatable
 local pcall = pcall
 
-local policy_config_validator = require('apicast.policy_config_validator')
-
 local _M = {}
 
 local resty_env = require('resty.env')
@@ -47,6 +45,11 @@ end
 local function policy_config_validation_is_enabled()
   return resty_env.enabled('APICAST_VALIDATE_POLICY_CONFIGS')
     or resty_env.value('TEST_NGINX_BINARY')
+end
+
+local policy_config_validator = { validate_config = function() return true end }
+if policy_config_validation_is_enabled() then
+  policy_config_validator = require('apicast.policy_config_validator')
 end
 
 local function read_manifest(path)

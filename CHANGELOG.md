@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - descriptions in `oneOf`s in policy manifests have been replaced with titles [PR #663](https://github.com/3scale/apicast/pull/663)
+- `resty.balancer` doesn't fall back to the port `80` by default. If the port is missing, `apicast.balancer` sets the default port for the scheme of the `proxy_pass` URL [PR #662](https://github.com/3scale/apicast/pull/662)
 
 ## [3.2.0-beta3] - 2018-03-20
 

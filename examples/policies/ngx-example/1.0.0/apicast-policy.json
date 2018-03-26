@@ -1,6 +1,7 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
   "name": "Ngx example policy",
+  "summary": "Sets request headers",
   "description":
   ["This policy is meant to be just an example.",
     "It sets request headers based on the configuration.",

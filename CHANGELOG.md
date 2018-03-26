@@ -4,22 +4,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [3.2.0-beta3] - 2018-03-20
 
-## Added
+### Fixed
+
+- `ljsonschema` is only used in testing but was required in production also [PR #660](https://github.com/3scale/apicast/pull/660)
+
+## [3.2.0-beta2] - 2018-03-19
+
+### Added
 
 - New property `summary` in the policy manifests [PR #633](https://github.com/3scale/apicast/pull/633)
 - OAuth2.0 Token Introspection policy [PR #619](https://github.com/3scale/apicast/pull/619)
 - New `metrics` phase that runs when prometheus is collecting metrics [PR #629](https://github.com/3scale/apicast/pull/629)
 - Validation of policy configs both in integration and unit tests [PR #646](https://github.com/3scale/apicast/pull/646)
 
-## Fixed
+### Fixed
 
 - Error loading policy chain configuration JSON with null value [PR #626](https://github.com/3scale/apicast/pull/626)
 - Splitted `resolv.conf` in lines,to avoid commented lines  [PR #618](https://github.com/3scale/apicast/pull/618)
 - Avoid `nameserver` repetion from `RESOLVER` variable and `resolv.conf` file [PR #636](https://github.com/3scale/apicast/pull/636)
 - Bug in URL rewriting policy that ignored the `commands` attribute in the policy manifest [PR #641](https://github.com/3scale/apicast/pull/641)
 - Skip comentaries after `search` values in resolv.conf [PR #635](https://github.com/3scale/apicast/pull/635)
+- Bug that prevented using `CONFIGURATION_CACHE_LOADER=boot` without specifying `APICAST_CONFIGURATION_CACHE` in staging [PR #651](https://github.com/3scale/apicast/pull/651).
+- `typ` is verified when it's present in keycloak tokens [PR #658](https://github.com/3scale/apicast/pull/658)
+
+### Changed
+
+- `summary` is now required in policy manifests [PR #655](https://github.com/3scale/apicast/pull/655)
 
 ## [3.2.0-beta1] - 2018-02-20
 
@@ -350,7 +362,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.2.0-beta1...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.2.0-beta3...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -367,3 +379,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.2.0-alpha1]: https://github.com/3scale/apicast/compare/v3.1.0...v3.2.0-alpha1
 [3.2.0-alpha2]: https://github.com/3scale/apicast/compare/v3.2.0-alpha1...v3.2.0-alpha2
 [3.2.0-beta1]: https://github.com/3scale/apicast/compare/v3.2.0-alpha2...v3.2.0-beta1
+[3.2.0-beta2]: https://github.com/3scale/apicast/compare/v3.2.0-beta1...v3.2.0-beta2
+[3.2.0-beta3]: https://github.com/3scale/apicast/compare/v3.2.0-beta2...v3.2.0-beta3

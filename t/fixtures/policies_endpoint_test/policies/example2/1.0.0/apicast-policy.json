@@ -1,7 +1,7 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
   "name": "Example policy 2",
-  "description": "Just an example with a version mismatch.",
+  "summary": "Just an example with a version mismatch.",
   "version": "2.0.0",
   "configuration": {
     "type": "object",

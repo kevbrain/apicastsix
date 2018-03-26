@@ -112,8 +112,8 @@ end
 local function build_env(options, config, context)
     return {
         APICAST_CONFIGURATION = options.configuration or context.configuration,
-        APICAST_CONFIGURATION_LOADER = tostring(options.configuration_loader or context.configuration_loader or 'lazy'),
-        APICAST_CONFIGURATION_CACHE = tostring(options.cache or context.configuration_cache or 0),
+        APICAST_CONFIGURATION_LOADER = options.configuration_loader or context.configuration_loader or 'lazy',
+        APICAST_CONFIGURATION_CACHE = options.cache or context.configuration_cache,
         THREESCALE_DEPLOYMENT_ENV = context.configuration_channel or options.channel or config.name,
         APICAST_POLICY_LOAD_PATH = concat(options.policy_load_path or context.policy_load_path, ':'),
     }

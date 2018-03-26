@@ -1,23 +1,52 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
   "name": "rate limiting to service policy",
-  "description": 
-  ["This policy adds rate limiting to the entire Service."],
+  "description": ["This policy adds rate limiting to the entire Service."],
   "version": "builtin",
   "configuration": {
     "type": "object",
     "properties": {
-      "limit": {
-        "description": "Limit",
-        "type": "integer"
+      "limitters": {
+        "description": "List of limitters to be applied",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "limitter": {
+              "description": "Limitter class name",
+              "type": "string"
+            },
+            "key": {
+              "description": "Key of Redis or Name of lua_shared_dict shm zone",
+              "type": "string"
+            },
+            "values": {
+              "description": "Values to be applied",
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
       },
-      "period": {
-        "description": "Period (second)",
-        "type": "integer"
-      },
-      "service_name": {
-        "description": "Service name (Redis key)",
-        "type": "string"
+      "redis_info": {
+        "description": "Redis information, if use",
+        "type": "object",
+        "properties": {
+          "host": {
+            "description": "Host",
+            "type": "string"
+          },
+          "port": {
+            "description": "Port",
+            "type": "integer"
+          },
+          "db": {
+            "description": "DB",
+            "type": "integer"
+          }
+        }
       }
     }
   }

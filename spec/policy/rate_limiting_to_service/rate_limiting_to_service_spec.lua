@@ -1,92 +1,195 @@
 local RateLimitPolicy = require('apicast.policy.rate_limiting_to_service')
-local env = require 'resty.env'
+local function init_val()
+  ngx.var = {}
+  ngx.var.request_time = '0.060'
+
+  ngx.shared.limitter = {}
+  ngx.shared.limitter.get = function(_, key)
+    return ngx.shared.limitter[key]
+  end
+  ngx.shared.limitter.set = function(_, key, val)
+    ngx.shared.limitter[key] = val
+  end
+  ngx.shared.limitter.incr = function(_, key, val, init)
+    local v = ngx.shared.limitter[key]
+    if not v then
+      ngx.shared.limitter[key] = val + init
+    else
+      ngx.shared.limitter[key] = v + val
+    end
+    return ngx.shared.limitter[key]
+  end
+  ngx.shared.limitter.expire = function(_, _, _)
+    return true, nil
+  end
+end
 
 describe('Rate limit policy', function()
   local ngx_exit_spy
+  local ngx_sleep_spy
 
   setup(function()
     ngx_exit_spy = spy.on(ngx, 'exit')
-    env.set('REDIS_URL', 'redis://localhost:6379/1')
+    ngx_sleep_spy = spy.on(ngx, 'sleep')
   end)
+
   before_each(function()
-    ngx.header = {}
+    local redis = require('resty.redis'):new()
+    redis:connect('127.0.0.1', 6379)
+    redis:select(1)
+    redis:del('test1', 'test2', 'test3')
+    init_val()
   end)
-  describe('.new', function()
-    it('invalid limit', function()
-      local config = {
-        limit = 0,
-        period = 10,
-        service_name = 'service_unit_test_1'
-      }
-      rate_limit_policy = RateLimitPolicy.new(config)
 
-      assert.spy(ngx_exit_spy).was_called_with(500)
-      assert.is_nil(ngx.header['X-RateLimit-Limit'])
-      assert.is_nil(ngx.header['X-RateLimit-Remaining'])
-      assert.is_nil(ngx.header['X-RateLimit-Reset'])
-    end)
-    it('invalid period', function()
+  describe('.access', function()
+    it('success with multiple limiters', function()
       local config = {
-        limit = 10,
-        period = 0,
-        service_name = 'service_unit_test_2'
-      }
-      rate_limit_policy = RateLimitPolicy.new(config)
-
-      assert.spy(ngx_exit_spy).was_called_with(500)
-      assert.is_nil(ngx.header['X-RateLimit-Limit'])
-      assert.is_nil(ngx.header['X-RateLimit-Remaining'])
-      assert.is_nil(ngx.header['X-RateLimit-Reset'])
-    end)
-  end)
-  describe('.rewrite', function()
-    it('set new limit and decrease the limit', function()
-      local config = {
-        limit = 10,
-        period = 10,
-        service_name = 'service_unit_test_3'
+        limitters = {
+          {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}},
+          {limitter = 'resty.limit.req', key = 'test2', values = {18, 9}},
+          {limitter = 'resty.limit.count', key = 'test3', values = {10, 10}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:rewrite()
-
-      assert.same(10, ngx.header['X-RateLimit-Limit'])
-      assert.same(9, ngx.header['X-RateLimit-Remaining'])
-      assert.is_not_nil(ngx.header['X-RateLimit-Reset'])
-
-      rate_limit_policy:rewrite()
-
-      assert.same(10, ngx.header['X-RateLimit-Limit'])
-      assert.same(8, ngx.header['X-RateLimit-Remaining'])
-      assert.is_not_nil(ngx.header['X-RateLimit-Reset'])
+      rate_limit_policy:access()
     end)
-    it('return 429 code', function()
+    it('invalid limitter class name', function()
       local config = {
-        limit = 1,
-        period = 5,
-        service_name = 'service_unit_test_4'
+        limitters = {
+          {limitter = 'resty.limit.invalid', key = 'test1', values = {20, 10, 0.5}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:rewrite()
-
-      assert.same(1, ngx.header['X-RateLimit-Limit'])
-      assert.same(0, ngx.header['X-RateLimit-Remaining'])
-      assert.is_not_nil(ngx.header['X-RateLimit-Reset'])
-
-      rate_limit_policy:rewrite()
-
+      rate_limit_policy:access()
+      assert.spy(ngx_exit_spy).was_called_with(500)
+    end)
+    it('invalid limitter values', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.count', key = 'test1', values = {0, 10}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      assert.spy(ngx_exit_spy).was_called_with(500)
+    end)
+    it('no redis information', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+        }
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      assert.spy(ngx_exit_spy).was_called_with(500)
+    end)
+    it('invalid redis host', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+        },
+        redis_info = {host = 'invalid', port = 6379, db = 1}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      assert.spy(ngx_exit_spy).was_called_with(500)
+    end)
+    it('invalid redis db', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 'a'}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      assert.spy(ngx_exit_spy).was_called_with(500)
+    end)
+    it('rejected (conn)', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.conn', key = 'test1', values = {1, 0, 0.5}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(429)
-      assert.same(1, ngx.header['X-RateLimit-Limit'])
-      assert.same(0, ngx.header['X-RateLimit-Remaining'])
-      assert.is_not_nil(ngx.header['X-RateLimit-Reset'])
-
-      local start = os.time()
-      while os.time() - start < 5 do end
-
-      rate_limit_policy:rewrite()
-
-      assert.same(1, ngx.header['X-RateLimit-Limit'])
-      assert.same(0, ngx.header['X-RateLimit-Remaining'])
-      assert.is_not_nil(ngx.header['X-RateLimit-Reset'])
+    end)
+    it('rejected (req)', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.req', key = 'test1', values = {1, 0}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      rate_limit_policy:access()
+      assert.spy(ngx_exit_spy).was_called_with(429)
+    end)
+    it('rejected (count)', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.count', key = 'test1', values = {1, 10}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      rate_limit_policy:access()
+      assert.spy(ngx_exit_spy).was_called_with(429)
+    end)
+    it('delay (conn)', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.conn', key = 'test1', values = {1, 1, 2}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      rate_limit_policy:access()
+      assert.spy(ngx_sleep_spy).was_called_more_than(0.001)
+    end)
+    it('delay (req)', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.req', key = 'test1', values = {1, 1}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      rate_limit_policy:access()
+      assert.spy(ngx_sleep_spy).was_called_more_than(0.001)
+    end)
+  end)
+  describe('.log', function()
+    it('success in leaving', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+        }
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      rate_limit_policy:log()
+    end)
+    it('success in leaving with redis', function()
+      local config = {
+        limitters = {
+          {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+        },
+        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      rate_limit_policy:log()
     end)
   end)
 end)

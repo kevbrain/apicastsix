@@ -3,7 +3,7 @@ local _M = policy.new('Rate Limiting to Service Policy')
 
 local ngx_semaphore = require "ngx.semaphore"
 local limit_traffic = require "resty.limit.traffic"
-local resty_redis = require('resty.redis')
+local ts = require ('apicast.threescale_utils')
 local tonumber = tonumber
 local next = next
 local shdict_key = 'limitter'
@@ -14,21 +14,15 @@ function _M.new(config)
   local self = new()
   self.config = config or {}
   self.limitters = config.limitters
-  self.redis_info = config.redis_info
+  self.redis_url = config.redis_url
   return self
 end
 
-local function redis_shdict(host, port, db)
-  local redis = assert(resty_redis:new())
-
-  local ok, connerr = redis:connect(host or '127.0.0.1', port or 6379)
-  if not ok then
-    return nil, connerr
-  end
-
-  ok = redis:select(db or 0)
-  if not ok then
-    return nil, "failed to select db"
+local function redis_shdict(url)
+  local options = { url = url }
+  local redis, err =  ts.connect_redis(options)
+  if not redis then
+    return nil, err
   end
 
   return {
@@ -77,7 +71,7 @@ function _M:access()
   local limitters_limit_conn_committed = {}
   local keys_limit_conn_committed = {}
 
-  if not self.redis_info then
+  if not self.redis_url then
     ngx.log(ngx.ERR, "No Redis information.")
     return ngx.exit(500)
   end
@@ -118,7 +112,7 @@ function _M:access()
     end
 
     local rediserr
-    lim.dict, rediserr = redis_shdict(self.redis_info.host, self.redis_info.port, self.redis_info.db)
+    lim.dict, rediserr = redis_shdict(self.redis_url)
     if not lim.dict then
       ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
       return ngx.exit(500)
@@ -163,13 +157,13 @@ function _M:access()
 
 end
 
-local function checkin(_, ctx, time, semaphore, redis_info)
+local function checkin(_, ctx, time, semaphore, redis_url)
   local limitters = ctx.limitters
   local keys = ctx.keys
 
   for i, lim in ipairs(limitters) do
     local rediserr
-    lim.dict, rediserr = redis_shdict(redis_info.host, redis_info.port, redis_info.db)
+    lim.dict, rediserr = redis_shdict(redis_url)
     if not lim.dict then
       ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
       return ngx.exit(500)
@@ -193,7 +187,7 @@ function _M:log()
   local limitters = ctx.limitters
   if limitters and next(limitters) ~= nil then
     local semaphore = ngx_semaphore.new()
-    ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore, self.redis_info)
+    ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore, self.redis_url)
     semaphore:wait(10)
   end
 end

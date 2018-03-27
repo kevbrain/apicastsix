@@ -31,7 +31,7 @@ Return 500 code.
                       values = {20, 10, 0.5}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               }
             }
@@ -76,7 +76,7 @@ Return 500 code.
                       values = {0, 10}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               }
             }
@@ -96,7 +96,7 @@ GET /
 --- error_log
 failed to instantiate limitter
 
-=== TEST 3: Invalid redis host.
+=== TEST 3: Invalid redis url.
 Return 500 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -121,7 +121,7 @@ Return 500 code.
                       values = {20, 10, 0.5}
                     }
                   },
-                  redis_info = { host = "invalid", port = 6379, db = 1}
+                  redis_url = "redis://invalidhost:6379/1"
                 }
               }
             }
@@ -138,55 +138,8 @@ Return 500 code.
 --- request
 GET /
 --- error_code: 500
---- error_log
-failed to connect Redis
 
-=== TEST 4: Invalid redis DB.
-Return 500 code.
---- http_config
-  include $TEST_NGINX_UPSTREAM_CONFIG;
-  lua_package_path "$TEST_NGINX_LUA_PATH";
-
-  init_by_lua_block {
-    require "resty.core"
-    ngx.shared.limitter:flush_all()
-    require('apicast.configuration_loader').mock({
-      services = {
-        {
-          id = 42,
-          proxy = {
-            policy_chain = {
-              {
-                name = "apicast.policy.rate_limiting_to_service",
-                configuration = {
-                  limitters = {
-                    {
-                      limitter = "resty.limit.req",
-                      key = "test4",
-                      values = {20, 10}
-                    }
-                  },
-                  redis_info = { host = localhost, port = 6379, db = "a"}
-                }
-              }
-            }
-          }
-        }
-      }
-    })
-  }
-  lua_shared_dict limitter 1m;
-
---- config
-  include $TEST_NGINX_APICAST_CONFIG;
-
---- request
-GET /
---- error_code: 500
---- error_log
-failed to select db
-
-=== TEST 5: No redis information.
+=== TEST 5: No redis url.
 Return 500 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -265,7 +218,7 @@ Return 200 code.
                       values = {20, 10}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               }
             }
@@ -321,7 +274,7 @@ Return 429 code.
                       values = {1, 0, 2}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               },
               {
@@ -334,7 +287,7 @@ Return 429 code.
                       values = {1, 0, 2}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               }
             }
@@ -387,7 +340,7 @@ Return 429 code.
                       values = {1, 0}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               },
               {
@@ -400,7 +353,7 @@ Return 429 code.
                       values = {1, 0}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               }
             }
@@ -453,7 +406,7 @@ Return 429 code.
                       values = {1, 10}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               },
               {
@@ -466,7 +419,7 @@ Return 429 code.
                       values = {1, 10}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               }
             }
@@ -519,7 +472,7 @@ Return 200 code.
                       values = {1, 1, 2}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               },
               {
@@ -532,7 +485,7 @@ Return 200 code.
                       values = {1, 1, 2}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               }
             }
@@ -589,7 +542,7 @@ Return 200 code.
                       values = {1, 1}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               },
               {
@@ -602,7 +555,7 @@ Return 200 code.
                       values = {1, 1}
                     }
                   },
-                  redis_info = { host = localhost, port = 6379, db = 1}
+                  redis_url = "redis://localhost:6379/1"
                 }
               }
             }

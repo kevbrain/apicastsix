@@ -17,11 +17,7 @@ local rate_limit_policy = require('apicast.policy.rate_limiting_to_service').new
     key = "limit3",
     values = {10, 10}
   }},
-  redis_info = {
-    host = '127.0.0.1',
-    port = 6379,
-    db = 1
-  }
+  redis_url = "redis://localhost:6379/1"
 })
 
 policy_chain:insert(rate_limit_policy, 1)

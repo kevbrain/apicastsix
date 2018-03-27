@@ -30,23 +30,9 @@
           }
         }
       },
-      "redis_info": {
-        "description": "Redis information, if use",
-        "type": "object",
-        "properties": {
-          "host": {
-            "description": "Host",
-            "type": "string"
-          },
-          "port": {
-            "description": "Port",
-            "type": "integer"
-          },
-          "db": {
-            "description": "DB",
-            "type": "integer"
-          }
-        }
+      "redis_url": {
+        "description": "URL of Redis",
+        "type": "string"
       }
     }
   }

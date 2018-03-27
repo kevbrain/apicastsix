@@ -49,7 +49,7 @@ describe('Rate limit policy', function()
           {limitter = 'resty.limit.req', key = 'test2', values = {18, 9}},
           {limitter = 'resty.limit.count', key = 'test3', values = {10, 10}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -59,7 +59,7 @@ describe('Rate limit policy', function()
         limitters = {
           {limitter = 'resty.limit.invalid', key = 'test1', values = {20, 10, 0.5}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -70,13 +70,13 @@ describe('Rate limit policy', function()
         limitters = {
           {limitter = 'resty.limit.count', key = 'test1', values = {0, 10}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
-    it('no redis information', function()
+    it('no redis url', function()
       local config = {
         limitters = {
           {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
@@ -86,23 +86,12 @@ describe('Rate limit policy', function()
       rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
-    it('invalid redis host', function()
+    it('invalid redis url', function()
       local config = {
         limitters = {
           {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
         },
-        redis_info = {host = 'invalid', port = 6379, db = 1}
-      }
-      local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      assert.spy(ngx_exit_spy).was_called_with(500)
-    end)
-    it('invalid redis db', function()
-      local config = {
-        limitters = {
-          {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
-        },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 'a'}
+        redis_url = 'redis://invalidhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -113,7 +102,7 @@ describe('Rate limit policy', function()
         limitters = {
           {limitter = 'resty.limit.conn', key = 'test1', values = {1, 0, 0.5}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -125,7 +114,7 @@ describe('Rate limit policy', function()
         limitters = {
           {limitter = 'resty.limit.req', key = 'test1', values = {1, 0}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -137,7 +126,7 @@ describe('Rate limit policy', function()
         limitters = {
           {limitter = 'resty.limit.count', key = 'test1', values = {1, 10}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -149,7 +138,7 @@ describe('Rate limit policy', function()
         limitters = {
           {limitter = 'resty.limit.conn', key = 'test1', values = {1, 1, 2}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -161,7 +150,7 @@ describe('Rate limit policy', function()
         limitters = {
           {limitter = 'resty.limit.req', key = 'test1', values = {1, 1}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -185,7 +174,7 @@ describe('Rate limit policy', function()
         limitters = {
           {limitter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
         },
-        redis_info = {host = '127.0.0.1', port = 6379, db = 1}
+        redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()

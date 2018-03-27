@@ -6,14 +6,14 @@
   "configuration": {
     "type": "object",
     "properties": {
-      "limitters": {
-        "description": "List of limitters to be applied",
+      "limiters": {
+        "description": "List of limiters to be applied",
         "type": "array",
         "items": {
           "type": "object",
           "properties": {
-            "limitter": {
-              "description": "Limitter class name",
+            "limiter": {
+              "description": "limiter class name",
               "type": "string"
             },
             "key": {

@@ -6,14 +6,14 @@ local limit_traffic = require "resty.limit.traffic"
 local ts = require ('apicast.threescale_utils')
 local tonumber = tonumber
 local next = next
-local shdict_key = 'limitter'
+local shdict_key = 'limiter'
 
 local new = _M.new
 
 function _M.new(config)
   local self = new()
   self.config = config or {}
-  self.limitters = config.limitters
+  self.limiters = config.limiters
   self.redis_url = config.redis_url
   return self
 end
@@ -61,14 +61,14 @@ local function try(f, catch_f)
 end
 
 function _M:access()
-  local limitters = {}
+  local limiters = {}
   local keys = {}
   local states = {}
 
-  local limitters_limit_conn = {}
+  local limiters_limit_conn = {}
   local keys_limit_conn = {}
 
-  local limitters_limit_conn_committed = {}
+  local limiters_limit_conn_committed = {}
   local keys_limit_conn_committed = {}
 
   if not self.redis_url then
@@ -76,12 +76,12 @@ function _M:access()
     return ngx.exit(500)
   end
 
-  for _, limitter in ipairs(self.limitters) do
+  for _, limiter in ipairs(self.limiters) do
     local limit
     local class_not_found = false
     try(
       function()
-        limit = require (limitter.limitter)
+        limit = require (limiter.limiter)
       end,
       function(e)
         ngx.log(ngx.ERR, "failed to find module: ", e)
@@ -96,14 +96,14 @@ function _M:access()
     local failed_to_instantiate = false
     try(
       function()
-        lim, limerr = limit.new(shdict_key, unpack(limitter.values))
+        lim, limerr = limit.new(shdict_key, unpack(limiter.values))
         if not lim then
-          ngx.log(ngx.ERR, "failed to instantiate limitter: ", limerr)
+          ngx.log(ngx.ERR, "failed to instantiate limiter: ", limerr)
           failed_to_instantiate = true
         end
       end,
       function(e)
-        ngx.log(ngx.ERR, "failed to instantiate limitter: ", e)
+        ngx.log(ngx.ERR, "failed to instantiate limiter: ", e)
         failed_to_instantiate = true
       end
     )
@@ -118,16 +118,16 @@ function _M:access()
       return ngx.exit(500)
     end
 
-    limitters[#limitters + 1] = lim
-    keys[#keys + 1] = limitter.key
+    limiters[#limiters + 1] = lim
+    keys[#keys + 1] = limiter.key
 
-    if limitter.limitter == "resty.limit.conn" then
-      limitters_limit_conn[#limitters_limit_conn + 1] = lim
-      keys_limit_conn[#keys_limit_conn + 1] = limitter.key
+    if limiter.limiter == "resty.limit.conn" then
+      limiters_limit_conn[#limiters_limit_conn + 1] = lim
+      keys_limit_conn[#keys_limit_conn + 1] = limiter.key
     end
   end
 
-  local delay, comerr = limit_traffic.combine(limitters, keys, states)
+  local delay, comerr = limit_traffic.combine(limiters, keys, states)
   if not delay then
     if comerr == "rejected" then
       ngx.log(ngx.ERR, "Requests over the limit.")
@@ -137,16 +137,16 @@ function _M:access()
     return ngx.exit(500)
   end
 
-  for i, lim in ipairs(limitters_limit_conn) do
+  for i, lim in ipairs(limiters_limit_conn) do
     if lim:is_committed() then
-      limitters_limit_conn_committed[#limitters_limit_conn_committed + 1] = lim
+      limiters_limit_conn_committed[#limiters_limit_conn_committed + 1] = lim
       keys_limit_conn_committed[#keys_limit_conn_committed + 1] = keys_limit_conn[i]
     end
   end
 
-  if next(limitters_limit_conn_committed) ~= nil then
+  if next(limiters_limit_conn_committed) ~= nil then
     local ctx = ngx.ctx
-    ctx.limitters = limitters_limit_conn_committed
+    ctx.limiters = limiters_limit_conn_committed
     ctx.keys = keys_limit_conn_committed
   end
 
@@ -158,10 +158,10 @@ function _M:access()
 end
 
 local function checkin(_, ctx, time, semaphore, redis_url)
-  local limitters = ctx.limitters
+  local limiters = ctx.limiters
   local keys = ctx.keys
 
-  for i, lim in ipairs(limitters) do
+  for i, lim in ipairs(limiters) do
     local rediserr
     lim.dict, rediserr = redis_shdict(redis_url)
     if not lim.dict then
@@ -184,8 +184,8 @@ end
 
 function _M:log()
   local ctx = ngx.ctx
-  local limitters = ctx.limitters
-  if limitters and next(limitters) ~= nil then
+  local limiters = ctx.limiters
+  if limiters and next(limiters) ~= nil then
     local semaphore = ngx_semaphore.new()
     ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore, self.redis_url)
     semaphore:wait(10)

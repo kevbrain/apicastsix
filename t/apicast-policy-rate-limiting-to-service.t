@@ -6,7 +6,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: Invalid limitter class.
+=== TEST 1: Invalid limiter class.
 Return 500 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -14,7 +14,7 @@ Return 500 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -24,9 +24,9 @@ Return 500 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.invalid",
+                      limiter = "resty.limit.invalid",
                       key = "test1",
                       values = {20, 10, 0.5}
                     }
@@ -40,7 +40,7 @@ Return 500 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -51,7 +51,7 @@ GET /
 --- error_log
 failed to find module
 
-=== TEST 2: Invalid limitter value.
+=== TEST 2: Invalid limiter value.
 Return 500 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -59,7 +59,7 @@ Return 500 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -69,9 +69,9 @@ Return 500 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.count",
+                      limiter = "resty.limit.count",
                       key = "test2",
                       values = {0, 10}
                     }
@@ -85,7 +85,7 @@ Return 500 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -94,7 +94,7 @@ Return 500 code.
 GET /
 --- error_code: 500
 --- error_log
-failed to instantiate limitter
+failed to instantiate limiter
 
 === TEST 3: Invalid redis url.
 Return 500 code.
@@ -104,7 +104,7 @@ Return 500 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -114,9 +114,9 @@ Return 500 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.conn",
+                      limiter = "resty.limit.conn",
                       key = "test3",
                       values = {20, 10, 0.5}
                     }
@@ -130,7 +130,7 @@ Return 500 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -147,7 +147,7 @@ Return 500 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -157,9 +157,9 @@ Return 500 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.req",
+                      limiter = "resty.limit.req",
                       key = "test5",
                       values = {20, 10}
                     }
@@ -172,7 +172,7 @@ Return 500 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -191,7 +191,7 @@ Return 200 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -201,19 +201,19 @@ Return 200 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.req",
+                      limiter = "resty.limit.req",
                       key = "test6_1",
                       values = {20, 10}
                     },
                     {
-                      limitter = "resty.limit.conn",
+                      limiter = "resty.limit.conn",
                       key = "test6_2",
                       values = {20, 10, 0.5}
                     },
                     {
-                      limitter = "resty.limit.count",
+                      limiter = "resty.limit.count",
                       key = "test6_3",
                       values = {20, 10}
                     }
@@ -227,7 +227,7 @@ Return 200 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -257,7 +257,7 @@ Return 429 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -267,9 +267,9 @@ Return 429 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.conn",
+                      limiter = "resty.limit.conn",
                       key = "test7",
                       values = {1, 0, 2}
                     }
@@ -280,9 +280,9 @@ Return 429 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.conn",
+                      limiter = "resty.limit.conn",
                       key = "test7",
                       values = {1, 0, 2}
                     }
@@ -296,7 +296,7 @@ Return 429 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -323,7 +323,7 @@ Return 429 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -333,9 +333,9 @@ Return 429 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.req",
+                      limiter = "resty.limit.req",
                       key = "test8",
                       values = {1, 0}
                     }
@@ -346,9 +346,9 @@ Return 429 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.req",
+                      limiter = "resty.limit.req",
                       key = "test8",
                       values = {1, 0}
                     }
@@ -362,7 +362,7 @@ Return 429 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -389,7 +389,7 @@ Return 429 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -399,9 +399,9 @@ Return 429 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.count",
+                      limiter = "resty.limit.count",
                       key = "test9",
                       values = {1, 10}
                     }
@@ -412,9 +412,9 @@ Return 429 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.count",
+                      limiter = "resty.limit.count",
                       key = "test9",
                       values = {1, 10}
                     }
@@ -428,7 +428,7 @@ Return 429 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -455,7 +455,7 @@ Return 200 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -465,9 +465,9 @@ Return 200 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.conn",
+                      limiter = "resty.limit.conn",
                       key = "test10",
                       values = {1, 1, 2}
                     }
@@ -478,9 +478,9 @@ Return 200 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.conn",
+                      limiter = "resty.limit.conn",
                       key = "test10",
                       values = {1, 1, 2}
                     }
@@ -494,7 +494,7 @@ Return 200 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
@@ -525,7 +525,7 @@ Return 200 code.
 
   init_by_lua_block {
     require "resty.core"
-    ngx.shared.limitter:flush_all()
+    ngx.shared.limiter:flush_all()
     require('apicast.configuration_loader').mock({
       services = {
         {
@@ -535,9 +535,9 @@ Return 200 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.req",
+                      limiter = "resty.limit.req",
                       key = "test11",
                       values = {1, 1}
                     }
@@ -548,9 +548,9 @@ Return 200 code.
               {
                 name = "apicast.policy.rate_limiting_to_service",
                 configuration = {
-                  limitters = {
+                  limiters = {
                     {
-                      limitter = "resty.limit.req",
+                      limiter = "resty.limit.req",
                       key = "test11",
                       values = {1, 1}
                     }
@@ -564,7 +564,7 @@ Return 200 code.
       }
     })
   }
-  lua_shared_dict limitter 1m;
+  lua_shared_dict limiter 1m;
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;

@@ -30,14 +30,6 @@ local function init_limiter(config)
   return traffic_limiters[config.name](config)
 end
 
-function _M.new(config)
-  local self = new()
-  self.config = config or {}
-  self.limiters = config.limiters
-  self.redis_url = config.redis_url
-  return self
-end
-
 local function redis_shdict(url)
   local options = { url = url }
   local redis, err = ts.connect_redis(options)
@@ -80,23 +72,20 @@ local function try(f, catch_f)
   end
 end
 
-function _M:access()
+function _M.new(config)
+  local self = new()
+  self.config = config or {}
+  self.redis_url = config.redis_url
+
   local limiters = {}
   local keys = {}
-  local states = {}
-
-  local limiters_limit_conn = {}
-  local keys_limit_conn = {}
-
-  local limiters_limit_conn_committed = {}
-  local keys_limit_conn_committed = {}
 
   if not self.redis_url then
     ngx.log(ngx.ERR, "No Redis information.")
     return ngx.exit(500)
   end
 
-  for _, limiter in ipairs(self.limiters) do
+  for _, limiter in ipairs(config.limiters) do
 
     local lim, limerr
     local failed_to_instantiate = false
@@ -127,11 +116,20 @@ function _M:access()
     limiters[#limiters + 1] = lim
     keys[#keys + 1] = limiter.key
 
-    if limiter.name == "connections" then
-      limiters_limit_conn[#limiters_limit_conn + 1] = lim
-      keys_limit_conn[#keys_limit_conn + 1] = limiter.key
-    end
   end
+
+  self.limiters = limiters
+  self.keys = keys
+
+  return self
+end
+
+function _M:access()
+  local limiters = self.limiters
+  local keys = self.keys
+  local states = {}
+  local connections_committed = {}
+  local keys_committed = {}
 
   local delay, comerr = limit_traffic.combine(limiters, keys, states)
   if not delay then
@@ -143,21 +141,21 @@ function _M:access()
     return ngx.exit(500)
   end
 
-  for i, lim in ipairs(limiters_limit_conn) do
-    if lim:is_committed() then
-      limiters_limit_conn_committed[#limiters_limit_conn_committed + 1] = lim
-      keys_limit_conn_committed[#keys_limit_conn_committed + 1] = keys_limit_conn[i]
+  for i, lim in ipairs(limiters) do
+    if lim.iscommitted and lim:is_committed() then
+      connections_committed[#connections_committed + 1] = lim
+      keys_committed[#keys_committed + 1] = keys[i]
     end
   end
 
-  if next(limiters_limit_conn_committed) ~= nil then
+  if next(connections_committed) ~= nil then
     local ctx = ngx.ctx
-    ctx.limiters = limiters_limit_conn_committed
-    ctx.keys = keys_limit_conn_committed
+    ctx.limiters = connections_committed
+    ctx.keys = keys_committed
   end
 
   if delay >= 0.001 then
-    ngx.log(ngx.WARN, 'need to delay by: ', delay, 's')
+    ngx.log(ngx.WARN, 'need to delay by: ', delay, 's, states: ', table.concat(states, ", "))
     ngx.sleep(delay)
   end
 

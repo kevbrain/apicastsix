@@ -61,8 +61,7 @@ describe('Rate limit policy', function()
         },
         redis_url = 'redis://localhost:6379/1'
       }
-      local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
+      RateLimitPolicy.new(config)
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
     it('invalid limiter values', function()
@@ -72,8 +71,7 @@ describe('Rate limit policy', function()
         },
         redis_url = 'redis://localhost:6379/1'
       }
-      local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
+      RateLimitPolicy.new(config)
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
     it('no redis url', function()
@@ -82,8 +80,7 @@ describe('Rate limit policy', function()
           {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         }
       }
-      local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
+      RateLimitPolicy.new(config)
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
     it('invalid redis url', function()
@@ -93,8 +90,7 @@ describe('Rate limit policy', function()
         },
         redis_url = 'redis://invalidhost:6379/1'
       }
-      local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
+      RateLimitPolicy.new(config)
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
     it('rejected (conn)', function()
@@ -160,16 +156,6 @@ describe('Rate limit policy', function()
   end)
   describe('.log', function()
     it('success in leaving', function()
-      local config = {
-        limiters = {
-          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
-        }
-      }
-      local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      rate_limit_policy:log()
-    end)
-    it('success in leaving with redis', function()
       local config = {
         limiters = {
           {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}

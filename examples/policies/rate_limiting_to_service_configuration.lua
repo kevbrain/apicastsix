@@ -3,19 +3,23 @@ local policy_chain = require('apicast.policy_chain').default()
 local rate_limit_policy = require('apicast.policy.rate_limiting_to_service').new({
   limiters = {
   {
-    limiter = "resty.limit.conn",
+    name = "connections",
     key = "limit1",
-    values = {20, 10, 0.5}
+    conn = 20,
+    burst = 10,
+    delay = 0.5
   },
   {
-    limiter = "resty.limit.req",
+    name = "leaky_bucket",
     key = "limit2",
-    values = {18, 9}
+    rate = 18,
+    burst = 9
   },
   {
-    limiter = "resty.limit.count",
+    name = "fixed_window",
     key = "limit3",
-    values = {10, 10}
+    count = 10,
+    window = 10
   }},
   redis_url = "redis://localhost:6379/1"
 })

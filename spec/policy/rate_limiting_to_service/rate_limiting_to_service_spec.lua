@@ -45,19 +45,19 @@ describe('Rate limit policy', function()
     it('success with multiple limiters', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}},
-          {limiter = 'resty.limit.req', key = 'test2', values = {18, 9}},
-          {limiter = 'resty.limit.count', key = 'test3', values = {10, 10}}
+          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5},
+          {name = "leaky_bucket", key = 'test2', rate = 18, burst = 9},
+          {name = "fixed_window", key = 'test3', count = 10, window = 10}
         },
         redis_url = 'redis://localhost:6379/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
     end)
-    it('invalid limiter class name', function()
+    it('invalid limiter name', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.invalid', key = 'test1', values = {20, 10, 0.5}}
+          {name = "invalid", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         },
         redis_url = 'redis://localhost:6379/1'
       }
@@ -68,7 +68,7 @@ describe('Rate limit policy', function()
     it('invalid limiter values', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.count', key = 'test1', values = {0, 10}}
+          {name = "fixed_window", key = 'test1', count = 0, window = 10}
         },
         redis_url = 'redis://localhost:6379/1'
       }
@@ -79,7 +79,7 @@ describe('Rate limit policy', function()
     it('no redis url', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         }
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
@@ -89,7 +89,7 @@ describe('Rate limit policy', function()
     it('invalid redis url', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         },
         redis_url = 'redis://invalidhost:6379/1'
       }
@@ -100,7 +100,7 @@ describe('Rate limit policy', function()
     it('rejected (conn)', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.conn', key = 'test1', values = {1, 0, 0.5}}
+          {name = "connections", key = 'test1', conn = 1, burst = 0, delay = 0.5}
         },
         redis_url = 'redis://localhost:6379/1'
       }
@@ -112,7 +112,7 @@ describe('Rate limit policy', function()
     it('rejected (req)', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.req', key = 'test1', values = {1, 0}}
+          {name = "leaky_bucket", key = 'test1', rate = 1, burst = 0}
         },
         redis_url = 'redis://localhost:6379/1'
       }
@@ -124,7 +124,7 @@ describe('Rate limit policy', function()
     it('rejected (count)', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.count', key = 'test1', values = {1, 10}}
+          {name = "fixed_window", key = 'test1', count = 1, window = 10}
         },
         redis_url = 'redis://localhost:6379/1'
       }
@@ -136,7 +136,7 @@ describe('Rate limit policy', function()
     it('delay (conn)', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.conn', key = 'test1', values = {1, 1, 2}}
+          {name = "connections", key = 'test1', conn = 1, burst = 1, delay = 2}
         },
         redis_url = 'redis://localhost:6379/1'
       }
@@ -148,7 +148,7 @@ describe('Rate limit policy', function()
     it('delay (req)', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.req', key = 'test1', values = {1, 1}}
+          {name = "leaky_bucket", key = 'test1', rate = 1, burst = 1}
         },
         redis_url = 'redis://localhost:6379/1'
       }
@@ -162,7 +162,7 @@ describe('Rate limit policy', function()
     it('success in leaving', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         }
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
@@ -172,7 +172,7 @@ describe('Rate limit policy', function()
     it('success in leaving with redis', function()
       local config = {
         limiters = {
-          {limiter = 'resty.limit.conn', key = 'test1', values = {20, 10, 0.5}}
+          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         },
         redis_url = 'redis://localhost:6379/1'
       }

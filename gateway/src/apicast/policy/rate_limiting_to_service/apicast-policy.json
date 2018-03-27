@@ -1,7 +1,9 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
   "name": "rate limiting to service policy",
-  "description": ["This policy adds rate limiting to the entire Service."],
+  "description": ["This policy adds rate limiting to the entire Service.",
+    ""
+  ],
   "version": "builtin",
   "configuration": {
     "type": "object",
@@ -12,21 +14,65 @@
         "items": {
           "type": "object",
           "properties": {
-            "limiter": {
-              "description": "limiter class name",
-              "type": "string"
-            },
-            "key": {
-              "description": "Key of Redis or Name of lua_shared_dict shm zone",
-              "type": "string"
-            },
-            "values": {
-              "description": "Values to be applied",
-              "type": "array",
-              "items": {
-                "type": "integer"
+            "oneOf": [{
+              "name": {
+                "type": "string",
+                "enum": ["connections"],
+                "description": "limiting request concurrency (or concurrent connections)"
+              },
+              "key": {
+                "description": "Key of limiter",
+                "type": "string"
+              },
+              "conn": {
+                "type": "integer",
+                "description": "the maximum number of concurrent requests allowed"
+              },
+              "burst": {
+                "type": "integer",
+                "description": "the number of excessive concurrent requests (or connections) allowed to be delayed"
+              },
+              "delay": {
+                "type": "integer",
+                "description": "the default processing latency of a typical connection (or request)"
               }
-            }
+            }, {
+              "name": {
+                "type": "string",
+                "enum": ["leaky_bucket"],
+                "description": "limiting request rate"
+              },
+              "key": {
+                "description": "Key of limiter",
+                "type": "string"
+              },
+              "rate": {
+                "type": "integer",
+                "description": "the specified request rate (number per second) threshold"
+              },
+              "burst": {
+                "type": "integer",
+                "description": "the number of excessive requests per second allowed to be delayed"
+              }
+            }, {
+              "name": {
+                "type": "string",
+                "enum": ["fixed_window"],
+                "description": "limiting request counts"
+              },
+              "key": {
+                "description": "Key of limiter",
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "description": "the specified number of requests threshold"
+              },
+              "window": {
+                "type": "integer",
+                "description": "the time window in seconds before the request count is reset"
+              }
+            }]
           }
         }
       },

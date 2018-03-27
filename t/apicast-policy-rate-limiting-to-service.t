@@ -6,7 +6,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: Invalid limiter class.
+=== TEST 1: Invalid limiter name.
 Return 500 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -26,9 +26,11 @@ Return 500 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.invalid",
+                      name = "invalid",
                       key = "test1",
-                      values = {20, 10, 0.5}
+                      conn = 20,
+                      burst = 10,
+                      delay = 0.5
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -49,7 +51,7 @@ Return 500 code.
 GET /
 --- error_code: 500
 --- error_log
-failed to find module
+unknown limiter
 
 === TEST 2: Invalid limiter value.
 Return 500 code.
@@ -71,9 +73,10 @@ Return 500 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.count",
+                      name = "fixed_window",
                       key = "test2",
-                      values = {0, 10}
+                      count = 0,
+                      window = 10
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -94,7 +97,7 @@ Return 500 code.
 GET /
 --- error_code: 500
 --- error_log
-failed to instantiate limiter
+unknown limiter
 
 === TEST 3: Invalid redis url.
 Return 500 code.
@@ -116,9 +119,11 @@ Return 500 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.conn",
+                      name = "connections",
                       key = "test3",
-                      values = {20, 10, 0.5}
+                      conn = 20,
+                      burst = 10,
+                      delay = 0.5
                     }
                   },
                   redis_url = "redis://invalidhost:6379/1"
@@ -159,9 +164,10 @@ Return 500 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.req",
+                      name = "leaky_bucket",
                       key = "test5",
-                      values = {20, 10}
+                      rate = 20,
+                      burst = 10
                     }
                   }
                 }
@@ -183,7 +189,7 @@ GET /
 --- error_log
 No Redis information.
 
-=== TEST 6: Success with multiple limiters and redis.
+=== TEST 6: Success with multiple limiters.
 Return 200 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -203,19 +209,23 @@ Return 200 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.req",
+                      name = "leaky_bucket",
                       key = "test6_1",
-                      values = {20, 10}
+                      rate = 20,
+                      burst = 10
                     },
                     {
-                      limiter = "resty.limit.conn",
+                      name = "connections",
                       key = "test6_2",
-                      values = {20, 10, 0.5}
+                      conn = 20,
+                      burst = 10,
+                      delay = 0.5
                     },
                     {
-                      limiter = "resty.limit.count",
+                      name = "fixed_window",
                       key = "test6_3",
-                      values = {20, 10}
+                      count = 20,
+                      window = 10
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -269,9 +279,11 @@ Return 429 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.conn",
+                      name = "connections",
                       key = "test7",
-                      values = {1, 0, 2}
+                      conn = 1,
+                      burst = 0,
+                      delay = 2
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -282,9 +294,11 @@ Return 429 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.conn",
+                      name = "connections",
                       key = "test7",
-                      values = {1, 0, 2}
+                      conn = 1,
+                      burst = 0,
+                      delay = 2
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -335,9 +349,10 @@ Return 429 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.req",
+                      name = "leaky_bucket",
                       key = "test8",
-                      values = {1, 0}
+                      rate = 1,
+                      burst = 0
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -348,9 +363,10 @@ Return 429 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.req",
+                      name = "leaky_bucket",
                       key = "test8",
-                      values = {1, 0}
+                      rate = 1,
+                      burst = 0
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -401,9 +417,10 @@ Return 429 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.count",
+                      name = "fixed_window",
                       key = "test9",
-                      values = {1, 10}
+                      count = 1,
+                      window = 10
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -414,9 +431,10 @@ Return 429 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.count",
+                      name = "fixed_window",
                       key = "test9",
-                      values = {1, 10}
+                      count = 1,
+                      window = 10
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -467,9 +485,11 @@ Return 200 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.conn",
+                      name = "connections",
                       key = "test10",
-                      values = {1, 1, 2}
+                      conn = 1,
+                      burst = 1,
+                      delay = 2
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -480,9 +500,11 @@ Return 200 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.conn",
+                      name = "connections",
                       key = "test10",
-                      values = {1, 1, 2}
+                      conn = 1,
+                      burst = 1,
+                      delay = 2
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -537,9 +559,10 @@ Return 200 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.req",
+                      name = "leaky_bucket",
                       key = "test11",
-                      values = {1, 1}
+                      rate = 1,
+                      burst = 1
                     }
                   },
                   redis_url = "redis://localhost:6379/1"
@@ -550,9 +573,10 @@ Return 200 code.
                 configuration = {
                   limiters = {
                     {
-                      limiter = "resty.limit.req",
+                      name = "leaky_bucket",
                       key = "test11",
-                      values = {1, 1}
+                      rate = 1,
+                      burst = 1
                     }
                   },
                   redis_url = "redis://localhost:6379/1"

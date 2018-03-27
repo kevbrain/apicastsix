@@ -1,6 +1,10 @@
 local policy = require('apicast.policy')
 local _M = policy.new('Rate Limiting to Service Policy')
 
+local resty_limit_conn = require('resty.limit.conn')
+local resty_limit_req = require('resty.limit.req')
+local resty_limit_count = require('resty.limit.count')
+
 local ngx_semaphore = require "ngx.semaphore"
 local limit_traffic = require "resty.limit.traffic"
 local ts = require ('apicast.threescale_utils')
@@ -9,6 +13,22 @@ local next = next
 local shdict_key = 'limiter'
 
 local new = _M.new
+
+local traffic_limiters = {
+  connections = function(config)
+    return resty_limit_conn.new(shdict_key, config.conn, config.burst, config.delay)
+  end,
+  leaky_bucket = function(config)
+    return resty_limit_req.new(shdict_key, config.rate, config.burst)
+  end,
+  fixed_window = function(config)
+    return resty_limit_count.new(shdict_key, config.count, config.window)
+  end
+}
+
+local function init_limiter(config)
+  return traffic_limiters[config.name](config)
+end
 
 function _M.new(config)
   local self = new()
@@ -20,7 +40,7 @@ end
 
 local function redis_shdict(url)
   local options = { url = url }
-  local redis, err =  ts.connect_redis(options)
+  local redis, err = ts.connect_redis(options)
   if not redis then
     return nil, err
   end
@@ -77,33 +97,19 @@ function _M:access()
   end
 
   for _, limiter in ipairs(self.limiters) do
-    local limit
-    local class_not_found = false
-    try(
-      function()
-        limit = require (limiter.limiter)
-      end,
-      function(e)
-        ngx.log(ngx.ERR, "failed to find module: ", e)
-        class_not_found = true
-      end
-    )
-    if class_not_found then
-      return ngx.exit(500)
-    end
 
     local lim, limerr
     local failed_to_instantiate = false
     try(
       function()
-        lim, limerr = limit.new(shdict_key, unpack(limiter.values))
+        lim, limerr = init_limiter(limiter)
         if not lim then
-          ngx.log(ngx.ERR, "failed to instantiate limiter: ", limerr)
+          ngx.log(ngx.ERR, "unknown limiter: ", limerr)
           failed_to_instantiate = true
         end
       end,
       function(e)
-        ngx.log(ngx.ERR, "failed to instantiate limiter: ", e)
+        ngx.log(ngx.ERR, "unknown limiter: ", e)
         failed_to_instantiate = true
       end
     )
@@ -121,7 +127,7 @@ function _M:access()
     limiters[#limiters + 1] = lim
     keys[#keys + 1] = limiter.key
 
-    if limiter.limiter == "resty.limit.conn" then
+    if limiter.name == "connections" then
       limiters_limit_conn[#limiters_limit_conn + 1] = lim
       keys_limit_conn[#keys_limit_conn + 1] = limiter.key
     end

@@ -26,8 +26,28 @@ local traffic_limiters = {
   end
 }
 
+local function try(f, catch_f)
+  local status, exception = pcall(f)
+  if not status then
+    catch_f(exception)
+  end
+end
+
 local function init_limiter(config)
-  return traffic_limiters[config.name](config)
+  local lim, limerr
+  try(
+    function()
+      lim, limerr = traffic_limiters[config.name](config)
+    end,
+    function(e)
+      return nil, e
+    end
+  )
+  if not lim then
+    return nil, limerr
+  end
+
+  return lim, nil
 end
 
 local function redis_shdict(url)
@@ -65,68 +85,52 @@ local function redis_shdict(url)
   }
 end
 
-local function try(f, catch_f)
-  local status, exception = pcall(f)
-  if not status then
-    catch_f(exception)
-  end
-end
-
 function _M.new(config)
   local self = new()
   self.config = config or {}
+  self.limiters = config.limiters
   self.redis_url = config.redis_url
-
-  local limiters = {}
-  local keys = {}
-
-  if not self.redis_url then
-    ngx.log(ngx.ERR, "No Redis information.")
-    return ngx.exit(500)
-  end
-
-  for _, limiter in ipairs(config.limiters) do
-
-    local lim, limerr
-    local failed_to_instantiate = false
-    try(
-      function()
-        lim, limerr = init_limiter(limiter)
-        if not lim then
-          ngx.log(ngx.ERR, "unknown limiter: ", limerr)
-          failed_to_instantiate = true
-        end
-      end,
-      function(e)
-        ngx.log(ngx.ERR, "unknown limiter: ", e)
-        failed_to_instantiate = true
-      end
-    )
-    if failed_to_instantiate then
-      return ngx.exit(500)
-    end
-
-    local rediserr
-    lim.dict, rediserr = redis_shdict(self.redis_url)
-    if not lim.dict then
-      ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
-      return ngx.exit(500)
-    end
-
-    limiters[#limiters + 1] = lim
-    keys[#keys + 1] = limiter.key
-
-  end
-
-  self.limiters = limiters
-  self.keys = keys
 
   return self
 end
 
 function _M:access()
-  local limiters = self.limiters
-  local keys = self.keys
+  local limiters = {}
+  local keys = {}
+
+  if not self.redis_url then
+    -- Only one (the first) limiter is enable.
+    -- Key will be shdict_key ('limiter').
+    local lim, initerr = init_limiter(self.limiters[1])
+    if not lim then
+      ngx.log(ngx.ERR, "unknown limiter: ", initerr)
+      return ngx.exit(500)
+    end
+
+    limiters[1] = lim
+    keys[1] = shdict_key
+
+  else
+    for _, limiter in ipairs(self.limiters) do
+      local lim, initerr = init_limiter(limiter)
+      if not lim then
+        ngx.log(ngx.ERR, "unknown limiter: ", limiter.name, ", err: ", initerr)
+        return ngx.exit(500)
+      end
+
+      local rediserr
+      lim.dict, rediserr = redis_shdict(self.redis_url)
+      if not lim.dict then
+        ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
+        return ngx.exit(500)
+      end
+
+      limiters[#limiters + 1] = lim
+      keys[#keys + 1] = limiter.key
+
+    end
+  end
+
   local states = {}
   local connections_committed = {}
   local keys_committed = {}
@@ -161,18 +165,11 @@ function _M:access()
 
 end
 
-local function checkin(_, ctx, time, semaphore, redis_url)
+local function checkin(_, ctx, time, semaphore)
   local limiters = ctx.limiters
   local keys = ctx.keys
 
   for i, lim in ipairs(limiters) do
-    local rediserr
-    lim.dict, rediserr = redis_shdict(redis_url)
-    if not lim.dict then
-      ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
-      return ngx.exit(500)
-    end
-
     local latency = tonumber(time)
     local conn, err = lim:leaving(keys[i], latency)
     if not conn then
@@ -191,7 +188,7 @@ function _M:log()
   local limiters = ctx.limiters
   if limiters and next(limiters) ~= nil then
     local semaphore = ngx_semaphore.new()
-    ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore, self.redis_url)
+    ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore)
     semaphore:wait(10)
   end
 end

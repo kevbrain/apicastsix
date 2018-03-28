@@ -145,7 +145,7 @@ GET /
 --- error_code: 500
 
 === TEST 5: No redis url.
-Return 500 code.
+Return 200 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -185,9 +185,9 @@ Return 500 code.
 
 --- request
 GET /
---- error_code: 500
---- error_log
-No Redis information.
+--- error_code: 200
+--- no_error_log
+[error]
 
 === TEST 6: Success with multiple limiters.
 Return 200 code.
@@ -610,3 +610,305 @@ Return 200 code.
 ["GET /flush_redis","GET /"]
 --- error_code eval
 [200, 200]
+
+=== TEST 12: Rejected (conn) (no redis).
+Return 429 code.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "connections",
+                      key = "test12",
+                      conn = 1,
+                      burst = 0,
+                      delay = 2
+                    }
+                  }
+                }
+              },
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "connections",
+                      key = "test12",
+                      conn = 1,
+                      burst = 0,
+                      delay = 2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+--- request
+GET /
+--- error_code: 429
+--- error_log
+Requests over the limit.
+
+=== TEST 13: Rejected (req) (no redis).
+Return 429 code.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "leaky_bucket",
+                      key = "test13",
+                      rate = 1,
+                      burst = 0
+                    }
+                  }
+                }
+              },
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "leaky_bucket",
+                      key = "test13",
+                      rate = 1,
+                      burst = 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+--- request
+GET /
+--- error_code: 429
+--- error_log
+Requests over the limit.
+
+=== TEST 14: Rejected (count) (no redis).
+Return 429 code.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "fixed_window",
+                      key = "test14",
+                      count = 1,
+                      window = 10
+                    }
+                  }
+                }
+              },
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "fixed_window",
+                      key = "test14",
+                      count = 1,
+                      window = 10
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+--- request
+GET /
+--- error_code: 429
+--- error_log
+Requests over the limit.
+
+=== TEST 15: Delay (conn) (no redis).
+Return 200 code.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "connections",
+                      key = "test15",
+                      conn = 1,
+                      burst = 1,
+                      delay = 2
+                    }
+                  }
+                }
+              },
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "connections",
+                      key = "test15",
+                      conn = 1,
+                      burst = 1,
+                      delay = 2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+
+--- request
+GET /
+--- error_code: 200
+--- error_log
+need to delay by
+
+=== TEST 16: Delay (req) (no redis).
+Return 200 code.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "leaky_bucket",
+                      key = "test16",
+                      rate = 1,
+                      burst = 1
+                    }
+                  }
+                }
+              },
+              {
+                name = "apicast.policy.rate_limiting_to_service",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "leaky_bucket",
+                      key = "test16",
+                      rate = 1,
+                      burst = 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+
+--- request
+GET /
+--- error_code: 200
+--- error_log
+need to delay by

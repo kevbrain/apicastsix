@@ -61,7 +61,8 @@ describe('Rate limit policy', function()
         },
         redis_url = 'redis://localhost:6379/1'
       }
-      RateLimitPolicy.new(config)
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
     it('invalid limiter values', function()
@@ -71,17 +72,20 @@ describe('Rate limit policy', function()
         },
         redis_url = 'redis://localhost:6379/1'
       }
-      RateLimitPolicy.new(config)
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
     it('no redis url', function()
       local config = {
         limiters = {
-          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
+          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5},
+          {name = "leaky_bucket", key = 'test2', rate = 18, burst = 9},
+          {name = "fixed_window", key = 'test3', count = 10, window = 10}
         }
       }
-      RateLimitPolicy.new(config)
-      assert.spy(ngx_exit_spy).was_called_with(500)
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
     end)
     it('invalid redis url', function()
       local config = {
@@ -90,7 +94,8 @@ describe('Rate limit policy', function()
         },
         redis_url = 'redis://invalidhost:6379/1'
       }
-      RateLimitPolicy.new(config)
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
     it('rejected (conn)', function()

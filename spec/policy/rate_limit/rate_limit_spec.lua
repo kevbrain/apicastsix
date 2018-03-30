@@ -1,4 +1,4 @@
-local RateLimitPolicy = require('apicast.policy.rate_limiting_to_service')
+local RateLimitPolicy = require('apicast.policy.rate_limit')
 local function init_val()
   ngx.var = {}
   ngx.var.request_time = '0.060'

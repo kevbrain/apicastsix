@@ -1,6 +1,6 @@
 local policy_chain = require('apicast.policy_chain').default()
 
-local rate_limit_policy = require('apicast.policy.rate_limiting_to_service').new({
+local rate_limit_policy = require('apicast.policy.rate_limit').new({
   limiters = {
   {
     name = "connections",

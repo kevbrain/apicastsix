@@ -1,5 +1,5 @@
 local policy = require('apicast.policy')
-local _M = policy.new('Rate Limiting to Service Policy')
+local _M = policy.new('Rate Limit Policy')
 
 local resty_limit_conn = require('resty.limit.conn')
 local resty_limit_req = require('resty.limit.req')

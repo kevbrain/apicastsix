@@ -22,7 +22,7 @@ Return 500 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -69,7 +69,7 @@ Return 500 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -115,7 +115,7 @@ Return 500 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -160,7 +160,7 @@ Return 200 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -205,7 +205,7 @@ Return 200 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -275,7 +275,7 @@ Return 429 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -290,7 +290,7 @@ Return 429 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -345,7 +345,7 @@ Return 429 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -359,7 +359,7 @@ Return 429 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -413,7 +413,7 @@ Return 429 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -427,7 +427,7 @@ Return 429 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -481,7 +481,7 @@ Return 200 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -496,7 +496,7 @@ Return 200 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -555,7 +555,7 @@ Return 200 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -569,7 +569,7 @@ Return 200 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -627,7 +627,7 @@ Return 429 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -641,7 +641,7 @@ Return 429 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -687,7 +687,7 @@ Return 429 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -700,7 +700,7 @@ Return 429 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -745,7 +745,7 @@ Return 429 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -758,7 +758,7 @@ Return 429 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -803,7 +803,7 @@ Return 200 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -817,7 +817,7 @@ Return 200 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -867,7 +867,7 @@ Return 200 code.
           proxy = {
             policy_chain = {
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {
@@ -880,7 +880,7 @@ Return 200 code.
                 }
               },
               {
-                name = "apicast.policy.rate_limiting_to_service",
+                name = "apicast.policy.rate_limit",
                 configuration = {
                   limiters = {
                     {

@@ -138,7 +138,7 @@ function _M:access()
   local delay, comerr = limit_traffic.combine(limiters, keys, states)
   if not delay then
     if comerr == "rejected" then
-      ngx.log(ngx.ERR, "Requests over the limit.")
+      ngx.log(ngx.WARN, "Requests over the limit.")
       return ngx.exit(429)
     end
     ngx.log(ngx.ERR, "failed to limit traffic: ", comerr)

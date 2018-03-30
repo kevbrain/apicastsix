@@ -329,6 +329,8 @@ Return 429 code.
 ["GET /flush_redis","GET /"]
 --- error_code eval
 [200, 429]
+--- no_error_log
+[error]
 
 === TEST 8: Rejected (req).
 Return 429 code.
@@ -397,6 +399,8 @@ Return 429 code.
 ["GET /flush_redis","GET /"]
 --- error_code eval
 [200, 429]
+--- no_error_log
+[error]
 
 === TEST 9: Rejected (count).
 Return 429 code.
@@ -465,6 +469,8 @@ Return 429 code.
 ["GET /flush_redis","GET /"]
 --- error_code eval
 [200, 429]
+--- no_error_log
+[error]
 
 === TEST 10: Delay (conn).
 Return 200 code.

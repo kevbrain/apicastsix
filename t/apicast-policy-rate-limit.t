@@ -144,6 +144,78 @@ Return 500 code.
 GET /
 --- error_code: 500
 
+=== TEST 4: Rejected (conn) logging only.
+Return 200 code.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limit",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "connections",
+                      key = "test4",
+                      conn = 1,
+                      burst = 0,
+                      delay = 2
+                    }
+                  },
+                  redis_url = "redis://localhost:6379/1",
+                  logging_only = true
+                }
+              },
+              {
+                name = "apicast.policy.rate_limit",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "connections",
+                      key = "test4",
+                      conn = 1,
+                      burst = 0,
+                      delay = 2
+                    }
+                  },
+                  redis_url = "redis://localhost:6379/1",
+                  logging_only = true
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /flush_redis {
+    content_by_lua_block {
+      local redis = require('resty.redis'):new()
+      redis:connect('127.0.0.1', 6379)
+      redis:select(1)
+      redis:del("test4")
+    }
+  }
+
+--- pipelined_requests eval
+["GET /flush_redis","GET /"]
+--- error_code eval
+[200, 200]
+
 === TEST 5: No redis url.
 Return 200 code.
 --- http_config

@@ -168,9 +168,9 @@ end
 local function checkin(_, ctx, time, semaphore)
   local limiters = ctx.limiters
   local keys = ctx.keys
+  local latency = tonumber(time)
 
   for i, lim in ipairs(limiters) do
-    local latency = tonumber(time)
     local conn, err = lim:leaving(keys[i], latency)
     if not conn then
       ngx.log(ngx.ERR, "failed to record the connection leaving request: ", err)

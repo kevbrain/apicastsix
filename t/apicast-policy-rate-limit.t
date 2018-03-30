@@ -164,10 +164,11 @@ Return 200 code.
                 configuration = {
                   limiters = {
                     {
-                      name = "leaky_bucket",
+                      name = "connections",
                       key = "test5",
-                      rate = 20,
-                      burst = 10
+                      conn = 20,
+                      burst = 10,
+                      delay = 0.5
                     }
                   }
                 }

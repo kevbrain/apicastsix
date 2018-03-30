@@ -146,7 +146,7 @@ function _M:access()
   end
 
   for i, lim in ipairs(limiters) do
-    if lim.iscommitted and lim:is_committed() then
+    if lim.is_committed and lim:is_committed() then
       connections_committed[#connections_committed + 1] = lim
       keys_committed[#keys_committed + 1] = keys[i]
     end
@@ -165,12 +165,20 @@ function _M:access()
 
 end
 
-local function checkin(_, ctx, time, semaphore)
+local function checkin(_, ctx, time, semaphore, redis_url)
   local limiters = ctx.limiters
   local keys = ctx.keys
   local latency = tonumber(time)
 
   for i, lim in ipairs(limiters) do
+    if redis_url then
+      local rediserr
+      lim.dict, rediserr = redis_shdict(redis_url)
+      if not lim.dict then
+        ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
+        return ngx.exit(500)
+      end
+    end
     local conn, err = lim:leaving(keys[i], latency)
     if not conn then
       ngx.log(ngx.ERR, "failed to record the connection leaving request: ", err)
@@ -188,7 +196,7 @@ function _M:log()
   local limiters = ctx.limiters
   if limiters and next(limiters) ~= nil then
     local semaphore = ngx_semaphore.new()
-    ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore)
+    ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore, self.redis_url)
     semaphore:wait(10)
   end
 end

@@ -90,6 +90,7 @@ function _M.new(config)
   self.config = config or {}
   self.limiters = config.limiters
   self.redis_url = config.redis_url
+  self.status_code_rejected = config.status_code_rejected or 429
 
   return self
 end
@@ -139,7 +140,7 @@ function _M:access()
   if not delay then
     if comerr == "rejected" then
       ngx.log(ngx.WARN, "Requests over the limit.")
-      return ngx.exit(429)
+      return ngx.exit(self.status_code_rejected)
     end
     ngx.log(ngx.ERR, "failed to limit traffic: ", comerr)
     return ngx.exit(500)

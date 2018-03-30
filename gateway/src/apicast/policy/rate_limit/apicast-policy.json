@@ -79,6 +79,10 @@
       "redis_url": {
         "description": "URL of Redis",
         "type": "string"
+      },
+      "status_code_rejected": {
+        "type": "integer",
+        "description": "the status code when requests over the limit, default 429"
       }
     }
   }

@@ -333,7 +333,7 @@ Return 429 code.
 [error]
 
 === TEST 8: Rejected (req).
-Return 429 code.
+Return 503 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -358,7 +358,8 @@ Return 429 code.
                       burst = 0
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://localhost:6379/1",
+                  status_code_rejected = 503
                 }
               },
               {
@@ -372,7 +373,8 @@ Return 429 code.
                       burst = 0
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://localhost:6379/1",
+                  status_code_rejected = 503
                 }
               }
             }
@@ -398,7 +400,7 @@ Return 429 code.
 --- pipelined_requests eval
 ["GET /flush_redis","GET /"]
 --- error_code eval
-[200, 429]
+[200, 503]
 --- no_error_log
 [error]
 

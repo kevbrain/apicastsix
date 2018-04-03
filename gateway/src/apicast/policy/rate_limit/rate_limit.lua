@@ -43,9 +43,6 @@ local function init_limiter(config)
       return nil, e
     end
   )
-  if not lim then
-    return nil, limerr
-  end
 
   return lim, nil
 end

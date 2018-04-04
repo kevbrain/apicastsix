@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- descriptions in `oneOf`s in policy manifests have been replaced with titles [PR #663](https://github.com/3scale/apicast/pull/663)
+
 ## [3.2.0-beta3] - 2018-03-20
 
 ### Fixed

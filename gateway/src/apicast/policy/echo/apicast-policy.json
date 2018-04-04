@@ -19,11 +19,11 @@
         "oneOf": [
           {
             "enum": ["request"],
-            "description": "Interrupts the processing of the request."
+            "title": "Interrupt the processing of the request."
           },
           {
             "enum": ["set"],
-            "description": "Only skips the rewrite phase."
+            "title": "Skip only the rewrite phase."
           }
         ]
       }

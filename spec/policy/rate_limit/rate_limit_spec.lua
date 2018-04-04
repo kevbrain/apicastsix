@@ -24,6 +24,14 @@ local function init_val()
   end
 end
 
+local function is_gt(state, arguments)
+  local expected = arguments[1]
+  return function(value)
+    return value > expected
+  end
+end
+assert:register("matcher", "gt", is_gt)
+
 describe('Rate limit policy', function()
   local ngx_exit_spy
   local ngx_sleep_spy
@@ -144,7 +152,7 @@ describe('Rate limit policy', function()
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
       rate_limit_policy:access()
-      assert.spy(ngx_sleep_spy).was_called_more_than(0.001)
+      assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
     end)
     it('delay (req)', function()
       local config = {
@@ -156,7 +164,7 @@ describe('Rate limit policy', function()
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
       rate_limit_policy:access()
-      assert.spy(ngx_sleep_spy).was_called_more_than(0.001)
+      assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
     end)
   end)
   describe('.log', function()

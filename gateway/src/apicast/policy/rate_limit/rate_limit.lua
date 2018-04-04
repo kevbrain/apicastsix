@@ -110,7 +110,7 @@ function _M:access()
     if not lim then
       ngx.log(ngx.ERR, "unknown limiter: ", initerr)
       error(self.logging_only, 500)
-      goto done
+      return
     end
 
     limiters[1] = lim
@@ -122,7 +122,7 @@ function _M:access()
       if not lim then
         ngx.log(ngx.ERR, "unknown limiter: ", limiter.name, ", err: ", initerr)
         error(self.logging_only, 500)
-        goto done
+        return
       end
 
       local rediserr
@@ -130,7 +130,7 @@ function _M:access()
       if not lim.dict then
         ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
         error(self.logging_only, 500)
-        goto done
+        return
       end
 
       limiters[#limiters + 1] = lim
@@ -148,11 +148,11 @@ function _M:access()
     if comerr == "rejected" then
       ngx.log(ngx.WARN, "Requests over the limit.")
       error(self.logging_only, self.status_code_rejected)
-      goto done
+      return
     end
     ngx.log(ngx.ERR, "failed to limit traffic: ", comerr)
     error(self.logging_only, 500)
-    goto done
+    return
   end
 
   for i, lim in ipairs(limiters) do
@@ -173,7 +173,6 @@ function _M:access()
     ngx.sleep(delay)
   end
 
-  ::done::
 end
 
 local function checkin(_, ctx, time, semaphore, redis_url, logging_only)
@@ -188,14 +187,14 @@ local function checkin(_, ctx, time, semaphore, redis_url, logging_only)
       if not lim.dict then
         ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
         error(logging_only, 500)
-        goto done
+        return
       end
     end
     local conn, err = lim:leaving(keys[i], latency)
     if not conn then
       ngx.log(ngx.ERR, "failed to record the connection leaving request: ", err)
       error(logging_only, 500)
-      goto done
+      return
     end
   end
 
@@ -203,7 +202,6 @@ local function checkin(_, ctx, time, semaphore, redis_url, logging_only)
     semaphore:post(1)
   end
 
-  ::done::
 end
 
 function _M:log()

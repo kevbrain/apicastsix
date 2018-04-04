@@ -24,11 +24,11 @@
               "oneOf": [
                 {
                   "enum": ["sub"],
-                  "description": "Substitutes the first match of the regex applied."
+                  "title": "Substitute the first match of the regex applied."
                 },
                 {
                   "enum": ["gsub"],
-                  "description": "Substitutes all the matches of the regex applied."
+                  "title": "Substitute all the matches of the regex applied."
                 }
               ]
             },

@@ -44,7 +44,7 @@ local function init_limiter(config)
     end
   )
 
-  return lim, nil
+  return lim, limerr
 end
 
 local function redis_shdict(url)

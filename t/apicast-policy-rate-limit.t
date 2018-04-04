@@ -1,6 +1,9 @@
 use lib 't';
 use Test::APIcast 'no_plan';
 
+$ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
+$ENV{TEST_NGINX_REDIS_PORT} ||= $ENV{REDIS_PORT} || 6379;
+
 repeat_each(1);
 run_tests();
 
@@ -33,7 +36,7 @@ Return 500 code.
                       delay = 0.5
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               }
             }
@@ -79,7 +82,7 @@ Return 500 code.
                       window = 10
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               }
             }
@@ -126,7 +129,7 @@ Return 500 code.
                       delay = 0.5
                     }
                   },
-                  redis_url = "redis://invalidhost:6379/1"
+                  redis_url = "redis://invalidhost:$TEST_NGINX_REDIS_PORT/1"
                 }
               }
             }
@@ -171,7 +174,7 @@ Return 200 code.
                       delay = 2
                     }
                   },
-                  redis_url = "redis://localhost:6379/1",
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
                   logging_only = true
                 }
               },
@@ -187,7 +190,7 @@ Return 200 code.
                       delay = 2
                     }
                   },
-                  redis_url = "redis://localhost:6379/1",
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
                   logging_only = true
                 }
               }
@@ -204,8 +207,11 @@ Return 200 code.
 
   location /flush_redis {
     content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
+      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
       local redis = require('resty.redis'):new()
-      redis:connect('127.0.0.1', 6379)
+      redis:connect(redis_host, redis_port)
       redis:select(1)
       redis:del("test4")
     }
@@ -301,7 +307,7 @@ Return 200 code.
                       window = 10
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               }
             }
@@ -317,8 +323,11 @@ Return 200 code.
 
   location /flush_redis {
     content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
+      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
       local redis = require('resty.redis'):new()
-      redis:connect('127.0.0.1', 6379)
+      redis:connect(redis_host, redis_port)
       redis:select(1)
       redis:del("test6_1", "test6_2", "test6_3")
     }
@@ -359,7 +368,7 @@ Return 429 code.
                       delay = 2
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               },
               {
@@ -374,7 +383,7 @@ Return 429 code.
                       delay = 2
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               }
             }
@@ -390,8 +399,11 @@ Return 429 code.
 
   location /flush_redis {
     content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
+      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
       local redis = require('resty.redis'):new()
-      redis:connect('127.0.0.1', 6379)
+      redis:connect(redis_host, redis_port)
       redis:select(1)
       redis:del("test7")
     }
@@ -430,7 +442,7 @@ Return 503 code.
                       burst = 0
                     }
                   },
-                  redis_url = "redis://localhost:6379/1",
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
                   status_code_rejected = 503
                 }
               },
@@ -445,7 +457,7 @@ Return 503 code.
                       burst = 0
                     }
                   },
-                  redis_url = "redis://localhost:6379/1",
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
                   status_code_rejected = 503
                 }
               }
@@ -462,8 +474,11 @@ Return 503 code.
 
   location /flush_redis {
     content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
+      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
       local redis = require('resty.redis'):new()
-      redis:connect('127.0.0.1', 6379)
+      redis:connect(redis_host, redis_port)
       redis:select(1)
       redis:del("test8")
     }
@@ -502,7 +517,7 @@ Return 429 code.
                       window = 10
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               },
               {
@@ -516,7 +531,7 @@ Return 429 code.
                       window = 10
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               }
             }
@@ -532,8 +547,11 @@ Return 429 code.
 
   location /flush_redis {
     content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
+      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
       local redis = require('resty.redis'):new()
-      redis:connect('127.0.0.1', 6379)
+      redis:connect(redis_host, redis_port)
       redis:select(1)
       redis:del("test9")
     }
@@ -573,7 +591,7 @@ Return 200 code.
                       delay = 2
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               },
               {
@@ -588,7 +606,7 @@ Return 200 code.
                       delay = 2
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               }
             }
@@ -608,8 +626,11 @@ Return 200 code.
 
   location /flush_redis {
     content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
+      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
       local redis = require('resty.redis'):new()
-      redis:connect('127.0.0.1', 6379)
+      redis:connect(redis_host, redis_port)
       redis:select(1)
       redis:del("test10")
     }
@@ -646,7 +667,7 @@ Return 200 code.
                       burst = 1
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               },
               {
@@ -660,7 +681,7 @@ Return 200 code.
                       burst = 1
                     }
                   },
-                  redis_url = "redis://localhost:6379/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
               }
             }
@@ -680,8 +701,11 @@ Return 200 code.
 
   location /flush_redis {
     content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
+      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
       local redis = require('resty.redis'):new()
-      redis:connect('127.0.0.1', 6379)
+      redis:connect(redis_host, redis_port)
       redis:select(1)
       redis:del("test11")
     }

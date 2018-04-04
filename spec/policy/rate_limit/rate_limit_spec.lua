@@ -1,4 +1,6 @@
 local RateLimitPolicy = require('apicast.policy.rate_limit')
+local match = require('luassert.match')
+local env = require('resty.env')
 local function init_val()
   ngx.var = {}
   ngx.var.request_time = '0.060'
@@ -24,13 +26,16 @@ local function init_val()
   end
 end
 
-local function is_gt(state, arguments)
+local function is_gt(_, arguments)
   local expected = arguments[1]
   return function(value)
     return value > expected
   end
 end
 assert:register("matcher", "gt", is_gt)
+
+local redis_host = env.get('TEST_NGINX_REDIS_HOST') or 'localhost'
+local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
 
 describe('Rate limit policy', function()
   local ngx_exit_spy
@@ -43,7 +48,7 @@ describe('Rate limit policy', function()
 
   before_each(function()
     local redis = require('resty.redis'):new()
-    redis:connect('127.0.0.1', 6379)
+    redis:connect(redis_host, redis_port)
     redis:select(1)
     redis:del('test1', 'test2', 'test3')
     init_val()
@@ -57,7 +62,7 @@ describe('Rate limit policy', function()
           {name = "leaky_bucket", key = 'test2', rate = 18, burst = 9},
           {name = "fixed_window", key = 'test3', count = 10, window = 10}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -67,7 +72,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "invalid", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -78,7 +83,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "fixed_window", key = 'test1', count = 0, window = 10}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -100,7 +105,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         },
-        redis_url = 'redis://invalidhost:6379/1'
+        redis_url = 'redis://invalidhost:'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -111,7 +116,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "connections", key = 'test1', conn = 1, burst = 0, delay = 0.5}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -123,7 +128,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "leaky_bucket", key = 'test1', rate = 1, burst = 0}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -135,7 +140,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "fixed_window", key = 'test1', count = 1, window = 10}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -147,7 +152,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "connections", key = 'test1', conn = 1, burst = 1, delay = 2}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -159,7 +164,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "leaky_bucket", key = 'test1', rate = 1, burst = 1}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
@@ -173,7 +178,7 @@ describe('Rate limit policy', function()
         limiters = {
           {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
         },
-        redis_url = 'redis://localhost:6379/1'
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()

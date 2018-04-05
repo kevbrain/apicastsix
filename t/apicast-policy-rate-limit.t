@@ -445,21 +445,6 @@ Return 503 code.
                   redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
                   status_code_rejected = 503
                 }
-              },
-              {
-                name = "apicast.policy.rate_limit",
-                configuration = {
-                  limiters = {
-                    {
-                      name = "leaky_bucket",
-                      key = "test8",
-                      rate = 1,
-                      burst = 0
-                    }
-                  },
-                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
-                  status_code_rejected = 503
-                }
               }
             }
           }
@@ -485,9 +470,9 @@ Return 503 code.
   }
 
 --- pipelined_requests eval
-["GET /flush_redis","GET /"]
+["GET /flush_redis","GET /","GET /"]
 --- error_code eval
-[200, 503]
+[200, 200, 503]
 --- no_error_log
 [error]
 
@@ -506,20 +491,6 @@ Return 429 code.
           id = 42,
           proxy = {
             policy_chain = {
-              {
-                name = "apicast.policy.rate_limit",
-                configuration = {
-                  limiters = {
-                    {
-                      name = "fixed_window",
-                      key = "test9",
-                      count = 1,
-                      window = 10
-                    }
-                  },
-                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
-                }
-              },
               {
                 name = "apicast.policy.rate_limit",
                 configuration = {
@@ -558,9 +529,9 @@ Return 429 code.
   }
 
 --- pipelined_requests eval
-["GET /flush_redis","GET /"]
+["GET /flush_redis","GET /","GET /"]
 --- error_code eval
-[200, 429]
+[200, 200, 429]
 --- no_error_log
 [error]
 
@@ -669,20 +640,6 @@ Return 200 code.
                   },
                   redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
                 }
-              },
-              {
-                name = "apicast.policy.rate_limit",
-                configuration = {
-                  limiters = {
-                    {
-                      name = "leaky_bucket",
-                      key = "test11",
-                      rate = 1,
-                      burst = 1
-                    }
-                  },
-                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
-                }
               }
             }
           }
@@ -712,9 +669,9 @@ Return 200 code.
   }
 
 --- pipelined_requests eval
-["GET /flush_redis","GET /"]
+["GET /flush_redis","GET /","GET /"]
 --- error_code eval
-[200, 200]
+[200, 200, 200]
 
 === TEST 12: Rejected (conn) (no redis).
 Return 429 code.
@@ -803,19 +760,6 @@ Return 429 code.
                     }
                   }
                 }
-              },
-              {
-                name = "apicast.policy.rate_limit",
-                configuration = {
-                  limiters = {
-                    {
-                      name = "leaky_bucket",
-                      key = "test13",
-                      rate = 1,
-                      burst = 0
-                    }
-                  }
-                }
               }
             }
           }
@@ -828,11 +772,10 @@ Return 429 code.
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
---- request
-GET /
---- error_code: 429
---- error_log
-Requests over the limit.
+--- pipelined_requests eval
+["GET /","GET /"]
+--- error_code eval
+[200, 429]
 
 === TEST 14: Rejected (count) (no redis).
 Return 429 code.
@@ -861,19 +804,6 @@ Return 429 code.
                     }
                   }
                 }
-              },
-              {
-                name = "apicast.policy.rate_limit",
-                configuration = {
-                  limiters = {
-                    {
-                      name = "fixed_window",
-                      key = "test14",
-                      count = 1,
-                      window = 10
-                    }
-                  }
-                }
               }
             }
           }
@@ -886,11 +816,10 @@ Return 429 code.
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
---- request
-GET /
---- error_code: 429
---- error_log
-Requests over the limit.
+--- pipelined_requests eval
+["GET /","GET /"]
+--- error_code eval
+[200, 429]
 
 === TEST 15: Delay (conn) (no redis).
 Return 200 code.
@@ -983,19 +912,6 @@ Return 200 code.
                     }
                   }
                 }
-              },
-              {
-                name = "apicast.policy.rate_limit",
-                configuration = {
-                  limiters = {
-                    {
-                      name = "leaky_bucket",
-                      key = "test16",
-                      rate = 1,
-                      burst = 1
-                    }
-                  }
-                }
               }
             }
           }
@@ -1012,8 +928,7 @@ Return 200 code.
     content_by_lua_block { ngx.exit(200) }
   }
 
---- request
-GET /
---- error_code: 200
---- error_log
-need to delay by
+--- pipelined_requests eval
+["GET /","GET /"]
+--- error_code eval
+[200, 200]

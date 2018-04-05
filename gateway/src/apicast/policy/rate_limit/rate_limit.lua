@@ -103,28 +103,15 @@ function _M:access()
   local limiters = {}
   local keys = {}
 
-  if not self.redis_url then
-    -- Only one (the first) limiter is enable.
-    -- Key will be shdict_key ('limiter').
-    local lim, initerr = init_limiter(self.limiters[1])
+  for _, limiter in ipairs(self.limiters) do
+    local lim, initerr = init_limiter(limiter)
     if not lim then
-      ngx.log(ngx.ERR, "unknown limiter: ", initerr)
+      ngx.log(ngx.ERR, "unknown limiter: ", limiter.name, ", err: ", initerr)
       error(self.logging_only, 500)
       return
     end
 
-    limiters[1] = lim
-    keys[1] = shdict_key
-
-  else
-    for _, limiter in ipairs(self.limiters) do
-      local lim, initerr = init_limiter(limiter)
-      if not lim then
-        ngx.log(ngx.ERR, "unknown limiter: ", limiter.name, ", err: ", initerr)
-        error(self.logging_only, 500)
-        return
-      end
-
+    if self.redis_url then
       local rediserr
       lim.dict, rediserr = redis_shdict(self.redis_url)
       if not lim.dict then
@@ -132,12 +119,13 @@ function _M:access()
         error(self.logging_only, 500)
         return
       end
-
-      limiters[#limiters + 1] = lim
-      keys[#keys + 1] = limiter.key
-
     end
+
+    limiters[#limiters + 1] = lim
+    keys[#keys + 1] = limiter.key
+
   end
+
 
   local states = {}
   local connections_committed = {}

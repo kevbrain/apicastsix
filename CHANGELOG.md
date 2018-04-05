@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Rate Limit policy [PR #648](https://github.com/3scale/apicast/pull/648)
+### Changed
+
+- descriptions in `oneOf`s in policy manifests have been replaced with titles [PR #663](https://github.com/3scale/apicast/pull/663)
 
 ## [3.2.0-beta3] - 2018-03-20
 

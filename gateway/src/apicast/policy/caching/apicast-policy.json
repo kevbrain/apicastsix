@@ -28,19 +28,19 @@
         "oneOf": [
           {
             "enum": ["resilient"],
-            "description": "Authorize according to last request when backend is down."
+            "title": "Authorize according to last request when backend is down."
           },
           {
             "enum": ["strict"],
-            "description": "It only caches authorized calls."
+            "title": "Cache only authorized calls."
           },
           {
             "enum": ["allow"],
-            "description": "When backend is down, allow everything unless seen before and denied."
+            "title": "When backend is down, allow everything unless seen before and denied."
           },
           {
             "enum": ["none"],
-            "description": "Disables caching."
+            "title": "Disable caching."
           }
         ]
       }

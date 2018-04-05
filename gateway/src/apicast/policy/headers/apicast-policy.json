@@ -23,15 +23,15 @@
               "oneOf": [
                 {
                   "enum": ["add"],
-                  "description": "Adds a value to an existing header."
+                  "title": "Add a value to an existing header."
                 },
                 {
                   "enum": ["set"],
-                  "description": "Creates the header when not set, replaces its value when set."
+                  "title": "Create the header when not set, replace its value when set."
                 },
                 {
                   "enum": ["push"],
-                  "description": "Creates the header when not set, adds the value when set."
+                  "title": "Create the header when not set, add the value when set."
                 }
               ]
             },

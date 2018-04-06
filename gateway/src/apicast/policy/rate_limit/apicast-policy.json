@@ -32,7 +32,7 @@
                 "description": "the number of excessive concurrent requests (or connections) allowed to be delayed"
               },
               "delay": {
-                "type": "integer",
+                "type": "number",
                 "description": "the default processing latency of a typical connection (or request)"
               }
             }

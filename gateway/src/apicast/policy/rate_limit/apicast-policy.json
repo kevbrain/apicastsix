@@ -11,9 +11,9 @@
         "description": "List of limiters to be applied",
         "type": "array",
         "items": {
-          "type": "object",
-          "properties": {
-            "oneOf": [{
+          "oneOf": [{
+            "type": "object",
+            "properties": {
               "name": {
                 "type": "string",
                 "enum": ["connections"],
@@ -35,7 +35,10 @@
                 "type": "integer",
                 "description": "the default processing latency of a typical connection (or request)"
               }
-            }, {
+            }
+          }, {
+            "type": "object",
+            "properties": {
               "name": {
                 "type": "string",
                 "enum": ["leaky_bucket"],
@@ -53,7 +56,10 @@
                 "type": "integer",
                 "description": "the number of excessive requests per second allowed to be delayed"
               }
-            }, {
+            }
+          }, {
+            "type": "object",
+            "properties": {
               "name": {
                 "type": "string",
                 "enum": ["fixed_window"],
@@ -71,8 +77,8 @@
                 "type": "integer",
                 "description": "the time window in seconds before the request count is reset"
               }
-            }]
-          }
+            }
+          }]
         }
       },
       "redis_url": {

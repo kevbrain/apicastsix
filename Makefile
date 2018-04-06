@@ -22,6 +22,14 @@ DEVEL_DOCKER_COMPOSE_FILE ?= docker-compose-devel.yml
 
 S2I_CONTEXT ?= gateway
 
+GIT_TAG += $(CIRCLE_TAG)
+GIT_TAG += $(shell git describe --tags --exact-match 2>/dev/null)
+
+GIT_BRANCH += $(CIRCLE_BRANCH)
+GIT_BRANCH += $(shell git symbolic-ref --short HEAD 2>/dev/null)
+
+S2I_OPTIONS = --env GIT_BRANCH=$(firstword $(GIT_BRANCH)) --env GIT_TAG=$(firstword $(GIT_TAG))
+
 CIRCLE_NODE_INDEX ?= 0
 CIRCLE_STAGE ?= build
 COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
@@ -70,12 +78,12 @@ prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm -T prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
 builder-image: ## Build builder image
-	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --copy --incremental
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --copy --incremental $(S2I_OPTIONS)
 
 runtime-image: PULL_POLICY ?= always
 runtime-image: IMAGE_NAME = apicast-runtime-test
 runtime-image: ## Build runtime image
-	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY) --runtime-pull-policy=$(PULL_POLICY)
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY) --runtime-pull-policy=$(PULL_POLICY) $(S2I_OPTIONS)
 
 push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)

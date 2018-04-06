@@ -65,7 +65,7 @@ prove: $(ROVER) nginx cpan ## Test nginx
 	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source
-prove-docker: export IMAGE_NAME = apicast-test
+prove-docker: export IMAGE_NAME ?= apicast-test
 prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm -T prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
@@ -81,17 +81,18 @@ push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)
 	docker push $(REGISTRY)/$(IMAGE_NAME)
 
-bash: export IMAGE_NAME = apicast-test
+bash: export IMAGE_NAME ?= apicast-test
 bash: export SERVICE = gateway
 bash: builder-image apicast-source ## Run bash inside the builder image
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash $(SERVICE)
 
-dev: export IMAGE_NAME = apicast-test
+dev: export IMAGE_NAME ?= apicast-test
 dev: export SERVICE = dev
 dev: USER = root
 dev: builder-image apicast-source ## Run APIcast inside the container mounted to local volume
 	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
-test-builder-image: export IMAGE_NAME = apicast-test
+
+test-builder-image: export IMAGE_NAME ?= apicast-test
 test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)

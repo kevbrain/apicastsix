@@ -32,10 +32,11 @@ jobs:
           exclusive: false
       - checkout
       - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
-      - run: make builder-image
-      - run: make test-builder-image gateway-logs --keep-going
-      - run: make prove-docker
-      - run: make lint-schema
+      - run: |
+          export IMAGE_NAME="quay.io/3scale/apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder"
+          make builder-image test-builder-image gateway-logs --keep-going
+          make prove-docker
+          make lint-schema
   build:
     docker:
       - image: quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover6

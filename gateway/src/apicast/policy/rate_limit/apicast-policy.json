@@ -1,6 +1,7 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
   "name": "rate limit policy",
+  "summary": "Adds rate limit.",
   "description": ["This policy adds rate limit."],
   "version": "builtin",
   "configuration": {

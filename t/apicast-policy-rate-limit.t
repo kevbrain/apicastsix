@@ -3,6 +3,7 @@ use Test::APIcast 'no_plan';
 
 $ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
 $ENV{TEST_NGINX_REDIS_PORT} ||= $ENV{REDIS_PORT} || 6379;
+$ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | head -1 | tr '\n' ' '`;
 
 repeat_each(1);
 run_tests();
@@ -204,12 +205,13 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
       local env = require('resty.env')
-      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
-      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
@@ -320,12 +322,13 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
       local env = require('resty.env')
-      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
-      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
@@ -396,12 +399,13 @@ Return 429 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
       local env = require('resty.env')
-      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
-      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
@@ -456,12 +460,13 @@ Return 503 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
       local env = require('resty.env')
-      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
-      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
@@ -515,12 +520,13 @@ Return 429 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
       local env = require('resty.env')
-      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
-      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
@@ -590,6 +596,7 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
@@ -598,8 +605,8 @@ Return 200 code.
   location /flush_redis {
     content_by_lua_block {
       local env = require('resty.env')
-      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
-      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
@@ -651,6 +658,7 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
@@ -659,8 +667,8 @@ Return 200 code.
   location /flush_redis {
     content_by_lua_block {
       local env = require('resty.env')
-      local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
-      local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)

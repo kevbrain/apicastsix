@@ -17,23 +17,23 @@
               "name": {
                 "type": "string",
                 "enum": ["connections"],
-                "description": "limiting request concurrency (or concurrent connections)"
+                "description": "Limiting request concurrency (or concurrent connections)"
               },
               "key": {
-                "description": "Key of limiter",
+                "description": "The user key corresponding to the limiter object. This must be unique in the scope.",
                 "type": "string"
               },
               "conn": {
                 "type": "integer",
-                "description": "the maximum number of concurrent requests allowed"
+                "description": "The maximum number of concurrent requests allowed"
               },
               "burst": {
                 "type": "integer",
-                "description": "the number of excessive concurrent requests (or connections) allowed to be delayed"
+                "description": "The number of excessive concurrent requests (or connections) allowed to be delayed"
               },
               "delay": {
                 "type": "number",
-                "description": "the default processing latency of a typical connection (or request)"
+                "description": "The default processing latency of a typical connection (or request)"
               }
             }
           }, {
@@ -42,19 +42,19 @@
               "name": {
                 "type": "string",
                 "enum": ["leaky_bucket"],
-                "description": "limiting request rate"
+                "description": "Limiting request rate"
               },
               "key": {
-                "description": "Key of limiter",
+                "description": "The user key corresponding to the limiter object. This must be unique in the scope.",
                 "type": "string"
               },
               "rate": {
                 "type": "integer",
-                "description": "the specified request rate (number per second) threshold"
+                "description": "The specified request rate (number per second) threshold"
               },
               "burst": {
                 "type": "integer",
-                "description": "the number of excessive requests per second allowed to be delayed"
+                "description": "The number of excessive requests per second allowed to be delayed"
               }
             }
           }, {
@@ -63,19 +63,19 @@
               "name": {
                 "type": "string",
                 "enum": ["fixed_window"],
-                "description": "limiting request counts"
+                "description": "Limiting request counts"
               },
               "key": {
-                "description": "Key of limiter",
+                "description": "The user key corresponding to the limiter object. This must be unique in the scope.",
                 "type": "string"
               },
               "count": {
                 "type": "integer",
-                "description": "the specified number of requests threshold"
+                "description": "The specified number of requests threshold"
               },
               "window": {
                 "type": "integer",
-                "description": "the time window in seconds before the request count is reset"
+                "description": "The time window in seconds before the request count is reset"
               }
             }
           }]
@@ -87,11 +87,11 @@
       },
       "status_code_rejected": {
         "type": "integer",
-        "description": "the status code when requests over the limit, default 429"
+        "description": "The status code when requests over the limit, default 429"
       },
       "logging_only": {
         "type": "boolean",
-        "description": "if true, the request goes through when there is some issue with rate limiting, default false"
+        "description": "If true, the request goes through when there is some issue with rate limiting, default false"
       }
     }
   }

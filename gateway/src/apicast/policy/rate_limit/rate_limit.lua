@@ -156,7 +156,7 @@ function _M:access()
     ctx.keys = keys_committed
   end
 
-  if delay >= 0.001 then
+  if delay > 0 then
     ngx.log(ngx.WARN, 'need to delay by: ', delay, 's, states: ', table.concat(states, ", "))
     ngx.sleep(delay)
   end

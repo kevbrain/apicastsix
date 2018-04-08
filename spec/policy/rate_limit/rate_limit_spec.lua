@@ -67,6 +67,7 @@ describe('Rate limit policy', function()
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
     end)
+
     it('invalid limiter values', function()
       local config = {
         limiters = {
@@ -78,6 +79,7 @@ describe('Rate limit policy', function()
       rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
+
     it('no redis url', function()
       local config = {
         limiters = {
@@ -89,6 +91,7 @@ describe('Rate limit policy', function()
       local rate_limit_policy = RateLimitPolicy.new(config)
       rate_limit_policy:access()
     end)
+
     it('invalid redis url', function()
       local config = {
         limiters = {
@@ -100,6 +103,7 @@ describe('Rate limit policy', function()
       rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
+
     it('rejected (conn)', function()
       local config = {
         limiters = {
@@ -112,6 +116,7 @@ describe('Rate limit policy', function()
       rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(429)
     end)
+
     it('rejected (req)', function()
       local config = {
         limiters = {
@@ -124,6 +129,7 @@ describe('Rate limit policy', function()
       rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(429)
     end)
+
     it('rejected (count)', function()
       local config = {
         limiters = {
@@ -136,6 +142,7 @@ describe('Rate limit policy', function()
       rate_limit_policy:access()
       assert.spy(ngx_exit_spy).was_called_with(429)
     end)
+
     it('delay (conn)', function()
       local config = {
         limiters = {
@@ -148,6 +155,7 @@ describe('Rate limit policy', function()
       rate_limit_policy:access()
       assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
     end)
+
     it('delay (req)', function()
       local config = {
         limiters = {
@@ -161,6 +169,7 @@ describe('Rate limit policy', function()
       assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
     end)
   end)
+
   describe('.log', function()
     it('success in leaving', function()
       local config = {

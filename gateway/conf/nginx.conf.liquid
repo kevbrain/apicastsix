@@ -124,6 +124,8 @@ http {
     }
   {% endif %}
 
+  lua_shared_dict limiter 1m;
+
   {% for file in "sites.d/*.conf" | filesystem %}
     {% include file %}
   {% endfor %}

@@ -121,8 +121,8 @@ function _M:access()
       end
     end
 
-    limiters[#limiters + 1] = lim
-    keys[#keys + 1] = limiter.key
+    table.insert(limiters, lim)
+    table.insert(keys, limiter.key)
 
   end
 
@@ -145,8 +145,8 @@ function _M:access()
 
   for i, lim in ipairs(limiters) do
     if lim.is_committed and lim:is_committed() then
-      connections_committed[#connections_committed + 1] = lim
-      keys_committed[#keys_committed + 1] = keys[i]
+      table.insert(connections_committed, lim)
+      table.insert(keys_committed, keys[i])
     end
   end
 

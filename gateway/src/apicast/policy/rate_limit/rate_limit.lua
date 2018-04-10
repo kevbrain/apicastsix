@@ -82,6 +82,17 @@ function _M:access()
   local limiters = {}
   local keys = {}
 
+  local red
+  if self.redis_url then
+    local rederr
+    red, rederr = redis_shdict(self.redis_url)
+    if not red then
+      ngx.log(ngx.ERR, "failed to connect Redis: ", rederr)
+      error(self.logging_only, 500)
+      return
+    end
+  end
+
   for _, limiter in ipairs(self.limiters) do
     local lim, initerr = traffic_limiters[limiter.name](limiter)
     if not lim then
@@ -90,21 +101,12 @@ function _M:access()
       return
     end
 
-    if self.redis_url then
-      local rediserr
-      lim.dict, rediserr = redis_shdict(self.redis_url)
-      if not lim.dict then
-        ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
-        error(self.logging_only, 500)
-        return
-      end
-    end
+    lim.dict = red or lim.dict
 
     table.insert(limiters, lim)
     table.insert(keys, limiter.key)
 
   end
-
 
   local states = {}
   local connections_committed = {}
@@ -147,16 +149,20 @@ local function checkin(_, ctx, time, semaphore, redis_url, logging_only)
   local keys = ctx.keys
   local latency = tonumber(time)
 
-  for i, lim in ipairs(limiters) do
-    if redis_url then
-      local rediserr
-      lim.dict, rediserr = redis_shdict(redis_url)
-      if not lim.dict then
-        ngx.log(ngx.ERR, "failed to connect Redis: ", rediserr)
-        error(logging_only, 500)
-        return
-      end
+  local red
+  if redis_url then
+    local rederr
+    red, rederr = redis_shdict(redis_url)
+    if not red then
+      ngx.log(ngx.ERR, "failed to connect Redis: ", rederr)
+      error(logging_only, 500)
+      return
     end
+  end
+
+  for i, lim in ipairs(limiters) do
+    lim.dict = red or lim.dict
+
     local conn, err = lim:leaving(keys[i], latency)
     if not conn then
       ngx.log(ngx.ERR, "failed to record the connection leaving request: ", err)

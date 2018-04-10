@@ -68,18 +68,6 @@ describe('Rate limit policy', function()
       rate_limit_policy:access()
     end)
 
-    it('invalid limiter values', function()
-      local config = {
-        limiters = {
-          {name = "fixed_window", key = 'test1', count = 0, window = 10}
-        },
-        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
-      }
-      local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      assert.spy(ngx_exit_spy).was_called_with(500)
-    end)
-
     it('no redis url', function()
       local config = {
         limiters = {

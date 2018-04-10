@@ -54,7 +54,7 @@ Return 500 code.
 GET /
 --- error_code: 500
 --- error_log
-unknown limiter
+assertion failed!
 
 === TEST 3: Invalid redis url.
 Return 500 code.

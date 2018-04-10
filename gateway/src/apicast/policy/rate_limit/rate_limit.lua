@@ -26,27 +26,6 @@ local traffic_limiters = {
   end
 }
 
-local function try(f, catch_f)
-  local status, exception = pcall(f)
-  if not status then
-    catch_f(exception)
-  end
-end
-
-local function init_limiter(config)
-  local lim, limerr
-  try(
-    function()
-      lim, limerr = traffic_limiters[config.name](config)
-    end,
-    function(e)
-      return nil, e
-    end
-  )
-
-  return lim, limerr
-end
-
 local function redis_shdict(url)
   local options = { url = url }
   local redis, err = ts.connect_redis(options)
@@ -104,7 +83,7 @@ function _M:access()
   local keys = {}
 
   for _, limiter in ipairs(self.limiters) do
-    local lim, initerr = init_limiter(limiter)
+    local lim, initerr = traffic_limiters[limiter.name](limiter)
     if not lim then
       ngx.log(ngx.ERR, "unknown limiter: ", limiter.name, ", err: ", initerr)
       error(self.logging_only, 500)

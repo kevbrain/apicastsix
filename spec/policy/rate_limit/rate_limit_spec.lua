@@ -50,7 +50,7 @@ describe('Rate limit policy', function()
     local redis = require('resty.redis'):new()
     redis:connect(redis_host, redis_port)
     redis:select(1)
-    redis:del('test1', 'test2', 'test3')
+    redis:del('connections_test1', 'leaky_bucket_test2', 'fixed_window_test3', 'bank_A_leaky_bucket_test4')
     init_val()
   end)
 
@@ -58,9 +58,9 @@ describe('Rate limit policy', function()
     it('success with multiple limiters', function()
       local config = {
         limiters = {
-          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5},
-          {name = "leaky_bucket", key = 'test2', rate = 18, burst = 9},
-          {name = "fixed_window", key = 'test3', count = 10, window = 10}
+          {name = "connections", key = {name = 'test1'}, conn = 20, burst = 10, delay = 0.5},
+          {name = "leaky_bucket", key = {name = 'test2'}, rate = 18, burst = 9},
+          {name = "fixed_window", key = {name = 'test3'}, count = 10, window = 10}
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
@@ -71,9 +71,9 @@ describe('Rate limit policy', function()
     it('no redis url', function()
       local config = {
         limiters = {
-          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5},
-          {name = "leaky_bucket", key = 'test2', rate = 18, burst = 9},
-          {name = "fixed_window", key = 'test3', count = 10, window = 10}
+          {name = "connections", key = {name = 'test1'}, conn = 20, burst = 10, delay = 0.5},
+          {name = "leaky_bucket", key = {name = 'test2'}, rate = 18, burst = 9},
+          {name = "fixed_window", key = {name = 'test3'}, count = 10, window = 10}
         }
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
@@ -83,7 +83,7 @@ describe('Rate limit policy', function()
     it('invalid redis url', function()
       local config = {
         limiters = {
-          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
+          {name = "connections", key = {name = 'test1'}, conn = 20, burst = 10, delay = 0.5}
         },
         redis_url = 'redis://invalidhost:'..redis_port..'/1'
       }
@@ -95,7 +95,7 @@ describe('Rate limit policy', function()
     it('rejected (conn)', function()
       local config = {
         limiters = {
-          {name = "connections", key = 'test1', conn = 1, burst = 0, delay = 0.5}
+          {name = "connections", key = {name = 'test1'}, conn = 1, burst = 0, delay = 0.5}
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
@@ -108,7 +108,7 @@ describe('Rate limit policy', function()
     it('rejected (req)', function()
       local config = {
         limiters = {
-          {name = "leaky_bucket", key = 'test1', rate = 1, burst = 0}
+          {name = "leaky_bucket", key = {name = 'test2'}, rate = 1, burst = 0}
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
@@ -121,7 +121,7 @@ describe('Rate limit policy', function()
     it('rejected (count)', function()
       local config = {
         limiters = {
-          {name = "fixed_window", key = 'test1', count = 1, window = 10}
+          {name = "fixed_window", key = {name = 'test3'}, count = 1, window = 10}
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
@@ -134,7 +134,7 @@ describe('Rate limit policy', function()
     it('delay (conn)', function()
       local config = {
         limiters = {
-          {name = "connections", key = 'test1', conn = 1, burst = 1, delay = 2}
+          {name = "connections", key = {name = 'test1'}, conn = 1, burst = 1, delay = 2}
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
@@ -147,7 +147,25 @@ describe('Rate limit policy', function()
     it('delay (req)', function()
       local config = {
         limiters = {
-          {name = "leaky_bucket", key = 'test1', rate = 1, burst = 1}
+          {name = "leaky_bucket", key = {name = 'test2', scope = 'global'}, rate = 1, burst = 1}
+        },
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access()
+      rate_limit_policy:access()
+      assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
+    end)
+
+    it('delay (req) service scope', function()
+      local config = {
+        limiters = {
+          {
+            name = "leaky_bucket",
+            key = {name = 'test4', scope = 'service', service_name = 'bank_A'},
+            rate = 1,
+            burst = 1
+          }
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
@@ -162,7 +180,7 @@ describe('Rate limit policy', function()
     it('success in leaving', function()
       local config = {
         limiters = {
-          {name = "connections", key = 'test1', conn = 20, burst = 10, delay = 0.5}
+          {name = "connections", key = {name = 'test1'}, conn = 20, burst = 10, delay = 0.5}
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }

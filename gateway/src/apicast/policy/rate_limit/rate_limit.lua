@@ -26,6 +26,17 @@ local traffic_limiters = {
   end
 }
 
+local default_error_settings = {
+  limits_exceeded = {
+    status_code = 429,
+    error_handling = "exit"
+  },
+  configuration_issue = {
+    status_code = 500,
+    error_handling = "exit"
+  }
+}
+
 local function redis_shdict(url)
   local options = { url = url }
   local redis, err = ts.connect_redis(options)
@@ -61,10 +72,27 @@ local function redis_shdict(url)
   }
 end
 
-local function error(logging_only, status_code)
-  if not logging_only then
-    return ngx.exit(status_code)
+local function error(error_settings, type)
+  if error_settings[type]["error_handling"] == "exit" then
+    return ngx.exit(error_settings[type]["status_code"])
   end
+end
+
+local function init_error_settings(config_error_settings)
+  local error_settings = default_error_settings
+  if config_error_settings then
+    for _, error_setting in pairs(config_error_settings) do
+      if error_setting.type then
+        if error_setting.status_code then
+          error_settings[error_setting.type]["status_code"] = error_setting.status_code
+        end
+        if error_setting.error_handling then
+          error_settings[error_setting.type]["error_handling"] = error_setting.error_handling
+        end
+      end
+    end
+  end
+  return error_settings
 end
 
 function _M.new(config)
@@ -72,8 +100,7 @@ function _M.new(config)
   self.config = config or {}
   self.limiters = config.limiters
   self.redis_url = config.redis_url
-  self.status_code_rejected = config.status_code_rejected or 429
-  self.logging_only = config.logging_only or false
+  self.error_settings = init_error_settings(config.error_settings)
 
   return self
 end
@@ -88,7 +115,7 @@ function _M:access()
     red, rederr = redis_shdict(self.redis_url)
     if not red then
       ngx.log(ngx.ERR, "failed to connect Redis: ", rederr)
-      error(self.logging_only, 500)
+      error(self.error_settings, "configuration_issue")
       return
     end
   end
@@ -97,14 +124,22 @@ function _M:access()
     local lim, initerr = traffic_limiters[limiter.name](limiter)
     if not lim then
       ngx.log(ngx.ERR, "unknown limiter: ", limiter.name, ", err: ", initerr)
-      error(self.logging_only, 500)
+      error(self.error_settings, "configuration_issue")
       return
     end
 
     lim.dict = red or lim.dict
 
     table.insert(limiters, lim)
-    table.insert(keys, limiter.key)
+
+    local key
+    if limiter.key.scope == "service" then
+      key = limiter.key.service_name.."_"..limiter.name.."_"..limiter.key.name
+    else
+      key = limiter.name.."_"..limiter.key.name
+    end
+
+    table.insert(keys, key)
 
   end
 
@@ -116,11 +151,11 @@ function _M:access()
   if not delay then
     if comerr == "rejected" then
       ngx.log(ngx.WARN, "Requests over the limit.")
-      error(self.logging_only, self.status_code_rejected)
+      error(self.error_settings, "limits_exceeded")
       return
     end
     ngx.log(ngx.ERR, "failed to limit traffic: ", comerr)
-    error(self.logging_only, 500)
+    error(self.error_settings, "configuration_issue")
     return
   end
 
@@ -144,7 +179,7 @@ function _M:access()
 
 end
 
-local function checkin(_, ctx, time, semaphore, redis_url, logging_only)
+local function checkin(_, ctx, time, semaphore, redis_url, error_settings)
   local limiters = ctx.limiters
   local keys = ctx.keys
   local latency = tonumber(time)
@@ -155,7 +190,7 @@ local function checkin(_, ctx, time, semaphore, redis_url, logging_only)
     red, rederr = redis_shdict(redis_url)
     if not red then
       ngx.log(ngx.ERR, "failed to connect Redis: ", rederr)
-      error(logging_only, 500)
+      error(error_settings, "configuration_issue")
       return
     end
   end
@@ -166,7 +201,7 @@ local function checkin(_, ctx, time, semaphore, redis_url, logging_only)
     local conn, err = lim:leaving(keys[i], latency)
     if not conn then
       ngx.log(ngx.ERR, "failed to record the connection leaving request: ", err)
-      error(logging_only, 500)
+      error(error_settings, "configuration_issue")
       return
     end
   end
@@ -182,7 +217,7 @@ function _M:log()
   local limiters = ctx.limiters
   if limiters and next(limiters) ~= nil then
     local semaphore = ngx_semaphore.new()
-    ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore, self.redis_url, self.logging_only)
+    ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore, self.redis_url, self.error_settings)
     semaphore:wait(10)
   end
 end

@@ -33,7 +33,8 @@ jobs:
       - checkout
       - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
       - run: |
-          export IMAGE_NAME="quay.io/3scale/apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder"
+          export IMAGE_TAG=${CIRCLE_TAG:-${CIRCLE_PR_NUMBER:-${CIRCLE_BRANCH}}}
+          export IMAGE_NAME="quay.io/3scale/apicast:${IMAGE_TAG}-builder"
           make builder-image test-builder-image gateway-logs --keep-going
           make prove-docker
           make lint-schema

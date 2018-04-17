@@ -4,7 +4,7 @@
   "summary": "Controls how to cache authorizations returned by the 3scale backend.",
   "description":
     ["Configures a cache for the authentication calls against the 3scale ",
-     "backend. This policy support three kinds of caching: \n",
+     "backend. This policy support four kinds of caching: \n",
      " - Strict: it only caches authorized calls. Denied and failed calls ",
      "invalidate the cache entry.\n",
      " - Resilient: caches authorized and denied calls. Failed calls do not ",

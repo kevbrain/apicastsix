@@ -2,7 +2,7 @@
 -- Configures a cache for the authentication calls against the 3scale backend.
 -- The 3scale backend can authorize (status code = 200) and deny (status code =
 -- 4xx) calls. When it fails, it returns a 5xx code.
--- This policy support three kinds of caching:
+-- This policy support four kinds of caching:
 --   - Strict: it only caches authorized calls. Denied and failed calls
 --     invalidate the cache entry.
 --   - Resilient: caches authorized and denied calls. Failed calls do not

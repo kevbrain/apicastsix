@@ -162,7 +162,7 @@ clean-containers: apicast-source
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
 
-doc/lua/index.html: $(shell find gateway/src -name '*.lua') | dependencies $(ROVER)
+doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | dependencies $(ROVER)
 	$(ROVER) exec ldoc -c doc/config.ld .
 
 doc: doc/lua/index.html ## Generate documentation

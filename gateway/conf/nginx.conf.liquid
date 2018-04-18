@@ -5,7 +5,7 @@ env RESOLVER;
 env BACKEND_ENDPOINT_OVERRIDE;
 env OPENSSL_VERIFY;
 
-{% if opentracing_enabled %}
+{% if opentracing_tracer != empty %}
 load_module /opt/app-root/src/nginx-modules/ngx_http_opentracing_module.so;
 load_module /opt/app-root/src/nginx-modules/ngx_http_jaeger_module.so;
 {% endif %}
@@ -16,7 +16,7 @@ worker_processes {{ worker_processes | default: 'auto' }};
 pcre_jit on;
 pid {{ pid | default: 'nginx.pid' }};
 
-{% unless opentracing_enabled %}
+{% unless opentracing_tracer != empty %}
 timer_resolution {{ timer_resolution | default: '100ms' }};
 {% endunless %}
 
@@ -71,16 +71,16 @@ http {
     {% include file %}
   {% endfor %}
 
-
-  {% if opentracing_enabled == 'true' %}
-    {% include "conf.d/opentracing" | append opentracing_tracer | append ".conf.liquid" %}
+  {% if opentracing_tracer != empty %}
+    {%- capture tracer_conf %}conf.d/opentracing/{{ opentracing_tracer }}.conf.liquid{%- endcapture -%}
+    {% include tracer_conf %}
   {% endif %}
 
   server {
     listen {{ port.management | default: 8090 }};
     server_name {{ server_name.management | default: 'management _' }};
 
-    {% if opentracing_enabled == 'true' %}
+    {% if opentracing_tracer != empty %}
     opentracing_operation_name "apicast_management";
     opentracing_trace_locations off;
     {% endif %}
@@ -92,7 +92,7 @@ http {
     listen {{ port.backend | default: 8081 }};
     server_name backend;
 
-    {% if opentracing_enabled == 'true' %}
+    {% if opentracing_tracer != empty %}
     opentracing_operation_name "apicast_mockbackend";
     opentracing_trace_locations off;
     {% endif %}
@@ -109,7 +109,7 @@ http {
     listen {{ port.echo | default: 8081 }} default_server;
     server_name echo _;
 
-    {% if opentracing_enabled == 'true' %}
+    {% if opentracing_tracer != empty %}
     opentracing_operation_name "apicast_echo";
     opentracing_trace_locations off;
     {% endif %}
@@ -125,7 +125,7 @@ http {
 
     server_name _;
 
-    {% if opentracing_enabled == 'true' %}
+    {% if opentracing_tracer != empty %}
     opentracing_operation_name "apicast";
     opentracing_trace_locations on;
     {% endif %}

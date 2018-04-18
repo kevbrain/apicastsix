@@ -6,8 +6,9 @@ env BACKEND_ENDPOINT_OVERRIDE;
 env OPENSSL_VERIFY;
 
 {% if opentracing_tracer != empty %}
-load_module /opt/app-root/src/nginx-modules/ngx_http_opentracing_module.so;
-load_module /opt/app-root/src/nginx-modules/ngx_http_jaeger_module.so;
+  {% for file in "nginx-modules/ngx_http_opentracing_module.so" | filesystem %}
+load_module {{file}};
+  {% endfor %}
 {% endif %}
 
 daemon {{ daemon | default: 'off' }};

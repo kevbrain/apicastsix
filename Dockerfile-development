@@ -1,4 +1,5 @@
-FROM quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover6
+ARG BUILDER_IMAGE
+FROM ${BUILDER_IMAGE}
 LABEL maintainer="dortiz@redhat.com"
 
 USER root
@@ -25,7 +26,6 @@ COPY Makefile ${USER_HOME}
 WORKDIR ${USER_HOME}
 
 RUN make dependencies
-RUN mv lua_modules /tmp/lua_modules
 
 RUN cpanm --installdeps ./gateway
 

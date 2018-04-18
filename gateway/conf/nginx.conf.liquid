@@ -18,7 +18,7 @@ pid {{ pid | default: 'nginx.pid' }};
 
 {% unless opentracing_enabled %}
 timer_resolution {{ timer_resolution | default: '100ms' }};
-{% endif %}
+{% endunless %}
 
 {% for file in "main.d/*.conf" | filesystem %}
   {% include file %}

@@ -5,7 +5,7 @@ env RESOLVER;
 env BACKEND_ENDPOINT_OVERRIDE;
 env OPENSSL_VERIFY;
 
-{% if jaeger_enabled %}
+{% if opentracing_enabled %}
 load_module /opt/app-root/src/nginx-modules/ngx_http_opentracing_module.so;
 load_module /opt/app-root/src/nginx-modules/ngx_http_jaeger_module.so;
 {% endif %}
@@ -15,6 +15,10 @@ master_process {{ master_process | default: 'on' }};
 worker_processes {{ worker_processes | default: 'auto' }};
 pcre_jit on;
 pid {{ pid | default: 'nginx.pid' }};
+
+{% unless opentracing_enabled %}
+timer_resolution {{ timer_resolution | default: '100ms' }};
+{% endif %}
 
 {% for file in "main.d/*.conf" | filesystem %}
   {% include file %}
@@ -68,13 +72,18 @@ http {
   {% endfor %}
 
 
-  {% if jaeger_enabled %}
-    {% include "conf.d/jaeger.conf" %}
+  {% if opentracing_enabled == 'true' %}
+    {% include "conf.d/opentracing" | append opentracing_tracer | append ".conf.liquid" %}
   {% endif %}
 
   server {
     listen {{ port.management | default: 8090 }};
     server_name {{ server_name.management | default: 'management _' }};
+
+    {% if opentracing_enabled == 'true' %}
+    opentracing_operation_name "apicast_management";
+    opentracing_trace_locations off;
+    {% endif %}
 
     {% include "conf.d/management.conf" %}
   }
@@ -82,6 +91,11 @@ http {
   server {
     listen {{ port.backend | default: 8081 }};
     server_name backend;
+
+    {% if opentracing_enabled == 'true' %}
+    opentracing_operation_name "apicast_mockbackend";
+    opentracing_trace_locations off;
+    {% endif %}
 
     {% include "conf.d/backend.conf" %}
   }
@@ -94,6 +108,12 @@ http {
   server {
     listen {{ port.echo | default: 8081 }} default_server;
     server_name echo _;
+
+    {% if opentracing_enabled == 'true' %}
+    opentracing_operation_name "apicast_echo";
+    opentracing_trace_locations off;
+    {% endif %}
+
     {% include "conf.d/echo.conf" %}
   }
 
@@ -104,6 +124,11 @@ http {
     listen {{ port.apicast | default: 8080 }};
 
     server_name _;
+
+    {% if opentracing_enabled == 'true' %}
+    opentracing_operation_name "apicast";
+    opentracing_trace_locations on;
+    {% endif %}
 
     {% include "http.d/ssl.conf" %}
 

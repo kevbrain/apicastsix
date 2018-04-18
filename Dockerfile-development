@@ -18,16 +18,19 @@ RUN mkdir -p ${USER_HOME}/gateway \
  && echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER_NAME} \
  && chmod 0440 /etc/sudoers.d/${USER_NAME}
 
+COPY gateway/cpanfile ${USER_HOME}/gateway
+RUN cpanm --installdeps ${USER_HOME}/gateway
+
 COPY gateway/Roverfile ${USER_HOME}/gateway
 COPY gateway/Roverfile.lock ${USER_HOME}/gateway
-COPY gateway/cpanfile ${USER_HOME}/gateway
-COPY Makefile ${USER_HOME}
 
 WORKDIR ${USER_HOME}
 
-RUN make dependencies
+RUN rover install --roverfile=gateway/Roverfile
 
-RUN cpanm --installdeps ./gateway
+COPY Makefile ${USER_HOME}
+
+RUN make dependencies
 
 COPY . ${USER_HOME}
 

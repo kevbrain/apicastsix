@@ -1,3 +1,2 @@
-
 opentracing on;
-opentracing_load_tracer libjaegertracing.so conf.d/opentracing/jaeger.example.json;
+opentracing_load_tracer libjaegertracing.so {{ opentracing_config | default:"conf.d/opentracing/jaeger.example.json"}};

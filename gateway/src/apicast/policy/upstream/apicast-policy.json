@@ -5,7 +5,9 @@
   "description":
     ["This policy allows to modify the host of a request based on its path. ",
      "It accepts regular expressions that, when matched against the path, ",
-     "replace it with a given string."],
+     "replace it with a given string. \n",
+     "When combined with the APIcast policy, the upstream policy should be ",
+     "placed before it in the policy chain"],
   "version": "builtin",
   "configuration": {
     "type": "object",

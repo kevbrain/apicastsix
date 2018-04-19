@@ -2,6 +2,7 @@ local resty_env = require('resty.env')
 
 local policy = require('apicast.policy')
 local Proxy = require('apicast.proxy')
+local LinkedList = require('apicast.linked_list')
 local _M = policy.new('Local Policy Chain')
 
 local function build_default_chain()
@@ -45,6 +46,9 @@ local rewrite = _M.rewrite
 
 function _M:rewrite(context, ...)
   build_chain(context)
+
+  context = LinkedList.readwrite(context, find_policy_chain(context):export())
+
   rewrite(self, context, ...)
 end
 

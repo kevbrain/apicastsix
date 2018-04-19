@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Rate Limit policy [PR #648](https://github.com/3scale/apicast/pull/648)
+- [THREESCALE-799](https://issues.jboss.org/browse/THREESCALE-799) Documented restrictions in the position in the chain for some policies [PR #675](https://github.com/3scale/apicast/pull/675)
+
 ### Changed
 
 - descriptions in `oneOf`s in policy manifests have been replaced with titles [PR #663](https://github.com/3scale/apicast/pull/663)

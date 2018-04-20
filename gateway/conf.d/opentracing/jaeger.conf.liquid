@@ -1,2 +1,7 @@
 opentracing on;
-opentracing_load_tracer libjaegertracing.so {{ opentracing_config | default:"conf.d/opentracing/jaeger.example.json"}};
+
+{% if opentracing_config == nil or opentracing_config == empty %}
+    {% assign opentracing_config = "conf.d/opentracing/jaeger.example.json" %}
+{% endif %}
+
+opentracing_load_tracer libjaegertracing.so {{ opentracing_config }};

@@ -95,6 +95,9 @@ _M.default_environment = 'production'
 -- @tfield ?string proxy_ssl_certificate_key path to SSL certificate key
 -- @tfield ?string proxy_ssl_session_reuse whether SSL sessions can be reused
 -- @tfield ?string proxy_ssl_password_file path to a file with passphrases for the certificate keys
+-- @tfield ?string opentracing_tracer loads an opentracing tracer library, for example: jaeger
+-- @tfield ?string opentracing_config opentracing config file to load
+-- @tfield ?string opentracing_forward_header opentracing http header to forward upstream
 -- @tfield ?policy_chain policy_chain @{policy_chain} instance
 -- @tfield ?{string,...} nameservers list of nameservers
 -- @tfield ?string package.path path to load Lua files
@@ -103,13 +106,13 @@ _M.default_environment = 'production'
 
 _M.default_config = {
     ca_bundle = env_value_ref('SSL_CERT_FILE'),
-
     proxy_ssl_certificate = env_value_ref('APICAST_PROXY_HTTPS_CERTIFICATE'),
     proxy_ssl_certificate_key = env_value_ref('APICAST_PROXY_HTTPS_CERTIFICATE_KEY'),
     proxy_ssl_session_reuse = env_value_ref('APICAST_PROXY_HTTPS_SESSION_REUSE'),
     proxy_ssl_password_file = env_value_ref('APICAST_PROXY_HTTPS_PASSWORD_FILE'),
     opentracing_tracer = env_value_ref('OPENTRACING_TRACER'),
     opentracing_config = env_value_ref('OPENTRACING_CONFIG'),
+    opentracing_forward_header = env_value_ref('OPENTRACING_FORWARD_HEADER'),
     policy_chain = require('apicast.policy_chain').default(),
     nameservers = parse_nameservers(),
     worker_processes = cpus() or 'auto',

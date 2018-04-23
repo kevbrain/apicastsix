@@ -279,3 +279,58 @@ In order to test this, we use a backend that returns 403 on the first call, and
 ["Authentication failed", "Authentication failed", "Authentication failed"]
 --- error_code eval
 [403, 403, 403]
+
+=== TEST 6: Caching policy placed after the apicast one in the chain
+The caching policy should work correctly regardless of his position in the
+chain.
+To test that, we define the same as in TEST 1, but this time we place the
+caching policy after the apicast one.
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.apicast"
+          },
+          {
+            "name": "apicast.policy.caching",
+            "configuration": { "caching_type": "resilient" }
+          }
+        ],
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ]
+      }
+    }
+  ]
+}
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local test_counter = ngx.shared.test_counter or 0
+      if test_counter == 0 then
+        ngx.shared.test_counter = test_counter + 1
+        ngx.exit(200)
+      else
+        ngx.shared.test_counter = test_counter + 1
+        ngx.exit(502)
+      end
+    }
+  }
+--- upstream
+  location / {
+     echo 'yay, api backend';
+  }
+--- request eval
+["GET /test?user_key=foo", "GET /foo?user_key=foo", "GET /?user_key=foo"]
+--- response_body eval
+["yay, api backend\x{0a}", "yay, api backend\x{0a}", "yay, api backend\x{0a}"]
+--- error_code eval
+[ 200, 200, 200 ]

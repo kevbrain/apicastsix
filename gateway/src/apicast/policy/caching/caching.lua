@@ -103,8 +103,8 @@ function _M.new(config)
   return self
 end
 
-function _M:rewrite(context)
-  context.cache_handler = self.cache_handler
+function _M:export()
+  return { cache_handler = self.cache_handler }
 end
 
 return _M

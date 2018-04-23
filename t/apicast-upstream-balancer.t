@@ -51,21 +51,12 @@ GET /t
     server 0.0.0.1:1;
 
     balancer_by_lua_block {
-      local round_robin = require 'resty.balancer.round_robin'
+      local balancer = require 'apicast.balancer'
 
-      local balancer = round_robin.new()
-      local servers = { { address = '127.0.0.1', port = $TEST_NGINX_SERVER_PORT } }
-      local peers = balancer:peers(servers)
+      ngx.ctx.upstream = { { address = '127.0.0.1', port = $TEST_NGINX_SERVER_PORT } }
 
-      local ok, err = balancer:set_peer(peers)
-
-      if not ok then
-        ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
-        ngx.log(ngx.ERR, "failed to set current peer: "..err)
-        ngx.exit(ngx.status)
-      end
+      local peers = balancer:call()
     }
-
     keepalive 32;
   }
 --- config
@@ -91,18 +82,8 @@ yay
     server 0.0.0.1:1;
 
     balancer_by_lua_block {
-      local round_robin = require 'resty.balancer.round_robin'
-
-      local balancer = round_robin.new()
-      local peers = balancer:peers(ngx.ctx.upstream)
-
-      local peer, err = balancer:set_peer(peers)
-
-      if not peer then
-        ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
-        ngx.log(ngx.ERR, "failed to set current peer: "..err)
-        ngx.exit(ngx.status)
-      end
+      local balancer = require 'apicast.balancer'
+      local peers = balancer:call()
     }
 
     keepalive 32;

@@ -53,6 +53,26 @@ Notice that we did not indicate what APIcast does in the `init` and the
 request. `init` is executed when APIcast boots, and `init_worker` when each
 of each of its workers start.
 
+The order in which policies actions are applied depend on two factors:
+- Position of the policy within the policy chain.
+- The phase in which the policies act.
+
+This means that sometimes the outcome of the policies execution may be affected
+by other policies which are located further in the policy chain.
+
+For example, suppose that we combine the APIcast policy (the default one),
+with the URL rewriting one (which modifies the URL path based on some defined
+rules). If the URL rewriting policy appears before the APIcast one, the
+mapping rules of APIcast will be applied against the rewritten path.
+However, if the URL policy appears after the APIcast one, the mapping rules
+will be applied against the original path.
+
+Another example, suppose that we combine the upstream policy with the URL
+rewriting one. The upstream policy acts on the content phase, whereas the URL
+rewriting one acts on the rewrite phase. This means that the upstream policy
+will always take into account the rewritten path instead of the original one,
+regardless of the position of the policies in the chain.
+
 ### Types
 
 There are two types of policy chains in APIcast: per-service chains and a

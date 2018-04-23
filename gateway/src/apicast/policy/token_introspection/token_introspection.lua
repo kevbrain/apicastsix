@@ -44,7 +44,7 @@ local function introspect_token(self, token)
     local token_info, decode_err = cjson.decode(res.body)
     if type(token_info) == 'table' then
       return token_info
-    else 
+    else
       ngx.log(ngx.ERR, 'failed to parse token introspection response:', decode_err)
       return { active = false }
     end

@@ -45,7 +45,7 @@ function _M.call(_, _, balancer)
     ngx.log(ngx.ERR, 'failed to set current backend peer: ', err)
     return exit_service_unavailable()
   end
-  
+
   ngx.log(ngx.INFO, 'balancer set peer ', address, ':', port)
 end
 

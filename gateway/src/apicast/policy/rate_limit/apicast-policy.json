@@ -11,29 +11,54 @@
         "description": "List of limiters to be applied",
         "type": "array",
         "items": {
-          "oneOf": [{
+          "anyOf": [{
             "type": "object",
             "properties": {
               "name": {
                 "type": "string",
                 "enum": ["connections"],
-                "description": "limiting request concurrency (or concurrent connections)"
+                "description": "Limiting request concurrency (or concurrent connections)"
               },
               "key": {
-                "description": "Key of limiter",
-                "type": "string"
+                "description": "The key corresponding to the limiter object",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the key, must be unique in the scope"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Scope of the key",
+                    "default": "global",
+                    "oneOf": [{
+                      "enum": ["global"],
+                      "description": "Global scope, affecting to all services"
+                    }, {
+                      "enum": ["service"],
+                      "description": "Service scope, affecting to one service"
+                    }]
+                  },
+                  "service_name": {
+                    "type": "string",
+                    "description": "Name of service, necessary for service scope"
+                  }
+                }
               },
               "conn": {
                 "type": "integer",
-                "description": "the maximum number of concurrent requests allowed"
+                "description": "The maximum number of concurrent requests allowed",
+                "exclusiveminimum": 0
               },
               "burst": {
                 "type": "integer",
-                "description": "the number of excessive concurrent requests (or connections) allowed to be delayed"
+                "description": "The number of excessive concurrent requests (or connections) allowed to be delayed",
+                "minimum": 0
               },
               "delay": {
                 "type": "number",
-                "description": "the default processing latency of a typical connection (or request)"
+                "description": "The default processing latency of a typical connection (or request)",
+                "exclusiveMinimum": 0
               }
             }
           }, {
@@ -42,19 +67,43 @@
               "name": {
                 "type": "string",
                 "enum": ["leaky_bucket"],
-                "description": "limiting request rate"
+                "description": "Limiting request rate"
               },
               "key": {
-                "description": "Key of limiter",
-                "type": "string"
+                "description": "The key corresponding to the limiter object",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the key, must be unique in the scope"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Scope of the key",
+                    "default": "global",
+                    "oneOf": [{
+                      "enum": ["global"],
+                      "description": "Global scope, affecting to all services"
+                    }, {
+                      "enum": ["service"],
+                      "description": "Service scope, affecting to one service"
+                    }]
+                  },
+                  "service_name": {
+                    "type": "string",
+                    "description": "Name of service, necessary for service scope"
+                  }
+                }
               },
               "rate": {
                 "type": "integer",
-                "description": "the specified request rate (number per second) threshold"
+                "description": "The specified request rate (number per second) threshold",
+                "exclusiveMinimum": 0
               },
               "burst": {
                 "type": "integer",
-                "description": "the number of excessive requests per second allowed to be delayed"
+                "description": "The number of excessive requests per second allowed to be delayed",
+                "minimum": 0
               }
             }
           }, {
@@ -63,19 +112,43 @@
               "name": {
                 "type": "string",
                 "enum": ["fixed_window"],
-                "description": "limiting request counts"
+                "description": "Limiting request counts"
               },
               "key": {
-                "description": "Key of limiter",
-                "type": "string"
+                "description": "The key corresponding to the limiter object",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the key, must be unique in the scope"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Scope of the key",
+                    "default": "global",
+                    "oneOf": [{
+                      "enum": ["global"],
+                      "description": "Global scope, affecting to all services"
+                    }, {
+                      "enum": ["service"],
+                      "description": "Service scope, affecting to one service"
+                    }]
+                  },
+                  "service_name": {
+                    "type": "string",
+                    "description": "Name of service, necessary for service scope"
+                  }
+                }
               },
               "count": {
                 "type": "integer",
-                "description": "the specified number of requests threshold"
+                "description": "The specified number of requests threshold",
+                "exclusiveMinimum": 0
               },
               "window": {
                 "type": "integer",
-                "description": "the time window in seconds before the request count is reset"
+                "description": "The time window in seconds before the request count is reset",
+                "exclusiveMinimum": 0
               }
             }
           }]
@@ -85,13 +158,64 @@
         "description": "URL of Redis",
         "type": "string"
       },
-      "status_code_rejected": {
-        "type": "integer",
-        "description": "the status code when requests over the limit, default 429"
-      },
-      "logging_only": {
-        "type": "boolean",
-        "description": "if true, the request goes through when there is some issue with rate limiting, default false"
+      "error_settings": {
+        "description": "List of error settings",
+        "type": "array",
+        "items": {
+          "anyOf": [{
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["limits_exceeded"],
+                "description": "The error setting when requests over the limit"
+              },
+              "status_code": {
+                "type": "integer",
+                "description": "The status code when requests over the limit",
+                "default": 429
+              },
+              "error_handling": {
+                "type": "string",
+                "description": "How to handle an error",
+                "default": "exit",
+                "oneOf": [{
+                  "enum": ["exit"],
+                  "description": "Respond with an error"
+                }, {
+                  "enum": ["log"],
+                  "description": "Let the request go through and only output logs"
+                }]
+              }
+            }
+          }, {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["configuration_issue"],
+                "description": "The error setting when there is some configuration issue"
+              },
+              "status_code": {
+                "type": "integer",
+                "description": "The status code when there is some configuration issue",
+                "default": 500
+              },
+              "error_handling": {
+                "type": "string",
+                "description": "How to handle an error",
+                "default": "exit",
+                "oneOf": [{
+                  "enum": ["exit"],
+                  "description": "Respond with an error"
+                }, {
+                  "enum": ["log"],
+                  "description": "Let the request go through and only output logs"
+                }]
+              }
+            }
+          }]
+        }
       }
     }
   }

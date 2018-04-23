@@ -10,8 +10,8 @@ run_tests();
 
 __DATA__
 
-=== TEST 2: Invalid limiter value.
-Return 500 code.
+=== TEST 1: Delay (conn) service scope.
+Return 200 code.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -30,10 +30,26 @@ Return 500 code.
                 configuration = {
                   limiters = {
                     {
-                      name = "fixed_window",
-                      key = "test2",
-                      count = 0,
-                      window = 10
+                      name = "connections",
+                      key = {name = "test1", scope = "service", service_name = "service_C"},
+                      conn = 1,
+                      burst = 1,
+                      delay = 2
+                    }
+                  },
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
+                }
+              },
+              {
+                name = "apicast.policy.rate_limit",
+                configuration = {
+                  limiters = {
+                    {
+                      name = "connections",
+                      key = {name = "test1", scope = "service", service_name = "service_C"},
+                      conn = 1,
+                      burst = 1,
+                      delay = 2
                     }
                   },
                   redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
@@ -49,12 +65,28 @@ Return 500 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
 
---- request
-GET /
---- error_code: 500
---- error_log
-unknown limiter
+  location /transactions/authrep.xml {
+    content_by_lua_block { ngx.exit(200) }
+  }
+
+  location /flush_redis {
+    content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
+      local redis = require('resty.redis'):new()
+      redis:connect(redis_host, redis_port)
+      redis:select(1)
+      redis:del("service_C_connections_test1")
+    }
+  }
+
+--- pipelined_requests eval
+["GET /flush_redis","GET /"]
+--- error_code eval
+[200, 200]
 
 === TEST 3: Invalid redis url.
 Return 500 code.
@@ -77,7 +109,7 @@ Return 500 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test3",
+                      key = {name = "test3"},
                       conn = 20,
                       burst = 10,
                       delay = 0.5
@@ -122,14 +154,16 @@ Return 200 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test4",
+                      key = {name = "test4"},
                       conn = 1,
                       burst = 0,
                       delay = 2
                     }
                   },
                   redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
-                  logging_only = true
+                  error_settings = {
+                    {type = "limits_exceeded", error_handling = "log"}
+                  }
                 }
               },
               {
@@ -138,14 +172,16 @@ Return 200 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test4",
+                      key = {name = "test4"},
                       conn = 1,
                       burst = 0,
                       delay = 2
                     }
                   },
                   redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
-                  logging_only = true
+                  error_settings = {
+                    {type = "limits_exceeded", error_handling = "log"}
+                  }
                 }
               }
             }
@@ -168,7 +204,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      redis:del("test4")
+      redis:del("connections_test4")
     }
   }
 
@@ -198,7 +234,7 @@ Return 200 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test5",
+                      key = {name = "test5"},
                       conn = 20,
                       burst = 10,
                       delay = 0.5
@@ -244,20 +280,20 @@ Return 200 code.
                   limiters = {
                     {
                       name = "leaky_bucket",
-                      key = "test6_1",
+                      key = {name = "test6_1"},
                       rate = 20,
                       burst = 10
                     },
                     {
                       name = "connections",
-                      key = "test6_2",
+                      key = {name = "test6_2"},
                       conn = 20,
                       burst = 10,
                       delay = 0.5
                     },
                     {
                       name = "fixed_window",
-                      key = "test6_3",
+                      key = {name = "test6_3"},
                       count = 20,
                       window = 10
                     }
@@ -285,7 +321,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      redis:del("test6_1", "test6_2", "test6_3")
+      redis:del("leaky_bucket_test6_1", "connections_test6_2", "fixed_window_test6_3")
     }
   }
 
@@ -318,7 +354,7 @@ Return 429 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test7",
+                      key = {name = "test7"},
                       conn = 1,
                       burst = 0,
                       delay = 2
@@ -333,7 +369,7 @@ Return 429 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test7",
+                      key = {name = "test7"},
                       conn = 1,
                       burst = 0,
                       delay = 2
@@ -362,7 +398,7 @@ Return 429 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      redis:del("test7")
+      redis:del("connections_test7")
     }
   }
 
@@ -394,13 +430,15 @@ Return 503 code.
                   limiters = {
                     {
                       name = "leaky_bucket",
-                      key = "test8",
+                      key = {name = "test8"},
                       rate = 1,
                       burst = 0
                     }
                   },
                   redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
-                  status_code_rejected = 503
+                  error_settings = {
+                    {type = "limits_exceeded", status_code = 503}
+                  }
                 }
               }
             }
@@ -423,7 +461,7 @@ Return 503 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      redis:del("test8")
+      redis:del("leaky_bucket_test8")
     }
   }
 
@@ -455,12 +493,15 @@ Return 429 code.
                   limiters = {
                     {
                       name = "fixed_window",
-                      key = "test9",
+                      key = {name = "test9", scope = "global"},
                       count = 1,
                       window = 10
                     }
                   },
-                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1"
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
+                  error_settings = {
+                    {type = "limits_exceeded", status_code = 429}
+                  }
                 }
               }
             }
@@ -483,7 +524,7 @@ Return 429 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      redis:del("test9")
+      redis:del("fixed_window_test9")
     }
   }
 
@@ -515,7 +556,7 @@ Return 200 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test10",
+                      key = {name = "test10"},
                       conn = 1,
                       burst = 1,
                       delay = 2
@@ -530,7 +571,7 @@ Return 200 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test10",
+                      key = {name = "test10"},
                       conn = 1,
                       burst = 1,
                       delay = 2
@@ -563,7 +604,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      redis:del("test10")
+      redis:del("connections_test10")
     }
   }
 
@@ -593,7 +634,7 @@ Return 200 code.
                   limiters = {
                     {
                       name = "leaky_bucket",
-                      key = "test11",
+                      key = {name = "test11"},
                       rate = 1,
                       burst = 1
                     }
@@ -625,7 +666,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      redis:del("test11")
+      redis:del("leaky_bucket_test11")
     }
   }
 
@@ -655,7 +696,7 @@ Return 429 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test12",
+                      key = {name = "test12"},
                       conn = 1,
                       burst = 0,
                       delay = 2
@@ -669,7 +710,7 @@ Return 429 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test12",
+                      key = {name = "test12"},
                       conn = 1,
                       burst = 0,
                       delay = 2
@@ -715,10 +756,13 @@ Return 429 code.
                   limiters = {
                     {
                       name = "leaky_bucket",
-                      key = "test13",
+                      key = {name = "test13"},
                       rate = 1,
                       burst = 0
                     }
+                  },
+                  error_settings = {
+                    {type = "limits_exceeded", error_handling = "exit"}
                   }
                 }
               }
@@ -759,7 +803,7 @@ Return 429 code.
                   limiters = {
                     {
                       name = "fixed_window",
-                      key = "test14",
+                      key = {name = "test14"},
                       count = 1,
                       window = 10
                     }
@@ -803,7 +847,7 @@ Return 200 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test15",
+                      key = {name = "test15"},
                       conn = 1,
                       burst = 1,
                       delay = 2
@@ -817,7 +861,7 @@ Return 200 code.
                   limiters = {
                     {
                       name = "connections",
-                      key = "test15",
+                      key = {name = "test15"},
                       conn = 1,
                       burst = 1,
                       delay = 2
@@ -867,7 +911,7 @@ Return 200 code.
                   limiters = {
                     {
                       name = "leaky_bucket",
-                      key = "test16",
+                      key = {name = "test16"},
                       rate = 1,
                       burst = 1
                     }

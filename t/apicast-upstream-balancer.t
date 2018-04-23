@@ -51,21 +51,12 @@ GET /t
     server 0.0.0.1:1;
 
     balancer_by_lua_block {
-      local round_robin = require 'resty.balancer.round_robin'
+      local balancer = require 'apicast.balancer'
 
-      local balancer = round_robin.new()
-      local servers = { { address = '127.0.0.1', port = $TEST_NGINX_SERVER_PORT } }
-      local peers = balancer:peers(servers)
+      ngx.ctx.upstream = { { address = '127.0.0.1', port = $TEST_NGINX_SERVER_PORT } }
 
-      local ok, err = balancer:set_peer(peers)
-
-      if not ok then
-        ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
-        ngx.log(ngx.ERR, "failed to set current peer: "..err)
-        ngx.exit(ngx.status)
-      end
+      local peers = balancer:call()
     }
-
     keepalive 32;
   }
 --- config
@@ -91,18 +82,8 @@ yay
     server 0.0.0.1:1;
 
     balancer_by_lua_block {
-      local round_robin = require 'resty.balancer.round_robin'
-
-      local balancer = round_robin.new()
-      local peers = balancer:peers(ngx.ctx.upstream)
-
-      local peer, err = balancer:set_peer(peers)
-
-      if not peer then
-        ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
-        ngx.log(ngx.ERR, "failed to set current peer: "..err)
-        ngx.exit(ngx.status)
-      end
+      local balancer = require 'apicast.balancer'
+      local peers = balancer:call()
     }
 
     keepalive 32;
@@ -134,3 +115,35 @@ GET /t
 --- response_body
 yay
 --- error_code: 200
+
+
+
+=== TEST 3: unsupported scheme
+Using an unsopported URI scheme causes an exception
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  upstream upstream {
+    server 0.0.0.1:1;
+
+    balancer_by_lua_block {
+      local balancer = require 'apicast.balancer'
+      ngx.ctx.upstream = { { address = '127.0.0.1', port = $TEST_NGINX_SERVER_PORT } }
+      local peers = balancer:call()
+    }
+
+    keepalive 32;
+  }
+--- config
+location /api {
+  echo 'yay';
+}
+
+location /t {
+  set $proxy_pass "unsupported://upstream/api";
+  proxy_pass $proxy_pass;
+}
+--- request
+GET /t
+--- error_code: 500
+--- error_log: invalid URL prefix in

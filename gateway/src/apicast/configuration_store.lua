@@ -133,8 +133,15 @@ function _M.store(self, config, ttl)
 
   local cache = self.cache
 
+  local cache_ttl = config.ttl or ttl or _M.ttl
+
+  -- In lrucache a value < 0 expires, but we use configs and ENVs for
+  -- setting the ttl where < 0 means 'never expire'. When ttl < 0,
+  -- we need to set it to nil (never expire in lrucache).
+  if cache_ttl and cache_ttl < 0 then cache_ttl = nil end
+
   for host, services_for_host in pairs(by_host) do
-    cache:set(host, services_for_host, config.ttl or ttl or _M.ttl)
+    cache:set(host, services_for_host, cache_ttl)
   end
 
   return config

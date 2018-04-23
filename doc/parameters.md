@@ -17,10 +17,11 @@ Resilient will do so only on getting authorization denied from backend.
 
 ### `APICAST_CONFIGURATION_CACHE`
 
-**Values:** _a number > 60_  
+**Values:** _a number_
 **Default:** 0
 
 Specifies the interval (in seconds) that the configuration will be stored for. The value should be set to 0 (not compatible with boot value of `APICAST_CONFIGURATION_LOADER`) or more than 60. For example, if `APICAST_CONFIGURATION_CACHE` is set to 120, the gateway will reload the configuration from the API manager every 2 minutes (120 seconds).
+A value < 0 disables reloading.
 
 ### `APICAST_CONFIGURATION_LOADER`
 

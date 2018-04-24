@@ -321,6 +321,8 @@ function _M:rewrite(service, context)
     ctx.credentials = credentials
     ctx.ttl = ttl
   end
+
+  context.credentials = ctx.credentials
 end
 
 function _M:access(service, usage, credentials, ttl)

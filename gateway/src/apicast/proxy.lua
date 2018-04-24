@@ -12,6 +12,7 @@ local util = require('apicast.util')
 local resty_lrucache = require('resty.lrucache')
 local backend_cache_handler = require('apicast.backend.cache_handler')
 local Usage = require('apicast.usage')
+local errors = require('apicast.errors')
 
 local resty_url = require 'resty.url'
 
@@ -66,52 +67,6 @@ function _M.new(configuration)
   }, mt)
 end
 
--- Error Codes
-local function error_no_credentials(service)
-  ngx.log(ngx.INFO, 'no credentials provided for service ', service.id)
-  ngx.var.cached_key = nil
-  ngx.status = service.auth_missing_status
-  ngx.header.content_type = service.auth_missing_headers
-  ngx.print(service.error_auth_missing)
-  return ngx.exit(ngx.HTTP_OK)
-end
-
-local function error_authorization_failed(service)
-  ngx.log(ngx.INFO, 'authorization failed for service ', service.id)
-  ngx.var.cached_key = nil
-  ngx.status = service.auth_failed_status
-  ngx.header.content_type = service.auth_failed_headers
-  ngx.print(service.error_auth_failed)
-  return ngx.exit(ngx.HTTP_OK)
-end
-
-local function error_limits_exceeded(service)
-  ngx.log(ngx.INFO, 'limits exceeded for service ', service.id)
-  ngx.var.cached_key = nil
-  ngx.status = service.limits_exceeded_status
-  ngx.header.content_type = service.limits_exceeded_headers
-  ngx.print(service.error_limits_exceeded)
-  return ngx.exit(ngx.HTTP_OK)
-end
-
-local function error_no_match(service)
-  ngx.header.x_3scale_matched_rules = ''
-  ngx.log(ngx.INFO, 'no rules matched for service ', service.id)
-  ngx.var.cached_key = nil
-  ngx.status = service.no_match_status
-  ngx.header.content_type = service.no_match_headers
-  ngx.print(service.error_no_match)
-  return ngx.exit(ngx.HTTP_OK)
-end
-
-local function error_service_not_found(host)
-  ngx.status = 404
-  ngx.print('')
-  ngx.log(ngx.WARN, 'could not find service for host: ', host or ngx.var.host)
-  return ngx.exit(ngx.status)
-end
--- End Error Codes
-
 local function debug_header_enabled(service)
   local debug_header_value = ngx.var.http_x_3scale_debug
   return debug_header_value and debug_header_value == service.backend_authentication.value
@@ -160,7 +115,7 @@ function _M:authorize(service, usage, credentials, ttl)
 
   local encoded_usage = encode_args(formatted_usage)
   if encoded_usage == '' then
-    return error_no_match(service)
+    return errors.no_match(service)
   end
   local encoded_credentials = encode_args(credentials)
 
@@ -186,9 +141,9 @@ function _M:authorize(service, usage, credentials, ttl)
     local authorized, rejection_reason = self:handle_backend_response(cached_key, res, ttl)
     if not authorized then
       if rejection_reason == 'limits_exceeded' then
-        return error_limits_exceeded(service)
+        return errors.limits_exceeded(service)
       else -- Generic error for now. Maybe return different ones in the future.
-        return error_authorization_failed(service)
+        return errors.authorization_failed(service)
       end
     end
   end
@@ -200,7 +155,7 @@ end
 
 function _M.set_service(service)
   if not service then
-    error_service_not_found()
+    return errors.service_not_found()
   end
 
   ngx.ctx.service = service
@@ -213,7 +168,7 @@ function _M.get_upstream(service)
   service = service or ngx.ctx.service
 
   if not service then
-    return error_service_not_found()
+    return errors.service_not_found()
   end
 
   local url = resty_url.split(service.api_backend) or empty
@@ -269,7 +224,7 @@ function _M:rewrite(service, context)
 
   if not credentials then
     ngx.log(ngx.WARN, "cannot get credentials: ", err or 'unknown error')
-    return error_no_credentials(service)
+    return errors.no_credentials(service)
   end
 
   local usage, matched_rules = service:get_usage(ngx.req.get_method(), ngx.var.uri)
@@ -281,7 +236,7 @@ function _M:rewrite(service, context)
   for i=1,#credentials do
     local val = credentials[i]
     if not val then
-      return error_no_credentials(service)
+      return errors.no_credentials(service)
     else
       credentials[i] = nil
     end
@@ -316,7 +271,7 @@ function _M:rewrite(service, context)
 
     if err then
       ngx.log(ngx.DEBUG, 'oauth failed with ', err)
-      return error_authorization_failed(service)
+      return errors.authorization_failed(service)
     end
     ctx.credentials = credentials
     ctx.ttl = ttl

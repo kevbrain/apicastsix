@@ -178,7 +178,6 @@ end
 local load_env = split_by(':')
 
 local function configure(cmd)
-    cmd:usage("Usage: apicast-cli start [OPTIONS]")
     cmd:option("--template", "Nginx config template.", 'conf/nginx.conf.liquid')
 
     local channel = resty_env.value('THREESCALE_DEPLOYMENT_ENV') or 'production'

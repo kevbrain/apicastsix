@@ -2,7 +2,7 @@ require('apicast.loader')
 
 local command_target = '_cmd'
 local parser = require('argparse')() {
-    name = "APIcast",
+    name = os.getenv('ARGV0') or 'apicast',
     description = "APIcast - 3scale API Management Platform Gateway."
 }
 :command_target(command_target)

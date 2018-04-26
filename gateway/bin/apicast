@@ -74,6 +74,7 @@ $ENV{LUA_PATH} = sprintf('%1$s/?.lua;', $apicast_src) . $lua_path;
 $ENV{LUA_CPATH} = sprintf('%1$s/?.so;', $apicast_lib) . $lua_lib;
 
 $ENV{PWD} = $cwd;
+$ENV{ARGV0} = $0;
 
 sub lua_file {
     my ($lua, $lua_file) = tempfile();

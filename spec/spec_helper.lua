@@ -38,10 +38,10 @@ local function reset()
 
   previous_env = {}
 
+  env.reset()
+
   -- To make sure that we are using valid policy configs in the tests.
   set('APICAST_VALIDATE_POLICY_CONFIGS', true)
-
-  env.reset()
 end
 
 busted.before_each(reset)

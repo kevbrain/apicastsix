@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - `export()` now works correctly in policies of the local chain [PR #673](https://github.com/3scale/apicast/pull/673)
 - caching policy now works correctly when placed after the apicast policy in the chain [PR #674](https://github.com/3scale/apicast/pull/674)
+- OpenTracing support [PR #669](https://github.com/3scale/apicast/pull/669)
 
 ### Changed
 

@@ -22,7 +22,7 @@
             "title": "Interrupt the processing of the request."
           },
           {
-            "enum": ["set"],
+            "enum": ["phase"],
             "title": "Skip only the rewrite phase."
           }
         ]

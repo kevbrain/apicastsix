@@ -1,0 +1,13 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "{{ policy.name }}",
+  "summary": "{{ policy.summary }}",
+  "description": [
+      "TODO: Write policy description"
+  ],
+  "version": "{{policy.version}}",
+  "configuration": {
+    "type": "object",
+    "properties": { }
+  }
+}

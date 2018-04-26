@@ -15,11 +15,7 @@ local re = require('ngx.re')
 local Template = require('apicast.cli.template')
 local Environment = require('apicast.cli.environment')
 
-local pl = {
-    path = require('pl.path'),
-    file = require('pl.file'),
-    dir = require('pl.dir'),
-}
+local pl = require'pl.import_into'()
 
 local _M = {
     openresty = { 'openresty-debug', 'openresty', 'nginx' },

@@ -193,6 +193,12 @@ own:
 - [CORS](../gateway/src/apicast/policy/cors)
 - [Headers](../gateway/src/apicast/policy/headers)
 
+### Policy scaffolding
+
+We provide a policy generator to make this process easier and create basic structure for you.
+Policy scaffolding generator will provide you with structure for your code,
+policy manifest, unit tests and integration tests.
+Invoke `bin/apicast generate policy --help` and follow the documentation.
 
 ## Integrate your policies
 

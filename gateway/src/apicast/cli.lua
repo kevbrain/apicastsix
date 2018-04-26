@@ -20,7 +20,10 @@ local function load_commands(commands, argparse)
     return commands
 end
 
-_M.commands = load_commands({ 'start' }, parser)
+_M.commands = load_commands({
+  'start',
+  'generate',
+}, parser)
 
 function mt.__call(self, arg)
     -- now we parse the options like usual:

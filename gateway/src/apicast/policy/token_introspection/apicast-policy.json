@@ -1,6 +1,6 @@
 {
   "$schema": "http://apicast.io/poolicy-v1/schema#manifest#",
-  "name": "oauth2 token introspection policy",
+  "name": "OAuth 2.0 Token Introspection",
   "summary": "Configures OAuth 2.0 Token Introspection.",
   "description": 
   ["This policy executes OAuth 2.0 Token Introspection ",

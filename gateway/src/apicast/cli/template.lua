@@ -33,6 +33,7 @@ function _M:new(config, dir, strict)
 
     local context = setmetatable({
         env = env,
+        platform = jit.os,
     }, { __index = config })
 
     instance.root = pl.path.abspath(dir or pl.path.currentdir())

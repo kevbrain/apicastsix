@@ -6,7 +6,7 @@ env BACKEND_ENDPOINT_OVERRIDE;
 env OPENSSL_VERIFY;
 
 {% if opentracing_tracer != empty %}
-  {% for file in "nginx-modules/ngx_http_opentracing_module.so" | filesystem %}
+  {% for file in "modules/ngx_http_opentracing_module.so" | filesystem %}
 load_module {{file}};
   {% endfor %}
 {% endif %}

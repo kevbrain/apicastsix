@@ -14,13 +14,7 @@ Test that the usage reported to backend is the sum of:
     content_by_lua_block {
       -- Notice that hits is 3 (1 in service rules + 2 in the policy rules)
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=3&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -85,13 +79,7 @@ Test that the usage reported to backend is the sum of:
     content_by_lua_block {
       -- Notice that hits is 3 (1 in service rules + 2 in the policy rules)
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=3&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -158,13 +146,7 @@ because it takes precedence over the one in the SOAPAction header.
     content_by_lua_block {
       -- Notice that hits is 3 (1 in service rules + 2 in the policy rules)
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=3&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -234,13 +216,7 @@ mapping rules.
     content_by_lua_block {
       -- Notice that hits is 1 (comes from the service mapping rules).
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=1&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration

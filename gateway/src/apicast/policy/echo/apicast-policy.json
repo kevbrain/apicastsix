@@ -1,6 +1,7 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
-  "name": "Echo policy",
+  "name": "Echo",
+  "summary": "Prints the request back to the client and optionally sets a status code.",
   "description":
     ["This policy prints the request back to the client and optionally sets ",
      "a status code."],
@@ -17,12 +18,12 @@
         "type": "string",
         "oneOf": [
           {
-            "const": "request",
-            "description": "Interrupts the processing of the request."
+            "enum": ["request"],
+            "title": "Interrupt the processing of the request."
           },
           {
-            "const": "set",
-            "description": "Only skips the rewrite phase."
+            "enum": ["phase"],
+            "title": "Skip only the rewrite phase."
           }
         ]
       }

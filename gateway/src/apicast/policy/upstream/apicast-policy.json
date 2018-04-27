@@ -1,7 +1,13 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
-  "name": "Upstream policy",
-  "description": "This policy allows to modify the host of a request based on its path.",
+  "name": "Upstream",
+  "summary": "Allows to modify the upstream URL of the request based on its path.",
+  "description":
+    ["This policy allows to modify the upstream URL (scheme, host and port) of the request based on its path. ",
+     "It accepts regular expressions that, when matched against the request path, ",
+     "replaces it with a given string. \n",
+     "When combined with the APIcast policy, the upstream policy should be ",
+     "placed before it in the policy chain"],
   "version": "builtin",
   "configuration": {
     "type": "object",

@@ -18,7 +18,7 @@ Splitting code and configuration allows thorough testing of each component indiv
 
 Using wonderful [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx/lib/Test/Nginx/Socket.pm) framework for high level integration tests allows us to run every test several times in random order to ensure there are no random failures.
 
-Low level unit testing is done in Lua testing framework [busted](https://olivinelabs.com/busted/). That allows us to run low level tests for edge cases easily and run them in isolation.
+Low level unit testing is done in Lua testing framework [busted](https://github.com/Olivine-Labs/busted). That allows us to run low level tests for edge cases easily and run them in isolation.
 
 ## Modules
 

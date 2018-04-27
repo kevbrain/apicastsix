@@ -12,6 +12,7 @@ You can start example configuration with example policy by running this from the
 ```shell
 bin/apicast -c examples/policies/example.json -b --policy-load-path examples/policies -v
 ```
+**To run `bin/apicast` you must install APIcast [tools and dependencies](../../README.md#tools-and-dependencies) first* 
 
 And then make a request by curl:
 

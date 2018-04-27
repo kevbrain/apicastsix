@@ -13,13 +13,7 @@ to the one we have set up. If this was not working we would notice, because
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -72,13 +66,7 @@ upstream we have set up.
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -135,13 +123,7 @@ upstream in 'api_backend'.
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -196,13 +178,7 @@ yay, api backend
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -258,13 +234,7 @@ yay, api backend
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=uk"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -367,7 +337,7 @@ Upstream policy should work with internal echo API.
           { "name": "apicast.policy.upstream",
             "configuration":
               {
-                "rules": [ { "regex": "/", "url": "http://echo:$TEST_NGINX_SERVER_PORT" } ]
+                "rules": [ { "regex": "/", "url": "http://echo" } ]
               }
           }
         ]
@@ -377,14 +347,74 @@ Upstream policy should work with internal echo API.
 }
 --- request
 GET /a_path?
---- response_body eval
-<<"HTTP"
-GET /a_path? HTTP/1.1\x{0d}
-X-Real-IP: 127.0.0.1\x{0d}
-Host: echo\x{0d}
-\x{0d}
-\x{0d}\x{0a}
-HTTP
+--- response_body
+GET /a_path? HTTP/1.1
+X-Real-IP: 127.0.0.1
+Host: echo
 --- error_code: 200
 --- no_error_log
 [error]
+
+
+
+=== TEST 8: TLS upstream
+--- configuration random_port env
+{
+  "services": [
+    {
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.upstream",
+            "configuration":
+              {
+                "rules": [ { "regex": "/", "url": "https://test:$TEST_NGINX_RANDOM_PORT" } ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream random_port env
+  listen $TEST_NGINX_RANDOM_PORT ssl;
+
+  ssl_certificate $TEST_NGINX_SERVER_ROOT/html/server.crt;
+  ssl_certificate_key $TEST_NGINX_SERVER_ROOT/html/server.key;
+
+  location / {
+     echo 'scheme: $scheme';
+     echo 'server_port: $server_port';
+     echo 'ssl_server_name: $ssl_server_name';
+  }
+--- request
+GET /?user_key=uk
+--- response_body random_port env
+scheme: https
+server_port: $TEST_NGINX_RANDOM_PORT
+ssl_server_name: test
+--- error_code: 200
+--- no_error_log
+[error]
+--- user_files
+>>> server.crt
+-----BEGIN CERTIFICATE-----
+MIIB0DCCAXegAwIBAgIJAISY+WDXX2w5MAoGCCqGSM49BAMCMEUxCzAJBgNVBAYT
+AkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRn
+aXRzIFB0eSBMdGQwHhcNMTYxMjIzMDg1MDExWhcNMjYxMjIxMDg1MDExWjBFMQsw
+CQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJu
+ZXQgV2lkZ2l0cyBQdHkgTHRkMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEhkmo
+6Xp/9W9cGaoGFU7TaBFXOUkZxYbGXQfxyZZucIQPt89+4r1cbx0wVEzbYK5wRb7U
+iWhvvvYDltIzsD75vqNQME4wHQYDVR0OBBYEFOBBS7ZF8Km2wGuLNoXFAcj0Tz1D
+MB8GA1UdIwQYMBaAFOBBS7ZF8Km2wGuLNoXFAcj0Tz1DMAwGA1UdEwQFMAMBAf8w
+CgYIKoZIzj0EAwIDRwAwRAIgZ54vooA5Eb91XmhsIBbp12u7cg1qYXNuSh8zih2g
+QWUCIGTHhoBXUzsEbVh302fg7bfRKPCi/mcPfpFICwrmoooh
+-----END CERTIFICATE-----
+>>> server.key
+-----BEGIN EC PARAMETERS-----
+BggqhkjOPQMBBw==
+-----END EC PARAMETERS-----
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIFCV3VwLEFKz9+yTR5vzonmLPYO/fUvZiMVU1Hb11nN8oAoGCCqGSM49
+AwEHoUQDQgAEhkmo6Xp/9W9cGaoGFU7TaBFXOUkZxYbGXQfxyZZucIQPt89+4r1c
+bx0wVEzbYK5wRb7UiWhvvvYDltIzsD75vg==
+-----END EC PRIVATE KEY-----

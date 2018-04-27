@@ -106,7 +106,7 @@ end
 --   2) When the header is set, it creates a new header with the same name and
 --      the given value.
 function _M.new(config)
-  local self = new()
+  local self = new(config)
   self.config = init_config(config)
   return self
 end

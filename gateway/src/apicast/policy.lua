@@ -13,7 +13,7 @@ local PHASES = {
     'rewrite', 'access',
     'content', 'balancer',
     'header_filter', 'body_filter',
-    'post_action',  'log'
+    'post_action',  'log', 'metrics',
 }
 
 local setmetatable = setmetatable

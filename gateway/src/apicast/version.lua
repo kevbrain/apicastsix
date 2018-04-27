@@ -1,1 +1,1 @@
-return "3.2.0-alpha2"
+return "3.2.0-rc1"

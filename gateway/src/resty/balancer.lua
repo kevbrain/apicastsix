@@ -30,7 +30,7 @@ local function new_peer(server, port)
 
   return {
     address,
-    tonumber(server.port or port or 80, 10)
+    tonumber(server.port or port, 10)
   }
 end
 
@@ -41,7 +41,7 @@ local function convert_servers(servers, port)
   for i =1, #servers do
     local peer = new_peer(servers[i], port)
 
-    if peer and #peer == 2 then
+    if peer then
       insert(peers, peer)
     else
       ngx.log(ngx.INFO, 'skipping peer because it misses address or port')

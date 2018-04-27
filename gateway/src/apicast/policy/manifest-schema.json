@@ -31,6 +31,16 @@
       ],
       "minLength": 1
     },
+    "summary": {
+      "$id": "/properties/summary",
+      "type": "string",
+      "title": "The Policy Summary",
+      "description": "Short description of what the policy does",
+      "examples": [
+        "Enables CORS (Cross Origin Resource Sharing) request handling."
+      ],
+      "maxLength": 75
+    },
     "description": {
       "$id": "/properties/description",
       "oneOf": [
@@ -54,5 +64,5 @@
       "$ref": "#/definitions/schema"
     }
   },
-  "required": ["name", "version", "configuration"]
+  "required": ["name", "version", "configuration", "summary"]
 }

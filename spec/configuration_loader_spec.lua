@@ -1,3 +1,5 @@
+local env = require 'resty.env'
+
 insulate('Configuration object', function()
 
   insulate('.mock', function()
@@ -55,7 +57,10 @@ insulate('Configuration object', function()
 
     it('returns false when configuration is stale', function()
       local config = configuration_store.new()
-      config:add({ id = 42, hosts = { 'example.com' } }, -1)
+
+      -- Can't add stale info with config.add. Need to do it through the
+      -- internals of the object.
+      config.cache:set('example.com', { { id = 42, hosts = { 'example.com' } } }, -1)
 
       assert.falsy(_M.configured(config, 'example.com'))
     end)
@@ -92,7 +97,14 @@ insulate('Configuration object', function()
     local configuration_store = require('apicast.configuration_store')
     local loader
 
-    before_each(function() loader = _M.new('lazy') end)
+    before_each(function()
+      loader = _M.new('lazy')
+
+      -- By default, the config is reloaded on every rewrite(), because
+      -- APICAST_CONFIGURATION_CACHE is set to 0. To be sure that it does not
+      -- change and we can compare it, we need to set the env.
+      env.set('APICAST_CONFIGURATION_CACHE', 120)
+    end)
 
     it('does not crash on rewrite', function()
       local configuration = configuration_store.new()

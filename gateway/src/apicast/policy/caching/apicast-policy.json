@@ -1,9 +1,10 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
-  "name": "Caching policy",
+  "name": "Caching",
+  "summary": "Controls how to cache authorizations returned by the 3scale backend.",
   "description":
     ["Configures a cache for the authentication calls against the 3scale ",
-     "backend. This policy support three kinds of caching: \n",
+     "backend. This policy support four kinds of caching: \n",
      " - Strict: it only caches authorized calls. Denied and failed calls ",
      "invalidate the cache entry.\n",
      " - Resilient: caches authorized and denied calls. Failed calls do not ",
@@ -26,20 +27,20 @@
         "type": "string",
         "oneOf": [
           {
-            "const": "resilient",
-            "description": "Authorize according to last request when backend is down."
+            "enum": ["resilient"],
+            "title": "Authorize according to last request when backend is down."
           },
           {
-            "const": "strict",
-            "description": "It only caches authorized calls."
+            "enum": ["strict"],
+            "title": "Cache only authorized calls."
           },
           {
-            "const": "allow",
-            "description": "When backend is down, allow everything unless seen before and denied."
+            "enum": ["allow"],
+            "title": "When backend is down, allow everything unless seen before and denied."
           },
           {
-            "const": "none",
-            "description": "Disables caching."
+            "enum": ["none"],
+            "title": "Disable caching."
           }
         ]
       }

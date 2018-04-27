@@ -1,7 +1,7 @@
 use lib 't';
 use Test::APIcast 'no_plan';
 
-$ENV{APICAST_PATH_ROUTING_ENABLED} = '1';
+$ENV{APICAST_PATH_ROUTING} = '1';
 
 repeat_each(1); # Can't be 2 as the second run would hit the cache
 run_tests();
@@ -11,7 +11,7 @@ __DATA__
 === TEST 1: multi service configuration with path based routing
 Two services can exist together and are split by their hostname and mapping rules.
 --- main_config
-env APICAST_PATH_ROUTING_ENABLED;
+env APICAST_PATH_ROUTING;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -86,7 +86,7 @@ apicast cache write key: 21:two-id:two-key:usage%5Btwo%5D=2
 === TEST 2: multi service configuration with path based routing defaults to host routing
 If none of the services match it goes for the host.
 --- main_config
-env APICAST_PATH_ROUTING_ENABLED;
+env APICAST_PATH_ROUTING;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";

@@ -112,8 +112,8 @@ end
 local function build_env(options, config, context)
     return {
         APICAST_CONFIGURATION = options.configuration or context.configuration,
-        APICAST_CONFIGURATION_LOADER = tostring(options.configuration_loader or context.configuration_loader or 'lazy'),
-        APICAST_CONFIGURATION_CACHE = tostring(options.cache or context.configuration_cache or 0),
+        APICAST_CONFIGURATION_LOADER = options.configuration_loader or context.configuration_loader or 'lazy',
+        APICAST_CONFIGURATION_CACHE = options.cache or context.configuration_cache,
         THREESCALE_DEPLOYMENT_ENV = context.configuration_channel or options.channel or config.name,
         APICAST_POLICY_LOAD_PATH = concat(options.policy_load_path or context.policy_load_path, ':'),
     }
@@ -134,7 +134,7 @@ local function build_context(options, config)
 
 
     context.prefix = apicast_root()
-    context.ca_bundle = pl.path.abspath(context.ca_bundle or pl.path.join(context.prefix, 'conf', 'ca-bundle.crt'))
+    context.ca_bundle = pl.path.abspath(tostring(context.ca_bundle) or pl.path.join(context.prefix, 'conf', 'ca-bundle.crt'))
 
     return context
 end

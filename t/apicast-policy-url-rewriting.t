@@ -9,13 +9,7 @@ __DATA__
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -35,10 +29,11 @@ __DATA__
           { "name": "apicast.policy.apicast" },
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "sub", "regex": "original", "replace": "new" }
               ]
+            }
           }
         ]
       }
@@ -64,13 +59,7 @@ yay, api backend
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -90,10 +79,11 @@ yay, api backend
           { "name": "apicast.policy.apicast" },
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "gsub", "regex": "original", "replace": "new" }
               ]
+            }
           }
         ]
       }
@@ -120,13 +110,7 @@ Substitutions are applied in the order specified.
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -146,12 +130,13 @@ Substitutions are applied in the order specified.
           { "name": "apicast.policy.apicast" },
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "gsub", "regex": "aaa", "replace": "bbb", "options": "i" },
                 { "op": "sub", "regex": "bbb", "replace": "ccc" },
                 { "op": "sub", "regex": "ccc", "replace": "ddd" }
               ]
+            }
           }
         ]
       }
@@ -180,13 +165,7 @@ We need to test 2 things:
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -206,13 +185,14 @@ We need to test 2 things:
           { "name": "apicast.policy.apicast" },
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "sub", "regex": "does_not_match", "replace": "a", "break": true },
                 { "op": "sub", "regex": "aaa", "replace": "bbb" },
                 { "op": "sub", "regex": "bbb", "replace": "ccc", "break": true },
                 { "op": "sub", "regex": "ccc", "replace": "ddd" }
               ]
+            }
           }
         ]
       }
@@ -241,13 +221,7 @@ rules.
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- configuration
@@ -266,10 +240,11 @@ rules.
         "policy_chain": [
           {
             "name": "apicast.policy.url_rewriting",
-            "configuration":
-              [
+            "configuration": {
+              "commands": [
                 { "op": "sub", "regex": "original", "replace": "new" }
               ]
+            }
           },
           { "name": "apicast.policy.apicast" }
         ]

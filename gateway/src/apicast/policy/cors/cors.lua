@@ -25,7 +25,7 @@ local new = _M.new
 -- @field[opt] allow_origin Allowed origins (e.g. 'http://example.com', '*')
 -- @field[opt] allow_credentials Boolean
 function _M.new(config)
-  local self = new()
+  local self = new(config)
   self.config = config or {}
   return self
 end
@@ -46,7 +46,7 @@ end
 
 local function set_access_control_allow_credentials(allow_credentials)
   local value = allow_credentials
-  if value == nil then value = 'true' end
+  if value == nil then value = true end
   ngx.header['Access-Control-Allow-Credentials'] = value
 end
 

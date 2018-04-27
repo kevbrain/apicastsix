@@ -20,6 +20,7 @@ dependencies = {
    'liquid',
    'argparse',
    'penlight',
+   'nginx-lua-prometheus',
 }
 build = {
    type = "make",

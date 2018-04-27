@@ -22,6 +22,14 @@ DEVEL_DOCKER_COMPOSE_FILE ?= docker-compose-devel.yml
 
 S2I_CONTEXT ?= gateway
 
+GIT_TAG += $(CIRCLE_TAG)
+GIT_TAG += $(shell git describe --tags --exact-match 2>/dev/null)
+
+GIT_BRANCH += $(CIRCLE_BRANCH)
+GIT_BRANCH += $(shell git symbolic-ref --short HEAD 2>/dev/null)
+
+S2I_OPTIONS = --env GIT_BRANCH=$(firstword $(GIT_BRANCH)) --env GIT_TAG=$(firstword $(GIT_TAG))
+
 CIRCLE_NODE_INDEX ?= 0
 CIRCLE_STAGE ?= build
 COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
@@ -32,6 +40,10 @@ ROVER := lua_modules/bin/rover
 endif
 
 CPANM ?= $(shell command -v cpanm 2> /dev/null)
+
+ifneq ($(CI),true)
+S2I_OPTIONS += --copy
+endif
 
 export COMPOSE_PROJECT_NAME
 
@@ -44,9 +56,9 @@ apicast-source: ## Create Docker Volume container with APIcast source code
 	docker create --rm -v /opt/app-root/src --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
 	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app-root/src
 
-
+BUSTED_FILES ?=
 busted: dependencies $(ROVER) ## Test Lua.
-	@$(ROVER) exec bin/busted
+	@$(ROVER) exec bin/busted $(BUSTED_FILES)
 	@- luacov
 
 nginx:
@@ -59,38 +71,40 @@ endif
 	$(CPANM) --notest --installdeps ./gateway
 
 prove: HARNESS ?= TAP::Harness
+prove: PROVE_FILES ?= $(shell find t examples  -type f -name "*.t")
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) nginx cpan ## Test nginx
-	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
+	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
 
 prove-docker: apicast-source
-prove-docker: export IMAGE_NAME = apicast-test
+prove-docker: export IMAGE_NAME ?= apicast-test
 prove-docker: ## Test nginx inside docker
 	$(DOCKER_COMPOSE) run --rm -T prove | awk '/Result: NOTESTS/ { print "FAIL: NOTESTS"; print; exit 1 }; { print }'
 
 builder-image: ## Build builder image
-	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --copy --incremental
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --incremental $(S2I_OPTIONS)
 
 runtime-image: PULL_POLICY ?= always
 runtime-image: IMAGE_NAME = apicast-runtime-test
 runtime-image: ## Build runtime image
-	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY) --runtime-pull-policy=$(PULL_POLICY)
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY) --runtime-pull-policy=$(PULL_POLICY) $(S2I_OPTIONS)
 
 push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)
 	docker push $(REGISTRY)/$(IMAGE_NAME)
 
-bash: export IMAGE_NAME = apicast-test
+bash: export IMAGE_NAME ?= apicast-test
 bash: export SERVICE = gateway
 bash: builder-image apicast-source ## Run bash inside the builder image
 	$(DOCKER_COMPOSE) run --user=root --rm --entrypoint=bash $(SERVICE)
 
-dev: export IMAGE_NAME = apicast-test
+dev: export IMAGE_NAME ?= apicast-test
 dev: export SERVICE = dev
 dev: USER = root
 dev: builder-image apicast-source ## Run APIcast inside the container mounted to local volume
 	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
-test-builder-image: export IMAGE_NAME = apicast-test
+
+test-builder-image: export IMAGE_NAME ?= apicast-test
 test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)

@@ -99,6 +99,13 @@ local function parse_and_verify_token(self, jwt_token)
   -- TODO: this should be able to use DER format instead of PEM
   local pubkey = format_public_key(self.config.public_key)
 
+  -- This is keycloak-specific. Its tokens have a 'typ' and we need to verify
+  -- it's Bearer.
+  local claims = self.jwt_claims
+  if jwt_obj.payload and jwt_obj.payload.typ then
+    claims.typ = jwt_validators.equals('Bearer')
+  end
+
   jwt_obj = jwt:verify_jwt_obj(pubkey, jwt_obj, self.jwt_claims)
 
   if not jwt_obj.verified then

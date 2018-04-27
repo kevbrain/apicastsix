@@ -135,6 +135,43 @@ describe('OIDC', function()
       assert.match('invalid alg', err, nil, true)
       assert.falsy(credentials, err)
     end)
+
+    it('validation fails when typ is invalid', function()
+      local oidc = _M.new(service)
+      local access_token = jwt:sign(rsa.private, {
+        header = { typ = 'JWT', alg = 'RS256' },
+        payload = {
+          iss = service.oidc.issuer,
+          aud = 'notused',
+          azp = 'ce3b2e5e',
+          nbf = 0,
+          exp = ngx.now() + 10,
+          typ = 'Not-Bearer'
+        },
+      })
+
+      local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+      assert.same("Claim 'typ' ('Not-Bearer') returned failure", err)
+      assert.falsy(credentials, err)
+    end)
+
+    it('validation is successful when typ is included and is Bearer', function()
+      local oidc = _M.new(service)
+      local access_token = jwt:sign(rsa.private, {
+        header = { typ = 'JWT', alg = 'RS256' },
+        payload = {
+          iss = service.oidc.issuer,
+          aud = 'notused',
+          azp = 'ce3b2e5e',
+          nbf = 0,
+          exp = ngx.now() + 10,
+          typ = 'Bearer'
+        },
+      })
+
+      local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+      assert(credentials, err)
+    end)
   end)
 
 end)

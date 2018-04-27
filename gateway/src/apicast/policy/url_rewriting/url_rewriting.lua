@@ -57,13 +57,13 @@ end
 --   - break[opt]: defaults to false. When set to true, if the command rewrote
 --     the URL, it will be the last command applied.
 function _M.new(config)
-  local self = new()
-  self.config = config or {}
+  local self = new(config)
+  self.commands = (config and config.commands) or {}
   return self
 end
 
 function _M:rewrite()
-  for _, command in ipairs(self.config) do
+  for _, command in ipairs(self.commands) do
     local rewritten = apply_rewrite_command(command)
 
     if rewritten and command['break'] then

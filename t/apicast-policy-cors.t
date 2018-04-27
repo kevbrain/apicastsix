@@ -6,7 +6,9 @@ run_tests();
 __DATA__
 
 === TEST 1: CORS preflight request
-Returns 204 and sets the appropriate headers.
+Returns 204 and sets the appropriate headers. This test does not configure the
+CORS policy with custom headers, so the response headers will be set to accept
+the request received.
 --- configuration
 {
   "services": [
@@ -34,6 +36,9 @@ OPTIONS /
 Origin: localhost
 Access-Control-Request-Method: GET
 --- error_code: 204
+--- response_headers
+Access-Control-Allow-Methods: GET
+Access-Control-Allow-Origin: localhost
 --- no_error_log
 [error]
 
@@ -71,13 +76,7 @@ the request. So for example, if the request sets the 'Origin' header to
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- upstream
@@ -133,13 +132,7 @@ the CORS headers in the response.
   location /transactions/authrep.xml {
     content_by_lua_block {
       local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
-      local args = ngx.var.args
-      if args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, expected, ' did not match: ', args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- upstream

@@ -54,12 +54,7 @@ __DATA__
   location = /backend/transactions/oauth_authrep.xml {
     content_by_lua_block {
       local expected = "provider_key=fookey&service_id=42&usage%5Bhits%5D=1&app_id=appid"
-      if ngx.var.args == expected then
-        ngx.exit(200)
-      else
-        ngx.log(ngx.ERR, 'expected: ' .. expected .. ' got: ' .. ngx.var.args)
-        ngx.exit(403)
-      end
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
     }
   }
 --- request

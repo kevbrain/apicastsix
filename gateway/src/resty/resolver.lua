@@ -113,13 +113,6 @@ function _M.parse_nameservers(path)
 
   local search = { }
   local nameservers = { search = search }
-  local domains = match(resolv_conf, 'search%s+([^\n]+)')
-
-  ngx.log(ngx.DEBUG, 'search ', domains)
-  for domain in gmatch(domains or '', '([^%s]+)') do
-    ngx.log(ngx.DEBUG, 'search domain: ', domain)
-    insert(search, domain)
-  end
 
   local resolver
   resolver, err = _M.parse_resolver(resty_env.value('RESOLVER'))
@@ -132,9 +125,24 @@ function _M.parse_nameservers(path)
     insert(nameservers, resolver)
   end
 
-  for server in gmatch(resolv_conf, 'nameserver%s+([^%s]+)') do
+  for _,line in ipairs(re.split(resolv_conf, "\n+")) do
+
+    local domains = match(line, '^search%s+([^\n]+)')
+
+    if domains then
+      ngx.log(ngx.DEBUG, 'search ', domains)
+
+      for domain in gmatch(domains or '', '([^%s]+)') do
+        if match(domain, '^%#') then break end
+        ngx.log(ngx.DEBUG, 'search domain: ', domain)
+        insert(search, domain)
+      end
+    end
+
+    local server = match(line, '^nameserver%s+([^%s]+)')
     -- TODO: implement port matching based on https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=549190
-    if server ~= resolver then
+    --       meanwhile assuming default port 53.
+    if server and format("%s:%s", server, default_resolver_port) ~= tostring(resolver) then
       insert(nameservers, nameserver.new(server))
     end
   end
@@ -219,7 +227,7 @@ local function new_server(answer, port)
   return setmetatable({
     address = answer.address,
     ttl = answer.ttl,
-    port = answer.port or port
+    port = port or answer.port,
   }, server_mt)
 end
 

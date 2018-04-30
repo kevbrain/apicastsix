@@ -33,6 +33,7 @@ function _M:new(config, dir, strict)
 
     local context = setmetatable({
         env = env,
+        platform = jit.os,
     }, { __index = config })
 
     instance.root = pl.path.abspath(dir or pl.path.currentdir())
@@ -70,6 +71,11 @@ local function build_interpreter(str)
     return interpreter
 end
 
+local function nginx_prefix()
+    local match = ngx.re.match(ngx.config.nginx_configure(), [[--prefix=(.+?)\s]])
+    if match then return match[1] end
+end
+
 function _M:interpret(str)
     local interpreter = build_interpreter(str)
 
@@ -82,7 +88,7 @@ function _M:interpret(str)
         local files = {}
         local included = {}
 
-        for _, root in ipairs({ self.root, pl.path.currentdir() }) do
+        for _, root in ipairs({ self.root, pl.path.currentdir(), ngx.config.prefix(), nginx_prefix() }) do
             for filename in fs(root) do
                 local file = pl.path.relpath(filename, root)
 

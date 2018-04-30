@@ -5,12 +5,21 @@ env RESOLVER;
 env BACKEND_ENDPOINT_OVERRIDE;
 env OPENSSL_VERIFY;
 
+{% if opentracing_tracer != empty %}
+  {% for file in "modules/ngx_http_opentracing_module.so" | filesystem %}
+load_module {{file}};
+  {% endfor %}
+{% endif %}
+
 daemon {{ daemon | default: 'off' }};
 master_process {{ master_process | default: 'on' }};
 worker_processes {{ worker_processes | default: 'auto' }};
 pcre_jit on;
 pid {{ pid | default: 'nginx.pid' }};
+
+{% unless opentracing_tracer != empty %}
 timer_resolution {{ timer_resolution | default: '100ms' }};
+{% endunless %}
 
 {% for file in "main.d/*.conf" | filesystem %}
   {% include file %}
@@ -27,6 +36,8 @@ http {
   sendfile           on;
   tcp_nopush         on;
   tcp_nodelay        on;
+
+
 
   # Enabling the Lua code cache is strongly encouraged for production use
   # Disabling it should only be done for testing and development purposes
@@ -61,42 +72,64 @@ http {
     {% include file %}
   {% endfor %}
 
+  {% if opentracing_tracer != empty %}
+    {%- capture tracer_conf %}conf.d/opentracing/{{ opentracing_tracer }}.conf.liquid{%- endcapture -%}
+    {% include tracer_conf %}
+  {% endif %}
+
   server {
     listen {{ port.management | default: 8090 }};
-
     server_name {{ server_name.management | default: 'management _' }};
+
+    {% if opentracing_tracer != empty %}
+    opentracing_operation_name "apicast_management";
+    opentracing_trace_locations off;
+    {% endif %}
 
     {% include "conf.d/management.conf" %}
   }
 
   server {
     listen {{ port.backend | default: 8081 }};
-
     server_name backend;
+
+    {% if opentracing_tracer != empty %}
+    opentracing_operation_name "apicast_mockbackend";
+    opentracing_trace_locations off;
+    {% endif %}
 
     {% include "conf.d/backend.conf" %}
   }
 
   upstream echo {
     server 127.0.0.1:{{ port.echo | default: 8081 }};
-
     keepalive 1024;
   }
 
   server {
     listen {{ port.echo | default: 8081 }} default_server;
-
     server_name echo _;
+
+    {% if opentracing_tracer != empty %}
+    opentracing_operation_name "apicast_echo";
+    opentracing_trace_locations off;
+    {% endif %}
 
     {% include "conf.d/echo.conf" %}
   }
 
   server {
+
     access_log /dev/stdout time;
 
     listen {{ port.apicast | default: 8080 }};
 
     server_name _;
+
+    {% if opentracing_tracer != empty %}
+    opentracing_operation_name "apicast";
+    opentracing_trace_locations on;
+    {% endif %}
 
     {% include "http.d/ssl.conf" %}
 

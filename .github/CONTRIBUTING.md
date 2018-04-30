@@ -53,7 +53,7 @@ It is important to send proper Host header, as that is used to route between dif
 # Development
 We will also consider contributions in the form of pull requests. Please follow the guidelines here to help your work get accepted.
 
-These guideline is inspired by and based on the Kubernetes guide "[How to get faster PR Reviews](https://github.com/kubernetes/community/blob/master/contributors/devel/pull-requests.md#best-practices-for-faster-reviews)".
+These guideline is inspired by and based on the Kubernetes guide "[How to get faster PR Reviews](https://github.com/kubernetes/community/blob/343caf5b51dae966d64a1f43192ffff330205c5f/contributors/guide/pull-requests.md#best-practices-for-faster-reviews)".
 
 ## Pull requests
 

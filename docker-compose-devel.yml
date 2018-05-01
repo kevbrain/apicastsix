@@ -7,5 +7,11 @@ services:
     entrypoint: "bash"
     volumes:
       - .:/home/centos/
+    environment:
+      TEST_NGINX_REDIS_HOST: redis
+      TEST_NGINX_BINARY: openresty
+      PROJECT_PATH: /home/centos
+      TEST_NGINX_APICAST_PATH: /home/centos/gateway
+      ROVER: /usr/local/openresty/luajit/bin/rover
   redis:
     image: redis

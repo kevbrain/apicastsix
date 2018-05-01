@@ -1,4 +1,5 @@
-FROM quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover6
+ARG BUILDER_IMAGE
+FROM ${BUILDER_IMAGE}
 LABEL maintainer="dortiz@redhat.com"
 
 USER root
@@ -17,17 +18,19 @@ RUN mkdir -p ${USER_HOME}/gateway \
  && echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER_NAME} \
  && chmod 0440 /etc/sudoers.d/${USER_NAME}
 
+COPY gateway/cpanfile ${USER_HOME}/gateway
+RUN cpanm --installdeps ${USER_HOME}/gateway
+
 COPY gateway/Roverfile ${USER_HOME}/gateway
 COPY gateway/Roverfile.lock ${USER_HOME}/gateway
-COPY gateway/cpanfile ${USER_HOME}/gateway
-COPY Makefile ${USER_HOME}
 
 WORKDIR ${USER_HOME}
 
-RUN make dependencies
-RUN mv lua_modules /tmp/lua_modules
+RUN rover install --roverfile=gateway/Roverfile
 
-RUN cpanm --installdeps ./gateway
+COPY Makefile ${USER_HOME}
+
+RUN make dependencies
 
 COPY . ${USER_HOME}
 

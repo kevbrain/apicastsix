@@ -1,0 +1,10 @@
+.git
+node_modules
+lua_modules
+.DS_Store
+t/servroot*
+log
+.idea
+*.swp
+tmp
+.vagrant

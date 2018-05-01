@@ -142,7 +142,7 @@ test-runtime-image: runtime-image clean-containers ## Smoke test the runtime ima
 	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'
 
 build-development:
-	docker build -f $(DEVEL_DOCKERFILE) -t $(DEVEL_IMAGE) .
+	docker build -f $(DEVEL_DOCKERFILE) -t $(DEVEL_IMAGE) --build-arg BUILDER_IMAGE=$(BUILDER_IMAGE) .
 
 development: build-development ## Run bash inside the development image
 	$(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) run --rm development
@@ -162,7 +162,7 @@ clean-containers: apicast-source
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
 
-doc/lua/index.html: $(shell find gateway/src -name '*.lua') | dependencies $(ROVER)
+doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | dependencies $(ROVER)
 	$(ROVER) exec ldoc -c doc/config.ld .
 
 doc: doc/lua/index.html ## Generate documentation

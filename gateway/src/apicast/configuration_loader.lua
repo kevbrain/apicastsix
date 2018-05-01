@@ -84,7 +84,9 @@ function _M.configure(configuration, contents)
   end
 
   if config then
-    return configuration:store(config, ttl())
+    configuration:store(config, ttl())
+    collectgarbage()
+    return config
   end
 end
 

@@ -116,4 +116,21 @@ describe('policy', function()
       assert.same(phases, res)
     end)
   end)
+
+  describe('garbage collection', function()
+    it('runs __gc metamethod when a policy instance is garbage-collected', function()
+      local MyPolicy, mt = policy.new('my_policy', '1.0')
+      local property
+      mt.__gc = spy.new(function(instance) property = instance.someproperty end)
+      local p = MyPolicy.new()
+      p.someproperty = 'foobar'
+      p = nil
+      assert.is_nil(p)
+
+      collectgarbage()
+
+      assert.spy(mt.__gc).was_called(1)
+      assert.equal('foobar', property)
+    end)
+  end)
 end)

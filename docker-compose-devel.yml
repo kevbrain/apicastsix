@@ -2,6 +2,7 @@ version: '2.1'
 services:
   development:
     image: apicast-development
+    user: root
     depends_on:
       - redis
     entrypoint: "bash"

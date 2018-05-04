@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fixed set of valid values for the exit param of the Echo policy [PR #684](https://github.com/3scale/apicast/pull/684/)
 
+### Changed
+
+- The upstream policy now performs the rule matching in the rewrite phase. This allows us to combine it with the URL rewriting policy more easily [PR #690](https://github.com/3scale/apicast/pull/690), [THREESCALE-852](https://issues.jboss.org/browse/THREESCALE-852)
+
 ## [3.2.0-rc1] - 2018-04-24
 
 ### Added

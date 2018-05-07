@@ -42,7 +42,8 @@
             "enum": ["none"],
             "title": "Disable caching."
           }
-        ]
+        ],
+        "default": "none"
       }
     }
   }

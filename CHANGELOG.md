@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- The upstream policy now performs the rule matching in the rewrite phase. This allows us to combine it with the URL rewriting policy more easily [PR #690](https://github.com/3scale/apicast/pull/690), [THREESCALE-852](https://issues.jboss.org/browse/THREESCALE-852)
+- The upstream policy now performs the rule matching in the rewrite phase. This allows combining it with the URL rewriting policy – upstream policy regex will be matched against the original path if upstream policy is placed before URL rewriting in the policy chain, and against the rewritten path otherwise [PR #690](https://github.com/3scale/apicast/pull/690), [THREESCALE-852](https://issues.jboss.org/browse/THREESCALE-852)
 
 ## [3.2.0-rc1] - 2018-04-24
 

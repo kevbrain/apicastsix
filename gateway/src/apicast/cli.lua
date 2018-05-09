@@ -2,7 +2,7 @@ require('apicast.loader')
 
 local command_target = '_cmd'
 local parser = require('argparse')() {
-    name = "APIcast",
+    name = os.getenv('ARGV0') or 'apicast',
     description = "APIcast - 3scale API Management Platform Gateway."
 }
 :command_target(command_target)
@@ -20,7 +20,10 @@ local function load_commands(commands, argparse)
     return commands
 end
 
-_M.commands = load_commands({ 'start' }, parser)
+_M.commands = load_commands({
+  'start',
+  'generate',
+}, parser)
 
 function mt.__call(self, arg)
     -- now we parse the options like usual:

@@ -15,11 +15,7 @@ local re = require('ngx.re')
 local Template = require('apicast.cli.template')
 local Environment = require('apicast.cli.environment')
 
-local pl = {
-    path = require('pl.path'),
-    file = require('pl.file'),
-    dir = require('pl.dir'),
-}
+local pl = require'pl.import_into'()
 
 local _M = {
     openresty = { 'openresty-debug', 'openresty', 'nginx' },
@@ -178,7 +174,6 @@ end
 local load_env = split_by(':')
 
 local function configure(cmd)
-    cmd:usage("Usage: apicast-cli start [OPTIONS]")
     cmd:option("--template", "Nginx config template.", 'conf/nginx.conf.liquid')
 
     local channel = resty_env.value('THREESCALE_DEPLOYMENT_ENV') or 'production'

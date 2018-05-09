@@ -70,8 +70,10 @@ ifeq ($(CPANM),)
 endif
 	$(CPANM) --notest --installdeps ./gateway
 
+find-file = $(shell find $(2) -type f -name $(1))
+
 prove: HARNESS ?= TAP::Harness
-prove: PROVE_FILES ?= $(shell find t examples  -type f -name "*.t")
+prove: PROVE_FILES ?= $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples))
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) nginx cpan ## Test nginx
 	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'

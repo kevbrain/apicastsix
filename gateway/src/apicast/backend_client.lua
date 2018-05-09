@@ -14,6 +14,7 @@ local concat = table.concat
 local insert = table.insert
 local len = string.len
 local format = string.format
+local pairs = pairs
 
 local http_ng = require('resty.http_ng')
 local user_agent = require('apicast.user_agent')
@@ -120,6 +121,8 @@ local function auth_path(using_oauth)
          '/transactions/authorize.xml'
 end
 
+local report_path = '/transactions.xml'
+
 local function create_token_path(service_id)
   return format('/services/%s/oauth_access_tokens.xml', service_id)
 end
@@ -140,6 +143,32 @@ local function authorize_options(using_oauth)
   end
 
   return { headers = headers }
+end
+
+local function add_transaction(transactions, index, cred_type, cred, reports)
+  local index_with_cred = format('transactions[%s][%s]', index, cred_type)
+  transactions[index_with_cred] = cred
+
+  for metric, value in pairs(reports) do
+    local index_with_metric = format('transactions[%s][usage][%s]', index, metric)
+    transactions[index_with_metric] = value
+  end
+end
+
+local function format_transactions(reports_batch)
+  local res = {}
+
+  -- Note: A service only supports one kind of credentials
+  local credentials_type = reports_batch.credentials_type
+  local reports = reports_batch.reports
+
+  local transaction_index = 0
+  for credential, metrics in pairs(reports) do
+    add_transaction(res, transaction_index, credentials_type, credential, metrics)
+    transaction_index = transaction_index + 1
+  end
+
+  return res
 end
 
 --- Call authrep (oauth_authrep) on backend.
@@ -166,6 +195,16 @@ function _M:authorize(...)
   local using_oauth = self.version == 'oauth'
   local auth_uri = auth_path(using_oauth)
   return call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
+end
+
+function _M:report(reports_batch)
+  local http_client = self.http_client
+
+  local report_uri = build_url(self, report_path)
+  local report_body = format_transactions(reports_batch)
+  local res = http_client.post(report_uri, report_body)
+
+  return res
 end
 
 --- Calls backend to create an oauth token.

@@ -159,6 +159,13 @@ http {
 
   lua_shared_dict limiter 1m;
 
+  # This shared dictionaries are only used in the 3scale batcher policy.
+  # This is not ideal, but they'll need to be here until we allow policies to
+  # modify this template.
+  lua_shared_dict cached_auths 1m;
+  lua_shared_dict batched_reports 1m;
+  lua_shared_dict batched_reports_locks 1m;
+
   {% for file in "sites.d/*.conf" | filesystem %}
     {% include file %}
   {% endfor %}

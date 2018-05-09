@@ -5,7 +5,6 @@ PROJECT_PATH=${PROJECT_PATH-$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. &&
 ROVER=${ROVER-/usr/local/openresty/luajit/bin/rover}
 
 function run_busted_tests {
-    sudo cp -R /tmp/lua_modules .
     cd "${PROJECT_PATH}" || exit
     ${ROVER} exec ./bin/busted
 }
@@ -13,12 +12,10 @@ function run_busted_tests {
 function run_nginx_unit_tests {
     cd "${PROJECT_PATH}" || exit
 
-    sudo cp -R /tmp/lua_modules .
-
-    sudo -E "${ROVER}" exec prove
+    "${ROVER}" exec prove
 
     # Text::Nginx runs nginx in the t/servroot dir. Clean it.
-    sudo rm -rf "${PROJECT_PATH}/t/servroot"
+    rm -rf "${PROJECT_PATH}/t/servroot"
 }
 
 function run_all_tests {

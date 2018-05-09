@@ -41,7 +41,24 @@ function _M:add(service_id, credentials, usage)
 
   for _, metric in ipairs(usage.metrics) do
     local key = keys_helper.key_for_batched_report(service_id, credentials, metric)
-    self.storage:incr(key, deltas[metric], 0)
+
+    -- There is not a 'safe_incr'. In order to avoid overriding batched
+    -- reports, we call `safe_add` and call incr only when there was not an
+    -- error because the dict ran out of memory.
+
+    local add_ok, add_err = self.storage:safe_add(key, deltas[metric])
+
+    if not add_ok then
+      if add_err == 'no memory' then
+        ngx.log(ngx.ERR,
+          'Reports batching storage ran out of memory. ',
+          'Will lose a report of ', deltas[metric], ' to metric ', metric)
+      elseif add_err == 'exists' then
+        self.storage:incr(key, deltas[metric])
+      else
+        ngx.log(ngx.ERR, 'Error while batching report: ', add_err)
+      end
+    end
   end
 
   local ok, unlock_err = lock:unlock()

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Default value for the `caching_type` attribute of the caching policy config schema [#691](https://github.com/3scale/apicast/pull/691), [THREESCALE-845](https://issues.jboss.org/browse/THREESCALE-845)
+
 ### Fixed
 
 - Fixed set of valid values for the exit param of the Echo policy [PR #684](https://github.com/3scale/apicast/pull/684/)

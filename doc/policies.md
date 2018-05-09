@@ -67,12 +67,6 @@ mapping rules of APIcast will be applied against the rewritten path.
 However, if the URL policy appears after the APIcast one, the mapping rules
 will be applied against the original path.
 
-Another example, suppose that we combine the upstream policy with the URL
-rewriting one. The upstream policy acts on the content phase, whereas the URL
-rewriting one acts on the rewrite phase. This means that the upstream policy
-will always take into account the rewritten path instead of the original one,
-regardless of the position of the policies in the chain.
-
 ### Types
 
 There are two types of policy chains in APIcast: per-service chains and a

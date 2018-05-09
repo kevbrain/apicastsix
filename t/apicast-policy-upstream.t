@@ -418,3 +418,123 @@ MHcCAQEEIFCV3VwLEFKz9+yTR5vzonmLPYO/fUvZiMVU1Hb11nN8oAoGCCqGSM49
 AwEHoUQDQgAEhkmo6Xp/9W9cGaoGFU7TaBFXOUkZxYbGXQfxyZZucIQPt89+4r1c
 bx0wVEzbYK5wRb7UiWhvvvYDltIzsD75vg==
 -----END EC PRIVATE KEY-----
+
+=== TEST 9: before the URL rewriting policy in the chain
+Check that the upstream policy matches the original path of the request
+instead of the rewritten one.
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=uk"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+    }
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://example.com:80/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          {
+            "name": "apicast.policy.upstream",
+            "configuration": {
+              "rules": [ { "regex": "/original", "url": "http://test:$TEST_NGINX_SERVER_PORT" } ]
+            }
+          },
+          {
+            "name": "apicast.policy.url_rewriting",
+            "configuration": {
+              "commands": [
+                { "op": "gsub", "regex": "/original", "replace": "/rewritten" }
+              ]
+            }
+          },
+          { "name": "apicast.policy.apicast" }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location /rewritten {
+     content_by_lua_block {
+       require('luassert').are.equal('GET /rewritten?user_key=uk&a_param=a_value HTTP/1.1',
+                                     ngx.var.request)
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /original?user_key=uk&a_param=a_value
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 10: after the URL rewriting policy in the chain
+Check that the upstream policy matches the rewritten path of the request
+instead of the original one.
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=uk"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+    }
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://example.com:80/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          {
+            "name": "apicast.policy.url_rewriting",
+            "configuration": {
+              "commands": [
+                { "op": "gsub", "regex": "/original", "replace": "/rewritten" }
+              ]
+            }
+          },
+          {
+            "name": "apicast.policy.upstream",
+            "configuration": {
+              "rules": [ { "regex": "/rewritten", "url": "http://test:$TEST_NGINX_SERVER_PORT" } ]
+            }
+          },
+          { "name": "apicast.policy.apicast" }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location /rewritten {
+     content_by_lua_block {
+       require('luassert').are.equal('GET /rewritten?user_key=uk&a_param=a_value HTTP/1.1',
+                                     ngx.var.request)
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /original?user_key=uk&a_param=a_value
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

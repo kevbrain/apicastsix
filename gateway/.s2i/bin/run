@@ -10,22 +10,6 @@ if [ -f "${luarocks}" ]; then
   eval `/opt/app/bin/luarocks path`
 fi
 
-APICAST_CONFIGURATION_CACHE=${APICAST_CONFIGURATION_CACHE:-}
-
-if [ "${APICAST_CONFIGURATION_CACHE:-0}" -gt 0 ] && [ "${APICAST_CONFIGURATION_CACHE}" -lt 60 ]; then
-  echo "APICAST_CONFIGURATION_CACHE should be 60 or greater, 0 or unset"
-  exit 1
-fi
-
-THREESCALE_PORTAL_ENDPOINT="${THREESCALE_PORTAL_ENDPOINT:-}"
-THREESCALE_CONFIG_FILE="${THREESCALE_CONFIG_FILE:-}"
-
-if [ -z "${THREESCALE_PORTAL_ENDPOINT:-}" ] && [ -z "${THREESCALE_CONFIG_FILE:-}" ]; then
-  # TODO: improve the error messsage
-  echo "missing either THREESCALE_PORTAL_ENDPOINT or THREESCALE_CONFIG_FILE environment variable"
-  exit 1
-fi
-
 if [ -f bin/apicast ]; then
   apicast=bin/apicast
 elif [ -f "${BASH_SOURCE%/*}/apicast" ]; then

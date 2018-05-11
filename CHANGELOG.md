@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Generate new policy scaffold from the CLI [PR #682](https://github.com/3scale/apicast/pull/682)
 - 3scale batcher policy [PR #685](https://github.com/3scale/apicast/pull/685)
 
+### Changed
+
+- `THREESCALE_PORTAL_ENDPOINT` and `THREESCALE_CONFIG_FILE` are not required anymore [PR #702](https://github.com/3scale/apicast/pull/702)
+
 ## [3.2.0-rc2] - 2018-05-11
 
 ### Added

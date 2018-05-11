@@ -65,17 +65,26 @@ function _M.new(config)
   return self
 end
 
-function _M:content(context)
+function _M:rewrite(context)
   local req_uri = ngx.var.uri
 
   for _, rule in ipairs(self.rules) do
     if match(req_uri, rule.regex) then
       ngx.log(ngx.DEBUG, 'upstream policy uri: ', req_uri, ' regex: ', rule.regex, ' match: true')
-      context.upstream_changed = true
-      return change_upstream(rule.url)
-    elseif ngx.config.debug then
+      context.new_upstream = rule.url
+      break
+    else
       ngx.log(ngx.DEBUG, 'upstream policy uri: ', req_uri, ' regex: ', rule.regex, ' match: false')
     end
+  end
+end
+
+function _M.content(_, context)
+  local new_upstream = context.new_upstream
+
+  if new_upstream then
+    context.upstream_changed = true
+    return change_upstream(new_upstream)
   end
 end
 

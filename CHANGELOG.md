@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fixed set of valid values for the exit param of the Echo policy [PR #684](https://github.com/3scale/apicast/pull/684/)
 
+### Changed
+
+- The schema of the rate-limit policy has been adapted so it can be rendered by `react-jsonschema-form`, a library used in the 3scale UI. This is a breaking change. [PR #696](https://github.com/3scale/apicast/pull/696), [THREESCALE-888](https://issues.jboss.org/browse/THREESCALE-888)
+
 ## [3.2.0-rc1] - 2018-04-24
 
 ### Added

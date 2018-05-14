@@ -80,12 +80,13 @@ local function init_error_settings(limits_exceeded_error, configuration_error)
   return error_settings
 end
 
-local function build_limiters_and_keys(type, limiters, redis, error_settings, context)
+local function build_limiters_and_keys(type, limiters, redis, error_settings, context, timestamp)
   local res_limiters = {}
   local res_keys = {}
 
   for _, limiter in ipairs(limiters) do
     local lim, initerr = traffic_limiters[type](limiter)
+    local window = limiter.window or 0
     if not lim then
       ngx.log(ngx.ERR, "unknown limiter: ", type, ", err: ", initerr)
       error(error_settings, "configuration_issue")
@@ -99,9 +100,9 @@ local function build_limiters_and_keys(type, limiters, redis, error_settings, co
     local key = limiter.template_string:render(
       ngx_variable.available_context(context))
     if limiter.key.scope == "global" then
-      key = format("%s_%s", type, key)
+      key = format("%d_%s_%s", timestamp + window, type, key)
     else
-      key = format("%s_%s_%s", context.service.id, type, key)
+      key = format("%d_%s_%s_%s", timestamp + window, context.service.id, type, key)
     end
 
     insert(res_keys, key)
@@ -126,6 +127,7 @@ function _M.new(config)
   self.redis_url = config.redis_url
   self.error_settings = init_error_settings(
     config.limits_exceeded_error, config.configuration_error)
+  self.timestamp = ngx.time()
 
   for _, limiters in ipairs({ self.connection_limiters, self.leaky_bucket_limiters, self.fixed_window_limiters }) do
     build_templates(limiters)
@@ -147,13 +149,13 @@ function _M:access(context)
   end
 
   local conn_limiters, conn_keys = build_limiters_and_keys(
-    'connections', self.connection_limiters, red, self.error_settings, context)
+    'connections', self.connection_limiters, red, self.error_settings, context, self.timestamp)
 
   local leaky_bucket_limiters, leaky_bucket_keys = build_limiters_and_keys(
-    'leaky_bucket', self.leaky_bucket_limiters, red, self.error_settings, context)
+    'leaky_bucket', self.leaky_bucket_limiters, red, self.error_settings, context, self.timestamp)
 
   local fixed_window_limiters, fixed_window_keys = build_limiters_and_keys(
-    'fixed_window', self.fixed_window_limiters, red, self.error_settings, context)
+    'fixed_window', self.fixed_window_limiters, red, self.error_settings, context, self.timestamp)
 
   local limiters = {}
   local limiter_groups = { conn_limiters, leaky_bucket_limiters, fixed_window_limiters }

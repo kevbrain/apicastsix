@@ -221,7 +221,10 @@ jobs:
       - checkout
       - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
       - deploy:
+          # In PRs coming from forks, the docker credentials are not set.
+          # In that case, we just skip the step of pushing to the registry.
           command: |
+            ([ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]) && return 0;
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" quay.io;
             make runtime-image push IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}";
             make builder-image push IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder";
@@ -298,3 +301,6 @@ workflows:
       - benchmark:
           requires:
             - deploy
+          filters:
+            branches:
+              only: /^[^:]+$/

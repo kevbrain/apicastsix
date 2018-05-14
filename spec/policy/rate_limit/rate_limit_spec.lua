@@ -40,6 +40,7 @@ local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
 describe('Rate limit policy', function()
   local ngx_exit_spy
   local ngx_sleep_spy
+  local context
 
   setup(function()
     ngx_exit_spy = spy.on(ngx, 'exit')
@@ -50,105 +51,110 @@ describe('Rate limit policy', function()
     local redis = require('resty.redis'):new()
     redis:connect(redis_host, redis_port)
     redis:select(1)
-    redis:del('connections_test1', 'leaky_bucket_test2', 'fixed_window_test3', 'bank_A_leaky_bucket_test4')
+    redis:del('connections_test1', 'leaky_bucket_test2', 'fixed_window_test3', '5_leaky_bucket_test4')
     init_val()
+    context = {
+      service = {
+        id = 5
+      }
+    }
   end)
 
   describe('.access', function()
     it('success with multiple limiters', function()
       local config = {
         connection_limiters = {
-          { key = { name = 'test1' }, conn = 20, burst = 10, delay = 0.5 }
+          { key = { name = 'test1', scope = 'global' }, conn = 20, burst = 10, delay = 0.5 }
         },
         leaky_bucket_limiters = {
-          { key = { name = 'test2' }, rate = 18, burst = 9 }
+          { key = { name = 'test2', scope = 'global' }, rate = 18, burst = 9 }
         },
         fixed_window_limiters = {
-          { key = {name = 'test3'}, count = 10, window = 10 }
+          { key = { name = 'test3', scope = 'global' }, count = 10, window = 10 }
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
     end)
 
     it('no redis url', function()
       local config = {
         connection_limiters = {
-          { key = { name = 'test1' }, conn = 20, burst = 10, delay = 0.5 }
+          { key = { name = 'test1', scope = 'global' }, conn = 20, burst = 10, delay = 0.5 }
         },
         leaky_bucket_limiters = {
-          { key = { name = 'test2' }, rate = 18, burst = 9 }
+          { key = { name = 'test2', scope = 'global' }, rate = 18, burst = 9 }
         },
         fixed_window_limiters = {
-          { key = { name = 'test3' }, count = 10, window = 10 }
+          { key = { name = 'test3', scope = 'global' }, count = 10, window = 10 }
         }
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
     end)
 
     it('invalid redis url', function()
       local config = {
         connection_limiters = {
-          { key = { name = 'test1' }, conn = 20, burst = 10, delay = 0.5 }
+          { key = { name = 'test1', scope = 'global' }, conn = 20, burst = 10, delay = 0.5 }
         },
         redis_url = 'redis://invalidhost:'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
       assert.spy(ngx_exit_spy).was_called_with(500)
     end)
 
     it('rejected (conn)', function()
       local config = {
         connection_limiters = {
-          { key = { name = 'test1' }, conn = 1, burst = 0, delay = 0.5 }
+          { key = { name = 'test1', scope = 'global' }, conn = 1, burst = 0, delay = 0.5 }
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
       assert.spy(ngx_exit_spy).was_called_with(429)
     end)
 
     it('rejected (req)', function()
       local config = {
         leaky_bucket_limiters = {
-          { key = { name = 'test2' }, rate = 1, burst = 0 }
+          { key = { name = 'test2', scope = 'global' }, rate = 1, burst = 0 }
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
       assert.spy(ngx_exit_spy).was_called_with(429)
     end)
 
     it('rejected (count)', function()
       local config = {
         fixed_window_limiters = {
-          { key = { name = 'test3' }, count = 1, window = 10 }
+          { key = { name = 'test3', scope = 'global' }, count = 1, window = 10 }
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
       assert.spy(ngx_exit_spy).was_called_with(429)
     end)
 
     it('delay (conn)', function()
       local config = {
         connection_limiters = {
-          { key = {name = 'test1'}, conn = 1, burst = 1, delay = 2 }
+          { key = { name = 'test1', scope = 'global' }, conn = 1, burst = 1, delay = 2 }
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
       assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
     end)
 
@@ -160,8 +166,8 @@ describe('Rate limit policy', function()
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
       assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
     end)
 
@@ -169,7 +175,7 @@ describe('Rate limit policy', function()
       local config = {
         leaky_bucket_limiters = {
           {
-            key = { name = 'test4', scope = 'service', service_name = 'bank_A' },
+            key = { name = 'test4', scope = 'service' },
             rate = 1,
             burst = 1
           }
@@ -177,8 +183,25 @@ describe('Rate limit policy', function()
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
+      assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
+    end)
+
+    it('delay (req) default service scope', function()
+      local config = {
+        leaky_bucket_limiters = {
+          {
+            key = { name = 'test4' },
+            rate = 1,
+            burst = 1
+          }
+        },
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
       assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
     end)
   end)
@@ -187,12 +210,12 @@ describe('Rate limit policy', function()
     it('success in leaving', function()
       local config = {
         connection_limiters = {
-          { key = {name = 'test1'}, conn = 20, burst = 10, delay = 0.5 }
+          { key = { name = 'test1', scope = 'global' }, conn = 20, burst = 10, delay = 0.5 }
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
       local rate_limit_policy = RateLimitPolicy.new(config)
-      rate_limit_policy:access()
+      rate_limit_policy:access(context)
       rate_limit_policy:log()
     end)
   end)

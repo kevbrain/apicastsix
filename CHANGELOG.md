@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - `THREESCALE_PORTAL_ENDPOINT` and `THREESCALE_CONFIG_FILE` are not required anymore [PR #702](https://github.com/3scale/apicast/pull/702)
+- The `scope` of the Rate Limit policy is `service` by default [PR #704](https://github.com/3scale/apicast/pull/704)
 
 ## [3.2.0-rc2] - 2018-05-11
 

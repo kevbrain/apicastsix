@@ -110,7 +110,7 @@ local function init_error_settings(limits_exceeded_error, configuration_error)
   return error_settings
 end
 
-local function build_limiters_and_keys(type, limiters, redis, error_settings)
+local function build_limiters_and_keys(type, limiters, redis, error_settings, service_id)
   local res_limiters = {}
   local res_keys = {}
 
@@ -127,10 +127,10 @@ local function build_limiters_and_keys(type, limiters, redis, error_settings)
     insert(res_limiters, lim)
 
     local key
-    if limiter.key.scope == "service" then
-      key = format("%s_%s_%s", limiter.key.service_name, type, limiter.key.name)
-    else
+    if limiter.key.scope == "global" then
       key = format("%s_%s", type, limiter.key.name)
+    else
+      key = format("%s_%s_%s", service_id, type, limiter.key.name)
     end
 
     insert(res_keys, key)
@@ -152,7 +152,7 @@ function _M.new(config)
   return self
 end
 
-function _M:access()
+function _M:access(context)
   local red
   if self.redis_url then
     local rederr
@@ -165,13 +165,13 @@ function _M:access()
   end
 
   local conn_limiters, conn_keys = build_limiters_and_keys(
-    'connections', self.connection_limiters, red, self.error_settings)
+    'connections', self.connection_limiters, red, self.error_settings, context.service.id)
 
   local leaky_bucket_limiters, leaky_bucket_keys = build_limiters_and_keys(
-    'leaky_bucket', self.leaky_bucket_limiters, red, self.error_settings)
+    'leaky_bucket', self.leaky_bucket_limiters, red, self.error_settings, context.service.id)
 
   local fixed_window_limiters, fixed_window_keys = build_limiters_and_keys(
-    'fixed_window', self.fixed_window_limiters, red, self.error_settings)
+    'fixed_window', self.fixed_window_limiters, red, self.error_settings, context.service.id)
 
   local limiters = {}
   local limiter_groups = { conn_limiters, leaky_bucket_limiters, fixed_window_limiters }

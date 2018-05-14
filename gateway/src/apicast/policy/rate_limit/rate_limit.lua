@@ -15,6 +15,8 @@ local shdict_key = 'limiter'
 local insert = table.insert
 local ipairs = ipairs
 local unpack = table.unpack
+local format = string.format
+local concat = table.concat
 
 local new = _M.new
 
@@ -126,9 +128,9 @@ local function build_limiters_and_keys(type, limiters, redis, error_settings)
 
     local key
     if limiter.key.scope == "service" then
-      key = limiter.key.service_name.."_"..type.."_"..limiter.key.name
+      key = format("%s_%s_%s", limiter.key.service_name, type, limiter.key.name)
     else
-      key = type.."_"..limiter.key.name
+      key = format("%s_%s", type, limiter.key.name)
     end
 
     insert(res_keys, key)
@@ -205,8 +207,8 @@ function _M:access()
 
   for i, lim in ipairs(limiters) do
     if lim.is_committed and lim:is_committed() then
-      table.insert(connections_committed, lim)
-      table.insert(keys_committed, keys[i])
+      insert(connections_committed, lim)
+      insert(keys_committed, keys[i])
     end
   end
 
@@ -217,7 +219,7 @@ function _M:access()
   end
 
   if delay > 0 then
-    ngx.log(ngx.WARN, 'need to delay by: ', delay, 's, states: ', table.concat(states, ", "))
+    ngx.log(ngx.WARN, 'need to delay by: ', delay, 's, states: ', concat(states, ", "))
     ngx.sleep(delay)
   end
 

@@ -25,7 +25,7 @@ function _M.new(config)
   self.reports_batcher = ReportsBatcher.new(
     ngx.shared.batched_reports, 'batched_reports_locks')
 
-  self.batch_reports_seconds = config.batch_reports_seconds or
+  self.batch_reports_seconds = config.batch_report_seconds or
                                default_batch_reports_seconds
 
   self.report_timer_on = false

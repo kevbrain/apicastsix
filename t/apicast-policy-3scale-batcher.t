@@ -255,6 +255,7 @@ push $res, "Host: one";
 $res
 --- no_error_log
 [error]
+3scale batcher report timer got
 
 === TEST 4: report batched reports to backend
 This test checks that reports are sent correctly to backend. To do that, it performs

@@ -25,7 +25,7 @@ function _M.new(config)
   self.reports_batcher = ReportsBatcher.new(
     ngx.shared.batched_reports, 'batched_reports_locks')
 
-  self.batch_reports_seconds = config.batch_reports_seconds or
+  self.batch_reports_seconds = config.batch_report_seconds or
                                default_batch_reports_seconds
 
   self.report_timer_on = false
@@ -65,6 +65,10 @@ end
 local function report(_, service_id, backend, reports_batcher)
   local reports = reports_batcher:get_all(service_id)
 
+  if reports then
+    ngx.log(ngx.DEBUG, '3scale batcher report timer got ', #reports, ' reports')
+  end
+
   -- TODO: verify if we should limit the number of reports sent in a sigle req
   reporter.report(reports, service_id, backend, reports_batcher)
 end
@@ -85,6 +89,8 @@ local function ensure_report_timer_on(self, service_id, backend)
         service_id, backend, self.reports_batcher)
 
       self.report_timer_on = true
+      ngx.log(ngx.DEBUG, 'scheduled 3scale batcher report timer every ',
+                         self.batch_reports_seconds, ' seconds')
     end
 
     self.semaphore_report_timer:post()

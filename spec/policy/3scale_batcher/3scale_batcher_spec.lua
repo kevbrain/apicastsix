@@ -5,6 +5,22 @@ local configuration = require('apicast.configuration')
 local lrucache = require('resty.lrucache')
 
 describe('3scale batcher policy', function()
+  describe('.new', function()
+    it('allows to configure the batching period', function()
+      local test_batching_period = 3
+      local config = { batch_report_seconds = test_batching_period }
+      local batcher_policy = ThreescaleBatcher.new(config)
+
+      assert.equals(test_batching_period, batcher_policy.batch_reports_seconds)
+    end)
+
+    it('assigns a default of 10s for the batching period', function()
+      local batcher_policy = ThreescaleBatcher.new({})
+
+      assert.equals(10, batcher_policy.batch_reports_seconds)
+    end)
+  end)
+
   describe('.access', function()
     local service = configuration.parse_service({ id = 42 })
     local service_id = service.id

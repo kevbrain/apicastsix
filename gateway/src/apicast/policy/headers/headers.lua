@@ -9,6 +9,10 @@ local ipairs = ipairs
 local type = type
 local insert = table.insert
 
+local TemplateString = require 'apicast.template_string'
+
+local default_value_type = 'plain'
+
 local policy = require('apicast.policy')
 local _M = policy.new('Headers policy')
 
@@ -69,10 +73,12 @@ local command_functions = {
 }
 
 -- header_type can be 'request' or 'response'.
-local function run_commands(commands, header_type, ...)
+local function run_commands(context, commands, header_type, ...)
   for _, command in ipairs(commands) do
     local command_func = command_functions[header_type][command.op]
-    command_func(command.header, command.value, ...)
+    local value = command.template_string:render(context)
+
+    command_func(command.header, value, ...)
   end
 end
 
@@ -85,6 +91,13 @@ local function init_config(config)
   return res
 end
 
+local function build_templates(commands)
+  for _, command in ipairs(commands) do
+    command.template_string = TemplateString.new(
+      command.value, command.value_type or default_value_type)
+  end
+end
+
 --- Initialize a Headers policy
 -- @tparam[opt] table config
 -- @field[opt] request Table with the operations to apply to the request headers
@@ -93,6 +106,7 @@ end
 --   1) op: can be 'add', 'set' or 'push'.
 --   2) header
 --   3) value
+--   4) value_type (can be 'liquid' or 'plain'). Defaults to 'plain'.
 -- The push operation:
 --   1) When the header is not set, creates it with the given value.
 --   2) When the header is set, it creates a new header with the same name and
@@ -108,18 +122,23 @@ end
 function _M.new(config)
   local self = new(config)
   self.config = init_config(config)
+
+  for _, commands in ipairs({ self.config.request, self.config.response } ) do
+    build_templates(commands)
+  end
+
   return self
 end
 
-function _M:rewrite()
+function _M:rewrite(context)
   -- This is here to avoid calling ngx.req.get_headers() in every command
   -- applied to the request headers.
   local req_headers = ngx.req.get_headers() or {}
-  run_commands(self.config.request, 'request', req_headers)
+  run_commands(context, self.config.request, 'request', req_headers)
 end
 
-function _M:header_filter()
-  run_commands(self.config.response, 'response')
+function _M:header_filter(context)
+  run_commands(context, self.config.response, 'response')
 end
 
 return _M

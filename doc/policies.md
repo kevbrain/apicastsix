@@ -236,7 +236,7 @@ policies can be configured:
             }
           },
           {
-            "name":"apicast", "version": "builtin",
+            "name":"apicast", "version": "builtin"
           }
         ]
       }

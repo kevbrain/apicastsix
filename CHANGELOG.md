@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - OpenTracing support [PR #669](https://github.com/3scale/apicast/pull/669)
 - Generate new policy scaffold from the CLI [PR #682](https://github.com/3scale/apicast/pull/682)
 - 3scale batcher policy [PR #685](https://github.com/3scale/apicast/pull/685), [PR #710](https://github.com/3scale/apicast/pull/710)
+- Liquid templating support in the headers policy configuration [PR #716](https://github.com/3scale/apicast/pull/716)
 
 ### Changed
 

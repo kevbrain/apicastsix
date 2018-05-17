@@ -42,6 +42,21 @@
             "value": {
               "description": "Value that will be added, set or pushed in the header",
               "type": "string"
+            },
+            "value_type": {
+              "description": "How to evaluate 'value'",
+              "type": "string",
+              "oneOf": [
+                {
+                  "enum": ["plain"],
+                  "title": "Evaluate 'value' as plain text."
+                },
+                {
+                  "enum": ["liquid"],
+                  "title": "Evaluate 'value' as liquid."
+                }
+              ],
+              "default": "plain"
             }
           },
           "required": ["op", "header", "value"]

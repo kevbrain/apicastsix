@@ -105,6 +105,55 @@ describe('Headers policy', function()
         assert.same({ '2', '3' }, ngx.req.get_headers()[header])
       end)
     end)
+
+    describe('when the type of the value is specified', function()
+      describe("and it is 'liquid'", function()
+        it('evaluates the value as liquid', function()
+          local context = { var_in_context = 'some_value' }
+
+          local config = {
+            [request_headers] = {
+              {
+                op = 'push',
+                header = header,
+                value = '{{ var_in_context }}',
+                value_type = 'liquid'
+              }
+            }
+          }
+
+          local headers_policy = HeadersPolicy.new(config)
+
+          headers_policy:rewrite(context)
+
+          assert.same({ context.var_in_context }, ngx.req.get_headers()[header])
+        end)
+      end)
+
+      describe("and it is 'plain'", function()
+        it('evaluates the value as plain text', function()
+          local context = { var_in_context = 'some_value' }
+          local value = '{{ var_in_context }}'
+
+          local config = {
+            [request_headers] = {
+              {
+                op = 'push',
+                header = header,
+                value = value,
+                value_type = 'plain'
+              }
+            }
+          }
+
+          local headers_policy = HeadersPolicy.new(config)
+
+          headers_policy:rewrite(context)
+
+          assert.same({ value }, ngx.req.get_headers()[header])
+        end)
+      end)
+    end)
   end)
 
   describe('.header_filter', function()
@@ -199,6 +248,55 @@ describe('Headers policy', function()
         headers_policy:header_filter()
 
         assert.same({ '2', '3' }, ngx.header[header])
+      end)
+    end)
+
+    describe('when the type of the value is specified', function()
+      describe("and it is 'liquid'", function()
+        it('evaluates the value as liquid', function()
+          local context = { var_in_context = 'some_value' }
+
+          local config = {
+            [response_headers] = {
+              {
+                op = 'push',
+                header = header,
+                value = '{{ var_in_context }}',
+                value_type = 'liquid'
+              }
+            }
+          }
+
+          local headers_policy = HeadersPolicy.new(config)
+
+          headers_policy:header_filter(context)
+
+          assert.same({ context.var_in_context }, ngx.header[header])
+        end)
+      end)
+
+      describe("and it is 'plain'", function()
+        it('evaluates the value as plain text', function()
+          local context = { var_in_context = 'some_value' }
+          local value = '{{ var_in_context }}'
+
+          local config = {
+            [response_headers] = {
+              {
+                op = 'push',
+                header = header,
+                value = value,
+                value_type = 'plain'
+              }
+            }
+          }
+
+          local headers_policy = HeadersPolicy.new(config)
+
+          headers_policy:header_filter(context)
+
+          assert.same({ value }, ngx.header[header])
+        end)
       end)
     end)
   end)

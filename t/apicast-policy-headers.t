@@ -451,3 +451,70 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 8: config with liquid templating
+Test that we can apply filters and also get values from the policies context
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+    }
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          { "name": "apicast.policy.apicast" },
+          {
+            "name": "apicast.policy.headers",
+            "configuration":
+              {
+                "request":
+                  [
+                    {
+                      "op": "set",
+                      "header": "New-Header-1",
+                      "value": "{{ 'something' | md5 }}",
+                      "value_type": "liquid"
+                    },
+                    {
+                      "op": "set",
+                      "header": "New-Header-2",
+                      "value": "{{ service.id }}",
+                      "value_type": "liquid"
+                    }
+                  ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+       local assert = require('luassert')
+       assert.same(ngx.md5("something"), ngx.req.get_headers()['New-Header-1'])
+       assert.same('42', ngx.req.get_headers()['New-Header-2'])
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /?user_key=value
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

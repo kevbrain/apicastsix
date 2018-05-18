@@ -128,7 +128,7 @@ function _M:transform_credentials(credentials)
     if ngx.config.debug then
       ngx.log(ngx.DEBUG, 'JWT object: ', require('inspect')(jwt_obj))
     end
-    return nil, nil, jwt_obj and jwt_obj.reason or err
+    return nil, nil, nil, jwt_obj and jwt_obj.reason or err
   end
 
   local payload = jwt_obj.payload
@@ -149,7 +149,7 @@ function _M:transform_credentials(credentials)
   -- OAuth2 credentials for OIDC
   -- @field app_id Client id
   -- @table credentials_oauth
-  return { app_id = app_id }, ttl
+  return { app_id = app_id }, ttl, payload
 end
 
 

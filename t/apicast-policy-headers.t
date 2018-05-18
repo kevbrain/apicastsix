@@ -1,6 +1,20 @@
 use lib 't';
 use Test::APIcast::Blackbox 'no_plan';
 
+use Cwd qw(abs_path);
+
+our $rsa = `cat t/fixtures/rsa.pem`;
+
+# Make fixtures policies available. There is a test that needs the "decode
+# oidc token" example policy.
+BEGIN {
+    $ENV{TEST_NGINX_APICAST_POLICY_LOAD_PATH} = 't/fixtures/policies';
+}
+
+env_to_apicast(
+    'APICAST_POLICY_LOAD_PATH' => abs_path($ENV{TEST_NGINX_APICAST_POLICY_LOAD_PATH}),
+);
+
 run_tests();
 
 __DATA__
@@ -518,3 +532,86 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 9: templating with jwt token information
+This tests that the headers policy can send headers with jwt information.
+The APIcast policy stores the jwt in the policies context, so the headers
+policy has access to it.
+Notice that in the configuration, oidc.config.public_key is the one in
+"/fixtures/rsa.pub".
+--- backend
+  location /transactions/oauth_authrep.xml {
+    content_by_lua_block {
+      ngx.exit(200)
+    }
+  }
+--- configuration
+{
+  "oidc": [
+    {
+      "issuer": "https://example.com/auth/realms/apicast",
+      "config": {
+        "public_key": "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2KNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==",
+        "openid": { "id_token_signing_alg_values_supported": [ "RS256" ] }
+      }
+    }
+  ],
+  "services": [
+    {
+      "id": 42,
+      "backend_version": "oauth",
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "authentication_method": "oidc",
+        "oidc_issuer_endpoint": "https://example.com/auth/realms/apicast",
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          { "name": "apicast.policy.apicast" },
+          {
+            "name": "apicast.policy.headers",
+            "configuration":
+              {
+                "request":
+                  [
+                    {
+                      "op": "set",
+                      "header": "Token-aud",
+                      "value": "{{ jwt.aud }}",
+                      "value_type": "liquid"
+                    }
+                  ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+       local assert = require('luassert')
+       assert.same("the_token_audience", ngx.req.get_headers()['Token-aud'])
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /
+--- more_headers eval
+use Crypt::JWT qw(encode_jwt);
+my $jwt = encode_jwt(payload => {
+  aud => 'the_token_audience',
+  nbf => 0,
+  iss => 'https://example.com/auth/realms/apicast',
+  exp => time + 3600 }, key => \$::rsa, alg => 'RS256');
+"Authorization: Bearer $jwt"
+--- error_code: 200
+--- response_body
+yay, api backend
+--- no_error_log
+[error]
+oauth failed with

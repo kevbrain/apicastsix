@@ -5,16 +5,6 @@ use Cwd qw(abs_path);
 
 our $rsa = `cat t/fixtures/rsa.pem`;
 
-# Make fixtures policies available. There is a test that needs the "decode
-# oidc token" example policy.
-BEGIN {
-    $ENV{TEST_NGINX_APICAST_POLICY_LOAD_PATH} = 't/fixtures/policies';
-}
-
-env_to_apicast(
-    'APICAST_POLICY_LOAD_PATH' => abs_path($ENV{TEST_NGINX_APICAST_POLICY_LOAD_PATH}),
-);
-
 run_tests();
 
 __DATA__

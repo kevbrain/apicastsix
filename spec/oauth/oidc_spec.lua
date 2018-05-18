@@ -31,7 +31,7 @@ describe('OIDC', function()
         },
       })
 
-      local credentials, ttl, err = oidc:transform_credentials({ access_token = access_token })
+      local credentials, ttl, _, err = oidc:transform_credentials({ access_token = access_token })
 
       assert(credentials, err)
 
@@ -53,7 +53,7 @@ describe('OIDC', function()
 
       local stubbed
       for _=1, 10 do
-        local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+        local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
         if not stubbed then
           stubbed = stub(jwt, 'verify_jwt_obj', function(_, jwt_obj, _) return jwt_obj end)
         end
@@ -75,7 +75,7 @@ describe('OIDC', function()
         },
       })
 
-      local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+      local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
 
       assert(credentials, err)
     end)
@@ -93,7 +93,7 @@ describe('OIDC', function()
         },
       })
 
-      local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+      local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
 
       assert.falsy(credentials)
       assert.truthy(err)
@@ -113,7 +113,7 @@ describe('OIDC', function()
 
       jwt_validators.set_system_clock(function() return 0 end)
 
-      local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+      local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
       assert(credentials, err)
 
       jwt_validators.set_system_clock(function() return 1 end)
@@ -130,7 +130,7 @@ describe('OIDC', function()
         payload = { },
       })
 
-      local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+      local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
 
       assert.match('invalid alg', err, nil, true)
       assert.falsy(credentials, err)
@@ -150,7 +150,7 @@ describe('OIDC', function()
         },
       })
 
-      local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+      local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
       assert.same("Claim 'typ' ('Not-Bearer') returned failure", err)
       assert.falsy(credentials, err)
     end)
@@ -169,7 +169,7 @@ describe('OIDC', function()
         },
       })
 
-      local credentials, _, err = oidc:transform_credentials({ access_token = access_token })
+      local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
       assert(credentials, err)
     end)
   end)

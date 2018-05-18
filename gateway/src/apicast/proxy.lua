@@ -267,7 +267,8 @@ function _M:rewrite(service, context)
   local ttl
 
   if self.oauth then
-    credentials, ttl, err = self.oauth:transform_credentials(credentials)
+    local jwt_payload
+    credentials, ttl, jwt_payload, err = self.oauth:transform_credentials(credentials)
 
     if err then
       ngx.log(ngx.DEBUG, 'oauth failed with ', err)
@@ -275,6 +276,7 @@ function _M:rewrite(service, context)
     end
     ctx.credentials = credentials
     ctx.ttl = ttl
+    context.jwt = jwt_payload
   end
 
   context.credentials = ctx.credentials

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Liquid templating support in the headers policy configuration [PR #716](https://github.com/3scale/apicast/pull/716)
 - Ability to modify query parameters in the URL rewriting policy [PR #724](https://github.com/3scale/apicast/pull/724)
 - 3scale referrer policy [PR #728](https://github.com/3scale/apicast/pull/728)
+- Liquid templating support in the rate-limit policy [PR #719](https://github.com/3scale/apicast/pull/719)
 
 ### Changed
 

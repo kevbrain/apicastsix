@@ -8,6 +8,7 @@ local resty_limit_count = require('resty.limit.count')
 local ngx_semaphore = require "ngx.semaphore"
 local limit_traffic = require "resty.limit.traffic"
 local ts = require ('apicast.threescale_utils')
+local ngx_variable = require ('apicast.policy.ngx_variable')
 local tonumber = tonumber
 local next = next
 local shdict_key = 'limiter'
@@ -17,6 +18,9 @@ local ipairs = ipairs
 local unpack = table.unpack
 local format = string.format
 local concat = table.concat
+
+local TemplateString = require 'apicast.template_string'
+local default_name_type = 'plain'
 
 local new = _M.new
 
@@ -110,7 +114,7 @@ local function init_error_settings(limits_exceeded_error, configuration_error)
   return error_settings
 end
 
-local function build_limiters_and_keys(type, limiters, redis, error_settings, service_id)
+local function build_limiters_and_keys(type, limiters, redis, error_settings, context)
   local res_limiters = {}
   local res_keys = {}
 
@@ -126,17 +130,25 @@ local function build_limiters_and_keys(type, limiters, redis, error_settings, se
 
     insert(res_limiters, lim)
 
-    local key
+    local key = limiter.template_string:render(
+      ngx_variable.available_context(context))
     if limiter.key.scope == "global" then
-      key = format("%s_%s", type, limiter.key.name)
+      key = format("%s_%s", type, key)
     else
-      key = format("%s_%s_%s", service_id, type, limiter.key.name)
+      key = format("%s_%s_%s", context.service.id, type, key)
     end
 
     insert(res_keys, key)
   end
 
   return res_limiters, res_keys
+end
+
+local function build_templates(limiters)
+  for _, limiter in ipairs(limiters) do
+    limiter.template_string = TemplateString.new(
+      limiter.key.name, limiter.key.name_type or default_name_type)
+  end
 end
 
 function _M.new(config)
@@ -148,6 +160,10 @@ function _M.new(config)
   self.redis_url = config.redis_url
   self.error_settings = init_error_settings(
     config.limits_exceeded_error, config.configuration_error)
+
+  for _, limiters in ipairs({ self.connection_limiters, self.leaky_bucket_limiters, self.fixed_window_limiters }) do
+    build_templates(limiters)
+  end
 
   return self
 end
@@ -165,13 +181,13 @@ function _M:access(context)
   end
 
   local conn_limiters, conn_keys = build_limiters_and_keys(
-    'connections', self.connection_limiters, red, self.error_settings, context.service.id)
+    'connections', self.connection_limiters, red, self.error_settings, context)
 
   local leaky_bucket_limiters, leaky_bucket_keys = build_limiters_and_keys(
-    'leaky_bucket', self.leaky_bucket_limiters, red, self.error_settings, context.service.id)
+    'leaky_bucket', self.leaky_bucket_limiters, red, self.error_settings, context)
 
   local fixed_window_limiters, fixed_window_keys = build_limiters_and_keys(
-    'fixed_window', self.fixed_window_limiters, red, self.error_settings, context.service.id)
+    'fixed_window', self.fixed_window_limiters, red, self.error_settings, context)
 
   local limiters = {}
   local limiter_groups = { conn_limiters, leaky_bucket_limiters, fixed_window_limiters }

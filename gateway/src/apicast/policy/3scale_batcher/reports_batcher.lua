@@ -35,7 +35,7 @@ function _M:add(service_id, credentials, usage)
 
   local elapsed, lock_err = lock:lock(service_id)
   if not elapsed then
-    ngx.log("failed to acquire the lock: ", lock_err)
+    ngx.log(ngx.ERR, "failed to acquire the lock: ", lock_err)
     return
   end
 

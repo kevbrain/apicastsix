@@ -5,6 +5,8 @@ local ipairs = ipairs
 local sub = ngx.re.sub
 local gsub = ngx.re.gsub
 
+local QueryParams = require 'apicast.policy.url_rewriting.query_params'
+
 local policy = require('apicast.policy')
 local _M = policy.new('URL rewriting policy')
 
@@ -42,8 +44,21 @@ local function apply_rewrite_command(command)
   return changed
 end
 
+local function apply_query_arg_command(command, query_args)
+  -- Possible values of command.op match the methods defined in QueryArgsParams
+  local func = query_args[command.op]
+
+  if not func then
+    ngx.log(ngx.ERR, 'Invalid query args operation: ', command.op)
+    return
+  end
+
+  func(query_args, command.arg, command.value)
+end
+
 --- Initialize a URL rewriting policy
--- @tparam[opt] table config Contains the rewrite commands.
+-- @tparam[opt] table config Contains two tables: the rewrite commands and the
+--   query args commands.
 -- The rewrite commands are based on the 'ngx.re.sub' and 'ngx.re.gsub'
 -- functions provided by OpenResty. Please check
 -- https://github.com/openresty/lua-nginx-module for more details.
@@ -56,9 +71,16 @@ end
 --     Accepted options are the ones in 'ngx.re.sub' and 'ngx.re.gsub'.
 --   - break[opt]: defaults to false. When set to true, if the command rewrote
 --     the URL, it will be the last command applied.
+--
+-- Each query arg command is a table with the following fields:
+--
+--   - op: can be 'push', 'set', and 'add'.
+--   - arg: query argument.
+--   - value: value to be added, replaced, or set.
 function _M.new(config)
   local self = new(config)
   self.commands = (config and config.commands) or {}
+  self.query_args_commands = (config and config.query_args_commands) or {}
   return self
 end
 
@@ -69,6 +91,11 @@ function _M:rewrite()
     if rewritten and command['break'] then
       break
     end
+  end
+
+  self.query_args = QueryParams.new()
+  for _, query_arg_command in ipairs(self.query_args_commands) do
+    apply_query_arg_command(query_arg_command, self.query_args)
   end
 end
 

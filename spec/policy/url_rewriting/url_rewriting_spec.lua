@@ -8,6 +8,9 @@ describe('URL rewriting policy', function()
       stub(ngx.req, 'set_uri', function(new_uri)
         ngx.var.uri = new_uri
       end)
+
+      stub(ngx.req, 'get_uri_args', function() return {} end)
+      stub(ngx.req, 'set_uri_args')
     end)
 
     it('can rewrite URLs using sub', function()
@@ -77,6 +80,57 @@ describe('URL rewriting policy', function()
       url_rewriting:rewrite()
 
       assert.stub(ngx.req.set_uri).was_called_with('/some_path/new/123/new')
+    end)
+
+    it('can apply the "push" operation to args in the query', function()
+      stub(ngx.req, 'get_uri_args', function()
+        return { an_arg = '1'}
+      end)
+
+      local config_to_push_args = {
+        query_args_commands = {
+          { op = 'push', arg = 'an_arg', value = '2' }
+        }
+      }
+      local url_rewriting = URLRewriting.new(config_to_push_args)
+
+      url_rewriting:rewrite()
+
+      assert.stub(ngx.req.set_uri_args).was_called_with({ an_arg = { '1', '2' } })
+    end)
+
+    it('can apply the "set" operation to args in the query', function()
+      stub(ngx.req, 'get_uri_args', function()
+        return { an_arg = 'original_value'}
+      end)
+
+      local config_to_set_args = {
+        query_args_commands = {
+          { op = 'set', arg = 'an_arg', value = 'new_val' }
+        }
+      }
+      local url_rewriting = URLRewriting.new(config_to_set_args)
+
+      url_rewriting:rewrite()
+
+      assert.stub(ngx.req.set_uri_args).was_called_with({ an_arg = 'new_val' })
+    end)
+
+    it('can apply the "add" operation to args in the query', function()
+      stub(ngx.req, 'get_uri_args', function()
+        return { an_arg = '1'}
+      end)
+
+      local config_to_add_args = {
+        query_args_commands = {
+          { op = 'add', arg = 'an_arg', value = '2' }
+        }
+      }
+      local url_rewriting = URLRewriting.new(config_to_add_args)
+
+      url_rewriting:rewrite()
+
+      assert.stub(ngx.req.set_uri_args).was_called_with({ an_arg = { '1', '2' } })
     end)
   end)
 end)

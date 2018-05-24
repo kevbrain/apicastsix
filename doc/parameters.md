@@ -238,7 +238,7 @@ The value will also be used in the header `X-3scale-User-Agent` in the authorize
 
 URI that includes your password and portal endpoint in the following format: `<schema>://<password>@<admin-portal-domain>`. The `<password>` can be either the [provider key](https://support.3scale.net/docs/terminology#apikey) or an [access token](https://support.3scale.net/docs/terminology#tokens) for the 3scale Account Management API. `<admin-portal-domain>` is the URL used to log into the admin portal.
 
-**Example**: `https://access-token@account-admin.3scale.net`.
+**Example:** `https://access-token@account-admin.3scale.net`.
 
 When `THREESCALE_PORTAL_ENDPOINT` environment variable is provided, the gateway will download the configuration from 3scale on initializing. The configuration includes all the settings provided on the Integration page of the API(s).
 
@@ -247,7 +247,7 @@ It is **required** to provide either `THREESCALE_PORTAL_ENDPOINT` or `THREESCALE
 
 ### `OPENTRACING_TRACER`
 
-**Example** `jaeger`
+**Example:** `jaeger`
 
 This environment variable controls which tracing library will be loaded, right now, there's only one opentracing tracer available, `jaeger`.
 
@@ -263,11 +263,11 @@ Each tracer has a default configuration file:
 
 You can choose to mount a different configuration than the provided by default by setting the file path using this variable.
 
-**Example**: `/tmp/jaeger/jaeger.json`
+**Example:** `/tmp/jaeger/jaeger.json`
 
 ### `OPENTRACING_HEADER_FORWARD`
 
-**Defaul** `uber-trace-id`
+**Default:** `uber-trace-id`
 
 This environment variable controls the HTTP header used for forwarding opentracing information, this HTTP header will be forwarded to upstream servers.
 

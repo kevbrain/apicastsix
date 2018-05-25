@@ -6,6 +6,8 @@ local sub = ngx.re.sub
 local gsub = ngx.re.gsub
 
 local QueryParams = require 'apicast.policy.url_rewriting.query_params'
+local TemplateString = require 'apicast.template_string'
+local default_value_type = 'plain'
 
 local policy = require('apicast.policy')
 local _M = policy.new('URL rewriting policy')
@@ -44,7 +46,7 @@ local function apply_rewrite_command(command)
   return changed
 end
 
-local function apply_query_arg_command(command, query_args)
+local function apply_query_arg_command(command, query_args, context)
   -- Possible values of command.op match the methods defined in QueryArgsParams
   local func = query_args[command.op]
 
@@ -53,7 +55,14 @@ local function apply_query_arg_command(command, query_args)
     return
   end
 
-  func(query_args, command.arg, command.value)
+  func(query_args, command.arg, command.template_string:render(context))
+end
+
+local function build_template(query_arg_command)
+  query_arg_command.template_string = TemplateString.new(
+    query_arg_command.value,
+    query_arg_command.value_type or default_value_type
+  )
 end
 
 --- Initialize a URL rewriting policy
@@ -80,11 +89,16 @@ end
 function _M.new(config)
   local self = new(config)
   self.commands = (config and config.commands) or {}
+
   self.query_args_commands = (config and config.query_args_commands) or {}
+  for _, query_arg_command in ipairs(self.query_args_commands) do
+    build_template(query_arg_command)
+  end
+
   return self
 end
 
-function _M:rewrite()
+function _M:rewrite(context)
   for _, command in ipairs(self.commands) do
     local rewritten = apply_rewrite_command(command)
 
@@ -95,7 +109,7 @@ function _M:rewrite()
 
   self.query_args = QueryParams.new()
   for _, query_arg_command in ipairs(self.query_args_commands) do
-    apply_query_arg_command(query_arg_command, self.query_args)
+    apply_query_arg_command(query_arg_command, self.query_args, context)
   end
 end
 

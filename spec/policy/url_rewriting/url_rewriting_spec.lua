@@ -132,5 +132,71 @@ describe('URL rewriting policy', function()
 
       assert.stub(ngx.req.set_uri_args).was_called_with({ an_arg = { '1', '2' } })
     end)
+
+    it('supports liquid templates when pushing query args', function()
+      local context = { var_in_context = '123' }
+
+      local config_with_liquid = {
+        query_args_commands = {
+          {
+            op = 'push',
+            arg = 'an_arg',
+            value = '{{ var_in_context }}',
+            value_type = 'liquid'
+          }
+        }
+      }
+
+      local url_rewriting = URLRewriting.new(config_with_liquid)
+
+      url_rewriting:rewrite(context)
+
+      assert.stub(ngx.req.set_uri_args).was_called_with(
+        { an_arg = context.var_in_context })
+    end)
+
+    it('supports liquid templates when setting query args', function()
+      local context = { var_in_context = '123' }
+
+      local config_with_liquid = {
+        query_args_commands = {
+          {
+            op = 'set',
+            arg = 'an_arg',
+            value = '{{ var_in_context }}',
+            value_type = 'liquid'
+          }
+        }
+      }
+
+      local url_rewriting = URLRewriting.new(config_with_liquid)
+
+      url_rewriting:rewrite(context)
+
+      assert.stub(ngx.req.set_uri_args).was_called_with(
+        { an_arg = context.var_in_context })
+    end)
+
+    it('supports liquid templates when adding query args', function()
+      local context = { var_in_context = '123' }
+
+      local config_with_liquid = {
+        query_args_commands = {
+          {
+            op = 'add',
+            arg = 'an_arg',
+            value = '{{ var_in_context }}',
+            value_type = 'liquid'
+          }
+        }
+      }
+
+      local url_rewriting = URLRewriting.new(config_with_liquid)
+
+      url_rewriting:rewrite(context)
+
+      assert.stub(ngx.req.set_uri_args).was_called_with(
+        { an_arg = { 'original_value', context.var_in_context } })
+    end)
   end)
 end)

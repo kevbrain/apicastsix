@@ -436,3 +436,81 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 9: modify query args using liquid templating
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+    }
+  }
+--- configuration
+{
+   "services":[
+      {
+         "id":42,
+         "backend_version":1,
+         "backend_authentication_type":"service_token",
+         "backend_authentication_value":"token-value",
+         "proxy":{
+            "api_backend":"http://test:$TEST_NGINX_SERVER_PORT/",
+            "proxy_rules":[
+               {
+                  "pattern":"/",
+                  "http_method":"GET",
+                  "metric_system_name":"hits",
+                  "delta":2
+               }
+            ],
+            "policy_chain":[
+               {
+                  "name":"apicast.policy.url_rewriting",
+                  "configuration":{
+                     "query_args_commands":[
+                        {
+                           "op":"push",
+                           "arg":"a",
+                           "value":"{{'a' | md5 }}",
+                           "value_type":"liquid"
+                        },
+                        {
+                           "op":"set",
+                           "arg":"b",
+                           "value":"{{'b' | md5 }}",
+                           "value_type":"liquid"
+                        },
+                        {
+                           "op":"add",
+                           "arg":"c",
+                           "value":"{{'c' | md5 }}",
+                           "value_type":"liquid"
+                        }
+                     ]
+                  }
+               },
+               {
+                  "name":"apicast.policy.apicast"
+               }
+            ]
+         }
+      }
+   ]
+}
+--- upstream
+  location / {
+    content_by_lua_block {
+      local luassert = require('luassert')
+      luassert.equals(ngx.md5('a'), ngx.req.get_uri_args()['a'])
+      luassert.equals(ngx.md5('b'), ngx.req.get_uri_args()['b'])
+      luassert.same({ 'original_val', ngx.md5('c') }, ngx.req.get_uri_args()['c'])
+      ngx.say('yay, api backend')
+    }
+  }
+--- request
+GET /?user_key=value&c=original_val
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

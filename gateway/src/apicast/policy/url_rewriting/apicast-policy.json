@@ -87,6 +87,21 @@
             "value": {
               "description": "Value",
               "type": "string"
+            },
+            "value_type": {
+              "description": "How to evaluate 'value'",
+              "type": "string",
+              "oneOf": [
+                {
+                  "enum": ["plain"],
+                  "title": "Evaluate 'value' as plain text."
+                },
+                {
+                  "enum": ["liquid"],
+                  "title": "Evaluate 'value' as liquid."
+                }
+              ],
+              "default": "plain"
             }
           }
         },

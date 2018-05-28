@@ -62,8 +62,8 @@ jobs:
       - run: mkdir -p tmp/junit
       - run: $(make rover) exec make busted
       - run:
-          name: Report Code Coverage
-          command: bash <(curl -s https://codecov.io/bash)
+          name: Report Unit Test Code Coverage
+          command: curl -s https://codecov.io/bash | bash -s - -F busted -c
           when: always
       - restore_cache:
           keys:
@@ -75,6 +75,11 @@ jobs:
           environment:
             JUNIT_OUTPUT_FILE: tmp/junit/prove.xml
             HARNESS: TAP::Harness::JUnit
+      - run:
+          name: Report Integration Test Code Coverage
+          command:
+            curl -s https://codecov.io/bash | bash -s - -f 'luacov.report.*.out' -F prove -c
+          when: always
       - save_cache:
           key: apicast-cpanm-{{ arch }}-{{ checksum "gateway/cpanfile" }}
           paths:

@@ -76,7 +76,7 @@ prove: HARNESS ?= TAP::Harness
 prove: PROVE_FILES ?= $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples))
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) nginx cpan ## Test nginx
-	$(ROVER) exec prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES) 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
+	$(ROVER) exec script/prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)
 
 prove-docker: apicast-source
 prove-docker: export IMAGE_NAME ?= apicast-test

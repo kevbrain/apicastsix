@@ -152,7 +152,10 @@ development: build-development ## Run bash inside the development image
 rover: $(ROVER)
 	@echo $(ROVER)
 
-dependencies: $(ROVER)
+$(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile
+	$(ROVER) lock --roverfile=$(S2I_CONTEXT)/Roverfile
+
+dependencies: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
 	$(ROVER) install --roverfile=$(S2I_CONTEXT)/Roverfile
 
 lua_modules/bin/rover:

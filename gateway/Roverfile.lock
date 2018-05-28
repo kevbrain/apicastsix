@@ -14,6 +14,7 @@ lua-resty-repl 0.0.6-0||development
 lua-resty-url 0.2.0-1||production
 lua-term 0.7-1||testing
 lua_cliargs 3.0-1||testing
+luacov 0.13.0-1||testing
 luafilesystem 1.7.0-2||production,development,testing
 luassert 1.7.10-0||testing
 luasystem 0.2.1-0||testing

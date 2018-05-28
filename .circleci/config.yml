@@ -61,6 +61,10 @@ jobs:
             - lua_modules
       - run: mkdir -p tmp/junit
       - run: $(make rover) exec make busted
+      - run:
+          name: Report Code Coverage
+          command: bash <(curl -s https://codecov.io/bash)
+          when: always
       - restore_cache:
           keys:
             - apicast-cpanm-{{ arch }}-{{ checksum "gateway/cpanfile" }}

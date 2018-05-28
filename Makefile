@@ -152,7 +152,10 @@ development: build-development ## Run bash inside the development image
 rover: $(ROVER)
 	@echo $(ROVER)
 
-dependencies: $(ROVER)
+$(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile
+	$(ROVER) lock --roverfile=$(S2I_CONTEXT)/Roverfile
+
+dependencies: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
 	$(ROVER) install --roverfile=$(S2I_CONTEXT)/Roverfile
 
 lua_modules/bin/rover:
@@ -163,6 +166,7 @@ clean-containers: apicast-source
 
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
+	- rm -rf luacov.stats*.out
 
 doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | dependencies $(ROVER)
 	$(ROVER) exec ldoc -c doc/config.ld .

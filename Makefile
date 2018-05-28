@@ -58,7 +58,7 @@ apicast-source: ## Create Docker Volume container with APIcast source code
 
 BUSTED_FILES ?=
 busted: dependencies $(ROVER) ## Test Lua.
-	@$(ROVER) exec bin/busted $(BUSTED_FILES)
+	@$(ROVER) exec bin/busted --coverage $(BUSTED_FILES)
 	@- luacov
 
 nginx:

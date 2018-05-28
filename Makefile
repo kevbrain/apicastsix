@@ -58,7 +58,7 @@ apicast-source: ## Create Docker Volume container with APIcast source code
 
 BUSTED_FILES ?=
 busted: dependencies $(ROVER) ## Test Lua.
-	@$(ROVER) exec bin/busted --coverage $(BUSTED_FILES)
+	@$(ROVER) exec bin/busted $(BUSTED_FILES)
 	@- luacov
 
 nginx:
@@ -166,6 +166,7 @@ clean-containers: apicast-source
 
 clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
+	- rm -rf luacov.stats*.out
 
 doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | dependencies $(ROVER)
 	$(ROVER) exec ldoc -c doc/config.ld .

@@ -23,11 +23,15 @@
       },
       "max_ttl_tokens": {
         "description": "Max TTL for cached tokens",
-        "type": "integer"
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3600
       },
       "max_cached_tokens": {
         "description": "Max number of tokens to cache",
-        "type": "integer"
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10000
       }
     }
   }

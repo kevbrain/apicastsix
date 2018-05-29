@@ -77,6 +77,10 @@
                 {
                   "enum": ["push"],
                   "title": "Create the arg when not set, add the value when set"
+                },
+                {
+                  "enum": ["delete"],
+                  "title": "Delete an arg"
                 }
               ]
             },

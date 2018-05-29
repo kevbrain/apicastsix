@@ -62,14 +62,8 @@ end
 --- Set a value for an argument
 -- 1) When the arg is not set, creates it with the given value.
 -- 2) When the arg is set, replaces its value with the given one.
--- 3) Deletes an arg when the value is "".
 function _M:set(arg, value)
-  if value == '' then
-    self.args[arg] = nil
-  else
-    self.args[arg] = value
-  end
-
+  self.args[arg] = value
   update_uri_args(self.args)
 end
 
@@ -80,6 +74,14 @@ end
 function _M:add(arg, value)
   if self.args[arg] then
     add_to_existing_arg(self, arg, value)
+    update_uri_args(self.args)
+  end
+end
+
+--- Deletes an argument
+function _M:delete(arg)
+  if self.args[arg] then
+    self.args[arg] = nil
     update_uri_args(self.args)
   end
 end

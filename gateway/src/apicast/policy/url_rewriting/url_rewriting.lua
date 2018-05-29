@@ -55,14 +55,17 @@ local function apply_query_arg_command(command, query_args, context)
     return
   end
 
-  func(query_args, command.arg, command.template_string:render(context))
+  local value = (command.template_string and command.template_string:render(context)) or nil
+  func(query_args, command.arg, value)
 end
 
 local function build_template(query_arg_command)
-  query_arg_command.template_string = TemplateString.new(
-    query_arg_command.value,
-    query_arg_command.value_type or default_value_type
-  )
+  if query_arg_command.value then -- The 'delete' op does not have a value
+    query_arg_command.template_string = TemplateString.new(
+      query_arg_command.value,
+      query_arg_command.value_type or default_value_type
+    )
+  end
 end
 
 --- Initialize a URL rewriting policy
@@ -83,7 +86,7 @@ end
 --
 -- Each query arg command is a table with the following fields:
 --
---   - op: can be 'push', 'set', and 'add'.
+--   - op: can be 'push', 'set', 'add', and 'delete'.
 --   - arg: query argument.
 --   - value: value to be added, replaced, or set.
 function _M.new(config)

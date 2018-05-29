@@ -5,11 +5,12 @@ local URLRewriting = require('apicast.policy.url_rewriting')
 -- not want to check its internals.
 local QueryParams = require('apicast.policy.url_rewriting.query_params')
 local noop = function() end
-local mocked_query_params = { push = noop, set = noop, add = noop }
+local mocked_query_params = { push = noop, set = noop, add = noop, delete = noop }
 QueryParams.new = function() return mocked_query_params end
 local spy_mocked_query_params_push
 local spy_mocked_query_params_set
 local spy_mocked_query_params_add
+local spy_mocked_query_params_delete
 
 describe('URL rewriting policy', function()
   describe('.rewrite', function()
@@ -26,6 +27,7 @@ describe('URL rewriting policy', function()
       spy_mocked_query_params_push = spy.on(mocked_query_params, 'push')
       spy_mocked_query_params_set = spy.on(mocked_query_params, 'set')
       spy_mocked_query_params_add = spy.on(mocked_query_params, 'add')
+      spy_mocked_query_params_delete = spy.on(mocked_query_params, 'delete')
     end)
 
     it('can rewrite URLs using sub', function()
@@ -137,6 +139,20 @@ describe('URL rewriting policy', function()
 
       assert.spy(spy_mocked_query_params_add).was_called_with(
         mocked_query_params, 'an_arg', '1')
+    end)
+
+    it('can apply the "delete" operation to args in the query', function()
+      local config_to_delete_args = {
+        query_args_commands = {
+          { op = 'delete', arg = 'an_arg' }
+        }
+      }
+      local url_rewriting = URLRewriting.new(config_to_delete_args)
+
+      url_rewriting:rewrite()
+
+      assert.spy(spy_mocked_query_params_delete).was_called_with(
+        mocked_query_params, 'an_arg', nil)
     end)
 
     it('supports liquid templates when pushing query args', function()

@@ -64,16 +64,6 @@ describe('QueryParams', function()
         assert.stub(ngx.req.set_uri_args).was_called_with(expected_args)
       end)
     end)
-
-    describe('if value is empty', function()
-      it('deletes the arg', function()
-        local params = QueryParams.new({ a = '1' })
-
-        params:set('a', '')
-
-        assert.stub(ngx.req.set_uri_args).was_called_with({})
-      end)
-    end)
   end)
 
   describe('.add', function()
@@ -108,6 +98,29 @@ describe('QueryParams', function()
           local expected_args = { a = { '1', '2', '3' } }
           assert.stub(ngx.req.set_uri_args).was_called_with(expected_args)
         end)
+      end)
+    end)
+  end)
+
+  describe('.delete', function()
+    describe('if the argument is in the query', function()
+      it('deletes it', function()
+        local params = QueryParams.new({ a = '1', b = '2' })
+
+        params:delete('a')
+
+        local expected_args = { b = '2' }
+        assert.stub(ngx.req.set_uri_args).was_called_with(expected_args)
+      end)
+    end)
+
+    describe('if the argument is not in the query', function()
+      it('does not delete anything', function()
+        local params = QueryParams.new({ a = '1' })
+
+        params:delete('b')
+
+        assert.stub(ngx.req.set_uri_args).was_not_called()
       end)
     end)
   end)

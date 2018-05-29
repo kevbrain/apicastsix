@@ -325,7 +325,6 @@ yay, api backend
 === TEST 7: "set" a query argument
 Test that the 'set' operation replaces a query argument when it exists.
 When the argument does not exist, the operation creates it.
-When the value is empty, it deletes the argument.
 --- backend
   location /transactions/authrep.xml {
     content_by_lua_block {
@@ -353,7 +352,6 @@ When the value is empty, it deletes the argument.
               "query_args_commands": [
                 { "op": "set", "arg": "an_arg", "value": "new_value" },
                 { "op": "set", "arg": "not_in_the_original_query", "value": "val" },
-                { "op": "set", "arg": "to_delete", "value": "" }
               ]
             }
           },
@@ -369,7 +367,6 @@ When the value is empty, it deletes the argument.
       local luassert = require('luassert')
       luassert.equals('new_value', ngx.req.get_uri_args()['an_arg'])
       luassert.equals('val', ngx.req.get_uri_args()['not_in_the_original_query'])
-      luassert.is_nil(ngx.req.get_uri_args()['to_delete'])
       ngx.say('yay, api backend')
     }
   }
@@ -437,7 +434,59 @@ yay, api backend
 --- no_error_log
 [error]
 
-=== TEST 9: modify query args using liquid templating
+=== TEST 9: delete a query argument
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+    }
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          {
+            "name": "apicast.policy.url_rewriting",
+            "configuration": {
+              "query_args_commands": [
+                { "op": "delete", "arg": "an_arg" }
+              ]
+            }
+          },
+          { "name": "apicast.policy.apicast" }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+    content_by_lua_block {
+      local luassert = require('luassert')
+      luassert.is_nil(ngx.req.get_uri_args()['an_arg'])
+      ngx.say('yay, api backend')
+    }
+  }
+--- request
+GET /?user_key=value&an_arg=1
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 10: modify query args using liquid templating
 --- backend
   location /transactions/authrep.xml {
     content_by_lua_block {
@@ -515,7 +564,7 @@ yay, api backend
 --- no_error_log
 [error]
 
-=== TEST 10: modify query params and use upstream policy
+=== TEST 11: modify query params and use upstream policy
 The goal of this test is to verify that when the query args are modified using
 the URL rewriting policy, the upstream specified in the upstream policy
 receives the correct values.

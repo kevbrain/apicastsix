@@ -55,6 +55,61 @@
           },
           "required": ["op", "regex", "replace"]
         }
+      },
+      "query_args_commands": {
+        "description": "List of commands to apply to the query string args",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "op": {
+              "description": "Operation to apply to the query argument",
+              "type": "string",
+              "oneOf": [
+                {
+                  "enum": ["add"],
+                  "title": "Add a value to an existing argument"
+                },
+                {
+                  "enum": ["set"],
+                  "title": "Create the arg when not set, replace its value when set"
+                },
+                {
+                  "enum": ["push"],
+                  "title": "Create the arg when not set, add the value when set"
+                },
+                {
+                  "enum": ["delete"],
+                  "title": "Delete an arg"
+                }
+              ]
+            },
+            "arg": {
+              "description": "Query argument",
+              "type": "string"
+            },
+            "value": {
+              "description": "Value",
+              "type": "string"
+            },
+            "value_type": {
+              "description": "How to evaluate 'value'",
+              "type": "string",
+              "oneOf": [
+                {
+                  "enum": ["plain"],
+                  "title": "Evaluate 'value' as plain text."
+                },
+                {
+                  "enum": ["liquid"],
+                  "title": "Evaluate 'value' as liquid."
+                }
+              ],
+              "default": "plain"
+            }
+          }
+        },
+        "required": ["op", "arg", "value"]
       }
     }
   }

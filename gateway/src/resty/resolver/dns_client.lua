@@ -34,18 +34,29 @@ end
 
 function _M:init_resolvers()
   local resolvers = self.resolvers
-  local nameservers = self.nameservers
+  local ns = self.nameservers
 
-  ngx.log(ngx.DEBUG, 'initializing ', #nameservers, ' nameservers')
-  for i=1,#nameservers do
-    insert(resolvers, {
-      nameserver = nameservers[i],
-      resolver = resty_resolver:new({
-        nameservers = { nameservers[i] },
-        timeout = 2900
-      })
+  if not resolvers or not ns then
+    return nil, 'not initialized'
+  end
+
+  ngx.log(ngx.DEBUG, 'initializing ', #ns, ' nameservers')
+
+  for i=1,#ns do
+    local resolver, err = resty_resolver:new({
+      nameservers = { ns[i] },
+      timeout = 2900
     })
-    ngx.log(ngx.DEBUG, 'nameserver ', nameservers[i][1],':',nameservers[i][2] or 53, ' initialized')
+
+    if resolver then
+      insert(resolvers, {
+        nameserver = ns[i],
+        resolver = resolver
+      })
+      ngx.log(ngx.DEBUG, 'nameserver ', ns[i][1],':',ns[i][2] or 53, ' initialized')
+    else
+      ngx.log(ngx.WARN, 'nameserver ', ns[i][1],':',ns[i][2] or 53, ' not initialized: ', err)
+    end
   end
 
   self.initialized = true

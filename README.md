@@ -1,8 +1,13 @@
+
+# APIcast
+
+[![CircleCI](https://circleci.com/gh/3scale/apicast/tree/master.svg?style=shield)](https://circleci.com/gh/3scale/apicast/tree/master)
+[![Docker Repository on Quay](https://quay.io/repository/3scale/apicast/status "Docker Repository on Quay")](https://quay.io/repository/3scale/apicast)
+[![codecov](https://codecov.io/gh/3scale/apicast/branch/master/graph/badge.svg)](https://codecov.io/gh/3scale/apicast)
+
 APIcast is an NGINX based API gateway used to integrate your internal and external API services with 3scale’s API Management Platform.
 
 To learn more about deployment options, environments provided, and how to get started, go to the [APIcast overview](doc/overview.md).
-
-# APIcast
 
 `master` branch is **not stable** and **not recommended for production** use. For the latest release, go to [Releases page](https://github.com/3scale/apicast/releases).
 

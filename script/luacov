@@ -1,0 +1,10 @@
+#!/bin/sh
+set -euo pipefail
+
+stats=$1
+pid=$(echo "$stats" | awk -F"." '{print $4}')
+
+mv -v "$stats" luacov.stats.out
+luacov
+mv -v luacov.report.out "luacov.report.${pid}.out"
+rm luacov.stats.out

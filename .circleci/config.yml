@@ -1,5 +1,5 @@
 s2i-image: &s2i-image
-  image: quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover12
+  image: quay.io/3scale/s2i-openresty-centos7:1.13.6.2-1
   environment:
     TEST_NGINX_BINARY: openresty
     LUA_BIN_PATH: /opt/app-root/bin
@@ -55,7 +55,7 @@ jobs:
     environment:
       S2I_VERSION: "1.1.9a-40ad911d"
       DOCKER_COMPOSE_VERSION: "1.16.1"
-      OPENRESTY_VERSION: "1.13.6.1-rover12"
+      OPENRESTY_VERSION: "1.13.6.2-1"
     steps:
       - <<: *setup-docker
       - run: |

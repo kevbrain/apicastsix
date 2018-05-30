@@ -8,8 +8,7 @@ USER root
 ARG USER_NAME=default
 ARG USER_HOME=/home/centos
 
-RUN yum -y update \
- && yum -y install sudo \
+RUN yum -y install sudo \
  && yum -y autoremove \
  && yum -y clean all
 

@@ -4,3 +4,5 @@ comment: off
 ignore:
   - spec
   - t
+  - bin/busted.lua
+  - examples

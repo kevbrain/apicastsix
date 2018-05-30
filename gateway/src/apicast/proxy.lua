@@ -64,6 +64,11 @@ function _M.new(configuration)
     configuration = assert(configuration, 'missing proxy configuration'),
     cache = cache,
     cache_handler = cache_handler,
+
+    -- Params to send in 3scale backend calls that are not the typical ones
+    -- (credentials, usage, etc.).
+    -- This allows us, for example, to send a referrer.
+    extra_params_backend_authrep = {}
   }, mt)
 end
 
@@ -136,7 +141,7 @@ function _M:authorize(service, usage, credentials, ttl)
     ngx.var.cached_key = nil
 
     local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
-    local res = backend:authrep(formatted_usage, credentials)
+    local res = backend:authrep(formatted_usage, credentials, self.extra_params_backend_authrep)
 
     local authorized, rejection_reason = self:handle_backend_response(cached_key, res, ttl)
     if not authorized then
@@ -315,7 +320,12 @@ end
 local function capture_post_action(self, cached_key, service)
   local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
   local formatted_usage = format_usage(self.usage)
-  local res = backend:authrep(formatted_usage, self.credentials, response_codes_data())
+  local res = backend:authrep(
+    formatted_usage,
+    self.credentials,
+    response_codes_data(),
+    self.extra_params_backend_authrep
+  )
 
   self:handle_backend_response(cached_key, res)
 end

@@ -11,6 +11,10 @@ trap generate_coverage EXIT
 # shellcheck disable=SC2086
 rm -f $coverage luacov.report.*.out
 
+if [ -n "${JUNIT_OUTPUT_FILE:-}" ]; then
+  mkdir -p "$(dirname "$JUNIT_OUTPUT_FILE")"
+fi
+
 if (prove "$@" 2>&1 | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'); then
   echo "Success"
 else

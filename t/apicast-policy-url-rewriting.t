@@ -351,7 +351,7 @@ When the argument does not exist, the operation creates it.
             "configuration": {
               "query_args_commands": [
                 { "op": "set", "arg": "an_arg", "value": "new_value" },
-                { "op": "set", "arg": "not_in_the_original_query", "value": "val" },
+                { "op": "set", "arg": "not_in_the_original_query", "value": "val" }
               ]
             }
           },

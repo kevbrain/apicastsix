@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 DOCKER_COMPOSE = docker-compose
-S2I = s2i
+S2I = script/s2i
 REGISTRY ?= quay.io/3scale
 export TEST_NGINX_BINARY ?= openresty
 NGINX = $(shell which $(TEST_NGINX_BINARY))
@@ -62,7 +62,7 @@ apicast-source: ## Create Docker Volume container with APIcast source code
 	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app-root/src
 
 BUSTED_FILES ?=
-busted: dependencies $(ROVER) ## Test Lua.
+busted: $(ROVER) ## Test Lua.
 	@$(ROVER) exec bin/busted $(BUSTED_FILES)
 	@- luacov
 
@@ -109,7 +109,12 @@ builder-image: ## Build builder image
 runtime-image: PULL_POLICY ?= always
 runtime-image: IMAGE_NAME = apicast-runtime-test
 runtime-image: ## Build runtime image
-	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY) --runtime-pull-policy=$(PULL_POLICY) $(S2I_OPTIONS)
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) \
+		--context-dir=$(S2I_CONTEXT) \
+		--runtime-image=$(RUNTIME_IMAGE) \
+		--pull-policy=$(PULL_POLICY) \
+		--runtime-pull-policy=$(PULL_POLICY) \
+		$(S2I_OPTIONS)
 
 push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)
@@ -127,7 +132,7 @@ dev: builder-image apicast-source ## Run APIcast inside the container mounted to
 	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
 
 test-builder-image: export IMAGE_NAME ?= apicast-test
-test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
+test-builder-image: clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --test
@@ -156,7 +161,7 @@ gateway-logs:
 	$(DOCKER_COMPOSE) logs gateway
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
-test-runtime-image: runtime-image clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
+test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -l -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_CONFIGURATION_LOADER=boot -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d

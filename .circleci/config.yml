@@ -32,8 +32,7 @@ lua-cache-paths: &lua-cache-paths
 
 setup-docker: &setup-docker
   setup_remote_docker:
-    reusable: true
-    exclusive: false
+    docker_layer_caching: true
 
 docker-compose: &docker-compose
   run: |
@@ -49,9 +48,7 @@ attach-workspace: &attach-workspace
 version: 2
 jobs:
 
-  # Try to build s2i runtime image and run smoke tests
-
-  s2i-runtime: &s2i-job
+  build-s2i: &s2i-job
     <<: *base-job
     docker:
       - image: docker:stable
@@ -59,7 +56,17 @@ jobs:
       S2I_VERSION: "1.1.9a-40ad911d"
       DOCKER_COMPOSE_VERSION: "1.16.1"
       OPENRESTY_VERSION: "1.13.6.1-rover12"
-      IMAGE_NAME: apicast-runtime-test
+    steps:
+      - <<: *setup-docker
+      - run: |
+          docker pull quay.io/3scale/s2i-openresty-centos7:${OPENRESTY_VERSION} &
+          docker pull quay.io/3scale/s2i-openresty-centos7:${OPENRESTY_VERSION}-runtime &
+          wait
+
+  # Try to build s2i runtime image and run smoke tests
+
+  s2i-runtime:
+    <<: *s2i-job
     steps:
       - run: apk update && apk add wget make bash curl py-pip git openssh-client
       - <<: *docker-compose
@@ -67,7 +74,10 @@ jobs:
       - checkout
       - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
       - <<: *attach-workspace
-      - run: make runtime-image
+      - run:
+          command: make runtime-image
+          environment:
+            IMAGE_NAME: apicast-runtime-test
       - run: make test-runtime-image gateway-logs --keep-going
 
   # Try to build s2i builder image and run smoke tests

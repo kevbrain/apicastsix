@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - The `scope` of the Rate Limit policy is `service` by default [PR #704](https://github.com/3scale/apicast/pull/704)
 - Decoded JWTs are now exposed in the policies context by the APIcast policy [PR #718](https://github.com/3scale/apicast/pull/718)
 
+### Fixed
+
+- Do not crash when initializing unreachable/invalid DNS resolver [PR #730](https://github.com/3scale/apicast/pull/730)
+
 ## [3.2.0-rc2] - 2018-05-11
 
 ### Added

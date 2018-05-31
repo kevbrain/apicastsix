@@ -61,11 +61,6 @@ apicast-source: ## Create Docker Volume container with APIcast source code
 	docker create --rm -v /opt/app-root/src --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
 	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app-root/src
 
-BUSTED_FILES ?=
-busted: $(ROVER) ## Test Lua.
-	@$(ROVER) exec bin/busted $(BUSTED_FILES)
-	@- luacov
-
 nginx:
 	@ ($(NGINX) -V 2>&1) > /dev/null
 
@@ -92,8 +87,19 @@ carton:
 
 find-file = $(shell find $(2) -type f -name $(1))
 
+circleci = $(shell circleci tests glob $(1) | grep -v examples/scaffold | circleci tests split --split-by=timings 2>/dev/null)
+
+BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
+BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
+busted: $(ROVER) ## Test Lua.
+	$(ROVER) exec bin/busted $(BUSTED_FILES)
+	@- luacov
+
+PROVE_PATTERN = "{t,examples}/**/*.t)"
+prove-files = $(or $(call circleci, $(PROVE_PATTERN)), $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples)))
+
 prove: HARNESS ?= TAP::Harness
-prove: PROVE_FILES ?= $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples))
+prove: PROVE_FILES ?= $(call prove-files)
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) nginx ## Test nginx
 	$(ROVER) exec script/prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)

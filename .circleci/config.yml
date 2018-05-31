@@ -144,10 +144,11 @@ jobs:
   # Run unit tests (busted)
 
   busted:
+      <<: *base-job
       docker:
         - <<: *s2i-image
         - image: redis:3.2.8-alpine
-      working_directory: /opt/app-root/apicast
+      parallelism: 1
       steps:
         - checkout
         - <<: *attach-workspace
@@ -188,7 +189,7 @@ jobs:
     docker:
       - <<: *s2i-image
       - image: redis:3.2.8-alpine
-
+    parallelism: 1
     steps:
       - checkout
       - <<: *attach-workspace

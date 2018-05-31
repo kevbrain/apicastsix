@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 DOCKER_COMPOSE = docker-compose
-S2I = s2i
+S2I = script/s2i
 REGISTRY ?= quay.io/3scale
 export TEST_NGINX_BINARY ?= openresty
 NGINX = $(shell which $(TEST_NGINX_BINARY))
@@ -34,18 +34,23 @@ CIRCLE_NODE_INDEX ?= 0
 CIRCLE_STAGE ?= build
 COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
 
-ROVER ?= $(shell which rover 2> /dev/null)
+which = $(shell command -v $(1) 2> /dev/null)
+
+ROVER ?= $(call which, rover)
 ifeq ($(ROVER),)
 ROVER := lua_modules/bin/rover
 endif
 
-CPANM ?= $(shell command -v cpanm 2> /dev/null)
+CPANM ?= $(call which, cpanm)
+CARTON ?= $(firstword $(call which, carton) local/bin/carton)
 
 ifneq ($(CI),true)
 S2I_OPTIONS += --copy
 endif
 
 export COMPOSE_PROJECT_NAME
+
+.PHONY: benchmark
 
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
@@ -56,26 +61,47 @@ apicast-source: ## Create Docker Volume container with APIcast source code
 	docker create --rm -v /opt/app-root/src --name $(COMPOSE_PROJECT_NAME)-source $(IMAGE_NAME) /bin/true
 	docker cp . $(COMPOSE_PROJECT_NAME)-source:/opt/app-root/src
 
-BUSTED_FILES ?=
-busted: dependencies $(ROVER) ## Test Lua.
-	@$(ROVER) exec bin/busted $(BUSTED_FILES)
-	@- luacov
-
 nginx:
 	@ ($(NGINX) -V 2>&1) > /dev/null
 
-cpan:
+$(CPANM):
 ifeq ($(CPANM),)
 	$(error Missing cpanminus. Install it by running `curl -L https://cpanmin.us | perl - App::cpanminus`)
 endif
-	$(CPANM) --notest --installdeps ./gateway
+
+local/bin/carton: $(CPANM)
+	$(CPANM) --local-lib ./local --notest Carton
+
+cpan: $(CPANM)
+	$(CPANM) --local-lib ./local --notest --installdeps ./gateway
+
+PERL5LIB:=$(PWD)/local/lib/perl5:$(PERL5LIB)
+export PERL5LIB
+
+carton: export PERL_CARTON_CPANFILE=$(PWD)/gateway/cpanfile
+carton: export PERL_CARTON_PATH=$(PWD)/local
+carton: $(CARTON)
+carton:
+	$(CARTON) install --deployment --cached
+	$(CARTON) bundle 2> /dev/null
 
 find-file = $(shell find $(2) -type f -name $(1))
 
+circleci = $(shell circleci tests glob $(1) | grep -v examples/scaffold | circleci tests split --split-by=timings 2>/dev/null)
+
+BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
+BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
+busted: $(ROVER) ## Test Lua.
+	$(ROVER) exec bin/busted $(BUSTED_FILES)
+	@- luacov
+
+PROVE_PATTERN = "{t,examples}/**/*.t)"
+prove-files = $(or $(call circleci, $(PROVE_PATTERN)), $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples)))
+
 prove: HARNESS ?= TAP::Harness
-prove: PROVE_FILES ?= $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples))
+prove: PROVE_FILES ?= $(call prove-files)
 prove: export TEST_NGINX_RANDOMIZE=1
-prove: $(ROVER) nginx cpan ## Test nginx
+prove: $(ROVER) nginx ## Test nginx
 	$(ROVER) exec script/prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)
 
 prove-docker: apicast-source
@@ -89,7 +115,12 @@ builder-image: ## Build builder image
 runtime-image: PULL_POLICY ?= always
 runtime-image: IMAGE_NAME = apicast-runtime-test
 runtime-image: ## Build runtime image
-	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --runtime-image=$(RUNTIME_IMAGE) --pull-policy=$(PULL_POLICY) --runtime-pull-policy=$(PULL_POLICY) $(S2I_OPTIONS)
+	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) \
+		--context-dir=$(S2I_CONTEXT) \
+		--runtime-image=$(RUNTIME_IMAGE) \
+		--pull-policy=$(PULL_POLICY) \
+		--runtime-pull-policy=$(PULL_POLICY) \
+		$(S2I_OPTIONS)
 
 push: ## Push image to the registry
 	docker tag $(IMAGE_NAME) $(REGISTRY)/$(IMAGE_NAME)
@@ -107,7 +138,7 @@ dev: builder-image apicast-source ## Run APIcast inside the container mounted to
 	$(DOCKER_COMPOSE) run --user=$(USER) --service-ports --rm --entrypoint=bash $(SERVICE) -i
 
 test-builder-image: export IMAGE_NAME ?= apicast-test
-test-builder-image: builder-image clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
+test-builder-image: clean-containers ## Smoke test the builder image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) --version
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway bin/apicast --test
@@ -136,7 +167,7 @@ gateway-logs:
 	$(DOCKER_COMPOSE) logs gateway
 
 test-runtime-image: export IMAGE_NAME = apicast-runtime-test
-test-runtime-image: runtime-image clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
+test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -l -d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm --user 100002 -e APICAST_CONFIGURATION_LOADER=boot -e THREESCALE_PORTAL_ENDPOINT=https://echo-api.3scale.net gateway bin/apicast -d

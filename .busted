@@ -15,8 +15,7 @@ local default = {
 }
 
 if ci then
-    default.output = 'junit'
-    default.Xoutput = 'tmp/junit/busted.xml'
+    default.output = 'spec.ci_reporter'
 end
 
 return {

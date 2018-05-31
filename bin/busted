@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 
 use File::Basename;
+use File::Path qw(make_path);
 use Cwd;
 
 my $dirname = dirname(__FILE__);
@@ -14,6 +15,10 @@ chdir "$dirname/..";
 my $apicast = getcwd();
 
 $ENV{APICAST_DIR} ||= "$apicast/gateway";
+
+if(defined $ENV{JUNIT_OUTPUT_FILE}) {
+    make_path(dirname($ENV{JUNIT_OUTPUT_FILE}));
+}
 
 exec '/usr/bin/env', 'resty',
     '--errlog-level', $ENV{APICAST_LOG_LEVEL} || 'alert',

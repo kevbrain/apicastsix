@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 mkdir -p /tmp/.s2i
 
@@ -14,5 +15,15 @@ cat > /tmp/.s2i/image_metadata.json << JSON
   ]
 }
 JSON
+
+if [ -d cache ]; then
+  cp -nr ./cache/. .
+fi
+
+if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
+  echo "---> Restoring build artifacts YAY..."
+  cp -fr /tmp/artifacts/. .
+  rm -rf /tmp/artifacts/
+fi
 
 exec "${STI_SCRIPTS_PATH:-/usr/libexec/s2i}/$(basename $0)"

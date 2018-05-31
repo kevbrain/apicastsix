@@ -1,101 +1,218 @@
+s2i-image: &s2i-image
+  image: quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover12
+  environment:
+    TEST_NGINX_BINARY: openresty
+    LUA_BIN_PATH: /opt/app-root/bin
+restore-lua-cache: &restore-lua-cache
+  restore_cache:
+    keys:
+      - apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
+      - apicast-rocks-{{ arch }}-{{ .Branch }}
+      - apicast-rocks-{{ arch }}-master
+
+restore-perl-cache: &restore-perl-cache
+  restore_cache:
+    keys:
+      - apicast-cpanm-v2-{{ arch }}-{{ checksum "gateway/cpanfile.snapshot" }}
+      - apicast-cpanm-v2-{{ arch }}-{{ .Branch }}
+      - apicast-cpanm-v2-{{ arch }}-master
+
+base-job: &base-job
+  working_directory: /opt/app-root/apicast
+
+perl-cache-paths: &perl-cache-paths
+  paths:
+    - ./local
+    - ./vendor/cache
+    - ./.cpanm
+
+lua-cache-paths: &lua-cache-paths
+  paths:
+    - ./lua_modules
+
+setup-docker: &setup-docker
+  setup_remote_docker:
+    docker_layer_caching: true
+
+docker-compose: &docker-compose
+  run: |
+    pip install "docker-compose==${DOCKER_COMPOSE_VERSION}"
+    docker-compose version
+
+attach-workspace: &attach-workspace
+  attach_workspace:
+    at: .
+
+# ------------------------------------------------------------------------
+
 version: 2
 jobs:
-  s2i-runtime: &S2i
+
+  build-s2i: &s2i-job
+    <<: *base-job
     docker:
       - image: docker:stable
-    working_directory: /opt/app-root/apicast
     environment:
       S2I_VERSION: "1.1.9a-40ad911d"
       DOCKER_COMPOSE_VERSION: "1.16.1"
       OPENRESTY_VERSION: "1.13.6.1-rover12"
     steps:
-      - run: apk update && apk add wget make bash curl py-pip git openssh-client
+      - <<: *setup-docker
       - run: |
-          pip install "docker-compose==${DOCKER_COMPOSE_VERSION}"
-          docker-compose version
-      - setup_remote_docker:
-          reusable: true
-          exclusive: false
+          docker pull quay.io/3scale/s2i-openresty-centos7:${OPENRESTY_VERSION} &
+          docker pull quay.io/3scale/s2i-openresty-centos7:${OPENRESTY_VERSION}-runtime &
+          wait
+
+  # Try to build s2i runtime image and run smoke tests
+
+  s2i-runtime:
+    <<: *s2i-job
+    steps:
+      - run: apk update && apk add wget make bash curl py-pip git openssh-client
+      - <<: *docker-compose
+      - <<: *setup-docker
       - checkout
       - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
-      - run: make runtime-image
+      - <<: *attach-workspace
+      - run:
+          command: make runtime-image
+          environment:
+            IMAGE_NAME: apicast-runtime-test
       - run: make test-runtime-image gateway-logs --keep-going
+
+  # Try to build s2i builder image and run smoke tests
+
   s2i-builder:
-    <<: *S2i
+    <<: *s2i-job
     steps:
       - run: apk update && apk add wget make bash curl py-pip git openssh-client
-      - run: |
-          pip install "docker-compose==${DOCKER_COMPOSE_VERSION}"
-          docker-compose version
-      - setup_remote_docker:
-          reusable: true
-          exclusive: false
+      - <<: *docker-compose
+      - <<: *setup-docker
       - checkout
       - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
+      - <<: *attach-workspace
+      - run:
+          name: "Build image"
+          command: make builder-image
+
+      - run:
+          name: "Build image (incremental)"
+          command: make builder-image
+
       - run: |
-          export IMAGE_TAG=${CIRCLE_TAG:-${CIRCLE_PR_NUMBER:-${CIRCLE_BRANCH}}}
-          export IMAGE_NAME="quay.io/3scale/apicast:${IMAGE_TAG}-builder"
-          make builder-image test-builder-image gateway-logs --keep-going
-          make prove-docker
+          make test-builder-image gateway-logs --keep-going
           make lint-schema
-  build:
+
+  # Download, build and store Lua dependencies.
+
+  build-lua:
+    <<: *base-job
     docker:
-      - image: quay.io/3scale/s2i-openresty-centos7:1.13.6.1-rover12
-        environment:
-          TEST_NGINX_BINARY: openresty
-          LUA_BIN_PATH: /opt/app-root/bin
-      - image: redis:3.2.8-alpine
-    working_directory: /opt/app-root/apicast
+      - <<: *s2i-image
     steps:
       - checkout
-      - run: rm -rf lua_modules
-      - restore_cache:
-          keys:
-            - apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
-            - apicast-rocks-{{ arch }}-{{ .Branch }}
-            - apicast-rocks-{{ arch }}-master
+      - run:
+          # This can happen when doing local build: lua_modules is copied from the host
+          name: Cleanup local dependencies
+          command: rm -rf lua_modules
+      - <<: *restore-lua-cache
       - run: make dependencies
       - save_cache:
           key: apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
-          paths:
-            - lua_modules
-      - run: mkdir -p tmp/junit
-      - run: $(make rover) exec make busted
-      - run:
-          name: Report Unit Test Code Coverage
-          command: curl -s https://codecov.io/bash | bash -s - -F busted -c
-          when: always
-      - restore_cache:
-          keys:
-            - apicast-cpanm-{{ arch }}-{{ checksum "gateway/cpanfile" }}
-            - apicast-cpanm-{{ arch }}-{{ .Branch }}
-            - apicast-cpanm-{{ arch }}-master
+          <<: *lua-cache-paths
+      - persist_to_workspace:
+          root: .
+          <<: *lua-cache-paths
+
+  # Download, build and store Perl dependencies.
+
+  build-perl:
+    <<: *base-job
+    docker:
+      - <<: *s2i-image
+    steps:
+      - checkout
+      - <<: *restore-perl-cache
+      - run: make carton
+      - save_cache:
+          key: apicast-cpanm-v2-{{ arch }}-{{ checksum "gateway/cpanfile.snapshot" }}
+          <<: *perl-cache-paths
+      - persist_to_workspace:
+          root: .
+          <<: *perl-cache-paths
+
+  # Run unit tests (busted)
+
+  busted:
+      <<: *base-job
+      docker:
+        - <<: *s2i-image
+        - image: redis:3.2.8-alpine
+      parallelism: 1
+      steps:
+        - checkout
+        - <<: *attach-workspace
+        - run:
+            name: 'busted'
+            command: $(make rover) exec make busted
+            environment:
+              JUNIT_OUTPUT_FILE: tmp/junit/prove/report.xml
+
+        - run:
+            name: Report Unit Test Code Coverage
+            command: curl -s https://codecov.io/bash | bash -s - -F busted -c
+            when: always
+        - store_test_results:
+            path: tmp/junit
+        - store_artifacts:
+            path: tmp/junit
+            destination: junit
+
+  # Generate documentation
+
+  docs:
+    <<: *base-job
+    docker:
+      - <<: *s2i-image
+    steps:
+      - checkout
+      - <<: *attach-workspace
+      - run: make doc
+      - store_artifacts:
+          path: doc/lua
+          destination: doc
+
+  # Run integration tests
+
+  prove:
+    <<: *base-job
+    docker:
+      - <<: *s2i-image
+      - image: redis:3.2.8-alpine
+    parallelism: 1
+    steps:
+      - checkout
+      - <<: *attach-workspace
       - run:
           command: /usr/libexec/s2i/entrypoint make prove
           environment:
-            JUNIT_OUTPUT_FILE: tmp/junit/prove.xml
+            JUNIT_OUTPUT_FILE: tmp/junit/prove/report.xml
             HARNESS: TAP::Harness::JUnit
       - run:
           name: Report Integration Test Code Coverage
           command:
             curl -s https://codecov.io/bash | bash -s - -f 'luacov.report.*.out' -F prove -c
           when: always
-      - save_cache:
-          key: apicast-cpanm-{{ arch }}-{{ checksum "gateway/cpanfile" }}
-          paths:
-            - ~/perl5
       - store_test_results:
           path: tmp/junit
       - store_artifacts:
           path: tmp/junit
           destination: junit
-      - run: make doc
-      - store_artifacts:
-          path: doc/lua
-          destination: doc
+
+  # Build and push image to docker registry
 
   deploy:
-    <<: *S2i
+    <<: *s2i-job
     steps:
       - run: apk update && apk add wget make bash curl git openssh-client
       - setup_remote_docker:
@@ -109,6 +226,8 @@ jobs:
             make runtime-image push IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}";
             make builder-image push IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder";
 
+  # Run benchmark on master and this branch
+
   benchmark:
     machine: true
     steps:
@@ -118,6 +237,11 @@ jobs:
       - store_artifacts:
           path: tmp/benchmark
           destination: benchmark
+
+build-tags: &build-tags
+  filters:
+    tags:
+      only: /.*/
 
 workflows:
   version: 2
@@ -132,20 +256,40 @@ workflows:
      jobs:
        - deploy:
           context: org-global
-  build:
+  build-test-deploy:
     jobs:
-      - build: &git-tags
-          filters:
-            tags:
-              only: /.*/
-      - s2i-runtime:
-          <<: *git-tags
+      - build-lua:
+          <<: *build-tags
+      - build-perl:
+          <<: *build-tags
+      - busted:
+          <<: *build-tags
+          requires:
+            - build-lua
+      - prove:
+          <<: *build-tags
+          requires:
+            - build-lua
+            - build-perl
+      - docs:
+          <<: *build-tags
+          requires:
+            - build-lua
       - s2i-builder:
-          <<: *git-tags
+          <<: *build-tags
+          requires:
+            - build-lua
+            - build-perl
+      - s2i-runtime:
+          <<: *build-tags
+          requires:
+            - build-lua
+            - build-perl
       - deploy:
           context: org-global
           requires:
-            - build
+            - prove
+            - busted
             - s2i-runtime
             - s2i-builder
           filters:

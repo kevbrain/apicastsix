@@ -34,12 +34,15 @@ CIRCLE_NODE_INDEX ?= 0
 CIRCLE_STAGE ?= build
 COMPOSE_PROJECT_NAME ?= apicast_$(CIRCLE_STAGE)_$(CIRCLE_NODE_INDEX)
 
-ROVER ?= $(shell which rover 2> /dev/null)
+which = $(shell command -v $(1) 2> /dev/null)
+
+ROVER ?= $(call which, rover)
 ifeq ($(ROVER),)
 ROVER := lua_modules/bin/rover
 endif
 
-CPANM ?= $(shell command -v cpanm 2> /dev/null)
+CPANM ?= $(call which, cpanm)
+CARTON ?= $(firstword $(call which, carton) local/bin/carton)
 
 ifneq ($(CI),true)
 S2I_OPTIONS += --copy
@@ -64,18 +67,33 @@ busted: dependencies $(ROVER) ## Test Lua.
 nginx:
 	@ ($(NGINX) -V 2>&1) > /dev/null
 
-cpan:
+$(CPANM):
 ifeq ($(CPANM),)
 	$(error Missing cpanminus. Install it by running `curl -L https://cpanmin.us | perl - App::cpanminus`)
 endif
-	$(CPANM) --notest --installdeps ./gateway
+
+local/bin/carton: $(CPANM)
+	$(CPANM) --local-lib ./local --notest Carton
+
+cpan: $(CPANM)
+	$(CPANM) --local-lib ./local --notest --installdeps ./gateway
+
+PERL5LIB:=$(PWD)/local/lib/perl5:$(PERL5LIB)
+export PERL5LIB
+
+carton: export PERL_CARTON_CPANFILE=$(PWD)/gateway/cpanfile
+carton: export PERL_CARTON_PATH=$(PWD)/local
+carton: $(CARTON)
+carton:
+	$(CARTON) install --deployment --cached
+	$(CARTON) bundle 2> /dev/null
 
 find-file = $(shell find $(2) -type f -name $(1))
 
 prove: HARNESS ?= TAP::Harness
 prove: PROVE_FILES ?= $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples))
 prove: export TEST_NGINX_RANDOMIZE=1
-prove: $(ROVER) nginx cpan ## Test nginx
+prove: $(ROVER) nginx ## Test nginx
 	$(ROVER) exec script/prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)
 
 prove-docker: apicast-source

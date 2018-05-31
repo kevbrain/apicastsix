@@ -10,3 +10,4 @@ lua_modules/
 tmp/benchmark/
 .bash_history
 .cache/
+/vendor/cache

@@ -225,7 +225,13 @@ function _M:rewrite(service, context)
 
   ngx.var.secret_token = service.secret_token
 
-  local credentials, err = service:extract_credentials()
+  -- Another policy might have already extracted the creds.
+  local credentials = service.extracted_credentials
+
+  local err
+  if not credentials then
+    credentials, err = service:extract_credentials()
+  end
 
   if not credentials then
     ngx.log(ngx.WARN, "cannot get credentials: ", err or 'unknown error')

@@ -16,6 +16,18 @@
             "type": "string",
             "description": "The name of the key, must be unique in the scope"
           },
+          "name_type": {
+            "description": "How to evaluate 'name'",
+            "type": "string",
+            "default": "plain",
+            "oneOf": [{
+              "enum": ["plain"],
+              "title": "Evaluate 'name' as plain text."
+            }, {
+              "enum": ["liquid"],
+              "title": "Evaluate 'name' as liquid."
+            }]
+          },
           "scope": {
             "type": "string",
             "description": "Scope of the key",

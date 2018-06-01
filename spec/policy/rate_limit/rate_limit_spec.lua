@@ -4,6 +4,7 @@ local env = require('resty.env')
 local function init_val()
   ngx.var = {}
   ngx.var.request_time = '0.060'
+  ngx.var.host = 'test3'
 
   ngx.shared.limiter = {}
   ngx.shared.limiter.get = function(_, key)
@@ -132,10 +133,10 @@ describe('Rate limit policy', function()
       assert.spy(ngx_exit_spy).was_called_with(429)
     end)
 
-    it('rejected (count)', function()
+    it('rejected (count), name_type is plain', function()
       local config = {
         fixed_window_limiters = {
-          { key = { name = 'test3', scope = 'global' }, count = 1, window = 10 }
+          { key = { name = 'test3', name_type = 'plain', scope = 'global' }, count = 1, window = 10 }
         },
         redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
       }
@@ -143,6 +144,51 @@ describe('Rate limit policy', function()
       rate_limit_policy:access(context)
       rate_limit_policy:access(context)
       assert.spy(ngx_exit_spy).was_called_with(429)
+
+      local redis = require('resty.redis'):new()
+      redis:connect(redis_host, redis_port)
+      redis:select(1)
+      local fixed_window = redis:get('fixed_window_test3')
+      assert.equal('-1', fixed_window)
+    end)
+
+    it('rejected (count), name_type is liquid', function()
+      context = { service = { id = 5 }, var_in_context = 'test3' }
+      local config = {
+        fixed_window_limiters = {
+          { key = { name = '{{ var_in_context }}', name_type = 'liquid', scope = 'global' }, count = 1, window = 10 }
+        },
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
+      assert.spy(ngx_exit_spy).was_called_with(429)
+
+      local redis = require('resty.redis'):new()
+      redis:connect(redis_host, redis_port)
+      redis:select(1)
+      local fixed_window = redis:get('fixed_window_test3')
+      assert.equal('-1', fixed_window)
+    end)
+
+    it('rejected (count), name_type is liquid, ngx variable', function()
+      local config = {
+        fixed_window_limiters = {
+          { key = { name = '{{ host }}', name_type = 'liquid', scope = 'global' }, count = 1, window = 10 }
+        },
+        redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
+      }
+      local rate_limit_policy = RateLimitPolicy.new(config)
+      rate_limit_policy:access(context)
+      rate_limit_policy:access(context)
+      assert.spy(ngx_exit_spy).was_called_with(429)
+
+      local redis = require('resty.redis'):new()
+      redis:connect(redis_host, redis_port)
+      redis:select(1)
+      local fixed_window = redis:get('fixed_window_test3')
+      assert.equal('-1', fixed_window)
     end)
 
     it('delay (conn)', function()

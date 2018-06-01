@@ -1,9 +1,15 @@
 use lib 't';
 use Test::APIcast 'no_plan';
+use Cwd qw(abs_path);
 
+$ENV{TEST_NGINX_LUA_PATH} = "$Test::APIcast::spec/?.lua;$ENV{TEST_NGINX_LUA_PATH}";
 $ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
 $ENV{TEST_NGINX_REDIS_PORT} ||= $ENV{REDIS_PORT} || 6379;
 $ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | head -1 | tr '\n' ' '`;
+$ENV{BACKEND_ENDPOINT_OVERRIDE} ||= "http://127.0.0.1:$Test::Nginx::Util::ServerPortForClient/backend";
+
+our $rsa = `cat t/fixtures/rsa.pem`;
+env_to_nginx('BACKEND_ENDPOINT_OVERRIDE');
 
 repeat_each(1);
 run_tests();
@@ -494,7 +500,7 @@ Return 503 code.
                 configuration = {
                   leaky_bucket_limiters = {
                     {
-                      key = {name = "test8", scope = "global"},
+                      key = {name = "test8", name_type = "plain", scope = "global"},
                       rate = 1,
                       burst = 0
                     }
@@ -984,3 +990,176 @@ Return 200 code.
 ["GET /","GET /"]
 --- error_code eval
 [200, 200]
+
+=== TEST 17: Liquid templating (jwt.aud).
+Rate Limit policy accesses to the jwt
+which the apicast policy stores to the context.
+This test uses "jwt.aud" as key name.
+Notice that in the configuration, oidc.config.public_key is the one in
+"/fixtures/rsa.pub".
+This test calls the service 3 times,
+and the second call has a different jwt.aud,
+so only the third call returns 429.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          backend_version = 'oauth',
+          backend_authentication_type = 'provider_key',
+          backend_authentication_value = 'fookey',
+          proxy = {
+            authentication_method = 'oidc',
+            oidc_issuer_endpoint = 'https://example.com/auth/realms/apicast',
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1  }
+            },
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limit",
+                configuration = {
+                  fixed_window_limiters = {
+                    {
+                      key = {name = "{{jwt.aud}}", name_type = "liquid", scope = "global"},
+                      count = 1,
+                      window = 10
+                    }
+                  },
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
+                  limits_exceeded_error = { status_code = 429 }
+                }
+              },
+              { name = "apicast.policy.apicast" }
+            }
+          }
+        }
+      },
+      oidc = {
+        {
+          issuer = 'https://example.com/auth/realms/apicast',
+          config = { 
+            public_key = require('fixtures.rsa').pub, openid = { id_token_signing_alg_values_supported = { 'RS256' } } 
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
+
+  location /flush_redis {
+    content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
+      local redis = require('resty.redis'):new()
+      redis:connect(redis_host, redis_port)
+      redis:select(1)
+      redis:del("fixed_window_test17_1", "fixed_window_test17_2")
+    }
+  }
+
+  location /api-backend/ {
+    content_by_lua_block {
+      ngx.exit(200)
+    }
+  }
+
+  location = /backend/transactions/oauth_authrep.xml {
+    content_by_lua_block {
+      ngx.exit(200)
+    }
+  }
+
+--- pipelined_requests eval
+["GET /flush_redis","GET /","GET /", "GET /"]
+--- more_headers eval
+use Crypt::JWT qw(encode_jwt);
+my $jwt1 = encode_jwt(payload => {
+  aud => 'test17_1',
+  nbf => 0,
+  iss => 'https://example.com/auth/realms/apicast',
+  exp => time + 3600 }, key => \$::rsa, alg => 'RS256');
+my $jwt2 = encode_jwt(payload => {
+  aud => 'test17_2',
+  nbf => 0,
+  iss => 'https://example.com/auth/realms/apicast',
+  exp => time + 3600 }, key => \$::rsa, alg => 'RS256');
+["Authorization: Bearer $jwt1", "Authorization: Bearer $jwt1", "Authorization: Bearer $jwt2", "Authorization: Bearer $jwt1"]
+--- error_code eval
+[200, 200, 200, 429]
+--- no_error_log
+[error]
+
+=== TEST 18: Liquid templating (ngx.***).
+This test uses "ngx.var.host" and "ngx.var.uri" as key name.
+This test calls the service 3 times,
+and the second call has a different ngx.var.uri,
+so only the third call returns 429.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limit",
+                configuration = {
+                  fixed_window_limiters = {
+                    {
+                      key = {name = "{{host}}{{uri}}", name_type = "liquid", scope = "global"},
+                      count = 1,
+                      window = 10
+                    }
+                  },
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
+                  limits_exceeded_error = { status_code = 429 }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
+
+  location /flush_redis {
+    content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
+      local redis = require('resty.redis'):new()
+      redis:connect(redis_host, redis_port)
+      redis:select(1)
+      redis:del("fixed_window_localhost/test18_1", "fixed_window_localhost/test18_2")
+    }
+  }
+
+--- pipelined_requests eval
+["GET /flush_redis","GET /test18_1","GET /test18_2", "GET /test18_1"]
+--- error_code eval
+[200, 200, 200, 429]
+--- no_error_log
+[error]

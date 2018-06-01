@@ -1,0 +1,69 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Default credentials",
+  "summary": "Provides default credentials for unauthenticated requests",
+  "description":
+    ["This policy allows to expose a service without authentication. ",
+     "It can be useful, for example, for legacy apps that cannot be adapted to ",
+     "send the auth params. ",
+     "When the credentials are not provided in the request, this policy ",
+     "provides the default ones configured. ",
+     "An app_id + app_key or a user_key should be configured."],
+  "version": "builtin",
+  "configuration": {
+    "type":"object",
+    "properties":{
+      "auth_type":{
+        "type":"string",
+        "enum":[
+          "user_key",
+          "app_id_and_app_key"
+        ],
+        "default":"user_key"
+      }
+    },
+    "required":[
+      "auth_type"
+    ],
+    "dependencies":{
+      "auth_type":{
+        "oneOf":[
+          {
+            "properties":{
+              "auth_type":{
+                "enum":[
+                  "user_key"
+                ]
+              },
+              "user_key":{
+                "type":"string"
+              }
+            },
+            "required":[
+              "user_key"
+            ]
+          },
+          {
+            "properties":{
+              "auth_type":{
+                "enum":[
+                  "app_id_and_app_key"
+                ]
+              },
+              "app_id":{
+                "type":"string"
+              },
+              "app_key":{
+                "type":"string"
+              }
+            },
+            "required":[
+              "app_id",
+              "app_key"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [3.2.0] - 2018-06-04
+
+3.2.0-rc2 was considered final and became 3.2.0.
+
 ## [3.2.0-rc2] - 2018-05-11
 
 ### Added
@@ -397,7 +401,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.2.0-rc2...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.2.0...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -418,3 +422,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.2.0-beta3]: https://github.com/3scale/apicast/compare/v3.2.0-beta2...v3.2.0-beta3
 [3.2.0-rc1]: https://github.com/3scale/apicast/compare/v3.2.0-beta3...v3.2.0-rc1
 [3.2.0-rc2]: https://github.com/3scale/apicast/compare/v3.2.0-rc1...v3.2.0-rc2
+[3.2.0]: https://github.com/3scale/apicast/compare/v3.2.0-rc2...v3.2.0

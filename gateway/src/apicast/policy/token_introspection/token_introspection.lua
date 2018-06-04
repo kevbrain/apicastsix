@@ -7,7 +7,14 @@ local http_ng = require 'resty.http_ng'
 local user_agent = require 'apicast.user_agent'
 local resty_env = require('resty.env')
 
+local tokens_cache = require('tokens_cache')
+
+local tonumber = tonumber
+
 local new = _M.new
+
+local noop = function() end
+local noop_cache = { get = noop, set = noop }
 
 function _M.new(config)
   local self = new(config)
@@ -26,12 +33,26 @@ function _M.new(config)
       ssl = { verify = resty_env.enabled('OPENSSL_VERIFY') }
     }
   }
+
+  local max_cached_tokens = tonumber(config.max_cached_tokens) or 0
+  self.caching_enabled = max_cached_tokens > 0
+
+  if self.caching_enabled then
+    self.tokens_cache = tokens_cache.new(
+      config.max_ttl_tokens, config.max_cached_tokens)
+  else
+    self.tokens_cache = noop_cache
+  end
+
   return self
 end
 
 --- OAuth 2.0 Token Introspection defined in RFC7662.
 -- https://tools.ietf.org/html/rfc7662
 local function introspect_token(self, token)
+  local cached_token_info = self.tokens_cache:get(token)
+  if cached_token_info then return cached_token_info end
+
   --- Parameters for the token introspection endpoint.
   -- https://tools.ietf.org/html/rfc7662#section-2.1
   local res, err = self.http_client.post(self.introspection_url , { token = token, token_type_hint = 'access_token'})
@@ -43,6 +64,7 @@ local function introspect_token(self, token)
   if res.status == 200 then
     local token_info, decode_err = cjson.decode(res.body)
     if type(token_info) == 'table' then
+      self.tokens_cache:set(token, token_info)
       return token_info
     else
       ngx.log(ngx.ERR, 'failed to parse token introspection response:', decode_err)

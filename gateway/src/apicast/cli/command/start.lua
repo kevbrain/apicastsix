@@ -132,6 +132,8 @@ local function build_context(options, config)
     context.prefix = apicast_root()
     context.ca_bundle = pl.path.abspath(tostring(context.ca_bundle) or pl.path.join(context.prefix, 'conf', 'ca-bundle.crt'))
 
+    context.access_log_file = options.access_log_file
+
     return context
 end
 
@@ -236,6 +238,7 @@ local function configure(cmd)
     )
     cmd:option('--log-level', 'Set log level', resty_env.value('APICAST_LOG_LEVEL') or 'warn')
     cmd:option('--log-file', 'Set log file', resty_env.value('APICAST_LOG_FILE') or 'stderr')
+    cmd:option('--access-log-file', 'Set access log file', resty_env.value('APICAST_ACCESS_LOG_FILE') or '/dev/stdout')
 
     cmd:epilog([[
       Example: apicast start --dev

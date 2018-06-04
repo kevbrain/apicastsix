@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Liquid templating support in the rate-limit policy [PR #719](https://github.com/3scale/apicast/pull/719)
 - Default credentials policy [PR #741](https://github.com/3scale/apicast/pull/741), [THREESCALE-586](https://issues.jboss.org/browse/THREESCALE-586)
 - Configurable caching for the token introspection policy [PR #656](https://github.com/3scale/apicast/pull/656)
+- `APICAST_ACCESS_LOG_FILE` env to make the access log location configurable [THREESCALE-743](https://github.com/3scale/apicast/pull/743)
 
 ### Changed
 

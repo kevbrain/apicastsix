@@ -102,7 +102,7 @@ prove: HARNESS ?= TAP::Harness
 prove: PROVE_FILES ?= $(call prove-files)
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) nginx ## Test nginx
-	$(ROVER) exec script/prove -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)
+	$(ROVER) exec script/prove --verbose -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)
 
 prove-docker: apicast-source
 prove-docker: export IMAGE_NAME ?= apicast-test

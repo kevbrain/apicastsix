@@ -59,6 +59,13 @@ Defines the file that will store the OpenResty error log. It is used by `bin/api
 
 Specifies the log level for the OpenResty logs.
 
+### `APICAST_ACCESS_LOG_FILE`
+
+**Default:** _stdout_
+
+Defines the file that will store the access logs.
+
+
 ### `APICAST_MANAGEMENT_API`
 
 **Values:**

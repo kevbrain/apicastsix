@@ -120,7 +120,7 @@ http {
 
   server {
 
-    access_log /dev/stdout time;
+    access_log {{ access_log_file | default: "/dev/stdout" }} time;
 
     listen {{ port.apicast | default: 8080 }};
 

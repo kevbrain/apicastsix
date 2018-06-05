@@ -109,6 +109,21 @@ local function error(service, rejection_reason)
   end
 end
 
+local function add_to_batcher(self, service_id, credentials, usage)
+  self.reports_batcher:add(service_id, credentials, usage)
+end
+
+local function handle_backend_ok(self, service_id, credentials, usage)
+  self.auths_cache:set(service_id, credentials, usage, 200)
+  add_to_batcher(self, service_id, credentials, usage)
+end
+
+local function handle_backend_denied(self, service, credentials, usage, status, headers)
+  local rejection_reason = rejection_reason_from_headers(headers)
+  self.auths_cache:set(service.id, credentials, usage, status, rejection_reason)
+  return error(service, rejection_reason)
+end
+
 -- Note: when an entry in the cache expires, there might be several requests
 -- with those credentials and all of them will call auth() on backend with the
 -- same parameters until the auth status is cached again. In the future, we
@@ -131,20 +146,22 @@ function _M:access(context)
     local backend_status = backend_res.status
 
     if backend_status == 200 then
-      self.auths_cache:set(service_id, credentials, usage, 200)
-      local to_batch = { service_id = service_id, credentials = credentials, usage = usage }
-      self.reports_batcher:add(to_batch.service_id, to_batch.credentials, to_batch.usage)
+      handle_backend_ok(self, service_id, credentials, usage)
     elseif backend_status >= 400 and backend_status < 500 then
-      local rejection_reason = rejection_reason_from_headers(backend_res.headers)
-      self.auths_cache:set(service_id, credentials, usage, backend_status, rejection_reason)
-      return error(service, rejection_reason)
+      handle_backend_denied(
+        self,
+        service,
+        credentials,
+        usage,
+        backend_status,
+        backend_res.headers
+      )
     else
       return error(service)
     end
   else
     if cached_auth.status == 200 then
-      local to_batch = { service_id = service_id, credentials = credentials, usage = usage }
-      self.reports_batcher:add(to_batch.service_id, to_batch.credentials, to_batch.usage)
+      add_to_batcher(self, service_id, credentials, usage)
     else
       return error(service, cached_auth.rejection_reason)
     end

@@ -6,7 +6,8 @@ describe('policy', function()
     'rewrite', 'access',
     'content', 'balancer',
     'header_filter', 'body_filter',
-    'post_action',  'log', 'metrics'
+    'post_action',  'log', 'metrics',
+    'ssl_certificate',
   }
 
   describe('.new', function()

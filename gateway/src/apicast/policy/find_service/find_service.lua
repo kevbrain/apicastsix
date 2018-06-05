@@ -1,5 +1,5 @@
-local policy = require('apicast.policy')
-local _M = policy.new('Find Service Policy')
+local Policy = require('apicast.policy')
+local _M = Policy.new('Find Service Policy')
 local configuration_store = require 'apicast.configuration_store'
 local mapping_rules_matcher = require 'apicast.mapping_rules_matcher'
 local new = _M.new
@@ -70,8 +70,14 @@ function _M.new(...)
   return self
 end
 
-function _M:rewrite(context)
-  context.service = self.find_service(context.configuration, context.host)
+local function find_service(policy, context)
+  context.service = context.service or policy.find_service(context.configuration, context.host)
 end
+
+_M.rewrite = find_service
+
+-- ssl_certiticate is the first phase executed when request arrives on HTTPS
+-- therefore it needs to find a service to build a policy chain
+_M.ssl_certificate = find_service
 
 return _M

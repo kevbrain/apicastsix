@@ -131,8 +131,22 @@ http {
 
     {% if https_port -%}
     listen {{ https_port }} ssl;
-    ssl_certificate {{ env.APICAST_HTTPS_CERTIFICATE }};
-    ssl_certificate_key {{ env.APICAST_HTTPS_CERTIFICATE_KEY }};
+
+    {%- assign https_certificate = env.APICAST_HTTPS_CERTIFICATE -%}
+    ssl_certificate {% if https_certificate -%}
+      {{  https_certificate }}
+    {%- else -%}
+      {{ "conf/server.crt" | filesystem | first }}
+    {%- endif %};
+
+    {%- assign https_certificate_key = env.APICAST_HTTPS_CERTIFICATE_KEY -%}
+    ssl_certificate_key {% if https_certificate_key -%}
+      {{  https_certificate_key }}
+    {%- else -%}
+      {{ "conf/server.key" | filesystem | first }}
+    {%- endif %};
+
+    ssl_certificate_by_lua_block { require('apicast.executor'):ssl_certificate() }
     {%- endif %}
 
     server_name _;

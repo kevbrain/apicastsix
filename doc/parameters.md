@@ -9,7 +9,8 @@ Note that when deploying APIcast v2 with OpenShift, some of these parameters can
 ### `APICAST_BACKEND_CACHE_HANDLER`
 
 **Values:** strict | resilient  
-**Default:** strict
+**Default:** strict  
+**Deprecated:** Use [Caching](../gateway/src/apicast/policy/caching/apicast-policy.json) policy instead.
 
 Defines how the authorization cache behaves when backend is unavailable.
 Strict will remove cached application when backend is unavailable.
@@ -17,7 +18,7 @@ Resilient will do so only on getting authorization denied from backend.
 
 ### `APICAST_CONFIGURATION_CACHE`
 
-**Values:** _a number_
+**Values:** _a number_  
 **Default:** 0
 
 Specifies the interval (in seconds) that the configuration will be stored for. The value should be set to 0 (not compatible with boot value of `APICAST_CONFIGURATION_LOADER`) or more than 60. For example, if `APICAST_CONFIGURATION_CACHE` is set to 120, the gateway will reload the configuration from the API manager every 2 minutes (120 seconds).
@@ -33,6 +34,8 @@ Boot will request the configuration to the API manager when the gateway starts.
 Lazy will load it on demand for each incoming request (to guarantee a complete refresh on each request `APICAST_CONFIGURATION_CACHE` should be 0).
 
 ### `APICAST_CUSTOM_CONFIG`
+
+**Deprecated:** Use [policies](./policies.md) instead.
 
 Defines the name of the Lua module that implements custom logic overriding the existing APIcast logic.
 
@@ -79,7 +82,8 @@ You should enable the debug level only for debugging.
 
 ### `APICAST_MODULE`
 
-**Default:** apicast
+**Default:** apicast  
+**Deprecated:** Use [policies](./policies.md) instead.
 
 Specifies the name of the main Lua module that implements the API gateway logic. Custom modules can override the functionality of the default `apicast.lua` module. See [an example](../examples/custom-module) of how to use modules.
 
@@ -101,7 +105,7 @@ When this parameter is set to _true_, the gateway will use path-based routing in
 ### `APICAST_POLICY_LOAD_PATH`
 
 **Default**: `APICAST_DIR/policies`  
-**Value:**: string\[:<string>\]
+**Value:**: string\[:<string>\]  
 **Example**: ~/apicast/policies:$PWD/policies
 
 Double colon (`:`) separated list of paths where APIcast should look for policies.
@@ -110,7 +114,7 @@ It can be used to first load policies from a development directory or to load ex
 ### `APICAST_PROXY_HTTPS_CERTIFICATE_KEY`
 
 **Default:**  
-**Value:** string
+**Value:** string  
 **Example:** /home/apicast/my_certificate.key
 
 The path to the key of the client SSL certificate.

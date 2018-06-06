@@ -29,6 +29,7 @@ function _M:new(config, dir, strict)
 
     for name,value in pairs(resty_env.list()) do
         insert(env, { name = name, value = value })
+        env[name] = value
     end
 
     local context = setmetatable({

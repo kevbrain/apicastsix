@@ -15,7 +15,7 @@ APIcast.
 ## Policies
 
 A policy tells APIcast what it should do in each of the nginx phases: `init`,
-`init_worker`, `rewrite`, `access`,`content`, `balancer`, `header_filter`, `body_filter`,
+`init_worker`, `ssl_certificate`, `rewrite`, `access`,`content`, `balancer`, `header_filter`, `body_filter`,
 `post_action`, `log`, and `metrics`.
 
 Policies can share data between them. They do that through what we call the
@@ -35,7 +35,7 @@ The way policy chains work is as follows: suppose that we have a policy A that
 describes what to do in the `rewrite` and `header_filter` phases and a policy B
 that describes what to run in `access` and `header_filter`. Assume also that
 when describing the chain, we indicate that policy A should be run before
-policy B. When APIcast receives a request, it will check the policy chain
+policy B. When APIcast receives an HTTP request, it will check the policy chain
 described to see what it should run on each phase:
 - rewrite: execute the function policy A provides for this phase.
 - access: execute the function policy B provides for this phase.
@@ -52,6 +52,9 @@ Notice that we did not indicate what APIcast does in the `init` and the
 `init_worker` phases. The reason is that those two are not executed in every
 request. `init` is executed when APIcast boots, and `init_worker` when each
 of each of its workers start.
+
+Another phase that is not executed for every request is `ssl_certificate` because
+it is called only when APIcast terminates the HTTPS connection.
 
 The order in which policies actions are applied depend on two factors:
 - Position of the policy within the policy chain.

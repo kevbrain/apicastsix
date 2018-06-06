@@ -383,10 +383,10 @@ DISTRIBUTIONS
       Spiffy::mixin undef
     requirements:
       ExtUtils::MakeMaker 6.30
-  Test-APIcast-0.12
-    pathname: M/MC/MCICHRA/Test-APIcast-0.12.tar.gz
+  Test-APIcast-0.14
+    pathname: M/MC/MCICHRA/Test-APIcast-0.14.tar.gz
     provides:
-      Test::APIcast 0.12
+      Test::APIcast 0.14
       Test::APIcast::Blackbox undef
     requirements:
       File::Slurp 0

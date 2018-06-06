@@ -105,13 +105,10 @@ Use `docker kill -s $SIGNAL CONTAINER` to send them, where _CONTAINER_ is the co
 For developing and testing APIcast the following tools are needed:
 
 - [OpenResty](http://openresty.org/en/) - a bundle based on NGINX core and including LuaJIT and Lua modules. Follow the [installation instructions](http://openresty.org/en/installation.html) according to your OS.
+   On macOS you can run `brew bundle` to install OpenResty and LuaRocks.
 
 - [LuaRocks](https://luarocks.org/) - the Lua package manager.
    You can find [installation instructions](https://github.com/keplerproject/luarocks/wiki/Download#installing) for different platforms in the documentation.
-   For Mac OS X the following [Homebrew](http://brew.sh/) formula can be used:
-```shell
- brew install apitools/openresty/luarocks
-```
 
 - Install the APIcast [development dependencies](gateway/Roverfile)
 ```shell

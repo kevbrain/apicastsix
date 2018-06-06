@@ -4,6 +4,7 @@ local ReportsBatcher = require('reports_batcher')
 local policy = require('apicast.policy')
 local errors = require('apicast.errors')
 local reporter = require('reporter')
+local Transaction = require('transaction')
 local http_ng_resty = require('resty.http_ng.backend.resty')
 local semaphore = require('ngx.semaphore')
 
@@ -109,6 +110,17 @@ local function error(service, rejection_reason)
   end
 end
 
+local function handle_backend_ok(self, transaction)
+  self.auths_cache:set(transaction, 200)
+  self.reports_batcher:add(transaction)
+end
+
+local function handle_backend_denied(self, service, transaction, status, headers)
+  local rejection_reason = rejection_reason_from_headers(headers)
+  self.auths_cache:set(transaction, status, rejection_reason)
+  return error(service, rejection_reason)
+end
+
 -- Note: when an entry in the cache expires, there might be several requests
 -- with those credentials and all of them will call auth() on backend with the
 -- same parameters until the auth status is cached again. In the future, we
@@ -120,10 +132,11 @@ function _M:access(context)
   local service = context.service
   local service_id = service.id
   local credentials = context.credentials
+  local transaction = Transaction.new(service_id, credentials, usage)
 
   ensure_report_timer_on(self, service_id, backend)
 
-  local cached_auth = self.auths_cache:get(service_id, credentials, usage)
+  local cached_auth = self.auths_cache:get(transaction)
 
   if not cached_auth then
     local formatted_usage = format_usage(usage)
@@ -131,20 +144,16 @@ function _M:access(context)
     local backend_status = backend_res.status
 
     if backend_status == 200 then
-      self.auths_cache:set(service_id, credentials, usage, 200)
-      local to_batch = { service_id = service_id, credentials = credentials, usage = usage }
-      self.reports_batcher:add(to_batch.service_id, to_batch.credentials, to_batch.usage)
+      handle_backend_ok(self, transaction)
     elseif backend_status >= 400 and backend_status < 500 then
-      local rejection_reason = rejection_reason_from_headers(backend_res.headers)
-      self.auths_cache:set(service_id, credentials, usage, backend_status, rejection_reason)
-      return error(service, rejection_reason)
+      handle_backend_denied(
+        self, service, transaction, backend_status, backend_res.headers)
     else
       return error(service)
     end
   else
     if cached_auth.status == 200 then
-      local to_batch = { service_id = service_id, credentials = credentials, usage = usage }
-      self.reports_batcher:add(to_batch.service_id, to_batch.credentials, to_batch.usage)
+      self.reports_batcher:add(transaction)
     else
       return error(service, cached_auth.rejection_reason)
     end

@@ -1,5 +1,6 @@
 local keys_helper = require 'apicast.policy.3scale_batcher.keys_helper'
 local Usage = require 'apicast.usage'
+local Transaction = require 'apicast.policy.3scale_batcher.transaction'
 
 describe('Keys Helper', function()
   describe('.key_for_cached_auth', function()
@@ -9,8 +10,9 @@ describe('Keys Helper', function()
       local usage = Usage.new()
       usage:add('m1', 1)
       usage:add('m2', 2)
+      local transaction = Transaction.new(service_id, credentials, usage)
 
-      local key = keys_helper.key_for_cached_auth(service_id, credentials, usage)
+      local key = keys_helper.key_for_cached_auth(transaction)
       assert.equals('service_id:s1,app_id:ai,app_key:ak,metrics:m1=1;m2=2', key)
     end)
   end)

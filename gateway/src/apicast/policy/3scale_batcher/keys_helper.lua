@@ -42,10 +42,10 @@ local regexes_report_key = {
   "service_id:(?<service_id>[\\w-]+),app_id:(?<app_id>[\\w-]+),app_key:(?<app_key>[\\w-]+),metric:(?<metric>[\\w-]+)"
 }
 
-function _M.key_for_cached_auth(service_id, credentials, usage)
-  local service_part = format("service_id:%s", service_id)
-  local creds_part = creds_part_in_key(credentials)
-  local metrics_part = metrics_part_in_key(usage)
+function _M.key_for_cached_auth(transaction)
+  local service_part = format("service_id:%s", transaction.service_id)
+  local creds_part = creds_part_in_key(transaction.credentials)
+  local metrics_part = metrics_part_in_key(transaction.usage)
 
   return format("%s,%s,%s", service_part, creds_part, metrics_part)
 end

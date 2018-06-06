@@ -1,5 +1,6 @@
 local ThreescaleBatcher = require('apicast.policy.3scale_batcher')
 local AuthsCache = require('apicast.policy.3scale_batcher.auths_cache')
+local Transaction = require('apicast.policy.3scale_batcher.transaction')
 local Usage = require('apicast.usage')
 local configuration = require('apicast.configuration')
 local lrucache = require('resty.lrucache')
@@ -27,6 +28,7 @@ describe('3scale batcher policy', function()
     local credentials = { user_key = 'uk' }
     local usage = Usage.new()
     usage:add('m1', 1)
+    local transaction = Transaction.new(service_id, credentials, usage)
 
     local context
     local batcher_policy
@@ -50,19 +52,18 @@ describe('3scale batcher policy', function()
     describe('when the request is cached', function()
       describe('and it is authorized', function()
         it('adds the report to the batcher', function()
-          batcher_policy.auths_cache:set(service_id, credentials, usage, 200)
+          batcher_policy.auths_cache:set(transaction, 200)
 
           batcher_policy:access(context)
 
           assert.stub(batcher_policy.reports_batcher.add).was_called_with(
-            batcher_policy.reports_batcher, service_id, credentials, usage)
+            batcher_policy.reports_batcher, transaction)
         end)
       end)
 
       describe('and it is not authorized', function()
         it('does not add the report to the batcher', function()
-          batcher_policy.auths_cache:set(
-            service_id, credentials, usage, 409, 'limits_exceeded')
+          batcher_policy.auths_cache:set(transaction, 409, 'limits_exceeded')
 
           batcher_policy:access(context)
 
@@ -70,8 +71,7 @@ describe('3scale batcher policy', function()
         end)
 
         it('returns an error', function()
-          batcher_policy.auths_cache:set(
-            service_id, credentials, usage, 409, 'limits_exceeded')
+          batcher_policy.auths_cache:set(transaction, 409, 'limits_exceeded')
 
           batcher_policy:access(context)
 

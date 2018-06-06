@@ -246,6 +246,10 @@ build-tags: &build-tags
     tags:
       only: /.*/
 
+ignore-forks: &ignore-forks
+  branches:
+    ignore: '/pull\/\d+/' # forks branch name is pull/PR_NUMBER
+
 workflows:
   version: 2
   nightly:
@@ -296,11 +300,11 @@ workflows:
             - s2i-runtime
             - s2i-builder
           filters:
+            <<: *ignore-forks
             tags:
               only: /^v\d+\..+/
       - benchmark:
           requires:
             - deploy
           filters:
-            branches:
-              only: /^[^:]+$/
+            <<: *ignore-forks

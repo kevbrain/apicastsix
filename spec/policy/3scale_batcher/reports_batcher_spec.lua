@@ -1,6 +1,7 @@
 local ReportsBatcher = require 'apicast.policy.3scale_batcher.reports_batcher'
 local Usage = require 'apicast.usage'
 local keys_helper = require 'apicast.policy.3scale_batcher.keys_helper'
+local Transaction = require 'apicast.policy.3scale_batcher.transaction'
 local resty_lock = require 'resty.lock'
 
 describe('reports batcher', function()
@@ -20,6 +21,8 @@ describe('reports batcher', function()
     local metric = 'm1'
     usage:add(metric, 1)
 
+    local transaction = Transaction.new(service_id, credentials, usage)
+
     local report_key = keys_helper.key_for_batched_report(service_id, credentials, metric)
 
     -- Note: all these tests use a mocked instance of ngx.shared.dict.
@@ -35,7 +38,7 @@ describe('reports batcher', function()
         local spy_incr_dict = spy.on(test_dict, 'incr')
         local reports_batcher = ReportsBatcher.new(test_dict, 'batched_reports_locks')
 
-        reports_batcher:add(service_id, credentials, usage)
+        reports_batcher:add(transaction)
 
         assert.spy(spy_incr_dict).was_not_called()
       end)
@@ -50,7 +53,7 @@ describe('reports batcher', function()
         local spy_incr_dict = spy.on(test_dict, 'incr')
         local reports_batcher = ReportsBatcher.new(test_dict, 'batched_reports_locks')
 
-        reports_batcher:add(service_id, credentials, usage)
+        reports_batcher:add(transaction)
 
         assert.spy(spy_incr_dict).was_called_with(test_dict, report_key, 1)
       end)
@@ -66,7 +69,7 @@ describe('reports batcher', function()
         local spy_incr_dict = spy.on(test_dict, 'incr')
         local reports_batcher = ReportsBatcher.new(test_dict, 'batched_reports_locks')
 
-        reports_batcher:add(service_id, credentials, usage)
+        reports_batcher:add(transaction)
 
         assert.spy(spy_add_dict).was_called.with(test_dict, report_key, 1)
         assert.spy(spy_incr_dict).was_not_called()

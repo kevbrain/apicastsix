@@ -100,6 +100,8 @@ When configured to authenticate using OAuth, this param specifies the TTL (in se
 - `true` or `1` for _true_
 - `false`, `0` or empty for _false_
 
+**Experimental:** Path routing might cause increased load and change totally in the future.  
+
 When this parameter is set to _true_, the gateway will use path-based routing in addition to the default host-based routing. The API request will be routed to the first service that has a matching mapping rule, from the list of services for which the value of the `Host` header of the request matches the _Public Base URL_.
 
 ### `APICAST_POLICY_LOAD_PATH`
@@ -148,7 +150,8 @@ Path to a file with passphrases for the SSL cert keys specified with
 ### `APICAST_REPORTING_THREADS`
 
 **Default**: 0  
-**Value:** integer >= 0
+**Value:** integer >= 0  
+**Experimental:** Under extreme load might have unpredictable performance and lose reports.
 
 Value greater than 0 is going to enable out-of-band reporting to backend.
 This is a new **experimental** feature for increasing performance. Client

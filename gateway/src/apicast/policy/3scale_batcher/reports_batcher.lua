@@ -24,8 +24,8 @@ end
 -- The timeout is high, that means that if it could not be acquired, there's
 -- probably a problem in the system.
 -- TODO: Find a solution for this.
-function _M:add(service_id, credentials, usage)
-  local deltas = usage.deltas
+function _M:add(transaction)
+  local deltas = transaction.usage.deltas
 
   local lock, new_lock_err = resty_lock:new(self.lock_shdict_name, lock_options)
   if not lock then
@@ -33,14 +33,15 @@ function _M:add(service_id, credentials, usage)
     return
   end
 
-  local elapsed, lock_err = lock:lock(service_id)
+  local elapsed, lock_err = lock:lock(transaction.service_id)
   if not elapsed then
     ngx.log(ngx.ERR, "failed to acquire the lock: ", lock_err)
     return
   end
 
-  for _, metric in ipairs(usage.metrics) do
-    local key = keys_helper.key_for_batched_report(service_id, credentials, metric)
+  for _, metric in ipairs(transaction.usage.metrics) do
+    local key = keys_helper.key_for_batched_report(
+      transaction.service_id, transaction.credentials, metric)
 
     -- There is not a 'safe_incr'. In order to avoid overriding batched
     -- reports, we call `safe_add` and call incr only when there was not an

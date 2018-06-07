@@ -11,3 +11,4 @@ tmp/benchmark/
 .bash_history
 .cache/
 /vendor/cache
+/.docker

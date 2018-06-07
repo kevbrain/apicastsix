@@ -10,8 +10,6 @@ local resolver_cache = require('resty.resolver.cache')
 local env = require('resty.env')
 local policy_manifests_loader = require('apicast.policy_manifests_loader')
 
-local setmetatable = setmetatable
-
 local live = { status = 'live', success = true }
 
 local function json_response(body, status)
@@ -129,7 +127,6 @@ end
 
 function _M.get_all_policy_manifests()
   local manifests = policy_manifests_loader.get_all()
-  setmetatable(manifests, cjson.array_mt)
   return json_response({ policies = manifests })
 end
 

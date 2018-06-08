@@ -33,6 +33,7 @@ describe("token introspection policy", function()
     it('success with valid token', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
+        auth_type = "client_id+client_secret",
         introspection_url = introspection_url,
         client_id = test_client_id,
         client_secret = test_client_secret
@@ -61,6 +62,7 @@ describe("token introspection policy", function()
     it('failed with invalid token', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
+        auth_type = "client_id+client_secret",
         introspection_url = introspection_url,
         client_id = "client",
         client_secret = "secret"
@@ -93,6 +95,7 @@ describe("token introspection policy", function()
     it('failed with bad status code', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
+        auth_type = "client_id+client_secret",
         introspection_url = introspection_url,
         client_id = "client",
         client_secret = "secret"
@@ -122,6 +125,7 @@ describe("token introspection policy", function()
     it('failed with null response', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
+        auth_type = "client_id+client_secret",
         introspection_url = introspection_url,
         client_id = "client",
         client_secret = "secret"
@@ -152,6 +156,7 @@ describe("token introspection policy", function()
     it('failed with bad contents type', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
+        auth_type = "client_id+client_secret",
         introspection_url = introspection_url,
         client_id = "client",
         client_secret = "secret"
@@ -182,6 +187,7 @@ describe("token introspection policy", function()
     describe('when caching is enabled', function()
       local introspection_url = "http://example/token/introspection"
       local policy_config = {
+        auth_type = "client_id+client_secret",
         introspection_url = introspection_url,
         client_id = test_client_id,
         client_secret = test_client_secret,
@@ -241,4 +247,3 @@ describe("token introspection policy", function()
     end)
   end)
 end)
-

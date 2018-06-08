@@ -6,6 +6,7 @@ local http_authorization = require 'resty.http_authorization'
 local http_ng = require 'resty.http_ng'
 local user_agent = require 'apicast.user_agent'
 local resty_env = require('resty.env')
+local resty_url = require('resty.url')
 
 local tokens_cache = require('tokens_cache')
 
@@ -16,19 +17,25 @@ local new = _M.new
 local noop = function() end
 local noop_cache = { get = noop, set = noop }
 
+local function create_credential(client_id, client_secret)
+  return 'Basic ' .. ngx.encode_base64(table.concat({ client_id, client_secret }, ':'))
+end
+
 function _M.new(config)
   local self = new(config)
   self.config = config or {}
+  self.auth_type = config.auth_type or "client_id+client_secret"
   --- authorization for the token introspection endpoint.
   -- https://tools.ietf.org/html/rfc7662#section-2.2
-  local credential = 'Basic ' .. ngx.encode_base64(table.concat({ self.config.client_id or '', self.config.client_secret or '' }, ':'))
-  self.introspection_url = config.introspection_url
+  if self.auth_type == "client_id+client_secret" then
+    self.credential = create_credential(self.config.client_id or '', self.config.client_secret or '')
+    self.introspection_url = config.introspection_url
+  end
   self.http_client = http_ng.new{
     backend = config.client,
     options = {
       headers = {
-        ['User-Agent'] = user_agent(),
-        ['Authorization'] = credential
+        ['User-Agent'] = user_agent()
       },
       ssl = { verify = resty_env.enabled('OPENSSL_VERIFY') }
     }
@@ -55,7 +62,8 @@ local function introspect_token(self, token)
 
   --- Parameters for the token introspection endpoint.
   -- https://tools.ietf.org/html/rfc7662#section-2.1
-  local res, err = self.http_client.post(self.introspection_url , { token = token, token_type_hint = 'access_token'})
+  local res, err = self.http_client.post{self.introspection_url , { token = token, token_type_hint = 'access_token'},
+    headers = {['Authorization'] = self.credential}}
   if err then
     ngx.log(ngx.WARN, 'token introspection error: ', err, ' url: ', self.introspection_url)
     return { active = false }
@@ -77,6 +85,18 @@ local function introspect_token(self, token)
 end
 
 function _M:access(context)
+  if self.auth_type == "use_3scale_oidc_issuer_endpoint" then
+    if not context.proxy.oauth then
+      ngx.status = context.service.auth_failed_status
+      ngx.say(context.service.error_auth_failed)
+      return ngx.exit(ngx.status)
+    end
+
+    local components = resty_url.parse(context.service.oidc.issuer_endpoint)
+    self.credential = create_credential(components.user, components.password)
+    self.introspection_url = context.proxy.oauth.config.openid.token_introspection_endpoint
+  end
+
   if self.introspection_url then
     local authorization = http_authorization.new(ngx.var.http_authorization)
     local access_token = authorization.token

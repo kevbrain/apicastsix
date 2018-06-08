@@ -2,24 +2,17 @@
   "$schema": "http://apicast.io/poolicy-v1/schema#manifest#",
   "name": "OAuth 2.0 Token Introspection",
   "summary": "Configures OAuth 2.0 Token Introspection.",
-  "description": 
-  ["This policy executes OAuth 2.0 Token Introspection ",
-   "(https://tools.ietf.org/html/rfc7662) for every API call."],
+  "description": ["This policy executes OAuth 2.0 Token Introspection ",
+    "(https://tools.ietf.org/html/rfc7662) for every API call."
+  ],
   "version": "builtin",
   "configuration": {
     "type": "object",
     "properties": {
-      "introspection_url": {
-        "description": "Introspection Endpoint URL",
-        "type": "string"
-      },
-      "client_id": {
-        "description": "Client ID for the Token Introspection Endpoint",
-        "type": "string"
-      },
-      "client_secret": {
-        "description": "Client Secret for the Token Introspection Endpoint",
-        "type": "string"
+      "auth_type": {
+        "type": "string",
+        "enum": ["use_3scale_oidc_issuer_endpoint", "client_id+client_secret"],
+        "default": "client_id+client_secret"
       },
       "max_ttl_tokens": {
         "description": "Max TTL for cached tokens",
@@ -32,6 +25,43 @@
         "type": "integer",
         "minimum": 0,
         "maximum": 10000
+      }
+    },
+    "required": [
+      "auth_type"
+    ],
+    "dependencies": {
+      "auth_type": {
+        "oneOf": [{
+          "properties": {
+            "auth_type": {
+              "describe": "Use the Client credentials and the Token Introspection Endpoint from the OpenID Connect Issuer setting.",
+              "enum": ["use_3scale_oidc_issuer_endpoint"]
+            }
+          }
+        }, {
+          "properties": {
+            "auth_type": {
+              "describe": "Specify the Token Introspection Endpoint, Client ID, and Client Secret.",
+              "enum": ["client_id+client_secret"]
+            },
+            "client_id": {
+              "description": "Client ID for the Token Introspection Endpoint",
+              "type": "string"
+            },
+            "client_secret": {
+              "description": "Client Secret for the Token Introspection Endpoint",
+              "type": "string"
+            },
+            "introspection_url": {
+              "description": "Introspection Endpoint URL",
+              "type": "string"
+            }
+          },
+          "required": [
+            "client_id", "client_secret", "introspection_url"
+          ]
+        }]
       }
     }
   }

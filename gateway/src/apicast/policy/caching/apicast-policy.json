@@ -27,20 +27,20 @@
         "type": "string",
         "oneOf": [
           {
-            "enum": ["resilient"],
-            "title": "Authorize according to last request when backend is down."
+            "enum": ["strict"],
+            "title": "Strict: cache only authorized calls."
           },
           {
-            "enum": ["strict"],
-            "title": "Cache only authorized calls."
+            "enum": ["resilient"],
+            "title": "Resilient: authorize according to last request when backend is down."
           },
           {
             "enum": ["allow"],
-            "title": "When backend is down, allow everything unless seen before and denied."
+            "title": "Allow: when backend is down, allow everything unless seen before and denied."
           },
           {
             "enum": ["none"],
-            "title": "Disable caching."
+            "title": "None: disable caching."
           }
         ],
         "default": "none"

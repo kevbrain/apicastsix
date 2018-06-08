@@ -372,3 +372,87 @@ push $res, "GET /force_report_to_backend";
 $res
 --- no_error_log
 [error]
+
+=== TEST 5: with caching policy (resilient mode)
+The purpose of this test is to test that the 3scale batcher policy works
+correctly when combined with the caching one.
+In this case, the caching policy is configured as "resilient". We define a
+backend that returns "limits exceeded" on the first request, and an error in
+all the rest. The caching policy will cache the first result and return it
+while backend is down. Notice that the caching policy does not store the
+rejection reason, it just returns a generic error (403/Authentication failed).
+To make sure that nothing is cached in the 3scale batcher policy, we flush its
+auth cache on every request (see rewrite_by_lua_block).
+--- http_config
+include $TEST_NGINX_UPSTREAM_CONFIG;
+lua_shared_dict api_keys 10m;
+lua_shared_dict cached_auths 1m;
+lua_shared_dict batched_reports 1m;
+lua_shared_dict batched_reports_locks 1m;
+lua_package_path "$TEST_NGINX_LUA_PATH";
+
+init_by_lua_block {
+  require('apicast.configuration_loader').mock({
+    services = {
+      {
+        id = 42,
+        backend_version = 1,
+        backend_authentication_type = 'service_token',
+        backend_authentication_value = 'token-value',
+        proxy = {
+          backend = { endpoint = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT" },
+          api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+          proxy_rules = {
+            { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
+          },
+          policy_chain = {
+            {
+              name = 'apicast.policy.3scale_batcher',
+              configuration = { }
+            },
+            {
+              name = 'apicast.policy.apicast'
+            },
+            {
+              name = 'apicast.policy.caching',
+              configuration = { caching_type = 'resilient' }
+            }
+          }
+        }
+      }
+    }
+  })
+}
+
+rewrite_by_lua_block {
+  ngx.shared.cached_auths:flush_all()
+}
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authorize.xml {
+    content_by_lua_block {
+      local test_counter = ngx.shared.test_counter or 0
+      if test_counter == 0 then
+        ngx.shared.test_counter = test_counter + 1
+        ngx.header['3scale-rejection-reason'] = 'limits_exceeded'
+        ngx.status = 409
+        ngx.exit(ngx.HTTP_OK)
+      else
+        ngx.shared.test_counter = test_counter + 1
+        ngx.exit(502)
+      end
+    }
+  }
+
+  location /api-backend {
+     echo 'yay, api backend';
+  }
+--- request eval
+["GET /test?user_key=foo", "GET /foo?user_key=foo", "GET /?user_key=foo"]
+--- response_body eval
+["Limits exceeded", "Authentication failed", "Authentication failed"]
+--- error_code eval
+[ 429, 403, 403 ]
+--- no_error_log
+[error]

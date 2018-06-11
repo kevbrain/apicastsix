@@ -3,7 +3,7 @@ local _M = policy.new('Rate Limit Policy')
 
 local resty_limit_conn = require('resty.limit.conn')
 local resty_limit_req = require('resty.limit.req')
-local resty_limit_count = require('resty.limit.count')
+local resty_limit_count = require('resty.limit.count-inc')
 
 local ngx_semaphore = require "ngx.semaphore"
 local limit_traffic = require "resty.limit.traffic"

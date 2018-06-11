@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - The `scope` of the Rate Limit policy is `service` by default [PR #704](https://github.com/3scale/apicast/pull/704)
 - Decoded JWTs are now exposed in the policies context by the APIcast policy [PR #718](https://github.com/3scale/apicast/pull/718)
 - Upgraded OpenResty to 1.13.6.2, uses OpenSSL 1.1 [PR #733](https://github.com/3scale/apicast/pull/733)
+- Use forked `resty.limit.count` that uses increments instead of decrements [PR #758](https://github.com/3scale/apicast/pull/758)
 
 ### Fixed
 

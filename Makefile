@@ -87,7 +87,7 @@ carton:
 
 find-file = $(shell find $(2) -type f -name $(1))
 
-circleci = $(shell circleci tests glob $(1) | grep -v examples/scaffold | circleci tests split --split-by=timings 2>/dev/null)
+circleci = $(shell circleci tests glob $(1) 2>/dev/null | grep -v examples/scaffold | circleci tests split --split-by=timings 2>/dev/null)
 
 BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
 BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))

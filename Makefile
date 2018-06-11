@@ -186,6 +186,9 @@ development: ## Run bash inside the development image
 	@ # https://github.com/moby/moby/issues/33794#issuecomment-312873988 for fixing the terminal width
 	$(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) exec -e COLUMNS="`tput cols`" -e LINES="`tput lines`" --user $(USER) development bash
 
+stop-development: ## Stop development environment
+	- $(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) down
+
 rover: $(ROVER)
 	@echo $(ROVER)
 

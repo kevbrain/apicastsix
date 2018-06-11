@@ -5,7 +5,7 @@ local concat = table.concat
 local sort = table.sort
 local unpack = table.unpack
 local ngx_re = ngx.re
-local table = table
+local new_tab = require('resty.core.base').new_tab
 
 local _M = {}
 
@@ -20,7 +20,7 @@ local function creds_part_in_key(creds)
 end
 
 local function metrics_part_in_key(usage)
-  local usages = table.new(#usage.metrics, 0)
+  local usages = new_tab(#usage.metrics, 0)
 
   local deltas = usage.deltas
 

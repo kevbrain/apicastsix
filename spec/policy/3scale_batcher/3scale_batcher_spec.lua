@@ -42,11 +42,17 @@ describe('3scale batcher policy', function()
       batcher_policy.auths_cache = AuthsCache.new(lrucache.new(10), 10)
       stub(batcher_policy.reports_batcher, 'add')
 
+      stub(batcher_policy, 'backend_downtime_cache')
+
       context = {
         service = service,
         usage = usage,
-        credentials = credentials
+        credentials = credentials,
+        -- cache_handler does nothing because we just need to check if it's called
+        cache_handler = function() end
       }
+
+      stub(context, 'cache_handler')
     end)
 
     describe('when the request is cached', function()
@@ -76,6 +82,73 @@ describe('3scale batcher policy', function()
           batcher_policy:access(context)
 
           assert.is_true(ngx.status >= 400 and ngx.status < 500)
+        end)
+      end)
+    end)
+
+    describe('when the request is not cached', function()
+      describe('and backend is available', function()
+        before_each(function()
+          local backend_client = require('apicast.backend_client')
+          stub(backend_client, 'authorize').returns({ status = 200 })
+        end)
+
+        it('updates the backend downtime cache using the handler in the context', function()
+          batcher_policy:access(context)
+
+          assert.stub(context.cache_handler).was_called()
+        end)
+      end)
+
+      describe('and backend is not available', function()
+        before_each(function()
+          local backend_client = require('apicast.backend_client')
+          stub(backend_client, 'authorize').returns({ status = 500 })
+        end)
+
+        describe('and the authorization is in the downtime cache', function()
+          describe('and it is OK', function()
+            before_each(function()
+              stub(batcher_policy.backend_downtime_cache, 'get').returns(200)
+            end)
+
+            it('adds the report to the batcher', function()
+              batcher_policy:access(context)
+
+              assert.stub(batcher_policy.reports_batcher.add).was_called_with(
+                batcher_policy.reports_batcher, transaction)
+            end)
+          end)
+
+          describe('and it is denied', function()
+            before_each(function()
+              stub(batcher_policy.backend_downtime_cache, 'get').returns(409)
+            end)
+
+            it('does not add the report to the batcher', function()
+              batcher_policy:access(context)
+
+              assert.stub(batcher_policy.reports_batcher.add).was_not_called()
+            end)
+
+            it('returns an error', function()
+              batcher_policy:access(context)
+
+              assert.is_true(ngx.status >= 400 and ngx.status < 500)
+            end)
+          end)
+        end)
+
+        describe('and the authorization is not in the downtime cache', function()
+          before_each(function()
+            stub(batcher_policy.backend_downtime_cache, 'get').returns(nil)
+          end)
+
+          it('returns an error', function()
+            batcher_policy:access(context)
+
+            assert.is_true(ngx.status >= 400 and ngx.status < 500)
+          end)
         end)
       end)
     end)

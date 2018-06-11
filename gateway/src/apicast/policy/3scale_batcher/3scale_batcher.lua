@@ -1,6 +1,7 @@
 local backend_client = require('apicast.backend_client')
 local AuthsCache = require('auths_cache')
 local ReportsBatcher = require('reports_batcher')
+local keys_helper = require('keys_helper')
 local policy = require('apicast.policy')
 local errors = require('apicast.errors')
 local reporter = require('reporter')
@@ -37,6 +38,12 @@ function _M.new(config)
     ngx.log(ngx.ERR, "Create semaphore failed: ", err)
   end
   self.semaphore_report_timer = semaphore_report_timer
+
+  -- Cache for authorizations to be used in the event of a 3scale backend
+  -- downtime.
+  -- This cache allows us to use this policy in combination with the caching
+  -- one.
+  self.backend_downtime_cache = ngx.shared.api_keys
 
   return self
 end
@@ -110,15 +117,40 @@ local function error(service, rejection_reason)
   end
 end
 
-local function handle_backend_ok(self, transaction)
+local function update_downtime_cache(cache, transaction, backend_status, cache_handler)
+  local key = keys_helper.key_for_cached_auth(transaction)
+  cache_handler(cache, key, backend_status)
+end
+
+local function handle_backend_ok(self, transaction, cache_handler)
+  if cache_handler then
+    update_downtime_cache(self.backend_downtime_cache, transaction, 200, cache_handler)
+  end
+
   self.auths_cache:set(transaction, 200)
   self.reports_batcher:add(transaction)
 end
 
-local function handle_backend_denied(self, service, transaction, status, headers)
+local function handle_backend_denied(self, service, transaction, status, headers, cache_handler)
+  if cache_handler then
+    update_downtime_cache(self.backend_downtime_cache, transaction, status, cache_handler)
+  end
+
   local rejection_reason = rejection_reason_from_headers(headers)
   self.auths_cache:set(transaction, status, rejection_reason)
   return error(service, rejection_reason)
+end
+
+local function handle_backend_error(self, service, transaction, cache_handler)
+  local cached = cache_handler and self.backend_downtime_cache:get(transaction)
+
+  if cached == 200 then
+    self.reports_batcher:add(transaction)
+  else
+    -- The caching policy does not store the rejection reason, so we can only
+    -- return a generic error.
+    return error(service)
+  end
 end
 
 -- Note: when an entry in the cache expires, there might be several requests
@@ -142,14 +174,15 @@ function _M:access(context)
     local formatted_usage = format_usage(usage)
     local backend_res = backend:authorize(formatted_usage, credentials)
     local backend_status = backend_res.status
+    local cache_handler = context.cache_handler -- Set by Caching policy
 
     if backend_status == 200 then
-      handle_backend_ok(self, transaction)
+      handle_backend_ok(self, transaction, cache_handler)
     elseif backend_status >= 400 and backend_status < 500 then
       handle_backend_denied(
-        self, service, transaction, backend_status, backend_res.headers)
+        self, service, transaction, backend_status, backend_res.headers, cache_handler)
     else
-      return error(service)
+      handle_backend_error(self, service, transaction, cache_handler)
     end
   else
     if cached_auth.status == 200 then

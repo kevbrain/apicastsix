@@ -8,3 +8,4 @@ log
 *.swp
 tmp
 .vagrant
+/.docker

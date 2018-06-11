@@ -87,13 +87,15 @@ carton:
 
 find-file = $(shell find $(2) -type f -name $(1))
 
-circleci = $(shell circleci tests glob $(1) | grep -v examples/scaffold | circleci tests split --split-by=timings 2>/dev/null)
+circleci = $(shell circleci tests glob $(1) 2>/dev/null | grep -v examples/scaffold | circleci tests split --split-by=timings 2>/dev/null)
 
 BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
 BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
 busted: $(ROVER) ## Test Lua.
 	$(ROVER) exec bin/busted $(BUSTED_FILES)
+ifeq ($(CI),true)
 	@- luacov
+endif
 
 PROVE_PATTERN = "{t,examples}/**/*.t)"
 prove-files = $(or $(call circleci, $(PROVE_PATTERN)), $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples)))
@@ -174,11 +176,20 @@ test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any d
 	@echo -e $(SEPARATOR)
 	$(DOCKER_COMPOSE) run --rm test sh -c 'sleep 5 && curl --fail http://gateway:8090/status/live'
 
-build-development:
-	docker build -f $(DEVEL_DOCKERFILE) -t $(DEVEL_IMAGE) --build-arg BUILDER_IMAGE=$(BUILDER_IMAGE) .
+.docker/lua_modules .docker/local .docker/cpanm .docker/vendor/cache :
+	mkdir -p $@
 
-development: build-development ## Run bash inside the development image
-	$(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) run --rm development
+ifeq ($(origin USER),environment)
+development: USER := $(shell id -u $(USER))
+endif
+development: .docker/lua_modules .docker/local .docker/cpanm .docker/vendor/cache
+development: ## Run bash inside the development image
+	- $(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) up --detach
+	@ # https://github.com/moby/moby/issues/33794#issuecomment-312873988 for fixing the terminal width
+	$(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) exec -e COLUMNS="`tput cols`" -e LINES="`tput lines`" --user $(USER) development bash
+
+stop-development: ## Stop development environment
+	- $(DOCKER_COMPOSE) -f $(DEVEL_DOCKER_COMPOSE_FILE) down
 
 rover: $(ROVER)
 	@echo $(ROVER)

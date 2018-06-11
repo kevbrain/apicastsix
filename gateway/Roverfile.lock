@@ -9,7 +9,7 @@ lua-resty-env 0.4.0-1||production
 lua-resty-execvp 0.1.1-1||production
 lua-resty-http 0.12-0||production
 lua-resty-iputils 0.3.0-1||development
-lua-resty-jwt 0.1.11-0||production
+lua-resty-jwt 0.2.0-0||production
 lua-resty-repl 0.0.6-0||development
 lua-resty-url 0.2.0-1||production
 lua-term 0.7-1||testing

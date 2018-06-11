@@ -93,7 +93,9 @@ BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
 BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
 busted: $(ROVER) ## Test Lua.
 	$(ROVER) exec bin/busted $(BUSTED_FILES)
+ifeq ($(CI),true)
 	@- luacov
+endif
 
 PROVE_PATTERN = "{t,examples}/**/*.t)"
 prove-files = $(or $(call circleci, $(PROVE_PATTERN)), $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples)))

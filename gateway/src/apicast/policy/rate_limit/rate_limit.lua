@@ -7,8 +7,9 @@ local resty_limit_count = require('resty.limit.count-inc')
 
 local ngx_semaphore = require "ngx.semaphore"
 local limit_traffic = require "resty.limit.traffic"
-local ts = require ('apicast.threescale_utils')
 local ngx_variable = require ('apicast.policy.ngx_variable')
+local redis_shdict = require('redis_shdict')
+
 local tonumber = tonumber
 local next = next
 local shdict_key = 'limiter'
@@ -46,41 +47,6 @@ local default_error_settings = {
     error_handling = "exit"
   }
 }
-
-local function redis_shdict(url)
-  local options = { url = url }
-  local redis, err = ts.connect_redis(options)
-  if not redis then
-    return nil, err
-  end
-
-  return {
-    incr = function(_, key, value, init)
-      if not init then
-        return redis:incrby(key, value), nil
-      end
-      redis:setnx(key, init)
-      return redis:incrby(key, value), nil
-    end,
-    set = function(_, key, value)
-      return redis:set(key, value)
-    end,
-    expire = function(_, key, exptime)
-      local ret = redis:expire(key, exptime)
-      if ret == 0 then
-        return nil, "not found"
-      end
-      return true, nil
-    end,
-    get = function(_, key)
-      local val = redis:get(key)
-      if type(val) == "userdata" then
-        return nil
-      end
-      return val
-    end
-  }
-end
 
 local function error(error_settings, type)
   if error_settings[type]["error_handling"] == "exit" then
@@ -172,7 +138,7 @@ function _M:access(context)
   local red
   if self.redis_url then
     local rederr
-    red, rederr = redis_shdict(self.redis_url)
+    red, rederr = redis_shdict.new{ url = self.redis_url }
     if not red then
       ngx.log(ngx.ERR, "failed to connect Redis: ", rederr)
       error(self.error_settings, "configuration_issue")
@@ -249,7 +215,7 @@ local function checkin(_, ctx, time, semaphore, redis_url, error_settings)
   local red
   if redis_url then
     local rederr
-    red, rederr = redis_shdict(redis_url)
+    red, rederr = redis_shdict.new{ url = redis_url }
     if not red then
       ngx.log(ngx.ERR, "failed to connect Redis: ", rederr)
       error(error_settings, "configuration_issue")

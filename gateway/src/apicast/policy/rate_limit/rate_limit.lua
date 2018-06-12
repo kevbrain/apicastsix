@@ -180,11 +180,12 @@ function _M:access(context)
     if comerr == "rejected" then
       ngx.log(ngx.WARN, "Requests over the limit.")
       error(self.error_settings, "limits_exceeded")
-      return
+      return nil, 'limits exceeded'
+    else
+      ngx.log(ngx.ERR, "failed to limit traffic: ", comerr)
+      error(self.error_settings, "configuration_issue")
+      return nil, comerr or 'invalid configuration'
     end
-    ngx.log(ngx.ERR, "failed to limit traffic: ", comerr)
-    error(self.error_settings, "configuration_issue")
-    return
   end
 
   for i, lim in ipairs(limiters) do
@@ -205,6 +206,7 @@ function _M:access(context)
     ngx.sleep(delay)
   end
 
+  return true, delay
 end
 
 local function checkin(_, ctx, time, semaphore, redis_url, error_settings)
@@ -246,7 +248,7 @@ function _M:log()
   if limiters and next(limiters) ~= nil then
     local semaphore = ngx_semaphore.new()
     ngx.timer.at(0, checkin, ngx.ctx, ngx.var.request_time, semaphore, self.redis_url, self.error_settings)
-    semaphore:wait(10)
+    return semaphore:wait(10)
   end
 end
 

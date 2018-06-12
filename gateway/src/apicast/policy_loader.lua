@@ -12,6 +12,7 @@ local format = string.format
 local ipairs = ipairs
 local pairs = pairs
 local insert = table.insert
+local concat = table.concat
 local setmetatable = setmetatable
 local pcall = pcall
 
@@ -140,7 +141,9 @@ function _M:call(name, version, dir)
   local v = version or 'builtin'
   local load_path, policy_config_schema, invalid_paths = self:load_path(name, v, dir)
 
-  local cache = package_cache[table.concat({name, v, dir}, '-')]
+  local cache_key = concat({name, v, dir and concat(dir, ',') or '' }, '-')
+
+  local cache = package_cache[cache_key]
   local loader = sandbox.new(load_path and { load_path } or invalid_paths,
           cache)
 

@@ -168,15 +168,17 @@ describe('Rate limit policy', function()
           rate_limit_policy:access(context)
           rate_limit_policy:access(context)
 
+          local redis_key = redis:keys('*_fixed_window_test3')[1]
+          assert.equal('2', redis:get(redis_key))
           assert.spy(ngx_exit_spy).was_called_with(429)
-          assert.equal('2', redis:get('fixed_window_test3'))
         end)
 
         it('rejected (count), name_type is liquid', function()
           local ctx = { service = { id = 5 }, var_in_context = 'test3' }
           local rate_limit_policy = RateLimitPolicy.new({
             fixed_window_limiters = {
-              { key = { name = '{{ var_in_context }}', name_type = 'liquid', scope = 'global' }, count = 1, window = 10 }
+              { key = { name = '{{ var_in_context }}', name_type = 'liquid', scope = 'global' },
+                count = 1, window = 10 }
             },
             redis_url = redis_url
           })
@@ -184,7 +186,8 @@ describe('Rate limit policy', function()
           rate_limit_policy:access(ctx)
           rate_limit_policy:access(ctx)
 
-          assert.equal('2', redis:get('fixed_window_test3'))
+          local redis_key = redis:keys('*_fixed_window_test3')[1]
+          assert.equal('2', redis:get(redis_key))
           assert.spy(ngx_exit_spy).was_called_with(429)
         end)
 
@@ -199,7 +202,8 @@ describe('Rate limit policy', function()
           rate_limit_policy:access(context)
           rate_limit_policy:access(context)
 
-          assert.equal('2', redis:get('fixed_window_test3'))
+          local redis_key = redis:keys('*_fixed_window_test3')[1]
+          assert.equal('2', redis:get(redis_key))
           assert.spy(ngx_exit_spy).was_called_with(429)
         end)
       end)

@@ -83,8 +83,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key = redis:keys('*_42_connections_test1')[1]
-      redis:del(redis_key)
+      redis:del('42_connections_test1')
     }
   }
 
@@ -160,8 +159,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key = redis:keys('*_42_connections_test2')[1]
-      redis:del(redis_key)
+      redis:del('42_connections_test2')
     }
   }
 
@@ -279,8 +277,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key = redis:keys('*_connections_test4')[1]
-      redis:del(redis_key)
+      redis:del('connections_test4')
     }
   }
 
@@ -397,10 +394,8 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key1 = redis:keys('*_leaky_bucket_test6_1')[1]
-      local redis_key2 = redis:keys('*_connections_test6_2')[1]
-      local redis_key3 = redis:keys('*_fixed_window_test6_3')[1]
-      redis:del(redis_key1, redis_key2, redis_key3)
+      local redis_key = redis:keys('*_fixed_window_test6_3')[1]
+      redis:del('leaky_bucket_test6_1', 'connections_test6_2', redis_key)
     }
   }
 
@@ -475,8 +470,7 @@ Return 429 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key = redis:keys('*_connections_test7')[1]
-      redis:del(redis_key)
+      redis:del('connections_test7')
     }
   }
 
@@ -536,8 +530,7 @@ Return 503 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key = redis:keys('*_leaky_bucket_test8')[1]
-      redis:del(redis_key)
+      redis:del('leaky_bucket_test8')
     }
   }
 
@@ -676,8 +669,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key = redis:keys('*_connections_test10')[1]
-      redis:del(redis_key)
+      redis:del('connections_test10')
     }
   }
 
@@ -738,8 +730,7 @@ Return 200 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key = redis:keys('*_leaky_bucket_test11')[1]
-      redis:del(redis_key)
+      redis:del('leaky_bucket_test11')
     }
   }
 

@@ -43,6 +43,7 @@ describe('Rate limit policy', function()
   setup(function()
     ngx_exit_spy = spy.on(ngx, 'exit')
     ngx_sleep_spy = spy.on(ngx, 'sleep')
+    stub(ngx, 'time', function() return 11111 end)
   end)
 
   before_each(function()
@@ -168,7 +169,7 @@ describe('Rate limit policy', function()
           rate_limit_policy:access(context)
           rate_limit_policy:access(context)
 
-          local redis_key = redis:keys('*_fixed_window_test3')[1]
+          local redis_key = redis:keys('11110_fixed_window_test3')[1]
           assert.equal('2', redis:get(redis_key))
           assert.spy(ngx_exit_spy).was_called_with(429)
         end)
@@ -186,7 +187,7 @@ describe('Rate limit policy', function()
           rate_limit_policy:access(ctx)
           rate_limit_policy:access(ctx)
 
-          local redis_key = redis:keys('*_fixed_window_test3')[1]
+          local redis_key = redis:keys('11110_fixed_window_test3')[1]
           assert.equal('2', redis:get(redis_key))
           assert.spy(ngx_exit_spy).was_called_with(429)
         end)
@@ -202,7 +203,7 @@ describe('Rate limit policy', function()
           rate_limit_policy:access(context)
           rate_limit_policy:access(context)
 
-          local redis_key = redis:keys('*_fixed_window_test3')[1]
+          local redis_key = redis:keys('11110_fixed_window_test3')[1]
           assert.equal('2', redis:get(redis_key))
           assert.spy(ngx_exit_spy).was_called_with(429)
         end)

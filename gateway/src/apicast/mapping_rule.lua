@@ -11,6 +11,7 @@ local type = type
 local format = string.format
 local re_match = ngx.re.match
 local insert = table.insert
+local re_gsub = ngx.re.gsub
 
 local _M = {}
 
@@ -27,7 +28,11 @@ local function hash_to_array(hash)
 end
 
 local function regexpify(pattern)
-  return pattern:gsub('?.*', ''):gsub("{.-}", '([\\w_.-]+)'):gsub("%.", "\\.")
+  pattern = re_gsub(pattern, [[\?.*]], '', 'oj')
+  -- dollar sign is escaped by another $, see https://github.com/openresty/lua-nginx-module#ngxresub
+  pattern = re_gsub(pattern, [[\{.+?\}]], [[([\w-.~%!$$&'()*+,;=@:]+)]], 'oj')
+  pattern = re_gsub(pattern, [[\.]], [[\.]], 'oj')
+  return pattern
 end
 
 local regex_variable = '\\{[-\\w_]+\\}'

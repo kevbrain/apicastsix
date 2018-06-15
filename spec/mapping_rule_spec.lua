@@ -79,5 +79,20 @@ describe('mapping_rule', function()
       local match = mapping_rule:matches('POST', '/def', { x = 'y' })
       assert.is_false(match)
     end)
+
+    it('returns true when wildcard value has special characters: @ : % etc.', function()
+      local mapping_rule = MappingRule.from_proxy_rule({
+        http_method = 'GET',
+        pattern = '/foo/{wildcard}/bar',
+        querystring_parameters = { },
+        metric_system_name = 'hits',
+        delta = 1
+      })
+
+      assert.is_true(mapping_rule:matches('GET', '/foo/a@b/bar'))
+      assert.is_true(mapping_rule:matches('GET', '/foo/a:b/bar'))
+      assert.is_true(mapping_rule:matches('GET', "/foo/a%b/bar"))
+    end)
+
   end)
 end)

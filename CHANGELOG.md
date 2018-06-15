@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Decoded JWTs are now exposed in the policies context by the APIcast policy [PR #718](https://github.com/3scale/apicast/pull/718)
 - Upgraded OpenResty to 1.13.6.2, uses OpenSSL 1.1 [PR #733](https://github.com/3scale/apicast/pull/733)
 - Use forked `resty.limit.count` that uses increments instead of decrements [PR #758](https://github.com/3scale/apicast/pull/758)
+- Rate Limit policy to take into account changes in the config [PR #703](https://github.com/3scale/apicast/pull/703)
 - The regular expression for mapping rules has been changed, so that special characters are accepted in the wildcard values for path [PR #717](https://github.com/3scale/apicast/pull/714)
 
 ### Fixed

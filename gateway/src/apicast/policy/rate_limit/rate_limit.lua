@@ -86,6 +86,7 @@ local function build_limiters_and_keys(type, limiters, redis, error_settings, co
 
   for _, limiter in ipairs(limiters) do
     local lim, initerr = traffic_limiters[type](limiter)
+
     if not lim then
       ngx.log(ngx.ERR, "unknown limiter: ", type, ", err: ", initerr)
       error(error_settings, "configuration_issue")
@@ -102,6 +103,11 @@ local function build_limiters_and_keys(type, limiters, redis, error_settings, co
       key = format("%s_%s", type, key)
     else
       key = format("%s_%s_%s", context.service.id, type, key)
+    end
+    if type == "fixed_window" then
+      local time = ngx.time()
+      local window = limiter.window
+      key = format("%d_%s", time - (time % window), key)
     end
 
     insert(res_keys, key)

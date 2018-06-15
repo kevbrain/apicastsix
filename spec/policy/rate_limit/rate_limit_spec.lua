@@ -59,8 +59,30 @@ describe('Rate limit policy', function()
   end)
 
   describe('.access', function()
+    describe('missing shdict', function ()
+      before_each(function()
+        ngx.shared.limiter = nil
+      end)
+
+      it('does not crash', function()
+        local rate_limit_policy = RateLimitPolicy.new({
+          connection_limiters = {
+            { key = { name = 'test1', scope = 'global' }, conn = 0, burst = 0, delay = 0 }
+          },
+          leaky_bucket_limiters = {
+            { key = { name = 'test2', scope = 'global' }, rate = 0, burst = 0 }
+          },
+          fixed_window_limiters = {
+            { key = { name = 'test3', scope = 'global' }, count = 0, window = 0 }
+          },
+        })
+
+        assert(rate_limit_policy:access(context))
+      end)
+    end)
+
     describe('using #shmem', function()
-      setup(function()
+      before_each(function()
         ngx.shared.limiter = shdict()
       end)
 

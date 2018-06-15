@@ -11,7 +11,13 @@ local mt = {
 }
 
 function _M.new(...)
-    return setmetatable(resty_limit_count.new(...), mt)
+    local lim, err = resty_limit_count.new(...)
+
+    if lim then
+        return setmetatable(lim, mt)
+    else
+        return nil, err
+    end
 end
 
 function _M.incoming(self, key, commit)

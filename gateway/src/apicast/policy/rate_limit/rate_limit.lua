@@ -148,7 +148,7 @@ function _M:access(context)
     if not red then
       ngx.log(ngx.ERR, "failed to connect Redis: ", rederr)
       error(self.error_settings, "configuration_issue")
-      return
+      return nil, rederr
     end
   end
 

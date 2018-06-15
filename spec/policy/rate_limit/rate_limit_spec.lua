@@ -19,14 +19,6 @@ local function shdict()
   return setmetatable({ }, shdict_mt)
 end
 
-local function is_gt(_, arguments)
-  local expected = arguments[1]
-  return function(value)
-    return value > expected
-  end
-end
-assert:register("matcher", "gt", is_gt)
-
 local ts = require ('apicast.threescale_utils')
 
 local redis_host = env.get('TEST_NGINX_REDIS_HOST') or 'localhost'
@@ -36,13 +28,14 @@ local redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
 local redis = ts.connect_redis{ url = redis_url }
 
 describe('Rate limit policy', function()
-  local ngx_exit_spy
-  local ngx_sleep_spy
+  local ngx_exit
+  local ngx_sleep
   local context
 
   setup(function()
-    ngx_exit_spy = spy.on(ngx, 'exit')
-    ngx_sleep_spy = spy.on(ngx, 'sleep')
+    ngx_exit = stub(ngx, 'exit')
+    ngx_sleep = stub(ngx, 'sleep')
+
     stub(ngx, 'time', function() return 11111 end)
   end)
 
@@ -124,9 +117,9 @@ describe('Rate limit policy', function()
           redis_url = 'redis://invalidhost:'..redis_port..'/1'
         })
 
-        rate_limit_policy:access(context)
+        assert.returns_error('failed to connect to redis on invalidhost:6379', rate_limit_policy:access(context))
 
-        assert.spy(ngx_exit_spy).was_called_with(500)
+        assert.spy(ngx_exit).was_called_with(500)
       end)
 
       describe('rejection', function()
@@ -138,24 +131,24 @@ describe('Rate limit policy', function()
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(context)
-          rate_limit_policy:access(context)
+          assert(rate_limit_policy:access(context))
+          assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          assert.spy(ngx_exit_spy).was_called_with(429)
+          assert.spy(ngx_exit).was_called_with(429)
         end)
 
         it('rejected (req)', function()
           local rate_limit_policy = RateLimitPolicy.new({
             leaky_bucket_limiters = {
-              { key = { name = 'test2', scope = 'global' }, rate = 1, burst = 0 }
+              { key = { name = 'test2foofoo', scope = 'global' }, rate = 1, burst = 0 }
             },
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(context)
-          rate_limit_policy:access(context)
+          assert(rate_limit_policy:access(context))
+          assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          assert.spy(ngx_exit_spy).was_called_with(429)
+          assert.spy(ngx_exit).was_called_with(429)
         end)
 
         it('rejected (count), name_type is plain', function()
@@ -166,12 +159,11 @@ describe('Rate limit policy', function()
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(context)
-          rate_limit_policy:access(context)
+          assert(rate_limit_policy:access(context))
+          assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          local redis_key = redis:keys('11110_fixed_window_test3')[1]
-          assert.equal('2', redis:get(redis_key))
-          assert.spy(ngx_exit_spy).was_called_with(429)
+          assert.equal('2', redis:get('11110_fixed_window_test3'))
+          assert.spy(ngx_exit).was_called_with(429)
         end)
 
         it('rejected (count), name_type is liquid', function()
@@ -184,12 +176,11 @@ describe('Rate limit policy', function()
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(ctx)
-          rate_limit_policy:access(ctx)
+          assert(rate_limit_policy:access(ctx))
+          assert.returns_error('limits exceeded', rate_limit_policy:access(ctx))
 
-          local redis_key = redis:keys('11110_fixed_window_test3')[1]
-          assert.equal('2', redis:get(redis_key))
-          assert.spy(ngx_exit_spy).was_called_with(429)
+          assert.equal('2', redis:get('11110_fixed_window_test3'))
+          assert.spy(ngx_exit).was_called_with(429)
         end)
 
         it('rejected (count), name_type is liquid, ngx variable', function()
@@ -200,12 +191,11 @@ describe('Rate limit policy', function()
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(context)
-          rate_limit_policy:access(context)
+          assert(rate_limit_policy:access(context))
+          assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          local redis_key = redis:keys('11110_fixed_window_test3')[1]
-          assert.equal('2', redis:get(redis_key))
-          assert.spy(ngx_exit_spy).was_called_with(429)
+          assert.equal('2', redis:get('11110_fixed_window_test3'))
+          assert.spy(ngx_exit).was_called_with(429)
         end)
       end)
 
@@ -218,10 +208,10 @@ describe('Rate limit policy', function()
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(context)
-          rate_limit_policy:access(context)
+          assert(rate_limit_policy:access(context))
+          assert(rate_limit_policy:access(context))
 
-          assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
+          assert.spy(ngx_sleep).was_called_with(match.is_gt(0.000))
         end)
 
         it('delay (req)', function()
@@ -232,10 +222,10 @@ describe('Rate limit policy', function()
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(context)
-          rate_limit_policy:access(context)
+          assert(rate_limit_policy:access(context))
+          assert(rate_limit_policy:access(context))
 
-          assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
+          assert.spy(ngx_sleep).was_called_with(match.is_gt(0.000))
         end)
 
         it('delay (req) service scope', function()
@@ -250,10 +240,10 @@ describe('Rate limit policy', function()
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(context)
-          rate_limit_policy:access(context)
+          assert(rate_limit_policy:access(context))
+          assert(rate_limit_policy:access(context))
 
-          assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
+          assert.spy(ngx_sleep).was_called_with(match.is_gt(0.001))
         end)
 
         it('delay (req) default service scope', function()
@@ -268,10 +258,10 @@ describe('Rate limit policy', function()
             redis_url = redis_url
           })
 
-          rate_limit_policy:access(context)
-          rate_limit_policy:access(context)
+          assert(rate_limit_policy:access(context))
+          assert(rate_limit_policy:access(context))
 
-          assert.spy(ngx_sleep_spy).was_called_with(match.is_gt(0.001))
+          assert.spy(ngx_sleep).was_called_with(match.is_gt(0.001))
         end)
       end)
     end)
@@ -285,7 +275,7 @@ describe('Rate limit policy', function()
           redis_url = redis_url
         })
 
-        rate_limit_policy:access(context)
+        assert(rate_limit_policy:access(context))
 
         assert(rate_limit_policy:log())
       end)

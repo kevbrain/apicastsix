@@ -6,9 +6,11 @@ local configuration_store = require('apicast.configuration_store')
 
 local new = _M.new
 
+_M.configuration = configuration_store.new()
+
 function _M.new(...)
     local policy = new(...)
-    policy.configuration = configuration_store.new()
+    policy.configuration = _M.configuration
     return policy
 end
 
@@ -18,12 +20,12 @@ function _M:export()
     }
 end
 
-function _M:init()
-    configuration_loader.init(self.configuration)
+function _M.init()
+    configuration_loader.init(_M.configuration)
 end
 
-function _M:init_worker()
-    configuration_loader.init_worker(self.configuration)
+function _M.init_worker()
+    configuration_loader.init_worker(_M.configuration)
 end
 
 function _M:rewrite(context)

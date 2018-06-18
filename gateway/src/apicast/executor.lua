@@ -10,7 +10,7 @@ local PolicyChain = require('apicast.policy_chain')
 local policy = require('apicast.policy')
 local linked_list = require('apicast.linked_list')
 local prometheus = require('apicast.prometheus')
-local policy_loader = require('apicast.policy_loader')
+
 
 local setmetatable = setmetatable
 local ipairs = ipairs
@@ -18,8 +18,6 @@ local ipairs = ipairs
 local _M = { }
 
 local mt = { __index = _M }
-
-local policy_modules = policy_loader:get_all()
 
 -- forward all policy methods to the policy chain
 for _,phase in policy.phases() do
@@ -63,24 +61,41 @@ function _M:context(phase)
     return shared_build_context(self)
 end
 
-local init = _M.init
-function _M:init()
-    init(self)
+do
+    local policy_loader = require('apicast.policy_loader')
+    local policies
 
-    for _, policy_mod in ipairs(policy_modules) do
-       if policy_mod.init then
-           policy_mod.init()
-       end
+    local init = _M.init
+    function _M:init()
+        local executed = {}
+
+        for _,policy in init(self) do
+            executed[policy.init] = true
+        end
+
+        policies = policy_loader:get_all()
+
+        for _, policy in ipairs(policies) do
+            if not executed[policy.init] then
+                policy.init()
+                executed[policy.init] = true
+            end
+        end
     end
-end
 
-local init_worker = _M.init_worker
-function _M:init_worker()
-    init_worker(self)
+    local init_worker = _M.init_worker
+    function _M:init_worker()
+        local executed = {}
 
-    for _, policy_mod in ipairs(policy_modules) do
-        if policy_mod.init_worker then
-            policy_mod.init_worker()
+        for _,policy in init_worker(self) do
+            executed[policy.init_worker] = true
+        end
+
+        for _, policy in ipairs(policies or policy_loader:get_all()) do
+            if not executed[policy.init_worker] then
+                policy.init_worker()
+                executed[policy.init_worker] = true
+            end
         end
     end
 end

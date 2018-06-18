@@ -1,4 +1,4 @@
-local executor = require 'apicast.executor'
+local Executor = require 'apicast.executor'
 local PolicyChain = require 'apicast.policy_chain'
 local Policy = require 'apicast.policy'
 
@@ -9,7 +9,7 @@ describe('executor', function()
 
   it('forwards all the policy methods to the policy chain', function()
     local chain = PolicyChain.default()
-    local exec = executor.new(chain)
+    local exec = Executor.new(chain)
     -- Stub all the nginx phases methods for each of the policies
     for _, phase in Policy.phases() do
       for _, policy in ipairs(chain) do
@@ -22,14 +22,44 @@ describe('executor', function()
     for _, phase in Policy.phases() do
       exec[phase](exec)
       for _, policy in ipairs(chain) do
-        assert.stub(policy[phase]).was_called()
+        assert.stub(policy[phase]).was_called(1)
       end
     end
   end)
 
+
+  context('policy is in the chain', function()
+
+    local executor
+    local policy
+
+    before_each(function()
+      local chain = PolicyChain.build({'apicast.policy.apicast'})
+      policy = getmetatable(chain[1]).__index
+      executor = Executor.new(chain)
+    end)
+
+    it('calls .init just once', function()
+      local init = stub(policy, 'init')
+
+      executor:init()
+
+      assert.stub(init).was_called(1)
+    end)
+
+    it('calls .init_worker just once', function()
+      local init = stub(policy, 'init_worker')
+
+      executor:init_worker()
+
+      assert.stub(init).was_called(1)
+    end)
+  end)
+
+
   it('is initialized with default chain', function()
     local default = PolicyChain.default()
-    local policy_chain = executor.policy_chain
+    local policy_chain = Executor.policy_chain
 
     assert.same(#default, #policy_chain)
 
@@ -45,7 +75,7 @@ describe('executor', function()
     local chain = PolicyChain.new({})
     assert.falsy(chain.frozen)
 
-    executor.new(chain)
+    Executor.new(chain)
     assert.truthy(chain.frozen)
   end)
 
@@ -58,7 +88,7 @@ describe('executor', function()
       policy_2.export = function() return { p2 = '2' } end
 
       local chain = PolicyChain.new({ policy_1, policy_2 })
-      local context = executor.new(chain):context('rewrite')
+      local context = Executor.new(chain):context('rewrite')
 
       assert.equal('1', context.p1)
       assert.equal('2', context.p2)
@@ -77,7 +107,7 @@ describe('executor', function()
       local inner_chain = PolicyChain.new({ policy_2, policy_3 })
       local outer_chain = PolicyChain.new({ policy_1, inner_chain })
 
-      local context = executor.new(outer_chain):context('rewrite')
+      local context = Executor.new(outer_chain):context('rewrite')
 
       assert.equal('1', context.p1)
       assert.equal('2', context.p2)

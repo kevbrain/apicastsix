@@ -26,18 +26,18 @@ local setmetatable = setmetatable
 local ipairs = ipairs
 local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
-local semaphore = require('ngx.semaphore')
+local ngx_semaphore = require('ngx.semaphore')
 local backend_client = require('apicast.backend_client')
 local http_ng_ngx = require('resty.http_ng.backend.ngx')
-local timers = semaphore.new(tonumber(env.get('APICAST_REPORTING_THREADS') or 0))
+local timers = ngx_semaphore.new(tonumber(env.get('APICAST_REPORTING_THREADS') or 0))
 
 local empty = {}
 
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
 
-local using_post_action = response_codes or timers:count() < 1
+local using_sync_post_action = response_codes or timers:count() < 1
 
-if not using_post_action then
+if not using_sync_post_action then
   ngx.log(ngx.WARN, 'using experimental asynchronous reporting threads: ', timers:count())
 end
 
@@ -151,10 +151,6 @@ function _M:authorize(service, usage, credentials, ttl)
         return errors.authorization_failed(service)
       end
     end
-  end
-
-  if not using_post_action then
-    self:post_action(true)
   end
 end
 
@@ -313,22 +309,21 @@ local function response_codes_data()
   return params
 end
 
-local function post_action(_, self, cached_key, backend, ...)
+local function handle_timer_post_action(_, self, semaphore, cached_key, backend, ...)
   local res = util.timer('backend post_action', backend.authrep, backend, ...)
 
-  if not using_post_action then
-    timers:post(1)
+  if not using_sync_post_action then
+    semaphore:post(1)
   end
 
   self:handle_backend_response(cached_key, res)
 end
 
-local function capture_post_action(self, cached_key, service)
+local function sync_post_action(self, cached_key, service, credentials, formatted_usage)
   local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
-  local formatted_usage = format_usage(self.usage)
   local res = backend:authrep(
     formatted_usage,
-    self.credentials,
+    credentials,
     response_codes_data(),
     self.extra_params_backend_authrep
   )
@@ -336,7 +331,7 @@ local function capture_post_action(self, cached_key, service)
   self:handle_backend_response(cached_key, res)
 end
 
-local function timer_post_action(self, cached_key, service)
+local function async_post_action(self, cached_key, service, credentials, formatted_usage)
   local backend = assert(backend_client:new(service), 'missing backend')
 
   local ok, err = timers:wait(10)
@@ -344,34 +339,34 @@ local function timer_post_action(self, cached_key, service)
   if ok then
     -- TODO: try to do this in different phase and use semaphore to limit number of background threads
     -- TODO: Also it is possible to use sets in shared memory to enqueue work
-    local formatted_usage = format_usage(self.usage)
-    ngx.timer.at(0, post_action, self, cached_key, backend, formatted_usage, self.credentials, response_codes_data())
+
+    ngx.timer.at(0, handle_timer_post_action, self, timers, cached_key, backend, formatted_usage, credentials, response_codes_data())
   else
     ngx.log(ngx.ERR, 'failed to acquire timer: ', err)
-    return capture_post_action(self, cached_key, service)
+    return sync_post_action(self, cached_key, service)
   end
 end
 
-function _M:post_action(force)
-  if not using_post_action and not force then
-    return nil, 'post action not needed'
-  end
-
+function _M:post_action(_)
   local cached_key = ngx.var.cached_key
 
-  if cached_key and cached_key ~= "null" and cached_key ~= '' then
-    ngx.log(ngx.INFO, '[async] reporting to backend asynchronously, cached_key: ', cached_key)
+  if not cached_key or cached_key == "null" or cached_key == '' then
+      ngx.log(ngx.INFO, '[async] skipping after action, no cached key')
+      return
+  end
 
-    local service_id = ngx.var.service_id
-    local service = ngx.ctx.service or self.configuration:find_by_id(service_id)
+  ngx.log(ngx.INFO, '[async] reporting to backend asynchronously, cached_key: ', cached_key)
 
-    if using_post_action then
-      capture_post_action(self, cached_key, service)
-    else
-      timer_post_action(self, cached_key, service)
-    end
+  local service_id = ngx.var.service_id
+  local service = ngx.ctx.service or self.configuration:find_by_id(service_id)
+
+  local credentials = self.credentials
+  local formatted_usage = format_usage(self.usage)
+
+  if using_sync_post_action then
+    sync_post_action(self, cached_key, service, credentials, formatted_usage)
   else
-    ngx.log(ngx.INFO, '[async] skipping after action, no cached key')
+    async_post_action(self, cached_key, service, credentials, formatted_usage)
   end
 end
 

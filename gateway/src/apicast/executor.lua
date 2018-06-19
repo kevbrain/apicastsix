@@ -7,7 +7,7 @@
 require('apicast.loader') -- to load code from deprecated paths
 
 local PolicyChain = require('apicast.policy_chain')
-local policy = require('apicast.policy')
+local Policy = require('apicast.policy')
 local linked_list = require('apicast.linked_list')
 local prometheus = require('apicast.prometheus')
 
@@ -20,7 +20,7 @@ local _M = { }
 local mt = { __index = _M }
 
 -- forward all policy methods to the policy chain
-for _,phase in policy.phases() do
+for _,phase in Policy.phases() do
     _M[phase] = function(self, ...)
         ngx.log(ngx.DEBUG, 'executor phase: ', phase)
         return self.policy_chain[phase](self.policy_chain, self:context(phase), ...)

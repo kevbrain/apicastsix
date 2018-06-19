@@ -35,7 +35,7 @@ end
 
 function _M.init()
   iputils.enable_lrucache()
-  apicast:init()
+  apicast.init()
 end
 
 local balancer_with_blacklist = resty_balancer.new(function(peers)

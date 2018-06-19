@@ -9,7 +9,8 @@ __DATA__
 This test uses the phase logger policy to verify that all of its phases are run
 when we use a policy chain that contains it. The policy chain also contains the
 normal apicast policy, so we can check that the authorize flow continues working.
-Phases init and init_worker are not executed for policies defined at the service level.
+Phases init and init_worker do not appear in the test because they're run just
+once, not on every request.
 
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;

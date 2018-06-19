@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Use forked `resty.limit.count` that uses increments instead of decrements [PR #758](https://github.com/3scale/apicast/pull/758)
 - Rate Limit policy to take into account changes in the config [PR #703](https://github.com/3scale/apicast/pull/703)
 - The regular expression for mapping rules has been changed, so that special characters are accepted in the wildcard values for path [PR #717](https://github.com/3scale/apicast/pull/714)
+- Call `init` and `init_worker` on all available policies regardless they are used or not [PR #770](https://github.com/3scale/apicast/pull/770)
+- Cache loaded policies. Loading one policy several times will use the same instance [PR #770](https://github.com/3scale/apicast/pull/770)
+- Load all policies into cache when starting APIcast master process. [PR #770](https://github.com/3scale/apicast/pull/770)
+- `init` and `init_worker` phases are executed on the policy module, not the instance of a policy with a configuration [PR #770](https://github.com/3scale/apicast/pull/770)
 
 ### Fixed
 

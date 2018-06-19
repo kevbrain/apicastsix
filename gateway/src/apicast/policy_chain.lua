@@ -9,6 +9,7 @@ local setmetatable = setmetatable
 local error = error
 local rawset = rawset
 local type = type
+local ipairs = ipairs
 local require = require
 local insert = table.insert
 local sub = string.sub
@@ -153,6 +154,8 @@ local function call_chain(phase_name)
             ngx.log(ngx.DEBUG, 'policy chain execute phase: ', phase_name, ', policy: ', self[i]._NAME, ', i: ', i)
             self[i][phase_name](self[i], ...)
         end
+
+        return ipairs(self)
     end
 end
 

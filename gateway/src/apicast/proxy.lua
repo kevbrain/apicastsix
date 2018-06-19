@@ -261,9 +261,6 @@ function _M:rewrite(service, context)
   ctx.usage = context.usage
   ctx.credentials = credentials
 
-  self.credentials = credentials
-  self.usage = context.usage
-
   var.cached_key = concat(cached_key, ':')
 
   if debug_header_enabled(service) then
@@ -358,7 +355,7 @@ local function async_post_action(self, cached_key, service, credentials, formatt
   end
 end
 
-function _M:post_action(_)
+function _M:post_action(context)
   local cached_key = ngx.var.cached_key
 
   if not cached_key or cached_key == "null" or cached_key == '' then
@@ -371,8 +368,8 @@ function _M:post_action(_)
   local service_id = ngx.var.service_id
   local service = ngx.ctx.service or self.configuration:find_by_id(service_id)
 
-  local credentials = self.credentials
-  local formatted_usage = format_usage(self.usage)
+  local credentials = context.credentials
+  local formatted_usage = format_usage(context.usage)
 
   if using_sync_post_action then
     sync_post_action(self, cached_key, service, credentials, formatted_usage)

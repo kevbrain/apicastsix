@@ -98,6 +98,10 @@ do
             end
         end
     end
+
+    function _M.reset_available_policies()
+        policies = policy_loader:get_all()
+    end
 end
 
 local metrics = _M.metrics

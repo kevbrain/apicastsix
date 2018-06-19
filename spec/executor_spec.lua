@@ -56,6 +56,38 @@ describe('executor', function()
     end)
   end)
 
+  describe('when there are policies that are not in the chain', function()
+    local policy_not_in_chain = {
+      init = function() return '1' end,
+      init_worker = function() return '2' end
+    }
+
+    before_each(function()
+      stub(policy_not_in_chain, 'init')
+      stub(policy_not_in_chain, 'init_worker')
+
+      local policy_loader = require('apicast.policy_loader')
+      stub(policy_loader, 'get_all').returns({ policy_not_in_chain })
+
+      Executor.reset_available_policies()
+    end)
+
+    it('init() calls their init method', function()
+      local executor = Executor.new(PolicyChain.default())
+
+      executor:init()
+
+      assert.stub(policy_not_in_chain.init).was_called(1)
+    end)
+
+    it('init_worker() calls their init_worker method', function()
+      local executor = Executor.new(PolicyChain.default())
+
+      executor:init_worker()
+
+      assert.stub(policy_not_in_chain.init_worker).was_called(1)
+    end)
+  end)
 
   it('is initialized with default chain', function()
     local default = PolicyChain.default()

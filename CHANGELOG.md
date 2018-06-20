@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - 3scale batcher policy [PR #685](https://github.com/3scale/apicast/pull/685), [PR #710](https://github.com/3scale/apicast/pull/710), [PR #757](https://github.com/3scale/apicast/pull/757)
 - Liquid templating support in the headers policy configuration [PR #716](https://github.com/3scale/apicast/pull/716)
 - Ability to modify query parameters in the URL rewriting policy [PR #724](https://github.com/3scale/apicast/pull/724)
-- 3scale referrer policy [PR #728](https://github.com/3scale/apicast/pull/728)
+- 3scale referrer policy [PR #728](https://github.com/3scale/apicast/pull/728), [PR #777](https://github.com/3scale/apicast/pull/777)
 - Liquid templating support in the rate-limit policy [PR #719](https://github.com/3scale/apicast/pull/719)
 - Default credentials policy [PR #741](https://github.com/3scale/apicast/pull/741), [THREESCALE-586](https://issues.jboss.org/browse/THREESCALE-586)
 - Configurable caching for the token introspection policy [PR #656](https://github.com/3scale/apicast/pull/656)

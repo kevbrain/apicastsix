@@ -195,9 +195,11 @@ jobs:
       - checkout
       - <<: *attach-workspace
       - run:
+          name: 'prove'
           command: /usr/libexec/s2i/entrypoint make prove
           environment:
             JUNIT_OUTPUT_FILE: tmp/junit/prove/report.xml
+            TEST_NGINX_ERROR_LOG: tmp/junit/prove/error.log
             HARNESS: TAP::Harness::JUnit
       - run:
           name: Report Integration Test Code Coverage

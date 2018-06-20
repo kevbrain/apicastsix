@@ -299,9 +299,6 @@ function _M:rewrite(service, context)
   ctx.usage = context.usage
   ctx.credentials = credentials
 
-  self.credentials = credentials
-  self.usage = context.usage
-
   var.cached_key = concat(cached_key, ':')
 
   if debug_header_enabled(service) then
@@ -321,6 +318,9 @@ function _M:rewrite(service, context)
     ctx.credentials = credentials
     ctx.ttl = ttl
   end
+
+  self.credentials = credentials
+  self.usage = context.usage
 end
 
 function _M:access(service, usage, credentials, ttl)

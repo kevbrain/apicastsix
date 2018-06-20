@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Reporting only 50% calls to 3scale backend when using OIDC [PR #779](https://github.com/3scale/apicast/pull/779)
+
 ## [3.2.0] - 2018-06-04
 
 3.2.0-rc2 was considered final and became 3.2.0.

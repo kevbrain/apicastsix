@@ -62,7 +62,7 @@ function _M:post_action(context)
   local p = context and context.proxy or ngx.ctx.proxy or self.proxy
 
   if p then
-    return p:post_action()
+    return p:post_action(context)
   else
     ngx.log(ngx.ERR, 'could not find proxy for request')
     return nil, 'no proxy for request'

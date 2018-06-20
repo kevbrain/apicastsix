@@ -157,12 +157,11 @@ jobs:
             command: $(make rover) exec make busted
             environment:
               JUNIT_OUTPUT_FILE: tmp/junit/busted/report.xml
-
         - run:
             name: Report Unit Test Code Coverage
             command: |
               set +x # allow failures
-              curl -s https://codecov.io/bash | bash -s - -F busted -c
+              curl -s https://codecov.io/bash | bash -s - -F busted
             when: always
         - store_test_results:
             path: tmp/junit
@@ -204,7 +203,7 @@ jobs:
           name: Report Integration Test Code Coverage
           command: |
             set +x # allow failures
-            curl -s https://codecov.io/bash | bash -s - -f 'luacov.report.*.out' -F prove -c
+            curl -s https://codecov.io/bash | bash -s - -f 'luacov.report.*.out' -F prove
           when: always
       - store_test_results:
           path: tmp/junit

@@ -78,9 +78,14 @@ cpan: $(CPANM)
 PERL5LIB:=$(PWD)/local/lib/perl5:$(PERL5LIB)
 export PERL5LIB
 
-carton: export PERL_CARTON_CPANFILE=$(PWD)/gateway/cpanfile
+CPANFILE ?= $(PWD)/gateway/cpanfile
+
+$(CPANFILE).snapshot : $(CPANFILE)
+	$(CARTON) install --cached
+
+carton: export PERL_CARTON_CPANFILE=$(CPANFILE)
 carton: export PERL_CARTON_PATH=$(PWD)/local
-carton: $(CARTON)
+carton: $(CARTON) $(CPANFILE).snapshot
 carton:
 	$(CARTON) install --deployment --cached
 	$(CARTON) bundle 2> /dev/null

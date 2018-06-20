@@ -12,3 +12,4 @@ tmp/benchmark/
 .cache/
 /vendor/cache
 /.docker
+/tmp/

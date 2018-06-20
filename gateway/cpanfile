@@ -1,5 +1,6 @@
 requires 'Test::APIcast', '0.14';
 requires 'Crypt::JWT';
 requires 'Test::Deep';
+requires 'TAP::Harness::JUnit';
 requires 'File::Slurp';
 requires 'JSON';

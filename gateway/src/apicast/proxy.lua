@@ -340,7 +340,18 @@ local function async_post_action(self, cached_key, service, credentials, formatt
     -- TODO: try to do this in different phase and use semaphore to limit number of background threads
     -- TODO: Also it is possible to use sets in shared memory to enqueue work
 
-    ngx.timer.at(0, handle_timer_post_action, self, timers, cached_key, backend, formatted_usage, credentials, response_codes_data())
+    ngx.timer.at(
+      0,
+      handle_timer_post_action,
+      self,
+      timers,
+      cached_key,
+      backend,
+      formatted_usage,
+      credentials,
+      response_codes_data(),
+      self.extra_params_backend_authrep
+    )
   else
     ngx.log(ngx.ERR, 'failed to acquire timer: ', err)
     return sync_post_action(self, cached_key, service)

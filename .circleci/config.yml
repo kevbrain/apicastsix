@@ -156,7 +156,7 @@ jobs:
             name: 'busted'
             command: $(make rover) exec make busted
             environment:
-              JUNIT_OUTPUT_FILE: tmp/junit/prove/report.xml
+              JUNIT_OUTPUT_FILE: tmp/junit/busted/report.xml
 
         - run:
             name: Report Unit Test Code Coverage

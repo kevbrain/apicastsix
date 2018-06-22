@@ -8,7 +8,6 @@
 
 local env = require 'resty.env'
 local custom_config = env.get('APICAST_CUSTOM_CONFIG')
-local util = require('apicast.util')
 local resty_lrucache = require('resty.lrucache')
 local backend_cache_handler = require('apicast.backend.cache_handler')
 local Usage = require('apicast.usage')
@@ -26,20 +25,25 @@ local setmetatable = setmetatable
 local ipairs = ipairs
 local encode_args = ngx.encode_args
 local resty_resolver = require 'resty.resolver'
-local ngx_semaphore = require('ngx.semaphore')
 local backend_client = require('apicast.backend_client')
 local http_ng_ngx = require('resty.http_ng.backend.ngx')
-local timers = ngx_semaphore.new(tonumber(env.get('APICAST_REPORTING_THREADS') or 0))
-
-local empty = {}
 
 local response_codes = env.enabled('APICAST_RESPONSE_CODES')
+local reporting_executor = require('resty.concurrent.immediate_executor')
+do
+  local reporting_threads = tonumber(env.value('APICAST_REPORTING_THREADS')) or 0
 
-local using_sync_post_action = response_codes or timers:count() < 1
+  if reporting_threads > 0 and not response_codes then
+    reporting_executor = require('resty.concurrent.timer_pool_executor').new({
+      max_timers = reporting_threads,
+      fallback_policy = 'caller_runs',
+    })
 
-if not using_sync_post_action then
-  ngx.log(ngx.WARN, 'using experimental asynchronous reporting threads: ', timers:count())
+    ngx.log(ngx.WARN, 'using experimental asynchronous reporting threads: ', reporting_threads)
+  end
 end
+
+local empty = {}
 
 local _M = { }
 
@@ -306,53 +310,29 @@ local function response_codes_data()
   return params
 end
 
-local function handle_timer_post_action(_, self, semaphore, cached_key, backend, ...)
-  local res = util.timer('backend post_action', backend.authrep, backend, ...)
+-- resty.http_ng.backend.ngx is using ngx.location.capture, which is available only
+-- on rewrite, access and content phases. We need to use cosockets (http_ng default backend)
+-- everywhere else (like timers).
+local http_ng_backend_phase = {
+  access = http_ng_ngx,
+  rewrite = http_ng_ngx,
+  content = http_ng_ngx,
+}
 
-  if not using_sync_post_action then
-    semaphore:post(1)
-  end
-
-  self:handle_backend_response(cached_key, res)
+local function build_backend_client(service)
+  return backend_client:new(service, http_ng_backend_phase[ngx.get_phase()])
 end
 
-local function sync_post_action(self, cached_key, service, credentials, formatted_usage)
-  local backend = assert(backend_client:new(service, http_ng_ngx), 'missing backend')
+local function post_action(self, cached_key, service, credentials, formatted_usage)
+  local backend = assert(build_backend_client(service), 'missing backend')
   local res = backend:authrep(
-    formatted_usage,
-    credentials,
-    response_codes_data(),
-    self.extra_params_backend_authrep
+          formatted_usage,
+          credentials,
+          response_codes_data(),
+          self.extra_params_backend_authrep
   )
 
   self:handle_backend_response(cached_key, res)
-end
-
-local function async_post_action(self, cached_key, service, credentials, formatted_usage)
-  local backend = assert(backend_client:new(service), 'missing backend')
-
-  local ok, err = timers:wait(10)
-
-  if ok then
-    -- TODO: try to do this in different phase and use semaphore to limit number of background threads
-    -- TODO: Also it is possible to use sets in shared memory to enqueue work
-
-    ngx.timer.at(
-      0,
-      handle_timer_post_action,
-      self,
-      timers,
-      cached_key,
-      backend,
-      formatted_usage,
-      credentials,
-      response_codes_data(),
-      self.extra_params_backend_authrep
-    )
-  else
-    ngx.log(ngx.ERR, 'failed to acquire timer: ', err)
-    return sync_post_action(self, cached_key, service)
-  end
 end
 
 function _M:post_action(context)
@@ -371,11 +351,7 @@ function _M:post_action(context)
   local credentials = context.credentials
   local formatted_usage = format_usage(context.usage)
 
-  if using_sync_post_action then
-    sync_post_action(self, cached_key, service, credentials, formatted_usage)
-  else
-    async_post_action(self, cached_key, service, credentials, formatted_usage)
-  end
+  reporting_executor:post(post_action, self, cached_key, service, credentials, formatted_usage)
 end
 
 -- Returns the rejection reason from the headers of a 3scale backend response.

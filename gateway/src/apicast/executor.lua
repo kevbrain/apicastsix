@@ -10,7 +10,7 @@ local PolicyChain = require('apicast.policy_chain')
 local Policy = require('apicast.policy')
 local linked_list = require('apicast.linked_list')
 local prometheus = require('apicast.prometheus')
-
+local uuid = require('resty.jit-uuid')
 
 local setmetatable = setmetatable
 local ipairs = ipairs
@@ -85,6 +85,10 @@ do
 
     local init_worker = _M.init_worker
     function _M:init_worker()
+        -- Need to seed the UUID in init_worker.
+        -- Ref: https://github.com/thibaultcha/lua-resty-jit-uuid/blob/c4c0004da0c4c4cdd23644a5472ea5c0d18decbb/README.md#usage
+        uuid.seed()
+
         local executed = {}
 
         for _,policy in init_worker(self) do

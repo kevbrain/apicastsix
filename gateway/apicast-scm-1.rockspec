@@ -21,6 +21,7 @@ dependencies = {
    'argparse',
    'penlight',
    'nginx-lua-prometheus',
+   'lua-resty-jit-uuid',
 }
 build = {
    type = "make",

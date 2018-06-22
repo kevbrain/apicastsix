@@ -1,5 +1,6 @@
 local Executor = require('resty.concurrent.executor')
 local ImmediateExecutor = require('resty.concurrent.immediate_executor')
+local TimerPoolExecutor = require('resty.concurrent.timer_pool_executor')
 
 describe('ImmediateExecutor', function()
     describe('.from_options', function()
@@ -15,8 +16,12 @@ describe('ImmediateExecutor', function()
             assert.equal(ImmediateExecutor, Executor.from_options())
         end)
 
-        it('works with string', function()
+        it('works with "immediate" string', function()
             assert.equal(ImmediateExecutor, Executor.from_options{ executor = 'immediate'})
+        end)
+
+        it('works with "timer_pool"', function()
+            assert.equal(TimerPoolExecutor, Executor.from_options{ executor = 'timer_pool'})
         end)
 
         it('throws error on unknown executor', function()

@@ -1,11 +1,13 @@
 --- @module resty.concurrent
 
 local ImmediateExecutor = require('resty.concurrent.immediate_executor')
+local TimerPoolExecutor = require('resty.concurrent.timer_pool_executor')
 
 --- @type Executor
 local _M = {
     default = ImmediateExecutor,
     immediate = ImmediateExecutor,
+    timer_pool = TimerPoolExecutor,
 }
 
 --- @function from_options

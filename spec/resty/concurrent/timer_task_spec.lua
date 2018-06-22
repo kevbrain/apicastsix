@@ -87,7 +87,7 @@ describe('TimerTask', function()
         local timer_task = TimerTask.new(func, { args = args, interval = interval })
         local func_stub = stub(timer_task, 'task')
 
-        timer_task:execute()
+        timer_task:execute(true)
 
         assert.stub(func_stub).was_called_with(unpack(args))
       end)
@@ -95,7 +95,7 @@ describe('TimerTask', function()
       it('schedules the next one', function()
         local timer_task = TimerTask.new(func, { args = args, interval = interval })
 
-        timer_task:execute()
+        timer_task:execute(true)
 
         assert.stub(ngx_timer_stub).was_called()
       end)
@@ -107,7 +107,7 @@ describe('TimerTask', function()
         local func_stub = stub(timer_task, 'task')
         timer_task:cancel()
 
-        timer_task:execute()
+        timer_task:execute(true)
 
         assert.stub(func_stub).was_not_called()
       end)
@@ -116,9 +116,29 @@ describe('TimerTask', function()
         local timer_task = TimerTask.new(func, { args = args, interval = interval })
         timer_task:cancel()
 
-        timer_task:execute()
+        timer_task:execute(true)
 
         assert.stub(ngx_timer_stub).was_not_called()
+      end)
+    end)
+
+    describe('when the option to wait an interval instead of running now is passed', function()
+      it('does not run the task inmediately', function()
+        local timer_task = TimerTask.new(func, { args = args, interval = interval })
+        local func_stub = stub(timer_task, 'task')
+
+        timer_task:execute(false)
+
+        -- It will be called in 'interval' seconds, but not now
+        assert.stub(func_stub).was_not_called()
+      end)
+
+      it('schedules the next one', function()
+        local timer_task = TimerTask.new(func, { args = args, interval = interval })
+
+        timer_task:execute(false)
+
+        assert.stub(ngx_timer_stub).was_called()
       end)
     end)
   end)

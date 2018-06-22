@@ -60,10 +60,12 @@ end
 
 local run_periodic, schedule_next, timer_execute
 
-run_periodic = function(self)
+run_periodic = function(self, run_now)
   if not _M.task_is_active(self.id) then return end
 
-  self.task(unpack(self.args))
+  if run_now then
+    self.task(unpack(self.args))
+  end
 
   schedule_next(self)
 end
@@ -72,7 +74,7 @@ end
 -- "premature" is boolean value indicating whether it is a premature timer
 -- expiration.
 timer_execute = function(_, self)
-  run_periodic(self)
+  run_periodic(self, true)
 end
 
 schedule_next = function(self)
@@ -83,8 +85,11 @@ schedule_next = function(self)
   end
 end
 
-function _M:execute()
-  run_periodic(self)
+--- Execute a task
+-- @tparam[opt] run_now boolean True to run the task immediately or False to
+--   wait 'interval' seconds. (Defaults to false)
+function _M:execute(run_now)
+  run_periodic(self, run_now or false)
 end
 
 function _M:cancel()

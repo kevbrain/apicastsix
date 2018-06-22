@@ -4,8 +4,13 @@ local Transaction = require('apicast.policy.3scale_batcher.transaction')
 local Usage = require('apicast.usage')
 local configuration = require('apicast.configuration')
 local lrucache = require('resty.lrucache')
+local TimerTask = require('resty.concurrent.timer_task')
 
 describe('3scale batcher policy', function()
+  before_each(function()
+    TimerTask.active_tasks = {}
+  end)
+
   describe('.new', function()
     it('allows to configure the batching period', function()
       local test_batching_period = 3
@@ -41,6 +46,10 @@ describe('3scale batcher policy', function()
       batcher_policy = ThreescaleBatcher.new({})
       batcher_policy.auths_cache = AuthsCache.new(lrucache.new(10), 10)
       stub(batcher_policy.reports_batcher, 'add')
+
+      -- if a report job executes, by default, stub the batcher so it returns
+      -- no pending reports.
+      stub(batcher_policy.reports_batcher, 'get_all').returns({})
 
       stub(batcher_policy, 'backend_downtime_cache')
 

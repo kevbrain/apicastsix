@@ -57,25 +57,25 @@ end
 
 local run_periodic, schedule_next, timer_execute
 
-run_periodic = function(self, run_now)
-  if not _M.task_is_active(self.id) then return end
+run_periodic = function(run_now, id, func, args, interval)
+  if not _M.task_is_active(id) then return end
 
   if run_now then
-    self.task(unpack(self.args))
+    func(unpack(args))
   end
 
-  schedule_next(self)
+  schedule_next(interval, id, func, args, interval)
 end
 
 -- Note: ngx.timer.at always sends "premature" as the first param.
 -- "premature" is boolean value indicating whether it is a premature timer
 -- expiration.
-timer_execute = function(_, self)
-  run_periodic(self, true)
+timer_execute = function(_, id, func, args, interval)
+  run_periodic(true, id, func, args, interval)
 end
 
-schedule_next = function(self)
-  local ok, err = ngx.timer.at(self.interval, timer_execute, self)
+schedule_next = function(id, func, args, interval)
+  local ok, err = ngx.timer.at(interval, timer_execute, id, func, args, interval)
 
   if not ok then
     ngx.log(ngx.ERR, "failed to schedule timer task: ", err)
@@ -86,7 +86,7 @@ end
 -- @tparam[opt] run_now boolean True to run the task immediately or False to
 --   wait 'interval' seconds. (Defaults to false)
 function _M:execute(run_now)
-  run_periodic(self, run_now or false)
+  run_periodic(run_now or false, self.id, self.task, self.args, self.interval)
 end
 
 function _M:cancel()

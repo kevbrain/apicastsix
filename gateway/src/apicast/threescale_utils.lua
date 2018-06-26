@@ -152,14 +152,14 @@ function _M.connect_redis(options)
 
   local ok, err = red:connect(_M.resolve(host, port))
   if not ok then
-    return nil, _M.error("failed to connect to redis on " .. host .. ":" .. port .. ":", err)
+    return nil, _M.error("failed to connect to redis on ", host, ":", port, ": ", err)
   end
 
   if opts.password then
     ok = red:auth(opts.password)
 
     if not ok then
-      return nil, _M.error("failed to auth on redis " .. host .. ":" .. port)
+      return nil, _M.error("failed to auth on redis ", host, ":", port)
     end
   end
 
@@ -167,7 +167,7 @@ function _M.connect_redis(options)
     ok = red:select(opts.db)
 
     if not ok then
-      return nil, _M.error("failed to select db " .. opts.db .. " on redis " .. host .. ":" .. port)
+      return nil, _M.error("failed to select db ", opts.db, " on redis ", host, ":", port)
     end
   end
 
@@ -187,10 +187,10 @@ function _M.match_xml_element(xml, element, value)
   return string.find(xml, pattern, xml_header_len, xml_header_len, true)
 end
 
--- error and exist
+-- error and exit
 function _M.error(...)
   if ngx.get_phase() == 'timer' then
-    return ...
+    return table.concat(table.pack(...))
   else
     ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
     ngx.say(...)

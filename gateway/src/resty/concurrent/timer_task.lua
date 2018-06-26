@@ -1,7 +1,6 @@
+local GC = require 'apicast.gc'
+
 local uuid = require 'resty.jit-uuid'
-local setmetatable = setmetatable
-local getmetatable = getmetatable
-local newproxy = newproxy
 local unpack = unpack
 
 local _M = {}
@@ -26,16 +25,14 @@ local function generate_id()
   return uuid.generate_v4()
 end
 
-local function mt(id)
-  -- Using 'newproxy' is needed to be able to define __gc().
-  -- With __gc we can make sure that the task will stop scheduling more work
-  -- after it has been garbage collected.
-  local proxy = newproxy(true)
-  local res_mt = getmetatable(proxy)
-  res_mt.__gc = function() _M.unregister_task(id) end
-  res_mt.__index = _M
-  return res_mt
+local function gc(self)
+  _M.unregister_task(self.id)
 end
+
+local mt = {
+  __gc = gc,
+  __index = _M
+}
 
 --- Initialize a TimerTask.
 -- @tparam function task The function to be run periodically
@@ -47,7 +44,7 @@ function _M.new(task, opts)
 
   local id = generate_id()
 
-  local self = setmetatable({}, mt(id))
+  local self = GC.set_metatable_gc({}, mt)
   self.task = task
   self.args = options.args
   self.interval = options.interval or default_interval_seconds

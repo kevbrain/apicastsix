@@ -85,11 +85,11 @@ describe('TimerTask', function()
     describe('when the task is active', function()
       it('runs the task', function()
         local timer_task = TimerTask.new(func, { args = args, interval = interval })
-        local func_stub = stub(timer_task, 'task')
+        local func_spy = spy.on(timer_task, 'task')
 
         timer_task:execute(true)
 
-        assert.stub(func_stub).was_called_with(unpack(args))
+        assert.spy(func_spy).was_called_with(unpack(args))
       end)
 
       it('schedules the next one', function()
@@ -104,12 +104,12 @@ describe('TimerTask', function()
     describe('when the task is not active', function()
       it('does not run the task', function()
         local timer_task = TimerTask.new(func, { args = args, interval = interval })
-        local func_stub = stub(timer_task, 'task')
+        local func_spy = spy.on(timer_task, 'task')
         timer_task:cancel()
 
         timer_task:execute(true)
 
-        assert.stub(func_stub).was_not_called()
+        assert.spy(func_spy).was_not_called()
       end)
 
       it('does not schedule another task', function()
@@ -125,12 +125,12 @@ describe('TimerTask', function()
     describe('when the option to wait an interval instead of running now is passed', function()
       it('does not run the task inmediately', function()
         local timer_task = TimerTask.new(func, { args = args, interval = interval })
-        local func_stub = stub(timer_task, 'task')
+        local func_spy = spy.on(timer_task, 'task')
 
         timer_task:execute(false)
 
         -- It will be called in 'interval' seconds, but not now
-        assert.stub(func_stub).was_not_called()
+        assert.spy(func_spy).was_not_called()
       end)
 
       it('schedules the next one', function()

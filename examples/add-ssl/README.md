@@ -1,30 +1,54 @@
-# Customizing APIcast server block
+# Making APIcast listen on HTTPS
 
-Like adding SSL or anything in the nginx [server](http://nginx.org/en/docs/http/ngx_http_core_module.html#server) block.
-
-## Adding SSL
-
-APIcast will read all `.conf` files in the `apicast.d` folder inside its prefix as part of the APIcast server configuration.
+APIcast HTTPS is controlled by `APICAST_HTTPS_*` variables defined in [the documentation](../../doc/parameters.md).
 
 ## Starting Docker
 
 ```sh
-docker run -it -v $(pwd)/apicast.d:/opt/app-root/src/apicast.d:ro -v $(pwd)/cert:/opt/app-root/src/conf/cert:ro -e THREESCALE_PORTAL_ENDPOINT=https://git.io/vXHTA -e THREESCALE_DEPLOYMENT_ENV=staging -p 8443:8443 quay.io/3scale/apicast:master
+docker run \
+  --env APICAST_HTTPS_PORT=8443 --publish 8443:8443 \
+  --volume $(pwd)/cert:/var/run/secrets/apicast \
+  --env APICAST_HTTPS_CERTIFICATE=/var/run/secrets/apicast/server.crt \
+  --env APICAST_HTTPS_CERTIFICATE_KEY=/var/run/secrets/apicast/server.key \
+  quay.io/3scale/apicast:master apicast \
+  --dev # this flag makes APIcast start without configuration in development mode
 ```
 
-Mounts `cert` and `apicast.d` folder to the correct place and exposes port 8443 that the `ssl.conf` defines.
+1) `APICAST_HTTPS_PORT` configures APIcast to start listening on HTTPS port.
+2) `--volume` mounts certificates to some path inside the container
+3) `APICAST_HTTPS_CERTIFICATE` points to the public key inside the container
+3) `APICAST_HTTPS_CERTIFICATE_KEY` points to the private key inside the container
 
 ## Testing
 
 ```sh
-curl -k -v https://localhost:8443
+curl https://localhost:8443 -v --cacert cert/server.crt
 ```
 
-> *   Trying 127.0.0.1...
-> *   Connected to localhost (127.0.0.1) port 8443 (#0)
-> *   TLS 1.2 connection using TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-> *   Server certificate: Internet Widgits Pty Ltd
-
-## Note
-
-The `THREESCALE_PORTAL_ENDPOINT` variable points to configuration that uses local backend, so it can be used without any account.
+> * Connected to localhost (127.0.0.1) port 8443 (#0)
+> * ALPN, offering h2
+> * ALPN, offering http/1.1
+> * Cipher selection: ALL:!EXPORT:!EXPORT40:!EXPORT56:!aNULL:!LOW:!RC4:@STRENGTH
+> * successfully set certificate verify locations:
+> *   CAfile: cert/server.crt
+>     CApath: /usr/local/etc/openssl/certs
+> * TLSv1.2 (OUT), TLS header, Certificate Status (22):
+> * TLSv1.2 (OUT), TLS handshake, Client hello (1):
+> * TLSv1.2 (IN), TLS handshake, Server hello (2):
+> * TLSv1.2 (IN), TLS handshake, Certificate (11):
+> * TLSv1.2 (IN), TLS handshake, Server key exchange (12):
+> * TLSv1.2 (IN), TLS handshake, Server finished (14):
+> * TLSv1.2 (OUT), TLS handshake, Client key exchange (16):
+> * TLSv1.2 (OUT), TLS change cipher, Client hello (1):
+> * TLSv1.2 (OUT), TLS handshake, Finished (20):
+> * TLSv1.2 (IN), TLS change cipher, Client hello (1):
+> * TLSv1.2 (IN), TLS handshake, Finished (20):
+> * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
+> * ALPN, server accepted to use http/1.1
+> * Server certificate:
+> *  subject: O=Red Hat; OU=3scale; CN=localhost
+> *  start date: Feb 23 07:47:00 2018 GMT
+> *  expire date: Feb 21 07:47:00 2028 GMT
+> *  common name: localhost (matched)
+> *  issuer: O=Red Hat; OU=3scale; CN=localhost
+> *  SSL certificate verify ok.

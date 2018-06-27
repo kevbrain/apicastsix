@@ -6,6 +6,8 @@ engines:
     checks:
       LC631:
         enabled: false
+    config:
+      max_cyclomatic_complexity: 7
   shellcheck:
     enabled: true
     checks:

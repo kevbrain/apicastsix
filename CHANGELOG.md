@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - ENV variables to make APIcast listen on HTTPS port [PR #622](https://github.com/3scale/apicast/pull/622) 
 - New `ssl_certificate` phase allows policies to provide certificate to terminate HTTPS connection [PR #622](https://github.com/3scale/apicast/pull/622).
 - Configurable `auth_type` for the token introspection policy [PR #755](https://github.com/3scale/apicast/pull/755)
-- `TimerTask` module to execute recurrent tasks that can be cancelled [PR #782](https://github.com/3scale/apicast/pull/782), [#784](https://github.com/3scale/apicast/pull/784)
+- `TimerTask` module to execute recurrent tasks that can be cancelled [PR #782](https://github.com/3scale/apicast/pull/782), [PR #784](https://github.com/3scale/apicast/pull/784), [PR #791](https://github.com/3scale/apicast/pull/791)
 - `GC` module that implements a workaround to be able to define `__gc` on tables [PR #790](https://github.com/3scale/apicast/pull/790)
 
 ### Changed

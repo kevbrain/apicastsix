@@ -245,6 +245,19 @@ jobs:
           path: tmp/benchmark
           destination: benchmark
 
+  # Run profiling tasks
+  profile:
+    machine: true
+    steps:
+      - checkout
+      - run: sudo --preserve-env script/install/circleci.sh
+      - run: sudo --preserve-env script/install/utilities.sh
+      - run: script/install/apicast.sh
+      - run: bin/apicast --dev --test
+      - store_artifacts:
+          path: tmp/profile
+          destination: profile
+
 build-tags: &build-tags
   filters:
     tags:
@@ -269,6 +282,8 @@ workflows:
           context: org-global
   build-test-deploy:
     jobs:
+      - profile:
+          <<: *build-tags
       - build-lua:
           <<: *build-tags
       - build-perl:

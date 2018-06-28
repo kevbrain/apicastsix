@@ -206,7 +206,7 @@ dependencies: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
 	$(ROVER) install --roverfile=$(S2I_CONTEXT)/Roverfile
 
 lua_modules/bin/rover:
-	@LUAROCKS_CONFIG=$(S2I_CONTEXT)/config-5.1.lua luarocks install --server=http://luarocks.org/dev lua-rover --tree lua_modules 1>&2
+	@LUAROCKS_CONFIG=$(S2I_CONTEXT)/config-5.1.lua luarocks install --server=http://luarocks.org/dev lua-rover --tree=lua_modules 1>&2
 
 clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes

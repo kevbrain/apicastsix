@@ -114,6 +114,12 @@ describe('TimerTask', function()
         timer_task:execute(true)
 
         assert.stub(ngx_timer_stub).was_called()
+
+        -- Can't check all the arguments of ngx.timer.at because it calls an
+        -- private function but at least we can check the interval (first arg),
+        -- and that the second argument is a function.
+        assert.equals(interval, ngx_timer_stub.calls[1].vals[1])
+        assert.is_function(ngx_timer_stub.calls[1].vals[2])
       end)
     end)
 

@@ -64,7 +64,7 @@ run_periodic = function(run_now, id, func, args, interval)
     func(unpack(args))
   end
 
-  schedule_next(interval, id, func, args, interval)
+  schedule_next(id, func, args, interval)
 end
 
 -- Note: ngx.timer.at always sends "premature" as the first param.

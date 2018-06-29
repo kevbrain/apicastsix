@@ -1,10 +1,14 @@
-version: '2.1'
+version: '2.2'
 services:
   apicast:
     image: quay.io/3scale/apicast:${IMAGE_TAG:-master}
     command: bin/apicast -c /tmp/apicast/echo.json -b
     volumes:
      - ${CIRCLE_WORKING_DIRECTORY:-.}/examples/configuration/:/tmp/apicast/:ro
+    environment:
+      APICAST_WORKERS: 1
+    cpuset: "0"
+    cpu_count: 1
   wrk:
     image: skandyla/wrk
     environment:

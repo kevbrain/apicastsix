@@ -18,7 +18,8 @@ local PHASES = {
     'ssl_certificate',
 }
 
-local setmetatable = setmetatable
+local GC = require('apicast.gc')
+local setmetatable_gc_clone = GC.setmetatable_gc_clone
 local ipairs = ipairs
 local format = string.format
 
@@ -37,22 +38,26 @@ end
 -- @tparam string name Name of the new policy.
 -- @tparam string version Version of the new policy. Default value is 0.0
 -- @treturn policy New policy
+-- @treturn table New policy metatable.
 function _M.new(name, version)
     local policy = {
         _NAME = name,
         _VERSION = version or '0.0',
     }
+
     local mt = { __index = policy, __tostring = __tostring, policy = policy }
 
     function policy.new()
-        return setmetatable({}, mt)
+        local p = setmetatable_gc_clone({}, mt)
+
+        return p
     end
 
     for _, phase in _M.phases() do
         policy[phase] = noop
     end
 
-    return setmetatable(policy, { __tostring = __tostring, __eq = __eq })
+    return setmetatable(policy, { __tostring = __tostring, __eq = __eq }), mt
 end
 
 function _M.phases()

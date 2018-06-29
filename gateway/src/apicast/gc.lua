@@ -2,6 +2,8 @@
 -- works in "userdata". This module introduces a workaround to make it work
 -- with tables.
 
+local tab_clone = require "table.clone"
+
 local rawgetmetatable = debug.getmetatable
 local getmetatable = getmetatable
 local setmetatable = setmetatable
@@ -9,7 +11,7 @@ local newproxy = newproxy
 local ipairs = ipairs
 local pairs = pairs
 local pcall = pcall
-local table = table
+local remove = table.remove
 local unpack = unpack
 local error = error
 local tostring = tostring
@@ -17,7 +19,9 @@ local tostring = tostring
 local _M = {}
 
 local function original_table(proxy)
-  return rawgetmetatable(proxy).__table
+  local mt = rawgetmetatable(proxy)
+
+  return mt and mt.__table
 end
 
 local function __gc(proxy)
@@ -37,7 +41,7 @@ local function __call(proxy, ...)
   -- Try to run __call() and if it's not possible, try to run it in a way that
   -- it returns a meaningful error.
   local ret = { pcall(t, ...) }
-  local ok = table.remove(ret, 1)
+  local ok = remove(ret, 1)
 
   if ok then
     return unpack(ret)
@@ -89,6 +93,34 @@ function _M.set_metatable_gc(t, metatable)
   mt.__metatable = metatable
 
   return proxy
+end
+
+local delegate_mt = {
+  __gc = function(self)
+    local mt = getmetatable(self.table)
+
+    if mt and mt.__gc then return mt.__gc(self.table) end
+  end
+}
+
+--- Creates new object that when GC'd will call __gc metamethod on a given table.
+--- @tparam table t a table
+function _M.delegate(t)
+  return _M.set_metatable_gc({ table = t }, delegate_mt)
+end
+
+--- Clones given metatable so it is tied to the life of given object.
+--- Please not that it first clones the metatable before assigning.
+--- @tparam table t a table
+--- @tparam table metatable a metatable
+function _M.setmetatable_gc_clone(t, metatable)
+  local copy = tab_clone(metatable)
+
+  copy.__table = t
+  copy.__gc_helper = _M.delegate(t)
+  copy.__metatable = metatable
+
+  return setmetatable(t, copy)
 end
 
 return _M

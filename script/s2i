@@ -9,9 +9,11 @@ DOCKER_REPO_ROOT=/opt/app-root/src
 source_volume() {
     volume=$(docker volume create)
     container=$(docker create --user root --volume "${volume}:${DOCKER_REPO_ROOT}/cache" "${IMAGE_NAME}" sh -c 'chgrp -fR root . && chmod -fR g+w .')
-    docker cp "$PWD/local" "${container}:${DOCKER_REPO_ROOT}/cache/perl5" 2>/dev/null || true
-    docker cp "$PWD/lua_modules" "${container}:${DOCKER_REPO_ROOT}/cache/" 2>/dev/null || true
-    docker cp "$PWD/vendor" "${container}:${DOCKER_REPO_ROOT}/cache/" 2>/dev/null || true
+    if [ -n "${CI:-}" ]; then
+        docker cp "$PWD/local" "${container}:${DOCKER_REPO_ROOT}/cache/perl5" 2>/dev/null || true
+        docker cp "$PWD/lua_modules" "${container}:${DOCKER_REPO_ROOT}/cache/" 2>/dev/null || true
+        docker cp "$PWD/vendor" "${container}:${DOCKER_REPO_ROOT}/cache/" 2>/dev/null || true
+    fi
     docker start "${container}" >/dev/null
     docker wait "${container}" >/dev/null
     docker logs "${container}" >&2

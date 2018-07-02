@@ -15,9 +15,19 @@ local ipairs = ipairs
 local default_auths_ttl = 10
 local default_batch_reports_seconds = 10
 
-local _M = policy.new('Caching policy')
+local _M, mt = policy.new('Caching policy')
 
 local new = _M.new
+
+mt.__gc = function(self)
+  -- Instances of this policy are garbage-collected when the config is
+  -- reloaded. We need to ensure that the TimerTask instance schedules another
+  -- run before that so we do not leave any pending reports.
+
+  if self.timer_task then
+    self.timer_task:cancel(true)
+  end
+end
 
 function _M.new(config)
   local self = new(config)

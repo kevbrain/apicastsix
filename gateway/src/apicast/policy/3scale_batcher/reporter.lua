@@ -1,5 +1,6 @@
 local ReportsBatch = require('apicast.policy.3scale_batcher.reports_batch')
 local Usage = require('apicast.usage')
+local Transaction = require('apicast.policy.3scale_batcher.transaction')
 
 local pairs = pairs
 
@@ -14,11 +15,13 @@ local function return_reports(service_id, batch, reports_batcher)
       usage:add(metric, value)
     end
 
-    reports_batcher:add(
+    local transaction = Transaction.new(
       service_id,
       { [credentials_type] = credential },
       usage
     )
+
+    reports_batcher:add(transaction)
   end
 end
 

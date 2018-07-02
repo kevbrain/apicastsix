@@ -8,15 +8,26 @@ local reporter = require('reporter')
 local Transaction = require('transaction')
 local http_ng_resty = require('resty.http_ng.backend.resty')
 local semaphore = require('ngx.semaphore')
+local TimerTask = require('resty.concurrent.timer_task')
 
 local ipairs = ipairs
 
 local default_auths_ttl = 10
 local default_batch_reports_seconds = 10
 
-local _M = policy.new('Caching policy')
+local _M, mt = policy.new('Caching policy')
 
 local new = _M.new
+
+mt.__gc = function(self)
+  -- Instances of this policy are garbage-collected when the config is
+  -- reloaded. We need to ensure that the TimerTask instance schedules another
+  -- run before that so we do not leave any pending reports.
+
+  if self.timer_task then
+    self.timer_task:cancel(true)
+  end
+end
 
 function _M.new(config)
   local self = new(config)
@@ -30,9 +41,7 @@ function _M.new(config)
   self.batch_reports_seconds = config.batch_report_seconds or
                                default_batch_reports_seconds
 
-  self.report_timer_on = false
-
-  -- Semaphore used to ensure that only one timer is started per worker.
+  -- Semaphore used to ensure that only one TimerTask is started per worker.
   local semaphore_report_timer, err = semaphore.new(1)
   if not semaphore_report_timer then
     ngx.log(ngx.ERR, "Create semaphore failed: ", err)
@@ -70,7 +79,7 @@ local function set_flags_to_avoid_auths_in_apicast(context)
   context.skip_apicast_post_action = true
 end
 
-local function report(_, service_id, backend, reports_batcher)
+local function report(service_id, backend, reports_batcher)
   local reports = reports_batcher:get_all(service_id)
 
   if reports then
@@ -81,22 +90,33 @@ local function report(_, service_id, backend, reports_batcher)
   reporter.report(reports, service_id, backend, reports_batcher)
 end
 
--- This starts a timer on each worker.
--- Starting a timer on each worker means that there will be more calls to
+local function timer_task(self, service_id, backend)
+  local task = report
+
+  local task_options = {
+    args = { service_id, backend, self.reports_batcher },
+    interval = self.batch_reports_seconds
+  }
+
+  return TimerTask.new(task, task_options)
+end
+
+-- This starts a TimerTask on each worker.
+-- Starting a TimerTask on each worker means that there will be more calls to
 -- 3scale backend, and the config param 'batch_report_seconds' becomes
 -- more confusing because the reporting frequency will be affected by the
 -- number of APIcast workers.
--- If we started a timer just on one of the workers, it could die, and then,
+-- If we started a TimerTask just on one of the workers, it could die, and then,
 -- there would not be any reporting.
-local function ensure_report_timer_on(self, service_id, backend)
-  local check_timer = self.semaphore_report_timer:wait(0)
+local function ensure_timer_task_created(self, service_id, backend)
+  local check_timer_task = self.semaphore_report_timer:wait(0)
 
-  if check_timer then
-    if not self.report_timer_on then
-      ngx.timer.every(self.batch_reports_seconds, report,
-        service_id, backend, self.reports_batcher)
+  if check_timer_task then
+    if not self.timer_task then
+      self.timer_task = timer_task(self, service_id, backend)
 
-      self.report_timer_on = true
+      self.timer_task:execute()
+
       ngx.log(ngx.DEBUG, 'scheduled 3scale batcher report timer every ',
                          self.batch_reports_seconds, ' seconds')
     end
@@ -166,7 +186,7 @@ function _M:access(context)
   local credentials = context.credentials
   local transaction = Transaction.new(service_id, credentials, usage)
 
-  ensure_report_timer_on(self, service_id, backend)
+  ensure_timer_task_created(self, service_id, backend)
 
   local cached_auth = self.auths_cache:get(transaction)
 

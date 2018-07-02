@@ -1,8 +1,32 @@
 local reporter = require('apicast.policy.3scale_batcher.reporter')
-local keys_helper = require('apicast.policy.3scale_batcher.keys_helper')
-local ipairs = ipairs
+local ReportsBatcher = require('apicast.policy.3scale_batcher.reports_batcher')
+local lrucache = require('resty.lrucache')
+local resty_lock = require 'resty.lock'
 local pairs = pairs
 local insert = table.insert
+
+-- ReportsBatcher uses a shdict. For the test we can use a lrucache instead
+-- but we need to define 2 missing methods (safe_add and get_keys)
+local function build_fake_shdict()
+  local fake_shdict = lrucache.new(100)
+
+  fake_shdict.safe_add = function(self, k, v)
+    local current = self:get(k) or 0
+    self:set(k, current + v)
+  end
+
+  fake_shdict.get_keys = function(self)
+    local res = {}
+
+    for k, _ in pairs(self.hasht) do
+      insert(res, k)
+    end
+
+    return res
+  end
+
+  return fake_shdict
+end
 
 describe('reporter', function()
   local test_service_id = 's1'
@@ -13,37 +37,14 @@ describe('reporter', function()
   before_each(function()
     test_backend_client = { report = function() return { ok = false } end }
     spy_report_backend_client = spy.on(test_backend_client, 'report')
+
+    -- Mock the lock so it can always be acquired and returned without waiting.
+    stub(resty_lock, 'new').returns(
+      { lock = function() return 0 end, unlock = function() return 1 end }
+    )
   end)
 
-  -- Testing using the real ReportsBatcher is a bit difficult because it uses
-  -- shared dicts and locks. To simplify we define this table with the same
-  -- interface.
-  local reports_batcher = {
-    reports = {},
-
-    add = function(self, service_id, credentials, usage)
-      local deltas = usage.deltas
-      for _, metric in ipairs(usage.metrics) do
-        local key = keys_helper.key_for_batched_report(service_id, credentials, metric)
-        self.reports[key] = (self.reports[key] or 0) + deltas[metric]
-      end
-    end,
-
-    get_all = function(self, service_id)
-      local cached_reports = {}
-
-      for key, value in pairs(self.reports) do
-        local report = keys_helper.report_from_key_batched_report(key, value)
-
-        if value and value > 0 and report.service_id == service_id then
-          insert(cached_reports, report)
-          self.reports[key] = nil
-        end
-      end
-
-      return cached_reports
-    end
-  }
+  local reports_batcher = ReportsBatcher.new(build_fake_shdict())
 
   it('returns reports to the batcher when sending reports to backend fails', function()
     local test_reports = {

@@ -6,6 +6,7 @@ describe('TimerTask', function()
 
   before_each(function()
     TimerTask.active_tasks = {}
+    TimerTask.last_one = {}
   end)
 
   after_each(function()
@@ -85,6 +86,14 @@ describe('TimerTask', function()
 
       assert.is_false(TimerTask.task_is_active(task.id))
     end)
+
+    it('marks the task to run for the last time when specified in the params', function()
+      local task = TimerTask.new(test_task)
+
+      task:cancel(true)
+
+      assert.is_true(TimerTask.last_one[task.id])
+    end)
   end)
 
   describe(':execute', function()
@@ -114,6 +123,12 @@ describe('TimerTask', function()
         timer_task:execute(true)
 
         assert.stub(ngx_timer_stub).was_called()
+
+        -- Can't check all the arguments of ngx.timer.at because it calls an
+        -- private function but at least we can check the interval (first arg),
+        -- and that the second argument is a function.
+        assert.equals(interval, ngx_timer_stub.calls[1].vals[1])
+        assert.is_function(ngx_timer_stub.calls[1].vals[2])
       end)
     end)
 
@@ -157,6 +172,27 @@ describe('TimerTask', function()
         assert.stub(ngx_timer_stub).was_called()
       end)
     end)
+
+    describe('when the task should run for the last time', function()
+      it('runs the task', function()
+        local timer_task = TimerTask.new(func, { args = args, interval = interval })
+        local func_spy = spy.on(timer_task, 'task')
+        timer_task:cancel(true)
+
+        timer_task:execute(true)
+
+        assert.spy(func_spy).was_called_with(unpack(args))
+      end)
+
+      it('does not schedule another task', function()
+        local timer_task = TimerTask.new(func, { args = args, interval = interval })
+        timer_task:cancel(true)
+
+        timer_task:execute(true)
+
+        assert.stub(ngx_timer_stub).was_not_called()
+      end)
+    end)
   end)
 
   it('cancels itself when it is garbage collected', function()
@@ -167,5 +203,15 @@ describe('TimerTask', function()
     collectgarbage()
 
     assert.is_false(TimerTask.task_is_active(id))
+  end)
+
+  it('does not ensure a last run when garbage collected', function()
+    local timer_task = TimerTask.new(test_task)
+    local id = timer_task.id
+
+    timer_task = nil
+    collectgarbage()
+
+    assert.is_falsy(TimerTask.last_one[id])
   end)
 end)

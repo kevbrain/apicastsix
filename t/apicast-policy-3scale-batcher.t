@@ -132,15 +132,15 @@ init_by_lua_block {
 --- no_error_log
 [error]
 
-=== TEST 3: batched reports
-This test checks that reports are batched correctly. In order to do that, we
-make 100 requests using 5 different user keys (20 requests for each of them).
-We define 2 services and make each of them receive the same number of calls.
-This is to test that reports are correctly classified by service.
-At the end, we make another request that is redirected to a location we defined
-in this test that checks the counters of the batched reports.
-To make sure that the policy does not report the batched reports during the
-test, we define a high 'batch_report_seconds' in the policy config.
+=== TEST 3: reports hits correctly
+This test is a bit complex. We want to check that reports are sent correctly to
+backend. Reports are sent periodically and also when instances of the policy
+are garbage collected. In order to capture those reports, we parse them in
+the backend endpoint that receives them (/transactions.xml) and aggregate them
+in a shared dictionary that we'll check later. At the end of the test, we force
+a report to ensure that there are no pending reports, and then, we call an
+endpoint defined specifically for this test (/check_reports) that checks
+that the values accumulated in that shared dictionary are correct.
 --- http_config
 include $TEST_NGINX_UPSTREAM_CONFIG;
 lua_shared_dict cached_auths 1m;
@@ -165,7 +165,7 @@ init_by_lua_block {
           policy_chain = {
             {
               name = 'apicast.policy.3scale_batcher',
-              configuration = { batch_report_seconds = 60 }
+              configuration = { batch_report_seconds = 1 }
             },
             { name = 'apicast.policy.apicast' }
           }
@@ -186,7 +186,7 @@ init_by_lua_block {
           policy_chain = {
             {
               name = 'apicast.policy.3scale_batcher',
-              configuration = { batch_report_seconds = 60 }
+              configuration = { batch_report_seconds = 1 }
             },
             { name = 'apicast.policy.apicast' }
           }
@@ -198,23 +198,6 @@ init_by_lua_block {
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
 
-  location /check_batched_reports {
-    content_by_lua_block {
-      local keys_helper = require('apicast.policy.3scale_batcher.keys_helper')
-      local luassert = require('luassert')
-
-      for service = 1,2 do
-        for user_key = 1,5 do
-          local key = keys_helper.key_for_batched_report(service, {user_key = user_key }, 'hits')
-          -- The mapping rule defines a delta of 2 for hits, and we made 10
-          -- requests for each {service, user_key}, so all the counters should
-          -- be 20.
-          luassert.equals(20, ngx.shared.batched_reports:get(key))
-        end
-      end
-    }
-  }
-
   location /transactions/authorize.xml {
     content_by_lua_block {
       ngx.exit(200)
@@ -223,6 +206,89 @@ init_by_lua_block {
 
   location /api-backend {
      echo 'yay, api backend';
+  }
+
+  location /transactions.xml {
+    content_by_lua_block {
+     ngx.req.read_body()
+     local post_args = ngx.req.get_post_args()
+
+      local post_transactions = {}
+
+      -- Parse the reports.
+      -- The keys of the post arguments have this format:
+      --   1) "transactions[0][user_key]"
+      --   2) "transactions[0][usage][hits]"
+
+      for k, v in pairs(post_args) do
+        local index = string.match(k, "transactions%[(%d+)%]%[user_key%]")
+        if index then
+          post_transactions[index] = post_transactions[index] or {}
+          post_transactions[index].user_key = v
+        else
+          local index, metric = string.match(k, "transactions%[(%d+)%]%[usage%]%[(%w+)%]")
+          post_transactions[index] = post_transactions[index] or {}
+          post_transactions[index].metric = metric
+          post_transactions[index].value = v
+        end
+      end
+
+      local service_id = ngx.req.get_uri_args()['service_id']
+
+      -- Accumulate the reports in a the shared dict ngx.shared.result
+
+      ngx.shared.result = ngx.shared.result or {}
+      ngx.shared.result[service_id] = ngx.shared.result[service_id] or {}
+
+      for _, t in pairs(post_transactions) do
+        ngx.shared.result[service_id][t.user_key] = ngx.shared.result[service_id][t.user_key] or {}
+        ngx.shared.result[service_id][t.user_key][t.metric] = (ngx.shared.result[service_id][t.user_key][t.metric] or 0) + t.value
+      end
+    }
+  }
+
+  location /force_report_to_backend {
+    content_by_lua_block {
+      local ReportsBatcher = require ('apicast.policy.3scale_batcher.reports_batcher')
+      local reporter = require ('apicast.policy.3scale_batcher.reporter')
+      local http_ng_resty = require('resty.http_ng.backend.resty')
+      local backend_client = require('apicast.backend_client')
+
+      for service = 1,2 do
+        local service_id = tostring(service)
+
+        local reports_batcher = ReportsBatcher.new(
+          ngx.shared.batched_reports, 'batched_reports_locks')
+
+        local reports = reports_batcher:get_all(service_id)
+
+        local backend = backend_client:new(
+          {
+            id = service_id,
+            backend_authentication_type = 'service_token',
+            backend_authentication_value = 'token-value',
+            backend = { endpoint = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT" }
+          }, http_ng_resty)
+
+        reporter.report(reports, service_id, backend, reports_batcher)
+      end
+    }
+  }
+
+  location /check_reports {
+    content_by_lua_block {
+      local luassert = require('luassert')
+
+      for service = 1,2 do
+        for user_key = 1,5 do
+          -- The mapping rule defines a delta of 2 for hits, and we made 10
+          -- requests for each {service, user_key}, so all the counters should
+          -- be 20.
+          local hits = ngx.shared.result[tostring(service)][tostring(user_key)].hits
+          luassert.equals(20, hits)
+        end
+      end
+    }
   }
 
 --- request eval
@@ -236,7 +302,8 @@ for(my $i = 0; $i < 20; $i = $i + 1 ) {
   push $res, "GET /test?user_key=5";
 }
 
-push $res, "GET /check_batched_reports";
+push $res, "GET /force_report_to_backend";
+push $res, "GET /check_reports";
 
 $res
 --- more_headers eval
@@ -251,129 +318,13 @@ for(my $i = 0; $i < 50; $i = $i + 1 ) {
 }
 
 push $res, "Host: one";
-
-$res
---- no_error_log
-[error]
-3scale batcher report timer got
-
-=== TEST 4: report batched reports to backend
-This test checks that reports are sent correctly to backend. To do that, it performs
-some requests, then it forces a report request to backend, and finally, checks that
-the POST body that backend receives is correct.
---- http_config
-include $TEST_NGINX_UPSTREAM_CONFIG;
-lua_shared_dict cached_auths 1m;
-lua_shared_dict batched_reports 1m;
-lua_shared_dict batched_reports_locks 1m;
-lua_package_path "$TEST_NGINX_LUA_PATH";
-init_by_lua_block {
-  require('apicast.configuration_loader').mock({
-    services = {
-      {
-        id = 1,
-        backend_version = 1,
-        backend_authentication_type = 'service_token',
-        backend_authentication_value = 'token-value',
-        proxy = {
-          backend = { endpoint = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT" },
-          api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
-          proxy_rules = {
-            { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
-          },
-          policy_chain = {
-            {
-              name = 'apicast.policy.3scale_batcher',
-              configuration = { batch_report_seconds = 60 }
-            },
-            { name = 'apicast.policy.apicast' }
-          }
-        }
-      }
-    }
-  })
-}
---- config
-  include $TEST_NGINX_APICAST_CONFIG;
-
-  location /force_report_to_backend {
-    content_by_lua_block {
-      local ReportsBatcher = require ('apicast.policy.3scale_batcher.reports_batcher')
-      local reporter = require ('apicast.policy.3scale_batcher.reporter')
-      local http_ng_resty = require('resty.http_ng.backend.resty')
-      local backend_client = require('apicast.backend_client')
-
-      local service_id = '1'
-
-      local reports_batcher = ReportsBatcher.new(
-        ngx.shared.batched_reports, 'batched_reports_locks')
-
-      local reports = reports_batcher:get_all(service_id)
-
-      local backend = backend_client:new(
-        {
-          id = '1',
-          backend_authentication_type = 'service_token',
-          backend_authentication_value = 'token-value',
-          backend = { endpoint = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT" }
-        }, http_ng_resty)
-
-      reporter.report(reports, service_id, backend, reports_batcher)
-    }
-  }
-
-  location /transactions/authorize.xml {
-    content_by_lua_block {
-      ngx.exit(200)
-    }
-  }
-
-  location /transactions.xml {
-    content_by_lua_block {
-     ngx.req.read_body()
-     local post_args = ngx.req.get_post_args()
-
-     -- Transactions can be received in any order, so we need to check both
-     -- possibilities.
-     -- We did 20 requests for each user key, and each request increases
-     -- hits by 2 according to the mapping rules defined.
-     local order1 =
-       (post_args["transactions[0][user_key]"] == '1' and
-         post_args["transactions[0][usage][hits]"] == "40") and
-       (post_args["transactions[1][user_key]"] == '2' and
-         post_args["transactions[1][usage][hits]"] == "40")
-
-     local order2 =
-       (post_args["transactions[1][user_key]"] == '1' and
-         post_args["transactions[1][usage][hits]"] == "40") and
-       (post_args["transactions[0][user_key]"] == '2' and
-         post_args["transactions[0][usage][hits]"] == "40")
-
-      local luassert = require('luassert')
-      luassert.equals('1', ngx.req.get_uri_args()['service_id'])
-      luassert.is_true(order1 or order2)
-    }
-  }
-
-  location /api-backend {
-     echo 'yay, api backend';
-  }
-
---- request eval
-my $res = [];
-
-for(my $i = 0; $i < 20; $i = $i + 1 ) {
-  push $res, "GET /test?user_key=1";
-  push $res, "GET /test?user_key=2";
-}
-
-push $res, "GET /force_report_to_backend";
+push $res, "Host: one";
 
 $res
 --- no_error_log
 [error]
 
-=== TEST 5: with caching policy (resilient mode)
+=== TEST 4: with caching policy (resilient mode)
 The purpose of this test is to test that the 3scale batcher policy works
 correctly when combined with the caching one.
 In this case, the caching policy is configured as "resilient". We define a

@@ -9,6 +9,11 @@ local default_interval_seconds = 60
 
 _M.active_tasks = {}
 
+-- Whether a run should be the last one for a given ID
+-- When a task is marked to run for a last time, it will do so even if it is
+-- cancelled.
+_M.last_one = {}
+
 function _M.register_task(id)
   _M.active_tasks[id] = true
 end
@@ -58,13 +63,19 @@ end
 local run_periodic, schedule_next, timer_execute
 
 run_periodic = function(run_now, id, func, args, interval)
-  if not _M.task_is_active(id) then return end
+  if not _M.task_is_active(id) and not _M.last_one[id] then
+    return
+  end
 
   if run_now then
     func(unpack(args))
   end
 
-  schedule_next(id, func, args, interval)
+  if not _M.last_one[id] then
+    schedule_next(id, func, args, interval)
+  else
+    _M.last_one[id] = nil
+  end
 end
 
 -- Note: ngx.timer.at always sends "premature" as the first param.
@@ -89,7 +100,17 @@ function _M:execute(run_now)
   run_periodic(run_now or false, self.id, self.task, self.args, self.interval)
 end
 
-function _M:cancel()
+--- Cancel a task
+-- @tparam[opt] run_one_more boolean True to ensure that the task will run one
+--   more time before it is cancelled. False to just cancel the task. (Defaults
+--   to false)
+function _M:cancel(run_one_more)
+  if run_one_more then
+    _M.last_one[self.id] = true
+  end
+
+  -- We can cancel the task in all cases because the flag to run for the last
+  -- time has precedence.
   _M.unregister_task(self.id)
 end
 

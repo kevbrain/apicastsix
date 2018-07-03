@@ -1,13 +1,6 @@
-require 'ffi'
-require 'resty.lrucache'
-require 'resty.aes'
-require 'resty.hmac'
-
 require 'ngx_helper'
 require 'luassert_helper'
 require 'jwt_helper'
-
-require('resty.limit.req') -- because it uses ffi.cdef and can't be reloaded
 
 local busted = require('busted')
 local env = require('resty.env')
@@ -54,3 +47,19 @@ end)
 busted.subscribe({ 'file', 'end' }, function ()
   collectgarbage()
 end)
+
+do
+  -- busted does auto-insulation and tries to reload all files for every test file
+  -- that breaks ffi.cdef as it can't be called several times with the same argument
+  -- backports https://github.com/Olivine-Labs/busted/commit/db6d8b4be8fd099ab387efeb8232cfd905912abb
+  local ffi = require('ffi')
+  local cdef = ffi.cdef
+  local cdef_cache = {}
+
+  function ffi.cdef(def)
+    if not cdef_cache[def] then
+      cdef(def)
+      cdef_cache[def] = true
+    end
+  end
+end

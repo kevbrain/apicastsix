@@ -10,10 +10,8 @@ describe('find_service', function()
         -- directly in the code, so we need to mock them. We should probably
         -- try to avoid this kind of coupling.
         ngx.var = { uri = '/def' }
-        ngx.req = {
-          get_uri_args = function() return {} end,
-          get_method = function() return 'GET' end
-        }
+        stub(ngx.req, 'get_uri_args', function() return {} end)
+        stub(ngx.req, 'get_method', function() return 'GET' end)
 
         local find_service_policy = require('apicast.policy.find_service').new()
         local host = 'example.com'
@@ -59,10 +57,9 @@ describe('find_service', function()
         it('finds a service for the host in the context and stores the service there', function()
           require('apicast.configuration_store').path_routing = true
           ngx.var = { uri = '/abc' }
-          ngx.req = {
-            get_uri_args = function() return {} end,
-            get_method = function() return 'GET' end
-          }
+
+          stub(ngx.req, 'get_uri_args', function() return {} end)
+          stub(ngx.req, 'get_method', function() return 'GET' end)
 
           local host = 'example.com'
           local find_service_policy = require('apicast.policy.find_service').new()
@@ -90,10 +87,8 @@ describe('find_service', function()
         it('stores nil in the service field of the given context', function()
           require('apicast.configuration_store').path_routing = true
           ngx.var = { uri = '/abc' }
-          ngx.req = {
-            get_uri_args = function() return {} end,
-            get_method = function() return 'GET' end
-          }
+          stub(ngx.req, 'get_uri_args', function() return {} end)
+          stub(ngx.req, 'get_method', function() return 'GET' end)
 
           local find_service_policy = require('apicast.policy.find_service').new()
           local configuration_store = require('apicast.configuration_store').new()

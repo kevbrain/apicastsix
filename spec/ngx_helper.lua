@@ -12,7 +12,6 @@ local copy = tablex.copy
 
 local pairs = pairs
 
-local ngx_shared = ngx.shared
 local ngx_original = copy(ngx)
 local ngx_var_original = deepcopy(ngx.var)
 local ngx_ctx_original = deepcopy(ngx.ctx)

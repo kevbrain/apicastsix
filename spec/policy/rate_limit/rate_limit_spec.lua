@@ -28,19 +28,15 @@ local redis_url = 'redis://'..redis_host..':'..redis_port..'/1'
 local redis = ts.connect_redis{ url = redis_url }
 
 describe('Rate limit policy', function()
-  local ngx_exit
-  local ngx_sleep
   local context
-
-  setup(function()
-    ngx_exit = stub(ngx, 'exit')
-    ngx_sleep = stub(ngx, 'sleep')
-
-    stub(ngx, 'time', function() return 11111 end)
-  end)
 
   before_each(function()
     redis:flushdb()
+
+    stub(ngx, 'exit')
+    stub(ngx, 'sleep')
+
+    stub(ngx, 'time', function() return 11111 end)
   end)
 
   before_each(function()
@@ -141,7 +137,7 @@ describe('Rate limit policy', function()
 
         assert.returns_error('failed to connect to redis on invalidhost:6379', rate_limit_policy:access(context))
 
-        assert.spy(ngx_exit).was_called_with(500)
+        assert.spy(ngx.exit).was_called_with(500)
       end)
 
       describe('rejection', function()
@@ -156,7 +152,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          assert.spy(ngx_exit).was_called_with(429)
+          assert.spy(ngx.exit).was_called_with(429)
         end)
 
         it('rejected (req)', function()
@@ -170,7 +166,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          assert.spy(ngx_exit).was_called_with(429)
+          assert.spy(ngx.exit).was_called_with(429)
         end)
 
         it('rejected (count), name_type is plain', function()
@@ -185,7 +181,7 @@ describe('Rate limit policy', function()
           assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
           assert.equal('2', redis:get('11110_fixed_window_test3'))
-          assert.spy(ngx_exit).was_called_with(429)
+          assert.spy(ngx.exit).was_called_with(429)
         end)
 
         it('rejected (count), name_type is liquid', function()
@@ -202,7 +198,7 @@ describe('Rate limit policy', function()
           assert.returns_error('limits exceeded', rate_limit_policy:access(ctx))
 
           assert.equal('2', redis:get('11110_fixed_window_test3'))
-          assert.spy(ngx_exit).was_called_with(429)
+          assert.spy(ngx.exit).was_called_with(429)
         end)
 
         it('rejected (count), name_type is liquid, ngx variable', function()
@@ -217,7 +213,7 @@ describe('Rate limit policy', function()
           assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
           assert.equal('2', redis:get('11110_fixed_window_test3'))
-          assert.spy(ngx_exit).was_called_with(429)
+          assert.spy(ngx.exit).was_called_with(429)
         end)
       end)
 
@@ -233,7 +229,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert(rate_limit_policy:access(context))
 
-          assert.spy(ngx_sleep).was_called_with(match.is_gt(0.000))
+          assert.spy(ngx.sleep).was_called_with(match.is_gt(0.000))
         end)
 
         it('delay (req)', function()
@@ -247,7 +243,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert(rate_limit_policy:access(context))
 
-          assert.spy(ngx_sleep).was_called_with(match.is_gt(0.000))
+          assert.spy(ngx.sleep).was_called_with(match.is_gt(0.000))
         end)
 
         it('delay (req) service scope', function()
@@ -265,7 +261,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert(rate_limit_policy:access(context))
 
-          assert.spy(ngx_sleep).was_called_with(match.is_gt(0.001))
+          assert.spy(ngx.sleep).was_called_with(match.is_gt(0.001))
         end)
 
         it('delay (req) default service scope', function()
@@ -283,7 +279,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert(rate_limit_policy:access(context))
 
-          assert.spy(ngx_sleep).was_called_with(match.is_gt(0.001))
+          assert.spy(ngx.sleep).was_called_with(match.is_gt(0.001))
         end)
       end)
     end)

@@ -92,10 +92,12 @@ busted.after_each(reset)
 
 busted.subscribe({ 'file', 'start' }, function ()
   require('apicast.loader')
+  return nil, true -- needs to return true as second return value to continue executing the chain
 end)
 
 busted.subscribe({ 'file', 'end' }, function ()
   collectgarbage()
+  return nil, true
 end)
 
 do

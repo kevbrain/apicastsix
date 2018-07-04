@@ -20,18 +20,8 @@ describe('Configuration Store', function()
     end)
 
     describe('when path routing is enabled', function()
-      local path_routing_enabled = configuration.path_routing
-
-      setup(function() -- Wouldn't be needed if we injected path_routing_enabled
-        configuration.path_routing = true;
-      end)
-
-      teardown(function()
-        configuration.path_routing = path_routing_enabled
-      end)
-
       it('defines several services for the same host', function()
-        local store = configuration.new()
+        local store = configuration.new(configuration.cache_size, { path_routing = true })
         local service1 = { id = '21', hosts = { 'example.com' } }
         local service2 = { id = '22', hosts = { 'example.com' } }
 
@@ -43,7 +33,7 @@ describe('Configuration Store', function()
 
     describe('when path routing is disabled', function()
       it('ignores defining a host for a service if already defined for another', function()
-        local store = configuration.new()
+        local store = configuration.new(configuration.cache_size, { path_routing = false })
         local service1 = { id = '21', hosts = { 'example.com' } }
         local service2 = { id = '22', hosts = { 'example.com' } }
 

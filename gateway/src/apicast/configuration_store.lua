@@ -18,7 +18,15 @@ if env.enabled('APICAST_PATH_ROUTING_ENABLED') then ngx.log(ngx.WARN, 'DEPRECATI
 
 local mt = { __index = _M, __tostring = function() return 'Configuration Store' end }
 
-function _M.new(cache_size)
+function _M.new(cache_size, options)
+  local path_routing
+
+  if options and options.path_routing ~= nil then
+    path_routing = options.path_routing
+  else
+    path_routing = _M.path_routing
+  end
+
   return setmetatable({
     -- services hashed by id, example: {
     --   ["16"] = service1
@@ -31,6 +39,8 @@ function _M.new(cache_size)
     --    { service2 }
     --  }
     cache = lrucache.new(cache_size or _M.cache_size),
+
+    path_routing = path_routing,
 
     cache_size = cache_size
 
@@ -117,7 +127,7 @@ function _M.store(self, config, ttl)
         local host = lower(hosts[j])
         local h = by_host[host]
 
-        if #(h) == 0 or _M.path_routing then
+        if #(h) == 0 or self.path_routing then
           insert(h, service)
         else
           ngx.log(ngx.WARN, 'skipping host ', host, ' for service ', id, ' already defined by service ', h[1].id)

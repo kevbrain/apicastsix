@@ -1,18 +1,30 @@
 local busted = require('busted')
-local assert = require("luassert")
+local assert = require('luassert.assert')
 local util = require ('luassert.util')
 local say = require('say')
 
 do -- set up reverting stubs
-  local snapshot
+  local state = require("luassert.state")
 
-  busted.before_each(function()
-    snapshot = assert:snapshot()
-  end)
+  local function snapshot()
+    --- creates a snapshot and adds it to a stack
+    state.snapshot()
+    return nil, true -- to not stop the chain
+  end
 
-  busted.after_each(function()
-    snapshot:revert()
-  end)
+  local function revert()
+    --- reverts state of the current snapshot and removes it from the stack
+    state.revert()
+    return nil, true
+  end
+
+  for _, phase in ipairs({ 'suite', 'file', 'describe', 'it'}) do
+    busted.subscribe({ phase, 'start' }, snapshot)
+    busted.subscribe({ phase, 'end' }, revert)
+  end
+
+  busted.before_each(snapshot)
+  busted.after_each(revert)
 end
 
 do -- adding gt matcher: assert.spy(something).was_called_with(match.is_gt(4))

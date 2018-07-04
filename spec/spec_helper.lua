@@ -1,13 +1,56 @@
-require 'ffi'
-require 'resty.lrucache'
-require 'resty.aes'
-require 'resty.hmac'
+--- nasty monkey patch to create new notification for the whole it block
+--- busted does not have builtin way of having a hook around a test with its before/after hooks
+do
+  local function getlocal(fn, var)
+    local i = 1
+    while true do
+      local name, val = debug.getlocal(fn + 1, i)
+      if name == var then
+        return val
+      elseif not name then
+        break
+      end
+      i = i + 1
+    end
+  end
 
-require 'ngx_helper'
+  local function getupvalue(fn, var)
+    local i = 1
+    while true do
+      local name, val = debug.getupvalue(fn, i)
+      if name == var then
+        return val
+      elseif not name then
+        break
+      end
+      i = i + 1
+    end
+  end
+
+  --- busted/runner.lua:147 is 5 stacks above
+  -- https://github.com/Olivine-Labs/busted/blob/v2.0.rc12-1/busted/runner.lua#L147
+  local busted = getlocal(5, 'busted')
+  --- busted/core.lua:240 has "executors" upvalue available
+  -- https://github.com/Olivine-Labs/busted/blob/v2.0.rc12-1/busted/core.lua#L240
+  local executors = getupvalue(busted.register, 'executors')
+  --- busted/init.lua:20 defines the "it" method we want to wrap around
+  -- https://github.com/Olivine-Labs/busted/blob/v2.0.rc12-1/busted/init.lua#L20
+  local it = executors.it
+
+  busted.register('it', function(element)
+    local parent = busted.context.parent(element)
+
+    if busted.safe_publish('it', { 'it', 'start' }, element, parent) then
+      it(element)
+    end
+
+    busted.safe_publish('it', { 'it', 'end' }, element, parent)
+  end)
+end
+
 require 'luassert_helper'
+require 'ngx_helper'
 require 'jwt_helper'
-
-require('resty.limit.req') -- because it uses ffi.cdef and can't be reloaded
 
 local busted = require('busted')
 local env = require('resty.env')
@@ -49,8 +92,26 @@ busted.after_each(reset)
 
 busted.subscribe({ 'file', 'start' }, function ()
   require('apicast.loader')
+  return nil, true -- needs to return true as second return value to continue executing the chain
 end)
 
 busted.subscribe({ 'file', 'end' }, function ()
   collectgarbage()
+  return nil, true
 end)
+
+do
+  -- busted does auto-insulation and tries to reload all files for every test file
+  -- that breaks ffi.cdef as it can't be called several times with the same argument
+  -- backports https://github.com/Olivine-Labs/busted/commit/db6d8b4be8fd099ab387efeb8232cfd905912abb
+  local ffi = require('ffi')
+  local cdef = ffi.cdef
+  local cdef_cache = {}
+
+  function ffi.cdef(def)
+    if not cdef_cache[def] then
+      cdef(def)
+      cdef_cache[def] = true
+    end
+  end
+end

@@ -1,9 +1,18 @@
+-- not really required, but makes it obvious it is loaded
+-- so we can copy ngx object and compare it later to check modifications
+require('resty.core')
+
 local busted = require('busted')
 local misc = require('resty.core.misc')
-local deepcopy = require('pl.tablex').deepcopy
+local tablex = require('pl.tablex')
+local inspect = require('inspect')
+local spy = require('luassert.spy')
+local deepcopy = tablex.deepcopy
+local copy = tablex.copy
 
 local pairs = pairs
 
+local ngx_original = copy(ngx)
 local ngx_var_original = deepcopy(ngx.var)
 local ngx_ctx_original = deepcopy(ngx.ctx)
 local ngx_shared_original = deepcopy(ngx.shared)
@@ -42,10 +51,17 @@ local function reset_ngx_shared(state)
   end
 end
 
+--- ngx keys that are going to be reset in between tests.
+local ngx_reset = {
+  var = ngx_var_original,
+  ctx = ngx_ctx_original,
+  header = ngx_header_original,
+}
+
 local function reset_ngx_state()
-  ngx.var = deepcopy(ngx_var_original)
-  ngx.ctx = deepcopy(ngx_ctx_original)
-  ngx.header = deepcopy(ngx_header_original)
+  for key, val in pairs(ngx_reset) do
+    ngx[key] = deepcopy(val)
+  end
 
   -- We can't replace the whole table, as some code like resty.limit.req takes reference to it when loading.
   reset_ngx_shared(ngx_shared_original)
@@ -76,6 +92,20 @@ local function setup()
 
   register_getter('headers_sent', function() return headers_sent end)
 end
+
+--- Verify ngx global variable against unintentional changes.
+--- Some specs could be for example setting `ngx.req = { }` and leak
+--- to other tests.
+busted.subscribe({ 'it', 'end' }, function ()
+  for key, value in pairs(ngx_original) do
+    if ngx[key] ~= value and not ngx_reset[key] and not spy.is_spy(ngx[key]) then
+      ngx[key] = value
+      busted.fail('ngx.' .. key .. ' changed from ' .. inspect(value) .. ' to ' .. inspect(ngx[key]))
+    end
+  end
+
+  return nil, true -- continue executing callbacks
+end)
 
 busted.after_each(cleanup)
 busted.teardown(cleanup)

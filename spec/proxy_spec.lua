@@ -26,7 +26,7 @@ describe('Proxy', function()
       ngx.header = {}
 
       ngx.var = { backend_endpoint = 'http://localhost:1853', uri = '/a/uri' }
-      ngx.req = { get_method = function () return 'GET' end}
+      stub(ngx.req, 'get_method', function () return 'GET' end)
       service = Service.new({ extract_usage = function() end })
     end)
 

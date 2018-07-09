@@ -4,6 +4,7 @@ describe('Keycloak Role check policy', function()
 
   before_each(function()
     ngx.header = {}
+    stub(ngx, 'print')
   end)
 
   describe('.access', function()

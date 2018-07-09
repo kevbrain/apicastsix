@@ -10,6 +10,7 @@ APIcast.
 - [**APIcast default policies**](#apicast-default-policies)
 - [**Write your own policy**](#write-your-own-policy)
 - [**Integrate your policies**](#integrate-your-policies)
+- [**Available policies**](#available-policies)
 
 
 ## Policies
@@ -205,10 +206,9 @@ Invoke `bin/apicast generate policy --help` and follow the documentation.
 
 ## Integrate your policies
 
-At some point, it will be possible to configure policies and policy chains
-through the 3scale UI, but you can also configure them in APIcast using a
-configuration file. Remember that APIcast allows to specify a config file using
-the `THREESCALE_CONFIG_FILE` env variable:
+Policies can be configured using the 3scale UI, but you can also configure them
+in APIcast using a configuration file. Remember that APIcast allows to specify a
+config file using the `THREESCALE_CONFIG_FILE` env variable:
 ```shell
 THREESCALE_CONFIG_FILE=my_config.json bin/apicast
 ```
@@ -251,3 +251,23 @@ policies can be configured:
 If instead of configuring the policy chain of a specific service, you want to
 customize the global policy chain, you can take a look at
 [this example](../examples/policy_chain/README.md).
+
+## Available policies
+
+When configuring your policies using the 3scale UI, the policies available
+depend on the 3scale deployment type (on-premises or SaaS). The built-in
+policies (headers, upstream, url_rewriting, etc.) are always available. However,
+it is not always possible to use custom policies:
+- On-premises: custom policies are available.
+- SaaS (APIcast hosted by 3scale): the policies available are the ones included
+in the APIcast hosted by 3scale,
+[apicast-cloud-hosted](https://github.com/3scale/apicast-cloud-hosted). It is
+not possible to use custom policies.
+- SaaS (self-hosted APIcast): the 3scale UI shows the policies provided in the
+APIcast hosted by 3scale. However, it is possible to use custom ones if they are
+included in APIcast as explained in the [Write your own
+policy](#write-your-own-policy) section. In order to use custom policies they
+need to be included in the config file as explained in [Integrate your
+policies](#integrate-your-policies). You can download the config file from
+3scale and use it as a starting point. Notice that with this option, if you make
+a change using the 3scale UI, you'll need to update your config file too.

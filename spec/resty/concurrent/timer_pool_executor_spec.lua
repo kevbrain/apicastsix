@@ -1,7 +1,7 @@
 local TimerPoolExecutor = require('resty.concurrent.timer_pool_executor')
 
 local function yield() ngx.sleep(0) end
-
+local timeout = 10
 local noop = function() end
 
 describe('TimerPoolExecutor', function()
@@ -9,19 +9,19 @@ describe('TimerPoolExecutor', function()
         it('automatically checks in back old workers', function()
             local pool = TimerPoolExecutor.new({ max_timers = 1 })
 
-            assert(pool:post(noop):wait(1))
+            assert(pool:post(noop):wait(timeout))
             yield()
             assert.equal(0, #pool)
-            assert(pool:post(noop):wait(1))
+            assert(pool:post(noop):wait(timeout))
         end)
 
         it('puts back worker even when task crashes', function ()
             local pool = TimerPoolExecutor.new({ max_timers = 1 })
 
-            assert(pool:post(error, 'message'):wait(1))
+            assert(pool:post(error, 'message'):wait(timeout))
             yield()
             assert.equal(0, #pool)
-            assert(pool:post(error, 'message'):wait(1))
+            assert(pool:post(error, 'message'):wait(timeout))
         end)
     end)
 

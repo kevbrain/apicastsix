@@ -1,0 +1,26 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Conditional",
+  "summary": "Executes a policy chain conditionally",
+  "description": [
+    "Evaluates a condition, and when it's true, it calls its policy chain."
+  ],
+  "version": "builtin",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "condition": {
+        "description": "condition to be evaluated",
+        "type": "string"
+      },
+      "policy_chain": {
+        "description": "the policy chain to execute when the condition is true",
+        "type": "array",
+        "items": {
+          "type": "object"
+        }
+      }
+    },
+    "required": ["condition"]
+  }
+}

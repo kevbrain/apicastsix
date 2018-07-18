@@ -20,7 +20,17 @@ phases it runs, so we can use that to verify it was executed.
           {
             "name": "apicast.policy.conditional",
             "configuration": {
-              "condition": "request_path == \"/log\"",
+              "condition": {
+                "operations": [
+                  {
+                    "left": "{{ uri }}",
+                    "left_type": "liquid",
+                    "op": "==",
+                    "right": "/log",
+                    "right_type": "plain"
+                  }
+                ]
+              },
               "policy_chain": [
                 {
                   "name": "apicast.policy.phase_logger"
@@ -61,7 +71,17 @@ phases it runs, so we can use that to verify that it was not executed.
           {
             "name": "apicast.policy.conditional",
             "configuration": {
-              "condition": "request_path == \"/log\"",
+              "condition": {
+                "operations": [
+                  {
+                    "left": "{{ uri }}",
+                    "left_type": "liquid",
+                    "op": "==",
+                    "right": "/log",
+                    "right_type": "plain"
+                  }
+                ]
+              },
               "policy_chain": [
                 {
                   "name": "apicast.policy.phase_logger"
@@ -84,4 +104,59 @@ GET / HTTP/1.1
 --- error_code: 200
 --- no_error_log
 [error]
+running phase: rewrite
+
+=== TEST 3: Combine several operations in the condition
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.conditional",
+            "configuration": {
+              "condition": {
+                "operations": [
+                  {
+                    "left": "{{ uri }}",
+                    "left_type": "liquid",
+                    "op": "==",
+                    "right": "/log",
+                    "right_type": "plain"
+                  },
+                  {
+                    "left": "{{ service.id }}",
+                    "left_type": "liquid",
+                    "op": "==",
+                    "right": "42",
+                    "right_type": "plain"
+                  }
+                ],
+                "combine_op": "and"
+              },
+              "policy_chain": [
+                {
+                  "name": "apicast.policy.phase_logger"
+                }
+              ]
+            }
+          },
+          {
+            "name": "apicast.policy.echo"
+          }
+        ]
+      }
+    }
+  ]
+}
+--- request
+GET /log
+--- response_body
+GET /log HTTP/1.1
+--- error_code: 200
+--- no_error_log
+[error]
+--- error_log chomp
 running phase: rewrite

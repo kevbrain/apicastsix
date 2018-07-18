@@ -1,7 +1,12 @@
+local ipairs = ipairs
+local insert = table.insert
+
 local policy = require('apicast.policy')
 local policy_phases = require('apicast.policy').phases
 local PolicyChain = require('apicast.policy_chain')
-local Engine = require('apicast.policy.conditional.engine')
+local Condition = require('apicast.policy.conditional.condition')
+local Operation = require('apicast.policy.conditional.operation')
+local ngx_variable = require('apicast.policy.ngx_variable')
 
 local _M = policy.new('Conditional policy')
 
@@ -23,15 +28,27 @@ local function build_policy_chain(chain)
   return PolicyChain.new(policies)
 end
 
-function _M.new(config)
-  local self = new(config)
-  self.condition = config.condition or true
-  self.policy_chain = build_policy_chain(config.policy_chain)
-  return self
+local function build_operations(config_ops)
+  local res = {}
+
+  for _, op in ipairs(config_ops) do
+    insert(res, Operation.new(op.left, op.left_type, op.op, op.right, op.right_type))
+  end
+
+  return res
 end
 
-local function condition_is_true(condition)
-  return Engine.evaluate(condition)
+function _M.new(config)
+  local self = new(config)
+
+  config.condition = config.condition or {}
+  self.condition = Condition.new(
+    build_operations(config.condition.operations),
+    config.condition.combine_op
+  )
+
+  self.policy_chain = build_policy_chain(config.policy_chain)
+  return self
 end
 
 function _M:export()
@@ -41,7 +58,11 @@ end
 -- Forward policy phases to chain
 for _, phase in policy_phases() do
   _M[phase] = function(self, context)
-    if condition_is_true(self.condition) then
+    local condition_is_true = self.condition:evaluate(
+      ngx_variable.available_context(context)
+    )
+
+    if condition_is_true then
       ngx.log(ngx.DEBUG, 'Condition met in conditional policy')
       self.policy_chain[phase](self.policy_chain, context)
     else

@@ -26,6 +26,12 @@ describe('linked_list', function()
       assert.same({ b = 2 }, list.next.current)
       assert.same({ c = 3 }, list.next.next)
     end)
+
+    it('takes false over nil', function()
+      local list = linked_list.readonly({ a = false }, { a = 'value' })
+
+      assert.is_false(list.a)
+    end)
   end)
 
   describe('readwrite', function()
@@ -53,6 +59,14 @@ describe('linked_list', function()
       assert.same({ a = 1 }, list.current)
       assert.same({ b = 2 }, list.next.current)
       assert.same({ c = 3 }, list.next.next)
+    end)
+
+    it('can override values with false', function()
+      local list = linked_list.readwrite({  }, { a = 'value' })
+
+      list.a = false
+
+      assert.is_false(list.a)
     end)
   end)
 end)

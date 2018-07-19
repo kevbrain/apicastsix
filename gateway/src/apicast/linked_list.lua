@@ -10,7 +10,7 @@ local noop = function() end
 
 local empty_t = setmetatable({}, { __newindex = noop })
 local __index = function(t,k)
-    return t.current[k] or t.next[k]
+    if t.current[k] == nil then return t.next[k] else return t.current[k] end
 end
 
 local ro_mt = {

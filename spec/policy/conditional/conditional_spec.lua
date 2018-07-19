@@ -1,12 +1,23 @@
 local ConditionalPolicy = require('apicast.policy.conditional')
 local Policy = require('apicast.policy')
 local PolicyChain = require('apicast.policy_chain')
-local Engine = require('apicast.policy.conditional.engine')
+local ngx_variable = require('apicast.policy.ngx_variable')
 
 describe('Conditional policy', function()
   local test_policy_chain
   local context
-  local condition = "request_path == '/some_path'"
+
+  local true_condition = {
+    operations = {
+      { left = '{{ var_1 }}', left_type = 'liquid', op = '==', right = '1' }
+    }
+  }
+
+  local false_condition = {
+    operations = {
+      { left = '1', op = '==', right = '2' }
+    }
+  }
 
   before_each(function()
     test_policy_chain = PolicyChain.build({})
@@ -15,16 +26,14 @@ describe('Conditional policy', function()
       test_policy_chain[phase] = spy.new(function() end)
     end
 
+    stub(ngx_variable, 'available_context').returns({ var_1 = '1' })
+
     context = {}
   end)
 
   describe('when the condition is true', function()
-    before_each(function()
-      stub(Engine, 'evaluate').returns(true)
-    end)
-
     it('forwards the policy phases (except init and init_worker) to the chain', function()
-      local conditional = ConditionalPolicy.new({ condition = condition })
+      local conditional = ConditionalPolicy.new({ condition = true_condition })
 
       -- .new() will try to load the chain, set it here to avoid that and
       -- control which one to use.
@@ -45,12 +54,8 @@ describe('Conditional policy', function()
   end)
 
   describe('when the condition is false', function()
-    before_each(function()
-      stub(Engine, 'evaluate').returns(false)
-    end)
-
     it('does not forward the policy phases to the chain', function()
-      local conditional = ConditionalPolicy.new({ condition = condition })
+      local conditional = ConditionalPolicy.new({ condition = false_condition })
       conditional.policy_chain = test_policy_chain
 
       for _, phase in Policy.phases() do
@@ -67,7 +72,7 @@ describe('Conditional policy', function()
 
       stub(test_policy_chain, 'export').returns(exported_by_chain)
 
-      local conditional = ConditionalPolicy.new({ condition = condition })
+      local conditional = ConditionalPolicy.new({ condition = true_condition })
       conditional.policy_chain = test_policy_chain
 
       assert.same(exported_by_chain, conditional:export())

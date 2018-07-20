@@ -311,13 +311,13 @@ Upstream policy should work if used standalone without apicast policy.
 --- upstream
   location /a_path {
      content_by_lua_block {
-       require('luassert').are.equal('GET /a_path? HTTP/1.1',
+       require('luassert').are.equal('GET /a_path?query HTTP/1.1',
                                      ngx.var.request)
        ngx.say('yay, api backend');
      }
   }
 --- request
-GET /a_path?
+GET /a_path?query
 --- response_body
 yay, api backend
 --- error_code: 200
@@ -346,9 +346,9 @@ Upstream policy should work with internal echo API.
   ]
 }
 --- request
-GET /a_path?
+GET /a_path
 --- response_body
-GET /a_path? HTTP/1.1
+GET /a_path HTTP/1.1
 X-Real-IP: 127.0.0.1
 Host: echo
 --- error_code: 200

@@ -1,23 +1,27 @@
 local apicast_balancer = require 'apicast.balancer'
-local resty_balancer = require 'resty.balancer'
+local Upstream = require 'apicast.upstream'
 
 describe('apicast.balancer', function()
 
   describe('.call', function()
-    local b = resty_balancer.new(function(peers) return peers[1] end)
-    b.balancer = { }
-
-    ngx.var = {
-      proxy_host = 'upstream'
-    }
+    before_each(function ()
+      ngx.var = {
+        proxy_host = 'upstream'
+      }
+    end)
 
     it('sets default port from scheme if no port is specified for peers', function()
-      b.peers = function() return { { '127.0.0.2' } } end
-      ngx.var.proxy_pass = 'https://example.com'
+      local balancer = setmetatable({
+        set_current_peer = spy.new(function() return true end),
+      }, { __index = apicast_balancer.default_balancer })
+      local upstream = Upstream.new('https://127.0.0.2')
 
-      b.balancer.set_current_peer = spy.new(function() return true end)
-      apicast_balancer:call({},b)
-      assert.spy(b.balancer.set_current_peer).was.called_with('127.0.0.2', 443)
+      upstream.servers = {
+        { address = '127.0.0.2', port = nil }
+      }
+
+      assert(apicast_balancer:call({ upstream =  upstream }, balancer))
+      assert.spy(balancer.set_current_peer).was.called_with(balancer, '127.0.0.2', 443)
     end)
   end)
 end)

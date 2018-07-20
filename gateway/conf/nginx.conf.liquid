@@ -9,6 +9,10 @@ env OPENSSL_VERIFY;
   {% for file in "modules/ngx_http_opentracing_module.so" | filesystem %}
 load_module {{file}};
   {% endfor %}
+{% else %}
+  {% if timer_resolution %}
+    timer_resolution {{ timer_resolution }};
+  {% endif %}
 {% endif %}
 
 daemon {{ daemon | default: 'off' }};
@@ -16,10 +20,6 @@ master_process {{ master_process | default: 'on' }};
 worker_processes {{ worker_processes | default: 'auto' }};
 pcre_jit on;
 pid {{ pid | default: 'nginx.pid' }};
-
-{% unless opentracing_tracer != empty %}
-timer_resolution {{ timer_resolution | default: '100ms' }};
-{% endunless %}
 
 {% for file in "main.d/*.conf" | filesystem %}
   {% include file %}

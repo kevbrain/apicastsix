@@ -29,5 +29,6 @@ return {
     configuration_loader = 'lazy',
     configuration_cache = 0,
     configuration = data_url('application/json', configuration),
-    port = { metrics = 9421 }, -- see https://github.com/prometheus/prometheus/wiki/Default-port-allocations
+    port = { metrics = 9421 }, -- see https://github.com/prometheus/prometheus/wiki/Default-port-allocations,
+    timer_resolution = false,
 }

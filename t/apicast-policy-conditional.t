@@ -160,3 +160,68 @@ GET /log HTTP/1.1
 [error]
 --- error_log chomp
 running phase: rewrite
+
+=== TEST 4: conditional policy combined with upstream policy
+This test shows that the conditional policy can be used in combination with the
+upstream one to change the upstream according to an HTTP request header.
+We define the upstream policy so it redirects the request to the upstream
+defined in the config below. The echo policy is included at the end of the
+chain, so if the test fails, we'll notice because we'll get the answer from the
+echo policy instead of our upstream.
+--- upstream
+  location / {
+     echo 'yay, api backend';
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.conditional",
+            "configuration": {
+              "condition": {
+                "operations": [
+                  {
+                    "left": "{{ headers['Upstream'] }}",
+                    "left_type": "liquid",
+                    "op": "==",
+                    "right": "test_upstream",
+                    "right_type": "plain"
+                  }
+                ]
+              },
+              "policy_chain": [
+                {
+                  "name": "apicast.policy.upstream",
+                  "configuration": {
+                    "rules": [
+                      {
+                        "regex": "/",
+                        "url": "http://test:$TEST_NGINX_SERVER_PORT"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "apicast.policy.echo"
+          }
+        ]
+      }
+    }
+  ]
+}
+--- request
+GET /
+--- more_headers
+Upstream: test_upstream
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

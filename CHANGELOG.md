@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Policies can define `__gc` metamethod that gets called when they are garbage collected to do cleanup [PR #688](https://github.com/3scale/apicast/pull/688)
 - Keycloak Role Check policy [PR #773](https://github.com/3scale/apicast/pull/773)
 - Conditional policy. This policy includes a condition and a policy chain, and only executes the chain when the condition is true [PR #812](https://github.com/3scale/apicast/pull/812), [PR #814](https://github.com/3scale/apicast/pull/814)
+- Request headers are now exposed in the context available when evaluating Liquid [PR #819](https://github.com/3scale/apicast/pull/819)
 
 ### Changed
 

@@ -110,9 +110,9 @@ function _M:rewrite(context)
     end
   end
 
-  self.query_args = QueryParams.new()
+  local query_args = QueryParams.new()
   for _, query_arg_command in ipairs(self.query_args_commands) do
-    apply_query_arg_command(query_arg_command, self.query_args, context)
+    apply_query_arg_command(query_arg_command, query_args, context)
   end
 end
 

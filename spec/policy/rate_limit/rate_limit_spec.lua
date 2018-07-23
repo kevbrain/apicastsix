@@ -1,4 +1,5 @@
 local RateLimitPolicy = require('apicast.policy.rate_limit')
+local ngx_variable = require('apicast.policy.ngx_variable')
 local match = require('luassert.match')
 local env = require('resty.env')
 
@@ -37,13 +38,15 @@ describe('Rate limit policy', function()
     stub(ngx, 'sleep')
 
     stub(ngx, 'time', function() return 11111 end)
+
+    -- By default expose the context shared by the policies.
+    stub(ngx_variable, 'available_context', function(policies_context)
+      return policies_context
+    end)
   end)
 
   before_each(function()
-    ngx.var = {
-      request_time = '0.060',
-      host = 'test3',
-    }
+    ngx.var = { request_time = '0.060', }
 
     ngx.shared.limiter = mock(shdict(), true)
 
@@ -201,7 +204,13 @@ describe('Rate limit policy', function()
           assert.spy(ngx.exit).was_called_with(429)
         end)
 
-        it('rejected (count), name_type is liquid, ngx variable', function()
+        it('rejected (count), name_type is liquid and refers to var in the context', function()
+          local test_host = 'some_host'
+
+          stub(ngx_variable, 'available_context', function()
+            return { host = test_host }
+          end)
+
           local rate_limit_policy = RateLimitPolicy.new({
             fixed_window_limiters = {
               { key = { name = '{{ host }}', name_type = 'liquid', scope = 'global' }, count = 1, window = 10 }
@@ -212,7 +221,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          assert.equal('2', redis:get('11110_fixed_window_test3'))
+          assert.equal('2', redis:get('11110_fixed_window_' .. test_host))
           assert.spy(ngx.exit).was_called_with(429)
         end)
       end)

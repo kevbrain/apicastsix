@@ -4,13 +4,16 @@ local lrucache = require('resty.lrucache')
 local configuration_store = require 'apicast.configuration_store'
 local Service = require 'apicast.configuration.service'
 local Usage = require 'apicast.usage'
+local test_backend_client = require 'resty.http_ng.backend.test'
 
 describe('Proxy', function()
-  local configuration, proxy
+  local configuration, proxy, test_backend
 
   before_each(function()
     configuration = configuration_store.new()
     proxy = require('apicast.proxy').new(configuration)
+    test_backend = test_backend_client.new()
+    proxy.http_ng_backend = test_backend
   end)
 
   it('has access function', function()
@@ -48,9 +51,9 @@ describe('Proxy', function()
     before_each(function() get_upstream = proxy.get_upstream end)
 
     it('sets correct upstream port', function()
-      assert.same(443, get_upstream({ api_backend = 'https://example.com' }).port)
-      assert.same(80, get_upstream({ api_backend = 'http://example.com' }).port)
-      assert.same(8080, get_upstream({ api_backend = 'http://example.com:8080' }).port)
+      assert.same(443, get_upstream({ api_backend = 'https://example.com' }):port())
+      assert.same(80, get_upstream({ api_backend = 'http://example.com' }):port())
+      assert.same(8080, get_upstream({ api_backend = 'http://example.com:8080' }):port())
     end)
   end)
 

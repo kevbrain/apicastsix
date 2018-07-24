@@ -44,13 +44,24 @@ describe('resty.balancer', function()
       local peers = {
         { '127.0.0.2', 8091 }
       }
-      b.balancer.set_current_peer = spy.new(function() return true end)
+      stub.new(b.balancer, 'set_current_peer', function() return true end)
 
       local ok, err = b:set_peer(peers)
 
       assert.falsy(err)
       assert.truthy(ok)
       assert.spy(b.balancer.set_current_peer).was.called_with('127.0.0.2', 8091)
+    end)
+  end)
+
+  describe(':set_current_peer', function()
+    it('returns ok when it sets the peer', function()
+      local test = resty_balancer.new(function(peers) return peers[1] end)
+      local set_current_peer = stub.new(test.balancer, 'set_current_peer', function() return true end)
+
+      assert(test:set_current_peer('127.0.0.1', 8080))
+
+      assert.spy(set_current_peer).was.called_with('127.0.0.1', 8080)
     end)
   end)
 

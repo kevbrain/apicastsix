@@ -8,7 +8,7 @@ describe('Configuration object', function()
     end)
 
     it('returns error on invalid URI', function()
-      assert.same({nil, 'invalid endpoint'}, { loader.download('foobar') })
+      assert.same({nil, 'missing scheme'}, { loader.download('foobar') })
     end)
 
     it('returns error on invalid URI', function()

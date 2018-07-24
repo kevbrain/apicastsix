@@ -52,10 +52,12 @@ GET /t
 
     balancer_by_lua_block {
       local balancer = require 'apicast.balancer'
+      local Upstream = require 'apicast.upstream'
+      local upstream = Upstream.new('http://127.0.0.1:$TEST_NGINX_SERVER_PORT')
 
-      ngx.ctx.upstream = { { address = '127.0.0.1', port = $TEST_NGINX_SERVER_PORT } }
+      upstream.servers = { { address = '127.0.0.1', port = $TEST_NGINX_SERVER_PORT } }
 
-      local peers = balancer:call()
+      assert(balancer:call({ upstream = upstream }))
     }
     keepalive 32;
   }
@@ -73,7 +75,7 @@ GET /t
 yay
 --- error_code: 200
 
-=== TEST 3: resolver + balancer
+=== TEST 3: upstream + balancer
 
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -83,7 +85,7 @@ yay
 
     balancer_by_lua_block {
       local balancer = require 'apicast.balancer'
-      local peers = balancer:call()
+      assert(balancer:call(ngx.ctx))
     }
 
     keepalive 32;
@@ -95,13 +97,12 @@ location /api {
 
 location /t {
   rewrite_by_lua_block {
-    local resty_resolver = require 'resty.resolver'
-    local dns_client = require 'resty.dns.resolver'
+    local Upstream = require 'apicast.upstream'
+    local upstream = Upstream.new('http://127.0.0.1:$TEST_NGINX_SERVER_PORT')
 
-    local dns = dns_client:new{ nameservers = { { "127.0.0.1", $TEST_NGINX_RANDOM_PORT } } }
-    local resolver = resty_resolver.new(dns)
+    upstream:resolve()
 
-    ngx.ctx.upstream = resolver:get_servers('localhost', { port = $TEST_NGINX_SERVER_PORT })
+    ngx.ctx.upstream = upstream
   }
 
   proxy_pass http://upstream/api;
@@ -118,7 +119,7 @@ yay
 
 
 
-=== TEST 3: unsupported scheme
+=== TEST 4: unsupported scheme
 Using an unsopported URI scheme causes an exception
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";

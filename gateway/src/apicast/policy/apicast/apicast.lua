@@ -1,6 +1,7 @@
 local balancer = require('apicast.balancer')
 local math = math
 local setmetatable = setmetatable
+local assert = assert
 
 local user_agent = require('apicast.user_agent')
 
@@ -51,7 +52,7 @@ function _M:rewrite(context)
     p:rewrite(service, context)
   end
 
-  p.set_upstream(service)
+  context[self] = p.get_upstream(service)
 
   ngx.ctx.proxy = p
 end
@@ -80,9 +81,12 @@ function _M:access(context)
   end
 end
 
-_M.content = function()
-  if not ngx.headers_sent then
-    ngx.exec("@upstream")
+function _M:content(context)
+  local upstream = assert(context[self], 'missing upstream')
+
+  if upstream then
+    upstream:set_request_host()
+    upstream:call(context)
   end
 end
 

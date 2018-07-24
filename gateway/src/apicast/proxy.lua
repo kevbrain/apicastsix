@@ -12,8 +12,7 @@ local resty_lrucache = require('resty.lrucache')
 local backend_cache_handler = require('apicast.backend.cache_handler')
 local Usage = require('apicast.usage')
 local errors = require('apicast.errors')
-
-local resty_url = require 'resty.url'
+local Upstream = require('apicast.upstream')
 
 local assert = assert
 local type = type
@@ -24,7 +23,6 @@ local tonumber = tonumber
 local setmetatable = setmetatable
 local ipairs = ipairs
 local encode_args = ngx.encode_args
-local resty_resolver = require 'resty.resolver'
 local backend_client = require('apicast.backend_client')
 local http_ng_ngx = require('resty.http_ng.backend.ngx')
 
@@ -42,8 +40,6 @@ do
     ngx.log(ngx.WARN, 'using experimental asynchronous reporting threads: ', reporting_threads)
   end
 end
-
-local empty = {}
 
 local _M = { }
 
@@ -176,26 +172,15 @@ function _M.get_upstream(service)
     return errors.service_not_found()
   end
 
-  local url = resty_url.split(service.api_backend) or empty
-  local scheme = url[1] or 'http'
-  local host, port, path =
-    url[4], url[5] or resty_url.default_port(url[1]), url[6] or ''
+  local upstream, err = Upstream.new(service.api_backend)
 
-  return {
-    server = host,
-    host = service.hostname_rewrite or host,
-    uri  = scheme .. '://upstream' .. path,
-    port = tonumber(port)
-  }
-end
+  if not upstream then
+    return nil, err
+  end
 
-function _M.set_upstream(service)
-  local upstream = _M.get_upstream(service)
+  upstream.host = service.hostname_rewrite
 
-  ngx.ctx.upstream = resty_resolver:instance():get_servers(upstream.server, { port = upstream.port })
-
-  ngx.var.proxy_pass = upstream.uri
-  ngx.req.set_header('Host', upstream.host or ngx.var.host)
+  return upstream
 end
 
 local function handle_oauth(service)

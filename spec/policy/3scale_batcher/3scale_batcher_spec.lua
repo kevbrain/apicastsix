@@ -27,6 +27,18 @@ describe('3scale batcher policy', function()
     end)
   end)
 
+  describe('.rewrite', function()
+    it('sets flags to avoid calling backend in the APIcast policy', function()
+      local context = {}
+      local batcher_policy = ThreescaleBatcher.new({})
+
+      batcher_policy:rewrite(context)
+
+      assert.is_true(context.skip_apicast_access)
+      assert.is_true(context.skip_apicast_post_action)
+    end)
+  end)
+
   describe('.access', function()
     local service = configuration.parse_service({ id = 42 })
     local service_id = service.id

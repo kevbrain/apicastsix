@@ -8,23 +8,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- OpenTracing support [PR #669](https://github.com/3scale/apicast/pull/669)
+- OpenTracing support [PR #669](https://github.com/3scale/apicast/pull/669), [THREESCALE-1159](https://issues.jboss.org/browse/THREESCALE-1159)
 - Generate new policy scaffold from the CLI [PR #682](https://github.com/3scale/apicast/pull/682)
-- 3scale batcher policy [PR #685](https://github.com/3scale/apicast/pull/685), [PR #710](https://github.com/3scale/apicast/pull/710), [PR #757](https://github.com/3scale/apicast/pull/757), [PR #786](https://github.com/3scale/apicast/pull/786)
-- Liquid templating support in the headers policy configuration [PR #716](https://github.com/3scale/apicast/pull/716)
-- Ability to modify query parameters in the URL rewriting policy [PR #724](https://github.com/3scale/apicast/pull/724), [PR #818](https://github.com/3scale/apicast/pull/818)
-- 3scale referrer policy [PR #728](https://github.com/3scale/apicast/pull/728), [PR #777](https://github.com/3scale/apicast/pull/777)
-- Liquid templating support in the rate-limit policy [PR #719](https://github.com/3scale/apicast/pull/719)
+- 3scale batcher policy [PR #685](https://github.com/3scale/apicast/pull/685), [PR #710](https://github.com/3scale/apicast/pull/710), [PR #757](https://github.com/3scale/apicast/pull/757), [PR #786](https://github.com/3scale/apicast/pull/786), [THREESCALE-1155](https://issues.jboss.org/browse/THREESCALE-1155)
+- Liquid templating support in the headers policy configuration [PR #716](https://github.com/3scale/apicast/pull/716), [THREESCALE-1140](https://issues.jboss.org/browse/THREESCALE-1140)
+- Ability to modify query parameters in the URL rewriting policy [PR #724](https://github.com/3scale/apicast/pull/724), [PR #818](https://github.com/3scale/apicast/pull/818), [THREESCALE-1139](https://issues.jboss.org/browse/THREESCALE-1139)
+- 3scale referrer policy [PR #728](https://github.com/3scale/apicast/pull/728), [PR #777](https://github.com/3scale/apicast/pull/777), [THREESCALE-329](https://issues.jboss.org/browse/THREESCALE-329)
+- Liquid templating support in the rate-limit policy [PR #719](https://github.com/3scale/apicast/pull/719), [THREESCALE-411](https://issues.jboss.org/browse/THREESCALE-411)
 - Default credentials policy [PR #741](https://github.com/3scale/apicast/pull/741), [THREESCALE-586](https://issues.jboss.org/browse/THREESCALE-586)
 - Configurable caching for the token introspection policy [PR #656](https://github.com/3scale/apicast/pull/656)
-- `APICAST_ACCESS_LOG_FILE` env to make the access log location configurable [THREESCALE-743](https://github.com/3scale/apicast/pull/743)
+- `APICAST_ACCESS_LOG_FILE` env to make the access log location configurable [PR #743](https://github.com/3scale/apicast/pull/743), [THREESCALE-1148](https://issues.jboss.org/browse/THREESCALE-1148)
 - ENV variables to make APIcast listen on HTTPS port [PR #622](https://github.com/3scale/apicast/pull/622) 
-- New `ssl_certificate` phase allows policies to provide certificate to terminate HTTPS connection [PR #622](https://github.com/3scale/apicast/pull/622).
+- New `ssl_certificate` phase allows policies to provide certificate to terminate HTTPS connection [PR #622](https://github.com/3scale/apicast/pull/622)
 - Configurable `auth_type` for the token introspection policy [PR #755](https://github.com/3scale/apicast/pull/755)
 - `TimerTask` module to execute recurrent tasks that can be cancelled [PR #782](https://github.com/3scale/apicast/pull/782), [PR #784](https://github.com/3scale/apicast/pull/784), [PR #791](https://github.com/3scale/apicast/pull/791)
 - `GC` module that implements a workaround to be able to define `__gc` on tables [PR #790](https://github.com/3scale/apicast/pull/790)
 - Policies can define `__gc` metamethod that gets called when they are garbage collected to do cleanup [PR #688](https://github.com/3scale/apicast/pull/688)
-- Keycloak Role Check policy [PR #773](https://github.com/3scale/apicast/pull/773)
+- Keycloak Role Check policy [PR #773](https://github.com/3scale/apicast/pull/773), [THREESCALE-1158](https://issues.jboss.org/browse/THREESCALE-1158)
 - Conditional policy. This policy includes a condition and a policy chain, and only executes the chain when the condition is true [PR #812](https://github.com/3scale/apicast/pull/812), [PR #814](https://github.com/3scale/apicast/pull/814), [PR #820](https://github.com/3scale/apicast/pull/820)
 - Request headers are now exposed in the context available when evaluating Liquid [PR #819](https://github.com/3scale/apicast/pull/819)
 
@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Do not crash when initializing unreachable/invalid DNS resolver [PR #730](https://github.com/3scale/apicast/pull/730)
-- Reporting only 50% calls to 3scale backend when using OIDC [PR #774](https://github.com/3scale/apicast/pull/774)
+- Reporting only 50% calls to 3scale backend when using OIDC [PR #774](https://github.com/3scale/apicast/pull/774), [THREESCALE-1080](https://issues.jboss.org/browse/THREESCALE-1080)
 - Building container image on OpenShift 3.9 [PR #810](https://github.com/3scale/apicast/pull/810), [THREESCALE-1138](https://issues.jboss.org/browse/THREESCALE-1138)
 
 ## [3.2.0-rc2] - 2018-05-11

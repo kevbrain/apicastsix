@@ -1,4 +1,4 @@
-local QueryParams = require('apicast.policy.url_rewriting.query_params')
+local QueryParams = require('apicast.query_params')
 
 describe('QueryParams', function()
   before_each(function()

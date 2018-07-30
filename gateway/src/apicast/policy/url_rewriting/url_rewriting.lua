@@ -5,7 +5,7 @@ local ipairs = ipairs
 local sub = ngx.re.sub
 local gsub = ngx.re.gsub
 
-local QueryParams = require 'apicast.policy.url_rewriting.query_params'
+local QueryParams = require 'apicast.query_params'
 local TemplateString = require 'apicast.template_string'
 local default_value_type = 'plain'
 

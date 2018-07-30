@@ -1169,3 +1169,64 @@ so only the third call returns 429.
 [200, 200, 200, 429]
 --- no_error_log
 [error]
+
+=== TEST 19: Rejected (count).
+Return 429 code.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limit",
+                configuration = {
+                  fixed_window_limiters = {
+                    { key = {name = "{{host}}", name_type = "liquid"}, count = 2, window = 10 },
+                    { key = {name = "{{uri}}", name_type = "liquid"}, count = 1, window = 10 }
+                  },
+                  redis_url = "redis://$TEST_NGINX_REDIS_HOST:$TEST_NGINX_REDIS_PORT/1",
+                  limits_exceeded_error = { status_code = 429 }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+  resolver $TEST_NGINX_RESOLVER;
+
+  location /flush_redis {
+    content_by_lua_block {
+      local env = require('resty.env')
+      local redis_host = "$TEST_NGINX_REDIS_HOST" or '127.0.0.1'
+      local redis_port = "$TEST_NGINX_REDIS_PORT" or 6379
+      local redis = require('resty.redis'):new()
+      redis:connect(redis_host, redis_port)
+      redis:select(1)
+      local redis_key1 = redis:keys('*_fixed_window_localhost')[1]
+      local redis_key2 = redis:keys('*_fixed_window_/test19_1')[1]
+      local redis_key3 = redis:keys('*_fixed_window_/test19_2')[1]
+      local redis_key4 = redis:keys('*_fixed_window_/test19_3')[1]
+      redis:del(redis_key1, redis_key2, redis_key3, redis_key4)
+    }
+  }
+
+--- pipelined_requests eval
+["GET /flush_redis","GET /test19_1","GET /test19_2","GET /test19_3"]
+--- error_code eval
+[200, 200, 200, 429]
+--- no_error_log
+[error]

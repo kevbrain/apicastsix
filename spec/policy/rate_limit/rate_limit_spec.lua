@@ -224,6 +224,28 @@ describe('Rate limit policy', function()
           assert.equal('2', redis:get('11110_fixed_window_' .. test_host))
           assert.spy(ngx.exit).was_called_with(429)
         end)
+
+        it('rejected (count), multi limiters', function()
+          local ctx = {
+            service = { id = 5 }, var1 = 'test3_1', var2 = 'test3_2', var3 = 'test3_3' }
+          local rate_limit_policy = RateLimitPolicy.new({
+            fixed_window_limiters = {
+              { key = { name = '{{ var1 }}', name_type = 'liquid' }, count = 1, window = 10 },
+              { key = { name = '{{ var2 }}', name_type = 'liquid' }, count = 2, window = 10 },
+              { key = { name = '{{ var3 }}', name_type = 'liquid' }, count = 3, window = 10 }
+            },
+            redis_url = redis_url
+          })
+
+          assert(rate_limit_policy:access(ctx))
+          assert.returns_error('limits exceeded', rate_limit_policy:access(ctx))
+
+          assert.equal('1', redis:get('11110_5_fixed_window_test3_1'))
+          assert.equal('1', redis:get('11110_5_fixed_window_test3_2'))
+          assert.equal('1', redis:get('11110_5_fixed_window_test3_3'))
+          assert.spy(ngx.exit).was_called_with(429)
+        end)
+
       end)
 
       describe('delay', function()

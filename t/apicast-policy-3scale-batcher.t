@@ -324,7 +324,77 @@ $res
 --- no_error_log
 [error]
 
-=== TEST 4: with caching policy (resilient mode)
+=== TEST 4: after apicast policy in the chain
+We want to check that only the batcher policy is reporting to backend. We know
+that the APIcast policy calls "/transactions/authrep.xml" whereas the batcher
+calls "/transactions/authorize.xml" and "/transactions.xml", because it
+authorizes and reports separately. Therefore, raising an error in
+"/transactions/authrep.xml" is enough to detect that the APIcast policy is
+calling backend when it's not supposed to.
+--- http_config
+include $TEST_NGINX_UPSTREAM_CONFIG;
+lua_shared_dict cached_auths 1m;
+lua_shared_dict batched_reports 1m;
+lua_shared_dict batched_reports_locks 1m;
+lua_package_path "$TEST_NGINX_LUA_PATH";
+init_by_lua_block {
+  require('apicast.configuration_loader').mock({
+    services = {
+      {
+        id = 1,
+        backend_version = 1,
+        backend_authentication_type = 'service_token',
+        backend_authentication_value = 'token-value',
+        proxy = {
+          backend = { endpoint = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT" },
+          api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+          proxy_rules = {
+            { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
+          },
+          policy_chain = {
+            { name = 'apicast.policy.apicast' },
+            {
+              name = 'apicast.policy.3scale_batcher',
+              configuration = { batch_report_seconds = 1 }
+            }
+          }
+        }
+      }
+    }
+  })
+}
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      ngx.log(ngx.ERR, 'APIcast policy called authrep and it was not supposed to!')
+    }
+  }
+
+  location /transactions/authorize.xml {
+    content_by_lua_block {
+      ngx.exit(200)
+    }
+  }
+
+  location /api-backend {
+     echo 'yay, api backend';
+  }
+
+  location /transactions.xml {
+    content_by_lua_block {
+      ngx.exit(200)
+    }
+  }
+
+--- request
+GET /test?user_key=uk
+--- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 5: with caching policy (resilient mode)
 The purpose of this test is to test that the 3scale batcher policy works
 correctly when combined with the caching one.
 In this case, the caching policy is configured as "resilient". We define a

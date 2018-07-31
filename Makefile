@@ -96,7 +96,7 @@ circleci = $(shell circleci tests glob $(1) 2>/dev/null | grep -v examples/scaff
 
 BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
 BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
-busted: $(ROVER) ## Test Lua.
+busted: $(ROVER) lua_modules ## Test Lua.
 	$(ROVER) exec bin/busted $(BUSTED_FILES)
 ifeq ($(CI),true)
 	@- luacov
@@ -203,10 +203,12 @@ $(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile
 	$(ROVER) lock --roverfile=$(S2I_CONTEXT)/Roverfile
 
 lua_modules: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
-	$(ROVER) install --roverfile=$(S2I_CONTEXT)/Roverfile
+	$(ROVER) install --roverfile=$(S2I_CONTEXT)/Roverfile > /dev/null
 
 lua_modules/bin/rover:
 	@LUAROCKS_CONFIG=$(S2I_CONTEXT)/config-5.1.lua luarocks install --server=http://luarocks.org/dev lua-rover --tree=lua_modules 1>&2
+
+dependencies: lua_modules carton
 
 clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes

@@ -108,7 +108,7 @@ prove-files = $(or $(call circleci, $(PROVE_PATTERN)), $(filter-out $(call find-
 prove: HARNESS ?= TAP::Harness
 prove: PROVE_FILES ?= $(call prove-files)
 prove: export TEST_NGINX_RANDOMIZE=1
-prove: $(ROVER) nginx ## Test nginx
+prove: $(ROVER) lua_modules nginx ## Test nginx
 	$(ROVER) exec script/prove --verbose -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)
 
 prove-docker: apicast-source
@@ -202,7 +202,7 @@ rover: $(ROVER)
 $(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile
 	$(ROVER) lock --roverfile=$(S2I_CONTEXT)/Roverfile
 
-dependencies: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
+lua_modules: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
 	$(ROVER) install --roverfile=$(S2I_CONTEXT)/Roverfile
 
 lua_modules/bin/rover:
@@ -215,7 +215,7 @@ clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
 	- rm -rf luacov.stats*.out
 
-doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | dependencies $(ROVER)
+doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | lua_modules $(ROVER)
 	$(ROVER) exec ldoc -c doc/config.ld .
 
 doc: doc/lua/index.html ## Generate documentation

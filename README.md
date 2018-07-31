@@ -112,7 +112,7 @@ For developing and testing APIcast the following tools are needed:
 
 - Install the APIcast [development dependencies](gateway/Roverfile)
 ```shell
- make dependencies
+ make lua_modules
 ```
 
 - [busted](https://github.com/Olivine-Labs/busted) - unit testing framework, used for unit testing.
@@ -133,7 +133,7 @@ For developing and testing APIcast the following tools are needed:
  Having dependency errors? Majority of the time the below will resolve it:
 ```shell
  rm -rf lua_modules
- make dependencies
+ make lua_modules
 ```
 
  There are tests that run in Docker container, to execute these Docker needs to be installed, and to build the images [Source-To-Image](https://github.com/openshift/source-to-image) is used. To install it, download it from the [releases page](https://github.com/openshift/source-to-image/releases), and put the extracted `s2i` executable on your PATH.

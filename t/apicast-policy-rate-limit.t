@@ -1170,8 +1170,9 @@ so only the third call returns 429.
 --- no_error_log
 [error]
 
-=== TEST 19: Rejected (count).
-Return 429 code.
+=== TEST 19: Rejected (count). Using multiple limiters of the same type.
+To confirm that multiple limiters of the same type are configurable
+and rejected properly.
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -1216,11 +1217,7 @@ Return 429 code.
       local redis = require('resty.redis'):new()
       redis:connect(redis_host, redis_port)
       redis:select(1)
-      local redis_key1 = redis:keys('*_fixed_window_localhost')[1]
-      local redis_key2 = redis:keys('*_fixed_window_/test19_1')[1]
-      local redis_key3 = redis:keys('*_fixed_window_/test19_2')[1]
-      local redis_key4 = redis:keys('*_fixed_window_/test19_3')[1]
-      redis:del(redis_key1, redis_key2, redis_key3, redis_key4)
+      redis:flushdb()
     }
   }
 

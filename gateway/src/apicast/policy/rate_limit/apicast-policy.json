@@ -68,7 +68,7 @@
             "conn": {
               "type": "integer",
               "description": "The maximum number of concurrent requests allowed",
-              "exclusiveminimum": 0
+              "exclusiveMinimum": 0
             },
             "burst": {
               "type": "integer",

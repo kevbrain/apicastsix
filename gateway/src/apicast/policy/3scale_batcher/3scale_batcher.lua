@@ -173,6 +173,15 @@ local function handle_backend_error(self, service, transaction, cache_handler)
   end
 end
 
+function _M.rewrite(_, context)
+  -- The APIcast policy reads these flags in the access() and post_action()
+  -- phases. That's why we need to set them before those phases. If we set
+  -- them in access() and placed the APIcast policy before the batcher in the
+  -- chain, APIcast would read the flags before the batcher set them, and both
+  -- policies would report to the 3scale backend.
+  set_flags_to_avoid_auths_in_apicast(context)
+end
+
 -- Note: when an entry in the cache expires, there might be several requests
 -- with those credentials and all of them will call auth() on backend with the
 -- same parameters until the auth status is cached again. In the future, we
@@ -211,8 +220,6 @@ function _M:access(context)
       return error(service, cached_auth.rejection_reason)
     end
   end
-
-  set_flags_to_avoid_auths_in_apicast(context)
 end
 
 return _M

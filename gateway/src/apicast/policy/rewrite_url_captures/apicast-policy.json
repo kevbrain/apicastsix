@@ -1,0 +1,34 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Rewrite URL captures",
+  "summary": "Captures arguments in a URL and rewrites the URL using them",
+  "description":
+    ["Captures arguments in a URL and rewrites the URL using those arguments. ",
+     "For example, we can specify a matching rule with arguments like ",
+     "'/{orderId}/{accountId}' and a template that specifies how to rewrite ",
+     "the URL using those arguments, for example: ",
+     "'/sales/v2/{orderId}?account={accountId}'. In that case, the request ",
+     "'/123/456' will be transformed into '/sales/v2/123?account=456'"],
+  "version": "builtin",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "transformations": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "match_rule": {
+              "type": "string",
+              "description": "Rule to be matched"
+            },
+            "template": {
+              "type": "string",
+              "description": "Template in which the matched args are replaced"
+            }
+          }
+        }
+      }
+    }
+  }
+}

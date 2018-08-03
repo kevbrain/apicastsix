@@ -3,7 +3,7 @@ local URLRewriting = require('apicast.policy.url_rewriting')
 -- Mock QueryParams module. In these tests we are only interested in checking
 -- that a QueryParams instance is called with the appropriate params. We do
 -- not want to check its internals.
-local QueryParams = require('apicast.policy.url_rewriting.query_params')
+local QueryParams = require('apicast.query_params')
 local noop = function() end
 
 describe('URL rewriting policy', function()

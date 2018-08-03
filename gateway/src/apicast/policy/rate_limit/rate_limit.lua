@@ -16,7 +16,6 @@ local shdict_key = 'limiter'
 
 local insert = table.insert
 local ipairs = ipairs
-local unpack = table.unpack
 local format = string.format
 local concat = table.concat
 
@@ -165,7 +164,9 @@ function _M:access(context)
   local limiter_groups = { conn_limiters, leaky_bucket_limiters, fixed_window_limiters }
   for _, limiter_group in ipairs(limiter_groups) do
     if #limiter_group > 0 then
-      insert(limiters, unpack(limiter_group))
+      for _, limiter in ipairs(limiter_group) do
+        insert(limiters, limiter)
+      end
     end
   end
 
@@ -173,7 +174,9 @@ function _M:access(context)
   local keys_groups = { conn_keys, leaky_bucket_keys, fixed_window_keys }
   for _, keys_group in ipairs(keys_groups) do
     if #keys_group > 0 then
-      insert(keys, unpack(keys_group))
+      for _, key in ipairs(keys_group) do
+        insert(keys, key)
+      end
     end
   end
 

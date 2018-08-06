@@ -2,6 +2,7 @@ local assert = assert
 local backend = {}
 local response = require 'resty.http_ng.response'
 local Upstream = require('apicast.upstream')
+local http_proxy = require 'resty.http.proxy'
 
 local METHODS = {
   ["GET"]      = ngx.HTTP_GET,
@@ -18,6 +19,10 @@ local pairs = pairs
 
 backend.capture = ngx.location.capture
 backend.send = function(_, request)
+  if http_proxy.active(request) then
+    return response.error(request, 'ngx backend does not support proxy')
+  end
+
   local res = backend.capture(PROXY_LOCATION, {
     method = METHODS[request.method],
     body = request.body,

@@ -17,18 +17,16 @@ local http_ok = 'HTTP/1.1 200 OK' .. cr_lf
 ngx.log(ngx.INFO, 'proxy starting')
 
 local function send(socket, data)
---    if ngx.ctx.upstream == socket then
---        ngx.log(ngx.DEBUG, 'sending: ', data , ' to upstream ', ngx.ctx.upstream_host, ':', ngx.ctx.upstream_port)
---    else
---        ngx.log(ngx.DEBUG, 'sending: ', data , ' to client')
---    end
-
     if not data or data == '' then
         ngx.log(ngx.DEBUG, 'skipping sending nil')
         return
     end
 
     return socket:send(data)
+end
+
+local function re_match(data, regex)
+    return ngx_re_match(data, regex, 'oj')
 end
 
 local function read_stream(input, output)
@@ -43,17 +41,19 @@ local function read_stream(input, output)
 
         if data or partial then
             send(output, data or partial)
+            -- We need to print the "CONNECT host:port" so Test::APIcast can verify it in the logs.
+            -- After the tunnel is established and client is using keep-alive it would not be printed at all.
             ngx.log(ngx.DEBUG, 'sending data for proxy request: ', ngx.ctx.request)
         end
 
         if err == 'closed' then
-            -- ngx.log(ngx.DEBUG, "failed to read any data: ", err, ' socket: ', name)
+            ngx.log(ngx.DEBUG, 'closed socket')
             break
 
         elseif err == 'timeout' and partial == '' then
             timeout = ceil(timeout * exp)
             input:settimeouts(nil, nil, timeout)
-            -- ngx.log(ngx.DEBUG, "failed to read any data: ", err, ' socket: ', name)
+            ngx.log(ngx.DEBUG, 'timeout reached when reading socket, next timeout: ', timeout)
         elseif not err then
             timeout = 1
         end
@@ -112,7 +112,7 @@ local function forward_http_stream(sock, upstream)
         header_line = read_header()
         send(upstream, header_line)
 
-        local header = ngx_re_match(header_line, [[(?<name>[^:\s]+):\s*(?<value>.+)\r\n$]], "oj")
+        local header = re_match(header_line, [[(?<name>[^:\s]+):\s*(?<value>.+)\r\n$]])
 
         if header and str_lower(header.name) == 'content-length' then
             body_length = tonumber(header.value)
@@ -135,9 +135,6 @@ local function proxy_http_request(sock, method, url, http_version, upstream)
 
     if ok then
         ngx.log(ngx.DEBUG, 'connected to upstream ', host, ':', port)
-        ngx.ctx.upstream = upstream
-        ngx.ctx.upstream_host = host
-        ngx.ctx.upstream_port = port
     else
         ngx.log(ngx.ERR, 'failed to connect to ', host, ':', port, ' err: ', err)
         return nil, err
@@ -159,9 +156,6 @@ local function proxy_connect_request(sock, connect, upstream)
 
     if ok then
         ngx.log(ngx.DEBUG, 'connected to upstream ', connect.host, ':', connect.port)
-        ngx.ctx.upstream = upstream
-        ngx.ctx.upstream_host = connect.host
-        ngx.ctx.upstream_port = connect.port
     else
         ngx.log(ngx.ERR, 'failed to connect to ', connect.host, ':', connect.port, ' err: ', err)
         return nil, err
@@ -181,6 +175,12 @@ local function proxy_connect_request(sock, connect, upstream)
     return pipe_stream(sock, upstream)
 end
 
+--- HTTP(S) proxy implementation
+-- Takes control of the incoming connection and implements http/s proxy.
+-- Supports all HTTP methods that nginx supports + CONNECT for HTTPS tunneling.
+-- Uses keep-alive to reuse both incoming and upstream connections.
+-- Client can send several HTTP requests pointing to different upstreams reusing the same connection.
+-- After sending CONNECT request the connection becomes a tunnel and all traffic is transparently proxied between sockets.
 return function()
     local client, err = ngx.req.socket(true)
 
@@ -199,7 +199,7 @@ return function()
             ngx.exit(ngx.OK)
         end
 
-        local match = ngx_re_match(data, [[^(?<method>[A-Z]+)\s(?<uri>\S+)\s(?<http>\S+)$]], 'oj')
+        local match = re_match(data, [[^(?<method>[A-Z]+)\s(?<uri>\S+)\s(?<http>\S+)$]])
 
         if not match then
             ngx.log(ngx.WARN, 'got invalid request: ', data)
@@ -209,10 +209,11 @@ return function()
         local upstream = ngx.socket.tcp()
 
         ngx.log(ngx.DEBUG, 'proxy request: ', data)
+        -- store the header so we can print it again when using keep-alive https tunnel
         ngx.ctx.request = data
 
         if match.method == 'CONNECT' then
-            local connect = ngx_re_match(match.uri, [[^(?<host>[^:]+):(?<port>\d+)$]])
+            local connect = re_match(match.uri, [[^(?<host>[^:]+):(?<port>\d+)$]])
 
             proxy_connect_request(client, connect, upstream)
         else

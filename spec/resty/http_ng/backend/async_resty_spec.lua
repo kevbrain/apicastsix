@@ -73,6 +73,19 @@ describe('resty backend', function()
       assert.equal(req, response.request)
       assert.falsy(response.ok)
     end)
+
+    context('http proxy is set', function()
+      before_each(function()
+        stub(require('resty.http.proxy'), 'active', true)
+      end)
+
+      it('returns error', function()
+        local res = assert(backend:send{method = method, url = 'http://localhost:8081' })
+
+        assert.contains({ error = 'async resty backend does not support proxy' }, res)
+      end)
+    end)
+
   end)
 
   describe('when there is no error', function()

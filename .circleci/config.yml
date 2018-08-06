@@ -282,8 +282,6 @@ workflows:
           context: org-global
   build-test-deploy:
     jobs:
-      - profile:
-          <<: *build-tags
       - build-lua:
           <<: *build-tags
       - build-perl:
@@ -322,8 +320,3 @@ workflows:
             <<: *ignore-forks
             tags:
               only: /^v\d+\..+/
-      - benchmark:
-          requires:
-            - deploy
-          filters:
-            <<: *ignore-forks

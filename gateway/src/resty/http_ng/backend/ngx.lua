@@ -65,7 +65,6 @@ function backend.resolver()
   ngx.var.options = headers['3scale-options']
   ngx.var.grant_type = headers['X-3scale-OAuth2-Grant-Type']
 
-  upstream:set_request_host()
   upstream:call(ngx.ctx)
 end
 

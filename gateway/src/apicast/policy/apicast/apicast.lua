@@ -1,4 +1,5 @@
 local balancer = require('apicast.balancer')
+
 local math = math
 local setmetatable = setmetatable
 local assert = assert
@@ -85,7 +86,6 @@ function _M:content(context)
   local upstream = assert(context[self], 'missing upstream')
 
   if upstream then
-    upstream:set_request_host()
     upstream:call(context)
   end
 end

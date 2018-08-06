@@ -21,12 +21,33 @@ local user_agent = require('apicast.user_agent')
 local resty_url = require('resty.url')
 local resty_env = require('resty.env')
 
+local http_proxy = require('resty.http.proxy')
+local http_ng_ngx = require('resty.http_ng.backend.ngx')
+-- resty.http_ng.backend.ngx is using ngx.location.capture, which is available only
+-- on rewrite, access and content phases. We need to use cosockets (http_ng default backend)
+-- everywhere else (like timers).
+local http_ng_backend_phase = {
+  access = http_ng_ngx,
+  rewrite = http_ng_ngx,
+  content = http_ng_ngx,
+}
+
 local _M = {
   endpoint = resty_env.get("BACKEND_ENDPOINT_OVERRIDE")
-
 }
 
 local mt = { __index = _M }
+
+local function detect_http_client(endpoint)
+  local uri = resty_url.parse(endpoint)
+  local proxy = http_proxy.find(uri)
+
+  if proxy then -- use default client
+    return
+  else
+    return http_ng_backend_phase[ngx.get_phase()]
+  end
+end
 
 --- Return new instance of backend client
 -- @tparam Service service object with service definition
@@ -50,6 +71,10 @@ function _M:new(service, http_client)
 
   if not backend and err then
     return nil, err
+  end
+
+  if not http_client then
+    http_client = detect_http_client(endpoint)
   end
 
   local client = http_ng.new{
@@ -106,7 +131,7 @@ local function call_backend_transaction(self, path, options, ...)
   local url = build_url(self, path, ...)
   local res = http_client.get(url, options)
 
-  ngx.log(ngx.INFO, 'backend client uri: ', url, ' ok: ', res.ok, ' status: ', res.status, ' body: ', res.body)
+  ngx.log(ngx.INFO, 'backend client uri: ', url, ' ok: ', res.ok, ' status: ', res.status, ' body: ', res.body, ' error: ', res.error)
 
   return res
 end

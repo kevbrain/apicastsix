@@ -311,3 +311,15 @@ Path to a file with X.509 certificate in the PEM format for HTTPS.
 **Default:** no value
 
 Path to a file with the X.509 certificate secret key in the PEM format.
+
+### `http_proxy`, `HTTP_PROXY`
+
+**Default:** no value
+
+Defines a HTTP proxy to be used for connecting to HTTP services.
+
+### `https_proxy`, `HTTPS_PROXY`
+
+**Default:** no value
+
+Defines a HTTPS (TLS) proxy to be used for connecting to HTTPS services.

@@ -13,8 +13,13 @@ local _M = {}
 
 local response = require 'resty.http_ng.response'
 local http = require 'resty.resolver.http'
+local http_proxy = require 'resty.http.proxy'
 
 _M.async = function(request)
+  if http_proxy.active(request) then
+    return response.error(request, 'async resty backend does not support proxy')
+  end
+
   local httpc = http.new()
 
   local parsed_uri = assert(httpc:parse_uri(assert(request.url, 'missing url')))

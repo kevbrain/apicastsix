@@ -29,7 +29,17 @@ describe('ngx backend',function()
       assert.truthy(response)
       assert.truthy(response.request)
     end)
+
+    context('http proxy is set', function()
+      before_each(function()
+        stub(require('resty.http.proxy'), 'active', true)
+      end)
+
+      it('returns error', function()
+        local res = assert(backend:send{method = method, url = 'http://localhost:8081' })
+
+        assert.contains({ error = 'ngx backend does not support proxy' }, res)
+      end)
+    end)
   end)
-
-
 end)

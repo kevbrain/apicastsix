@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Request headers are now exposed in the context available when evaluating Liquid [PR #819](https://github.com/3scale/apicast/pull/819)
 - Rewrite URL captures policy. This policy captures arguments in a URL and rewrites the URL using them [PR #827](https://github.com/3scale/apicast/pull/827), [THREESCALE-1139](https://issues.jboss.org/browse/THREESCALE-1139)
 - Support for HTTP Proxy [THREESCALE-221](https://issues.jboss.org/browse/THREESCALE-221), [PR #835](https://github.com/3scale/apicast/pull/835)
+- Conditions for the limits of the rate-limit policy [PR #839](https://github.com/3scale/apicast/pull/839)
 
 ### Changed
 

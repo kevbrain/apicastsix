@@ -10,6 +10,9 @@ local limit_traffic = require "resty.limit.traffic"
 local ngx_variable = require ('apicast.policy.ngx_variable')
 local redis_shdict = require('redis_shdict')
 
+local Condition = require('apicast.policy.conditional.condition')
+local Operation = require('apicast.policy.conditional.operation')
+
 local tonumber = tonumber
 local next = next
 local shdict_key = 'limiter'
@@ -79,6 +82,29 @@ local function init_error_settings(limits_exceeded_error, configuration_error)
   return error_settings
 end
 
+local function build_operations(config_ops)
+  local res = {}
+
+  for _, op in ipairs(config_ops or {}) do
+    insert(res, Operation.new(op.left, op.left_type, op.op, op.right, op.right_type))
+  end
+
+  return res
+end
+
+local function build_condition(config_condition)
+  local cond = config_condition or {}
+
+  return Condition.new(
+    build_operations(cond.operations),
+    cond.combine_op
+  )
+end
+
+local function liquid_context(policy_context)
+  return ngx_variable.available_context(policy_context)
+end
+
 local function build_limiters_and_keys(type, limiters, redis, error_settings, context)
   local res_limiters = {}
   local res_keys = {}
@@ -93,6 +119,12 @@ local function build_limiters_and_keys(type, limiters, redis, error_settings, co
     end
 
     lim.dict = redis or lim.dict
+
+    lim.condition_is_true = function(policy_context)
+      local condition = build_condition(limiter.condition)
+      local liquid_ctx = liquid_context(policy_context)
+      return condition:evaluate(liquid_ctx)
+    end
 
     insert(res_limiters, lim)
 
@@ -120,6 +152,28 @@ local function build_templates(limiters)
     limiter.template_string = TemplateString.new(
       limiter.key.name, limiter.key.name_type or default_name_type)
   end
+end
+
+local function select_condition_is_true(groups_of_limiters, groups_of_keys, policies_ctx)
+  local res_limiters = {}
+  local res_keys = {}
+
+  for i = 1, #groups_of_limiters do
+    local limiters = groups_of_limiters[i]
+    local keys = groups_of_keys[i]
+
+    for j = 1, #limiters do
+      local limiter = limiters[j]
+      local key = keys[j]
+
+      if limiter.condition_is_true(policies_ctx) then
+        insert(res_limiters, limiter)
+        insert(res_keys, key)
+      end
+    end
+  end
+
+  return res_limiters, res_keys
 end
 
 function _M.new(config)
@@ -160,25 +214,9 @@ function _M:access(context)
   local fixed_window_limiters, fixed_window_keys = build_limiters_and_keys(
     'fixed_window', self.fixed_window_limiters, red, self.error_settings, context)
 
-  local limiters = {}
   local limiter_groups = { conn_limiters, leaky_bucket_limiters, fixed_window_limiters }
-  for _, limiter_group in ipairs(limiter_groups) do
-    if #limiter_group > 0 then
-      for _, limiter in ipairs(limiter_group) do
-        insert(limiters, limiter)
-      end
-    end
-  end
-
-  local keys = {}
   local keys_groups = { conn_keys, leaky_bucket_keys, fixed_window_keys }
-  for _, keys_group in ipairs(keys_groups) do
-    if #keys_group > 0 then
-      for _, key in ipairs(keys_group) do
-        insert(keys, key)
-      end
-    end
-  end
+  local limiters, keys = select_condition_is_true(limiter_groups, keys_groups, context)
 
   local states = {}
   local connections_committed = {}

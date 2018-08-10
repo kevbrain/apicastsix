@@ -2,7 +2,6 @@ use lib 't';
 use Test::APIcast 'no_plan';
 
 $ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
-$ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | head -1 | tr '\n' ' '`;
 $ENV{BACKEND_ENDPOINT_OVERRIDE} ||= "http://127.0.0.1:$Test::Nginx::Util::ServerPortForClient/backend";
 
 env_to_nginx('BACKEND_ENDPOINT_OVERRIDE');
@@ -47,7 +46,6 @@ called oauth_authorize.xml
 [Section 1.3.1 of RFC 6749](https://tools.ietf.org/html/rfc6749#section-1.3.1)
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -221,7 +219,6 @@ include $TEST_NGINX_APICAST_CONFIG;
 === TEST 8: calling /callback redirects to correct error when state is missing
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -245,7 +242,6 @@ include $TEST_NGINX_APICAST_CONFIG;
 Not part of the RFC. This is the Gateway API to create access tokens and redirect back to the Client.
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
   init_by_lua_block {
@@ -285,7 +281,6 @@ Location: http://example.com/redirect\?code=\w+&state=clientstate
 === TEST 10: calling /oauth/token returns correct error message on invalid parameters
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
   env APICAST_OAUTH_TOKENS_TTL=123;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -402,7 +397,6 @@ yay, upstream
 === TEST 12: calling /authorize with state returns same value back on redirect_uri
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
   lua_package_path "$TEST_NGINX_LUA_PATH";
 
@@ -554,7 +548,6 @@ credentials missing!
 Regression test for CVE-2017-7512
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -617,7 +610,6 @@ GET /t
 === TEST 17: return error status code and message when access token couldn't be stored in 3scale
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -682,7 +674,6 @@ GET /t
 === TEST 18: when calling /oauth/token request headers are not passed to the backend
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
   env APICAST_OAUTH_TOKENS_TTL=123;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
@@ -758,7 +749,6 @@ Content-Type: application/json
 When a token TTL is not specified, it applies a default of 7 days (604800 s)
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;
   lua_package_path "$TEST_NGINX_LUA_PATH";
@@ -835,7 +825,6 @@ Content-Type: application/json
 When an empty token TTL is received, Apicast applies a default of 7 days (604800 s)
 --- main_config
   env REDIS_HOST=$TEST_NGINX_REDIS_HOST;
-  env RESOLVER=$TEST_NGINX_RESOLVER;
   env APICAST_OAUTH_TOKENS_TTL=;
 --- http_config
   include $TEST_NGINX_UPSTREAM_CONFIG;

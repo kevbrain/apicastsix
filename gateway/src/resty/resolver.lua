@@ -106,7 +106,7 @@ function _M.parse_nameservers(path)
   local resolv_conf, err = read_resolv_conf(path)
 
   if err then
-    ngx.log(ngx.WARN, 'resolver could not get nameservers: ', err)
+    ngx.log(ngx.NOTICE, 'resolver could not get nameservers: ', err)
   end
 
   ngx.log(ngx.DEBUG, '/etc/resolv.conf:\n', resolv_conf)

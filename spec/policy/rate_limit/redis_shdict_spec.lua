@@ -1,7 +1,7 @@
 local env = require('resty.env')
 local ts = require ('apicast.threescale_utils')
 
-local redis_host = env.get('TEST_NGINX_REDIS_HOST') or 'localhost'
+local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
 local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
 
 local redis_shdict = require('apicast.policy.rate_limit.redis_shdict')

@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Load all policies into cache when starting APIcast master process. [PR #770](https://github.com/3scale/apicast/pull/770)
 - `init` and `init_worker` phases are executed on the policy module, not the instance of a policy with a configuration [PR #770](https://github.com/3scale/apicast/pull/770)
 - `timer_resolution` set only in development environment [PR #815](https://github.com/3scale/apicast/pull/815)
+- The rate-limit policy, when `redis_url` is empty, now applies per-gateway limits instead of trying to use a localhost Redis [PR #842](https://github.com/3scale/apicast/pull/842)
 
 ### Fixed
 

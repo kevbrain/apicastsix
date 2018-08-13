@@ -339,6 +339,19 @@ describe('Rate limit policy', function()
 
         assert(rate_limit_policy:log())
       end)
+
+      it('success when redis url is empty', function()
+        local rate_limit_policy = RateLimitPolicy.new({
+          connection_limiters = {
+            { key = { name = 'test1', scope = 'global' }, conn = 20, burst = 10, delay = 0.5 }
+          },
+          redis_url = ''
+        })
+
+        assert(rate_limit_policy:access(context))
+
+        assert(rate_limit_policy:log())
+      end)
     end)
   end)
 end)

@@ -141,7 +141,7 @@ end
 
 function _M:access(context)
   local red
-  if self.redis_url then
+  if self.redis_url and self.redis_url ~= '' then
     local rederr
     red, rederr = redis_shdict.new{ url = self.redis_url }
     if not red then

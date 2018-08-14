@@ -69,6 +69,14 @@ Specifies the log level for the OpenResty logs.
 Defines the file that will store the access logs.
 
 
+### `APICAST_OIDC_LOG_LEVEL`
+
+**Values:** debug | info | notice | warn | error | crit | alert | emerg  
+**Default:** err
+
+Allows to set the log level for the logs related to OpenID Connect integration
+
+
 ### `APICAST_MANAGEMENT_API`
 
 **Values:**

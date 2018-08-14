@@ -194,7 +194,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          assert.equal('2', redis:get('11110_fixed_window_test3'))
+          assert.equal('1', redis:get('11110_fixed_window_test3'))
           assert.spy(ngx.exit).was_called_with(429)
         end)
 
@@ -211,7 +211,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(ctx))
           assert.returns_error('limits exceeded', rate_limit_policy:access(ctx))
 
-          assert.equal('2', redis:get('11110_fixed_window_test3'))
+          assert.equal('1', redis:get('11110_fixed_window_test3'))
           assert.spy(ngx.exit).was_called_with(429)
         end)
 
@@ -232,7 +232,7 @@ describe('Rate limit policy', function()
           assert(rate_limit_policy:access(context))
           assert.returns_error('limits exceeded', rate_limit_policy:access(context))
 
-          assert.equal('2', redis:get('11110_fixed_window_' .. test_host))
+          assert.equal('1', redis:get('11110_fixed_window_' .. test_host))
           assert.spy(ngx.exit).was_called_with(429)
         end)
 

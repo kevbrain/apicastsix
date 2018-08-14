@@ -33,6 +33,17 @@ function _M.incoming(self, key, commit)
         if not count then
             return nil, err
         end
+
+        if count > limit then
+            count, err = dict:incr(key, -1)
+
+            if not count then
+                return nil, err
+            end
+
+            return nil, "rejected"
+        end
+
     else
         count = (dict:get(key) or 0) + 1
     end

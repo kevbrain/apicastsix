@@ -54,6 +54,72 @@
           "enum": ["log"],
           "description": "Let the request go through and only output logs"
         }]
+      },
+      "operation": {
+        "type": "object",
+        "$id": "#/definitions/operation",
+        "properties": {
+          "left": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string",
+            "enum": ["==", "!="]
+          },
+          "right": {
+            "type": "string"
+          },
+          "left_type": {
+            "description": "How to evaluate 'left'",
+            "type": "string",
+            "default": "plain",
+            "oneOf": [
+              {
+                "enum": ["plain"],
+                "title": "Evaluate 'left' as plain text."
+              },
+              {
+                "enum": ["liquid"],
+                "title": "Evaluate 'left' as liquid."
+              }
+            ]
+          },
+          "right_type": {
+            "description": "How to evaluate 'right'",
+            "type": "string",
+            "default": "plain",
+            "oneOf": [
+              {
+                "enum": ["plain"],
+                "title": "Evaluate 'right' as plain text."
+              },
+              {
+                "enum": ["liquid"],
+                "title": "Evaluate 'right' as liquid."
+              }
+            ]
+          }
+        },
+        "required": ["left", "op", "right"]
+      },
+      "condition": {
+        "$id": "#/definitions/condition",
+        "type": "object",
+        "description": "condition to be evaluated",
+        "properties": {
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/operation"
+            },
+            "minItems": 1
+          },
+          "combine_op": {
+            "type": "string",
+            "enum": ["and", "or"],
+            "default": "and"
+          }
+        }
       }
     },
     "properties": {
@@ -64,6 +130,9 @@
           "properties": {
             "key": {
               "$ref": "#/definitions/key"
+            },
+            "condition": {
+              "$ref": "#/definitions/condition"
             },
             "conn": {
               "type": "integer",
@@ -91,6 +160,9 @@
             "key": {
               "$ref": "#/definitions/key"
             },
+            "condition": {
+              "$ref": "#/definitions/condition"
+            },
             "rate": {
               "type": "integer",
               "description": "The specified request rate (number per second) threshold",
@@ -111,6 +183,9 @@
           "properties": {
             "key": {
               "$ref": "#/definitions/key"
+            },
+            "condition": {
+              "$ref": "#/definitions/condition"
             },
             "count": {
               "type": "integer",

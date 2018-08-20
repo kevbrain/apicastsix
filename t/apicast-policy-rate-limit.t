@@ -1214,3 +1214,73 @@ and rejected properly.
 [200, 200, 200, 429]
 --- no_error_log
 [error]
+
+=== TEST 20: with conditions
+We define a limit of 1 with a false condition, and a limit of 2 with a
+condition that's true. We check that the false condition does not apply by
+making 3 requests and checking that only the last one is rejected.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+
+  init_by_lua_block {
+    require "resty.core"
+    ngx.shared.limiter:flush_all()
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          proxy = {
+            policy_chain = {
+              {
+                name = "apicast.policy.rate_limit",
+                configuration = {
+                  fixed_window_limiters = {
+                    {
+                      key = { name = "test20_key_1" },
+                      count = 2,
+                      window = 10,
+                      condition = {
+                        operations = {
+                          {
+                            left = "{{ uri }}",
+                            left_type = "liquid",
+                            op = "==",
+                            right = "/"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      key = { name = "test20_key_2" },
+                      count = 1,
+                      window = 10,
+                      condition = {
+                        operations = {
+                          {
+                            left = "1",
+                            op = "==",
+                            right = "2"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  limits_exceeded_error = { status_code = 429 }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict limiter 1m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+--- pipelined_requests eval
+["GET /flush_redis", "GET /", "GET /", "GET /"]
+--- error_code eval
+[200, 200, 200, 429]
+--- no_error_log
+[error]

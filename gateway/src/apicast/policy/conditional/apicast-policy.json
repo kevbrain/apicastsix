@@ -55,12 +55,11 @@
           }
         },
         "required": ["left", "op", "right"]
-      }
-    },
-    "properties": {
+      },
       "condition": {
-        "description": "conditions to be evaluated",
+        "$id": "#/definitions/condition",
         "type": "object",
+        "description": "condition to be evaluated",
         "properties": {
           "operations": {
             "type": "array",
@@ -75,6 +74,11 @@
             "default": "and"
           }
         }
+      }
+    },
+    "properties": {
+      "condition": {
+        "$ref": "#/definitions/condition"
       },
       "policy_chain": {
         "description": "the policy chain to execute when the condition is true",

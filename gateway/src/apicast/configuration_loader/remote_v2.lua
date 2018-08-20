@@ -8,6 +8,8 @@ local encode_args = ngx.encode_args
 local tonumber = tonumber
 local type = type
 
+local tablex = require('pl.tablex')
+local deepcopy = tablex.deepcopy
 local resty_url = require 'resty.url'
 local http_ng = require "resty.http_ng"
 local user_agent = require 'apicast.user_agent'
@@ -317,14 +319,19 @@ function _M:config(service, environment, version)
   if res.status == 200 then
     local proxy_config = cjson.decode(res.body).proxy_config
 
+    -- Copy the config because parse_service have side-effects. It adds
+    -- liquid templates in some policies and those cannot be encoded into a
+    -- JSON. We should get rid of these side effects.
+    local original_proxy_config = deepcopy(proxy_config)
+
     local config_service = configuration.parse_service(proxy_config.content)
     local issuer, oidc_config = self:oidc_issuer_configuration(config_service)
 
     if issuer then
-      proxy_config.oidc = { issuer = issuer, config = oidc_config }
+      original_proxy_config.oidc = { issuer = issuer, config = oidc_config }
     end
 
-    return proxy_config
+    return original_proxy_config
   else
     return nil, status_code_error(res)
   end

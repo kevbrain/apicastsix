@@ -125,3 +125,64 @@ echo '
 --- request
 GET /t
 --- exit_code: 200
+
+=== TEST 4: retrieve config with liquid values using THREESCALE_PORTAL_ENDPOINT with path
+should not fail
+--- main_config
+env THREESCALE_PORTAL_ENDPOINT=http://127.0.0.1:$TEST_NGINX_SERVER_PORT/config;
+env APICAST_CONFIGURATION_LOADER=boot;
+env THREESCALE_DEPLOYMENT_ENV=production;
+env PATH;
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+--- config
+location = /t {
+  content_by_lua_block {
+    local loader = require('apicast.configuration_loader.remote_v2')
+    ngx.say(assert(loader:call()))
+  }
+}
+
+location = /config/production.json {
+echo '
+{
+  "proxy_configs": [
+    {
+      "proxy_config": {
+        "id": 42,
+        "version": 1,
+        "environment": "production",
+        "content": {
+          "proxy": {
+            "hosts": [
+              "127.0.0.1"
+            ],
+            "policy_chain": [
+              {
+                "name": "headers",
+                "version": "builtin",
+                "configuration": {
+                  "request": [
+                    {
+                      "op": "set",
+                      "header": "New-Header",
+                      "value": "{{ service.id }}",
+                      "value_type": "liquid"
+                    }
+                  ]
+                }
+              }
+            ],
+            "proxy_rules": []
+          }
+        }
+      }
+    }
+  ]
+}
+
+';
+}
+--- request
+GET /t
+--- exit_code: 200

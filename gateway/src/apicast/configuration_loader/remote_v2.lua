@@ -118,13 +118,19 @@ function _M:index(host)
 
     for i=1, #proxy_configs do
       local proxy_config = proxy_configs[i].proxy_config
+
+      -- Copy the config because parse_service have side-effects. It adds
+      -- liquid templates in some policies and those cannot be encoded into a
+      -- JSON. We should get rid of these side effects.
+      local original_proxy_config = deepcopy(proxy_config)
+
       local service = configuration.parse_service(proxy_config.content)
       local issuer, oidc_config = self:oidc_issuer_configuration(service)
 
       if issuer then
         config.oidc[i] = { issuer = issuer, config = oidc_config }
       end
-      config.services[i] = proxy_config.content
+      config.services[i] = original_proxy_config.content
     end
 
     return cjson.encode(config)

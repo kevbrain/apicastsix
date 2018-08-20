@@ -22,7 +22,7 @@ end
 
 local ts = require ('apicast.threescale_utils')
 
-local redis_host = env.get('TEST_NGINX_REDIS_HOST') or 'localhost'
+local redis_host = env.get('TEST_NGINX_REDIS_HOST') or '127.0.0.1'
 local redis_port = env.get('TEST_NGINX_REDIS_PORT') or 6379
 
 local redis_url = 'redis://'..redis_host..':'..redis_port..'/1'

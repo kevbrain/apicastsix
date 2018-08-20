@@ -5,7 +5,6 @@ use Cwd qw(abs_path);
 $ENV{TEST_NGINX_LUA_PATH} = "$Test::APIcast::spec/?.lua;$ENV{TEST_NGINX_LUA_PATH}";
 $ENV{TEST_NGINX_REDIS_HOST} ||= $ENV{REDIS_HOST} || "127.0.0.1";
 $ENV{TEST_NGINX_REDIS_PORT} ||= $ENV{REDIS_PORT} || 6379;
-$ENV{TEST_NGINX_RESOLVER} ||= `grep nameserver /etc/resolv.conf | awk '{print \$2}' | head -1 | tr '\n' ' '`;
 $ENV{BACKEND_ENDPOINT_OVERRIDE} ||= "http://127.0.0.1:$Test::Nginx::Util::ServerPortForClient/backend";
 
 our $rsa = `cat t/fixtures/rsa.pem`;
@@ -69,7 +68,6 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
@@ -145,7 +143,6 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
@@ -267,7 +264,6 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
@@ -384,7 +380,6 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
@@ -460,7 +455,6 @@ Return 429 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
@@ -520,7 +514,6 @@ Return 503 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
@@ -580,7 +573,6 @@ Return 429 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
@@ -655,7 +647,6 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
@@ -716,7 +707,6 @@ Return 200 code.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /transactions/authrep.xml {
     content_by_lua_block { ngx.exit(200) }
@@ -1057,7 +1047,6 @@ so only the third call returns 429.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
@@ -1147,7 +1136,6 @@ so only the third call returns 429.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {
@@ -1207,7 +1195,6 @@ and rejected properly.
 
 --- config
   include $TEST_NGINX_APICAST_CONFIG;
-  resolver $TEST_NGINX_RESOLVER;
 
   location /flush_redis {
     content_by_lua_block {

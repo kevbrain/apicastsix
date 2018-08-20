@@ -2,7 +2,7 @@ local dns_client = require 'resty.resolver.dns_client'
 
 describe('resty.resolver.dns_client', function()
 
-  describe(':init_resolvers', function()
+  describe(':init_resolvers #network', function()
     it('is called only once', function()
       local dns = dns_client:new{ nameservers = { '127.0.0.1' } }
       local s = spy.on(dns, 'init_resolvers')

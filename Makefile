@@ -96,7 +96,7 @@ circleci = $(shell circleci tests glob $(1) 2>/dev/null | grep -v examples/scaff
 
 BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
 BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
-busted: $(ROVER) ## Test Lua.
+busted: $(ROVER) lua_modules ## Test Lua.
 	$(ROVER) exec bin/busted $(BUSTED_FILES)
 ifeq ($(CI),true)
 	@- luacov
@@ -108,7 +108,7 @@ prove-files = $(or $(call circleci, $(PROVE_PATTERN)), $(filter-out $(call find-
 prove: HARNESS ?= TAP::Harness
 prove: PROVE_FILES ?= $(call prove-files)
 prove: export TEST_NGINX_RANDOMIZE=1
-prove: $(ROVER) nginx ## Test nginx
+prove: $(ROVER) lua_modules nginx ## Test nginx
 	$(ROVER) exec script/prove --verbose -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)
 
 prove-docker: apicast-source
@@ -202,11 +202,13 @@ rover: $(ROVER)
 $(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile
 	$(ROVER) lock --roverfile=$(S2I_CONTEXT)/Roverfile
 
-dependencies: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
-	$(ROVER) install --roverfile=$(S2I_CONTEXT)/Roverfile
+lua_modules: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
+	$(ROVER) install --roverfile=$(S2I_CONTEXT)/Roverfile > /dev/null
 
 lua_modules/bin/rover:
 	@LUAROCKS_CONFIG=$(S2I_CONTEXT)/config-5.1.lua luarocks install --server=http://luarocks.org/dev lua-rover --tree=lua_modules 1>&2
+
+dependencies: lua_modules carton
 
 clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes
@@ -215,7 +217,7 @@ clean: clean-containers ## Remove all running docker containers and images
 	- docker rmi apicast-test apicast-runtime-test --force
 	- rm -rf luacov.stats*.out
 
-doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | dependencies $(ROVER)
+doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | lua_modules $(ROVER)
 	$(ROVER) exec ldoc -c doc/config.ld .
 
 doc: doc/lua/index.html ## Generate documentation

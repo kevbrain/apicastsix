@@ -9,7 +9,7 @@ fi
 
 "$HOME/.local/bin/hererocks" lua_modules -r^ -l 5.1 --no-readline
 curl -L https://raw.githubusercontent.com/3scale/s2i-openresty/ffb1c55533be866a97466915d7ef31c12bae688c/site_config.lua -o lua_modules/share/lua/5.1/luarocks/site_config.lua
-make dependencies cpan
+make lua_modules cpan
 
 mkdir -p ~/.systemtap
 # needed for complete backtraces

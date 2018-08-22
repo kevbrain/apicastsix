@@ -2,7 +2,7 @@
 -- Abstracts how to forward traffic to upstream server.
 --- @usage
 --- local upstream = Upstream.new('http://example.com')
---- upstream:set_request_host() -- set Host header to 'example.com'
+--- upstream:rewrite_request() -- set Host header to 'example.com'
 --- -- store itself in `context` table for later use in balancer phase and call `ngx.exec`.
 --- upstream:call(context)
 
@@ -13,6 +13,9 @@ local str_format = string.format
 local resty_resolver = require('resty.resolver')
 local resty_url = require('resty.url')
 local core_base = require('resty.core.base')
+local http_proxy = require('apicast.http_proxy')
+local str_find = string.find
+local str_sub = string.sub
 local new_tab = core_base.new_tab
 
 local _M = {
@@ -20,20 +23,24 @@ local _M = {
 }
 
 local function proxy_pass(upstream)
-    local uri = upstream.uri
-
-    return str_format('%s://%s%s%s%s',
-            uri.scheme,
-            upstream.upstream_name,
-            uri.path or ngx.var.uri or '',
-            ngx.var.is_args or '',
-            ngx.var.query_string or '')
+    return str_format('%s://%s', upstream.uri.scheme, upstream.upstream_name)
 end
 
 local mt = {
     __index = _M
 }
 
+local function split_path(path)
+    if not path then return end
+
+    local start = str_find(path, '?', 1, true)
+
+    if start then
+        return str_sub(path, 1, start - 1), str_sub(path, start + 1)
+    else
+        return path
+    end
+end
 
 local function parse_url(url)
     local parsed, err = resty_url.split(url)
@@ -47,7 +54,8 @@ local function parse_url(url)
     uri.password = parsed[3]
     uri.host = parsed[4]
     uri.port = tonumber(parsed[5])
-    uri.path = parsed[6]
+
+    uri.path, uri.query = split_path(parsed[6])
 
     return uri
 end
@@ -110,9 +118,20 @@ function _M:port()
 end
 
 --- Rewrite request Host header to what is provided in the argument or in the URL.
---- @tparam string host Host header of the request
-function _M:set_request_host(host)
-    ngx.req.set_header('Host', host or self.uri.host)
+function _M:rewrite_request()
+    local uri = self.uri
+
+    if not uri then return nil, 'not initialized' end
+
+    ngx.req.set_header('Host', self.host or uri.host)
+
+    if uri.path then
+        ngx.req.set_uri(uri.path)
+    end
+
+    if uri.query then
+        ngx.req.set_uri_args(uri.query)
+    end
 end
 
 local function exec(self)
@@ -128,6 +147,16 @@ end
 --- @tparam table context any table (policy context, ngx.ctx) to store the upstream for later use by balancer
 function _M:call(context)
     if ngx.headers_sent then return nil, 'response sent already' end
+
+    local proxy_uri = http_proxy.find(self)
+
+    if proxy_uri then
+        ngx.log(ngx.DEBUG, 'using proxy: ', proxy_uri)
+        -- https requests will be terminated, http will be rewritten and sent to a proxy
+        http_proxy.request(self, proxy_uri)
+    else
+        self:rewrite_request()
+    end
 
     if not self.servers then self:resolve() end
 

@@ -13,7 +13,7 @@ local function default_port(uri)
     return uri.port or resty_url.default_port(uri.scheme)
 end
 
-local function connect_http(httpc, request)
+local function connect_direct(httpc, request)
     local uri = request.uri
     local host = uri.host
     local ip, port = httpc:resolve(host, nil, uri)
@@ -106,11 +106,7 @@ local function find_proxy_url(request)
     local uri = parse_request_uri(request)
     if not uri then return end
 
-    local proxy_url = http:get_proxy_uri(uri.scheme, uri.host)
-
-    if proxy_url then
-        return resty_url.parse(proxy_url)
-    end
+    return _M.find(uri)
 end
 
 local function connect(request)
@@ -123,7 +119,7 @@ local function connect(request)
     if proxy_uri then
         return connect_proxy(httpc, request)
     else
-        return connect_http(httpc, request)
+        return connect_direct(httpc, request)
     end
 end
 
@@ -143,6 +139,16 @@ function _M.options() return options end
 
 function _M.active(request)
     return not not find_proxy_url(request)
+end
+
+function _M.find(uri)
+    local proxy_url = http:get_proxy_uri(uri.scheme, uri.host)
+
+    if proxy_url then
+        return resty_url.parse(proxy_url)
+    else
+        return nil, 'no_proxy'
+    end
 end
 
 function _M:reset(opts)

@@ -60,14 +60,12 @@ describe('Proxy', function()
   describe('.authorize', function()
     local service = { backend_authentication = { value = 'not_baz' }, backend = { endpoint = 'http://0.0.0.0' } }
 
-    local ngx_backend = require('resty.http_ng.backend.ngx')
-
     it('takes ttl value if sent', function()
       local ttl = 80
       ngx.var = { cached_key = 'client_id=blah', http_x_3scale_debug='baz', real_url='blah' }
 
       local response = { status = 200 }
-      stub(ngx_backend, 'send', function() return response end)
+      stub(test_backend, 'send', function() return response end)
 
       stub(proxy, 'cache_handler').returns(true)
 
@@ -83,7 +81,7 @@ describe('Proxy', function()
       ngx.var = { cached_key = "client_id=blah", http_x_3scale_debug='baz', real_url='blah' }
 
       local response = { status = 200 }
-      stub(ngx_backend, 'send', function() return response end)
+      stub(test_backend, 'send', function() return response end)
       stub(proxy, 'cache_handler').returns(true)
 
       local usage = Usage.new()

@@ -81,13 +81,12 @@ describe('Upstream policy', function()
         local upstream = Upstream.new(test_upstream_matched)
         local policy = UpstreamPolicy.new({})
 
-        stub.new(upstream, 'set_request_host')
+        stub.new(upstream, 'rewrite_request')
         stub.new(upstream, 'call')
 
         local ctx = { [policy] = upstream }
         policy:content(ctx)
 
-        assert.spy(upstream.set_request_host).was_called_with(upstream)
         assert.spy(upstream.call).was_called_with(upstream, ctx)
       end)
     end)

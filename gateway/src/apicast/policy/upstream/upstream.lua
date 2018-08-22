@@ -22,7 +22,7 @@ local function init_config(config)
     local upstream, err = Upstream.new(rule.url)
 
     if upstream then
-      tab_insert(res, { regex = rule.regex, upstream = upstream })
+      tab_insert(res, { regex = rule.regex, url = rule.url })
     else
       ngx.log(ngx.WARN, 'failed to initialize upstream from url: ', rule.url, ' err: ', err)
     end
@@ -49,7 +49,8 @@ function _M:rewrite(context)
   for _, rule in ipairs(self.rules) do
     if match(req_uri, rule.regex) then
       ngx.log(ngx.DEBUG, 'upstream policy uri: ', req_uri, ' regex: ', rule.regex, ' match: true')
-      context[self] = rule.upstream
+      -- better to allocate new object for each request as it is going to get mutated
+      context[self] = Upstream.new(rule.url)
       break
     else
       ngx.log(ngx.DEBUG, 'upstream policy uri: ', req_uri, ' regex: ', rule.regex, ' match: false')
@@ -61,7 +62,6 @@ function _M:content(context)
   local upstream = context[self]
 
   if upstream then
-    upstream:set_request_host()
     upstream:call(context)
   else
     return nil, 'no upstream'

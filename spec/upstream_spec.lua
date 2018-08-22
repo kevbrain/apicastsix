@@ -66,29 +66,50 @@ describe('Upstream', function()
         end)
     end)
 
-    describe(':set_request_host', function()
-        it('sets request Host header to the URI host', function()
-            stub(ngx.req, 'set_header')
+    local function stub_ngx_request()
+        ngx.var = { }
 
-            assert(Upstream.new('http://example.com/')):set_request_host()
+        stub(ngx, 'exec')
+        stub(ngx.req, 'set_header')
+        stub(ngx.req, 'set_uri', function(uri)
+            ngx.var.uri = uri
+        end)
+        stub(ngx.req, 'set_uri_args', function(args)
+            ngx.var.args = args
+            ngx.var.query_string = args
+        end)
+    end
+
+    describe(':rewrite_request', function()
+        before_each(stub_ngx_request)
+
+        it('sets request Host header to the URI host', function()
+            assert(Upstream.new('http://example.com/')):rewrite_request()
 
             assert.spy(ngx.req.set_header).was_called_with('Host', 'example.com')
         end)
 
-        it('sets request Host header to the host passed as argument', function()
-            stub(ngx.req, 'set_header')
+        it('sets request uri to the upstream path', function()
+            assert(Upstream.new('http://example.com/test-path')):rewrite_request()
 
-            assert(Upstream.new('http://example.com/')):set_request_host('localhost')
+            assert.spy(ngx.req.set_uri).was_called_with('/test-path')
+        end)
 
-            assert.spy(ngx.req.set_header).was_called_with('Host', 'localhost')
+        it('sets request query params to the upstream query params', function()
+            assert(Upstream.new('http://example.com/?query=param')):rewrite_request()
+
+            assert.spy(ngx.req.set_uri_args).was_called_with('query=param')
+        end)
+
+        it('does not set the request uri when there is no upstream path', function()
+            assert(Upstream.new('http://example.com')):rewrite_request()
+
+            assert.spy(ngx.req.set_uri).was_not_called()
         end)
     end)
 
     describe(':call', function()
-        before_each(function()
-            stub(ngx, 'exec')
-            ngx.var = { }
-        end)
+        before_each(stub_ngx_request)
 
         it('calls :resolve() when needed', function()
             local upstream = Upstream.new('http://example.com')
@@ -153,7 +174,7 @@ describe('Upstream', function()
 
                 upstream:call({})
 
-                assert.equal('http://upstream/path?query', ngx.var.proxy_pass)
+                assert.equal('http://upstream', ngx.var.proxy_pass)
             end)
 
             it('works with partial url', function()
@@ -162,6 +183,43 @@ describe('Upstream', function()
                 upstream:call({})
 
                 assert.equal('http://upstream', ngx.var.proxy_pass)
+            end)
+        end)
+    end)
+
+    describe('http proxy', function()
+        local resty_proxy = require('resty.http.proxy')
+        local http_proxy = require('apicast.http_proxy')
+
+        before_each(stub_ngx_request)
+
+        describe('is active', function()
+            before_each(function()
+                resty_proxy:reset({ no_proxy = '*' })
+            end)
+
+            it('calls :rewrite_request()', function()
+                local upstream = Upstream.new('http://example.com')
+                stub(upstream, 'rewrite_request')
+
+                upstream:call({})
+
+                assert.spy(upstream.rewrite_request).was_called(1)
+            end)
+        end)
+
+        describe('is not active', function()
+            before_each(function()
+                resty_proxy:reset({ http_proxy = 'http://localhost' })
+            end)
+
+            it('calls http_proxy.request()', function()
+                local upstream = Upstream.new('http://example.com')
+                stub(http_proxy, 'request')
+
+                upstream:call({})
+
+                assert.spy(http_proxy.request).was_called(1)
             end)
         end)
     end)

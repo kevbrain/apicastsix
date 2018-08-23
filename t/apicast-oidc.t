@@ -2,10 +2,8 @@ use lib 't';
 use Test::APIcast::Blackbox 'no_plan';
 
 our $private_key = `cat t/fixtures/rsa.pem`;
+our $public_key = `cat t/fixtures/rsa.pub`;
 
-my $public_key = `cat t/fixtures/rsa.pub`;
-
-our $public_key_oneline = join('', grep { length($_) eq 64 } split(/\R/, $public_key));
 
 repeat_each(1);
 run_tests();
@@ -33,7 +31,8 @@ to_json({
   }],
   oidc => [{
     issuer => 'https://example.com/auth/realms/apicast',
-    config => { public_key => $::public_key_oneline, openid => { id_token_signing_alg_values_supported => [ 'RS256' ] } }
+    config => { id_token_signing_alg_values_supported => [ 'RS256' ] },
+    keys => { somekid => { pem => $::public_key } },
   }]
 });
 --- upstream
@@ -55,7 +54,7 @@ my $jwt = encode_jwt(payload => {
   aud => 'appid',
   nbf => 0,
   iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600 }, key => \$::private_key, alg => 'RS256');
+  exp => time + 3600 }, key => \$::private_key, alg => 'RS256', extra_headers => { kid => 'somekid' });
 "Authorization: Bearer $jwt"
 --- no_error_log
 [error]
@@ -85,7 +84,8 @@ to_json({
   }],
   oidc => [{
     issuer => 'https://example.com/auth/realms/apicast',
-    config => { public_key => $::public_key_oneline, openid => { id_token_signing_alg_values_supported => [ 'RS256' ] } }
+    config => { id_token_signing_alg_values_supported => [ 'RS256' ] },
+    keys => { somekid => { pem => $::public_key } },
   }]
 });
 --- upstream
@@ -109,7 +109,7 @@ my $jwt = encode_jwt(payload => {
   aud => 'appid',
   nbf => 0,
   iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600 }, key => \$::private_key, alg => 'RS256');
+  exp => time + 3600 }, key => \$::private_key, alg => 'RS256', extra_headers => { kid => 'somekid' });
 ["Authorization: Bearer $jwt", "Authorization: Bearer $jwt"]
 --- no_error_log
 [error]

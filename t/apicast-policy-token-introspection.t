@@ -290,13 +290,8 @@ introspection endpoint from the oidc_issuer_endpoint of the service configuratio
   "oidc": [
     {
       "issuer": "https://example.com/auth/realms/apicast",
-      "config": {
-        "public_key": "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2KNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==",
-        "openid": {
-          "id_token_signing_alg_values_supported": [ "RS256" ],
-          "token_introspection_endpoint": "http://test_backend:$TEST_NGINX_SERVER_PORT/token/introspection"
-        }
-      }
+      "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
     }
   ],
   "services": [
@@ -339,7 +334,7 @@ my $jwt = encode_jwt(payload => {
   aud => 'the_token_audience',
   nbf => 0,
   iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600 }, key => \$::rsa, alg => 'RS256');
+  exp => time + 3600 }, key => \$::rsa, alg => 'RS256', extra_headers => { kid => 'somekid' });
 "Authorization: Bearer $jwt"
 --- error_code: 200
 --- response_body

@@ -5,6 +5,7 @@ local file_loader = require 'apicast.configuration_loader.file'
 local data_url_loader = require 'apicast.configuration_loader.data_url'
 local remote_loader_v1 = require 'apicast.configuration_loader.remote_v1'
 local remote_loader_v2 = require 'apicast.configuration_loader.remote_v2'
+local oidc_loader = require 'apicast.configuration_loader.oidc'
 local util = require 'apicast.util'
 local env = require('resty.env')
 local resty_url = require('resty.url')
@@ -50,7 +51,7 @@ function _M.load(host)
     env.set('THREESCALE_CONFIG_FILE', configuration)
   end
 
-  return mock_loader.call() or file_loader.call() or remote_loader_v2:call(host) or remote_loader_v1.call(host)
+  return oidc_loader.call(mock_loader.call() or file_loader.call() or remote_loader_v2:call(host) or remote_loader_v1.call(host))
 end
 
 function _M.boot(host)

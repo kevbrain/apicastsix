@@ -66,6 +66,15 @@ describe('Configuration object', function()
 
         assert(config)
       end)
+
+      it('ignores invalid policies in the chain', function()
+        local config = configuration.parse_service({ proxy = { policy_chain = { { name = 'invalid' }, { name = 'echo' }, { name = 'echo' } } }})
+
+        local policy_chain = config.policy_chain
+
+        assert.equal(2, #policy_chain)
+        assert.equal(2, table.maxn(policy_chain))
+      end)
     end)
 
     describe('backend', function()

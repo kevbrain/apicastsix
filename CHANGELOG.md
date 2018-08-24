@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Building container image on OpenShift 3.9 [PR #810](https://github.com/3scale/apicast/pull/810), [THREESCALE-1138](https://issues.jboss.org/browse/THREESCALE-1138)
 - Rate Limit policy to define multiple limiters of the same type [PR #825](https://github.com/3scale/apicast/pull/825)
 - Fix `exclusiveMinimum` field for `conn` property in the rate-limit JSON schema [PR #832](https://github.com/3scale/apicast/pull/832)
+- Skip invalid policies in the policy chain [PR #854](https://github.com/3scale/apicast/pull/854)
 
 ## [3.2.0-rc2] - 2018-05-11
 

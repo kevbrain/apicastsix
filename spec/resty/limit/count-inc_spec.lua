@@ -77,10 +77,14 @@ describe('resty.limit.count-inc', function()
 
         describe('and incr method fails', function()
           it('returns error', function()
-            lim:incoming('tmp', true)
-            ngx.shared.limiter.incr = function()
-              return nil, 'something'
+            ngx.shared.limiter.incr = function(t, key, inc, init, _)
+              local value = t:get(key) or init
+              if not value then return nil, 'not found' end
+              if inc == -1 then return nil, 'something' end
+              t:set(key, value + inc)
+              return t:get(key)
             end
+            lim:incoming('tmp', true)
             local delay, err = lim:incoming('tmp', true)
             assert.is_nil(delay)
             assert.same('something', err)

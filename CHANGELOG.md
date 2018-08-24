@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Rewrite URL captures policy. This policy captures arguments in a URL and rewrites the URL using them [PR #827](https://github.com/3scale/apicast/pull/827), [THREESCALE-1139](https://issues.jboss.org/browse/THREESCALE-1139)
 - Support for HTTP Proxy [THREESCALE-221](https://issues.jboss.org/browse/THREESCALE-221), [#709](https://github.com/3scale/apicast/issues/709)
 - Conditions for the limits of the rate-limit policy [PR #839](https://github.com/3scale/apicast/pull/839)
+- `bin/apicast console` to start Lua REPL with APIcast code loaded [PR #853](https://github.com/3scale/apicast/pull/853)
 
 ### Changed
 

@@ -23,6 +23,7 @@ end
 _M.commands = load_commands({
   'start',
   'generate',
+  'console',
 }, parser)
 
 function mt.__call(self, arg)

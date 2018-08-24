@@ -1,8 +1,3 @@
-s2i-image: &s2i-image
-  image: quay.io/3scale/s2i-openresty-centos7:1.13.6.2-1
-  environment:
-    TEST_NGINX_BINARY: openresty
-    LUA_BIN_PATH: /opt/app-root/bin
 restore-lua-cache: &restore-lua-cache
   restore_cache:
     keys:
@@ -16,9 +11,6 @@ restore-perl-cache: &restore-perl-cache
       - apicast-cpanm-v2-{{ arch }}-{{ checksum "gateway/cpanfile.snapshot" }}
       - apicast-cpanm-v2-{{ arch }}-{{ .Branch }}
       - apicast-cpanm-v2-{{ arch }}-master
-
-base-job: &base-job
-  working_directory: /opt/app-root/apicast
 
 perl-cache-paths: &perl-cache-paths
   paths:
@@ -46,16 +38,30 @@ attach-workspace: &attach-workspace
 # ------------------------------------------------------------------------
 
 version: 2.1
-jobs:
 
-  build-s2i: &s2i-job
-    <<: *base-job
+executors:
+  s2i:
+    working_directory: /opt/app-root/apicast
     docker:
-      - image: docker:stable
+    - image: docker:stable
     environment:
       S2I_VERSION: "1.1.9a-40ad911d"
       DOCKER_COMPOSE_VERSION: "1.16.1"
       OPENRESTY_VERSION: "1.13.6.2-1"
+
+  openresty:
+    working_directory: /opt/app-root/apicast
+    docker:
+    - image: quay.io/3scale/s2i-openresty-centos7:1.13.6.2-1
+    - image: redis:3.2.8-alpine
+    environment:
+      TEST_NGINX_BINARY: openresty
+      LUA_BIN_PATH: /opt/app-root/bin
+jobs:
+
+  build-s2i:
+    executor: s2i
+
     steps:
       - <<: *setup-docker
       - run: |
@@ -66,7 +72,8 @@ jobs:
   # Try to build s2i runtime image and run smoke tests
 
   s2i-runtime:
-    <<: *s2i-job
+    executor: s2i
+
     steps:
       - run: apk update && apk add wget make bash curl py-pip git openssh-client
       - <<: *docker-compose
@@ -83,7 +90,8 @@ jobs:
   # Try to build s2i builder image and run smoke tests
 
   s2i-builder:
-    <<: *s2i-job
+    executor: s2i
+
     steps:
       - run: apk update && apk add wget make bash curl py-pip git openssh-client
       - <<: *docker-compose
@@ -106,9 +114,8 @@ jobs:
   # Download, build and store Lua dependencies.
 
   build-lua:
-    <<: *base-job
-    docker:
-      - <<: *s2i-image
+    executor: openresty
+
     steps:
       - checkout
       - run:
@@ -127,9 +134,8 @@ jobs:
   # Download, build and store Perl dependencies.
 
   build-perl:
-    <<: *base-job
-    docker:
-      - <<: *s2i-image
+    executor: openresty
+
     steps:
       - checkout
       - <<: *restore-perl-cache
@@ -144,10 +150,8 @@ jobs:
   # Run unit tests (busted)
 
   busted:
-      <<: *base-job
-      docker:
-        - <<: *s2i-image
-        - image: redis:3.2.8-alpine
+      executor: openresty
+
       parallelism: 1
       steps:
         - checkout
@@ -172,9 +176,8 @@ jobs:
   # Generate documentation
 
   docs:
-    <<: *base-job
-    docker:
-      - <<: *s2i-image
+    executor: openresty
+
     steps:
       - checkout
       - <<: *attach-workspace
@@ -186,10 +189,8 @@ jobs:
   # Run integration tests
 
   prove:
-    <<: *base-job
-    docker:
-      - <<: *s2i-image
-      - image: redis:3.2.8-alpine
+    executor: openresty
+
     parallelism: 1
     steps:
       - checkout
@@ -216,7 +217,7 @@ jobs:
   # Build and push image to docker registry
 
   deploy:
-    <<: *s2i-job
+    executor: s2i
     steps:
       - run: apk update && apk add wget make bash curl git openssh-client
       - setup_remote_docker:

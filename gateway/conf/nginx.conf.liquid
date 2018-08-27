@@ -120,7 +120,8 @@ http {
 
   server {
 
-    access_log {{ access_log_file | default: "/dev/stdout" }} time;
+    set $access_logs_enabled '1';
+    access_log {{ access_log_file | default: "/dev/stdout" }} time if=$access_logs_enabled;
 
     {%- assign http_port = port.apicast | default: 8080 %}
     {%- assign https_port = env.APICAST_HTTPS_PORT %}

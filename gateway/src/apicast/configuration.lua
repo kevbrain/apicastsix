@@ -18,6 +18,7 @@ local resty_url = require 'resty.url'
 local util = require 'apicast.util'
 local policy_chain = require 'apicast.policy_chain'
 local mapping_rule = require 'apicast.mapping_rule'
+local tab_new = require('resty.core.base').new_tab
 
 local mt = { __index = _M, __tostring = function() return 'Configuration' end }
 
@@ -58,10 +59,16 @@ end
 local function build_policy_chain(policies)
   if not policies or policies == null then return nil, 'no policy chain' end
 
-  local chain = {}
+  local chain = tab_new(#policies, 0)
 
   for i=1, #policies do
-    chain[i] = policy_chain.load_policy(policies[i].name, policies[i].version, policies[i].configuration)
+      local policy, err = policy_chain.load_policy(policies[i].name, policies[i].version, policies[i].configuration)
+
+      if policy then
+        insert(chain, policy)
+      elseif err then
+        ngx.log(ngx.WARN, 'failed to load policy: ', policies[i].name, ' version: ', policies[i].version, ' err: ', err)
+      end
   end
 
   return policy_chain.new(chain)

@@ -75,7 +75,7 @@ end
 -- received.
 -- @tparam string|table module the module or its name
 -- @tparam ?table ... params needed to initialize the module
--- @treturn object The module instantiated
+-- @treturn object|nil, nil|string The module instantiated or an error message.
 function _M.load_policy(module, version, ...)
     if type(module) == 'string' then
         if sub(module, 1, 14) == 'apicast.policy' then
@@ -83,12 +83,12 @@ function _M.load_policy(module, version, ...)
             version = 'builtin'
         end
 
-        local mod = policy_loader(module, version or 'builtin')
+        local mod, err = policy_loader:pcall(module, version or 'builtin')
 
         if mod then
             return mod.new(...)
         else
-            return mod
+            return nil, err
         end
     else
         return module

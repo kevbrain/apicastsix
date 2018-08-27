@@ -163,4 +163,19 @@ describe('policy_chain', function()
       assert.falsy(_M.default().frozen)
     end)
   end)
+
+  describe('.load_policy', function()
+    it('loads defined policy', function()
+      assert.same(require('apicast.policy.echo').new({ status = 200 }),
+              _M.load_policy('echo', 'builtin', { status = 200 }))
+    end)
+
+    it('returns error on missing policy', function()
+      local _, err = _M.load_policy('unknown')
+
+      assert.match([[module 'init' not found]], err)
+      assert.match([[no file]], err)
+      assert.match([[apicast/policy/unknown]], err)
+    end)
+  end)
 end)

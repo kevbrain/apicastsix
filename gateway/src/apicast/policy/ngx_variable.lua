@@ -1,3 +1,5 @@
+local LinkedList = require('apicast.linked_list')
+
 local _M = {}
 
 local function context_values()
@@ -10,7 +12,7 @@ local function context_values()
 end
 
 function _M.available_context(policies_context)
-  return setmetatable(context_values(), { __index = policies_context })
+  return LinkedList.readonly(context_values(), policies_context)
 end
 
 return _M

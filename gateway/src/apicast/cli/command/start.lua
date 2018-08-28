@@ -7,6 +7,7 @@ local concat = table.concat
 local format = string.format
 local tostring = tostring
 local tonumber = tonumber
+local sub = string.sub
 
 local exec = require('resty.execvp')
 local resty_env = require('resty.env')
@@ -175,8 +176,14 @@ end
 
 local load_env = split_by(':')
 
+local function has_prefix(str, prefix)
+    return sub(str, 1, #prefix) == prefix
+end
+
 local function abspath(path)
     if not path then return nil end
+    if has_prefix(path, 'syslog:') then return path end
+    if has_prefix(path, 'memory:') then return path end
 
     return pl.path.abspath(path)
 end

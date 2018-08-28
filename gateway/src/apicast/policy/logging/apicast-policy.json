@@ -1,0 +1,19 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Logging",
+  "summary": "Controls logging",
+  "description": [
+    "Controls logging. It allows to enable and disable access logs per ",
+    "service."
+  ],
+  "version": "builtin",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "enable_access_logs": {
+        "description": "Whether to enable access logs for the service",
+        "type": "boolean"
+      }
+    }
+  }
+}

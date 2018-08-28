@@ -160,6 +160,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix case where debug headers are returned without enabling the option [PR #577](https://github.com/3scale/apicast/pull/577)
 - Fix errors loading openresty libraries when rover is active [PR #598](https://github.com/3scale/apicast/pull/598)
 - Passthrough "invalid" headers [PR #612](https://github.com/3scale/apicast/pull/612), [THREESCALE-630](https://issues.jboss.org/browse/THREESCALE-630)
+- Fix using relative path for access and error log [THREESCALE-1090](https://issues.jboss.org/browse/THREESCALE-1090)
 
 ### Changed
 

@@ -175,6 +175,12 @@ end
 
 local load_env = split_by(':')
 
+local function abspath(path)
+    if not path then return nil end
+
+    return pl.path.abspath(path)
+end
+
 local function configure(cmd)
     cmd:option("--template", "Nginx config template.", 'conf/nginx.conf.liquid')
 
@@ -237,8 +243,8 @@ local function configure(cmd)
         :count(("0-%s"):format(_M.log_level - 1))
     )
     cmd:option('--log-level', 'Set log level', resty_env.value('APICAST_LOG_LEVEL') or 'warn')
-    cmd:option('--log-file', 'Set log file', resty_env.value('APICAST_LOG_FILE') or 'stderr')
-    cmd:option('--access-log-file', 'Set access log file', resty_env.value('APICAST_ACCESS_LOG_FILE') or '/dev/stdout')
+    cmd:option('--log-file', 'Set log file', abspath(resty_env.value('APICAST_LOG_FILE')) or 'stderr')
+    cmd:option('--access-log-file', 'Set access log file', abspath(resty_env.value('APICAST_ACCESS_LOG_FILE')) or '/dev/stdout')
 
     cmd:epilog([[
       Example: apicast start --dev

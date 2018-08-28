@@ -6,7 +6,6 @@ local insert = table.insert
 local rawset = rawset
 local encode_args = ngx.encode_args
 local tonumber = tonumber
-local type = type
 
 local tablex = require('pl.tablex')
 local deepcopy = tablex.deepcopy
@@ -17,8 +16,7 @@ local cjson = require 'cjson'
 local resty_env = require 'resty.env'
 local re = require 'ngx.re'
 local configuration = require 'apicast.configuration'
-
-local oidc_log_level = ngx[string.upper(resty_env.value('APICAST_OIDC_LOG_LEVEL') or 'err')] or ngx.ERR
+local oidc_discovery = require('resty.oidc.discovery')
 
 local _M = {
   _VERSION = '0.1'
@@ -125,10 +123,10 @@ function _M:index(host)
       local original_proxy_config = deepcopy(proxy_config)
 
       local service = configuration.parse_service(proxy_config.content)
-      local issuer, oidc_config = self:oidc_issuer_configuration(service)
+      local oidc = self:oidc_issuer_configuration(service)
 
-      if issuer then
-        config.oidc[i] = { issuer = issuer, config = oidc_config }
+      if oidc then
+        config.oidc[i] = oidc
       end
       config.services[i] = original_proxy_config.content
     end
@@ -239,56 +237,16 @@ function _M:services()
   end
 end
 
-local function openid_configuration_url(endpoint)
-  if endpoint and type(endpoint) == 'string' and len(endpoint) > 0 then
-    return resty_url.join(endpoint, '.well-known/openid-configuration')
-  end
-end
-
 function _M:oidc_issuer_configuration(service)
-  local http_client = self.http_client
+  local config = oidc_discovery.openid_configuration(self, service.oidc.issuer)
 
-  if not http_client then
-    return nil, 'not initialized'
+  if config then
+    return {
+      config = config,
+      issuer = config.issuer,
+      keys = oidc_discovery.jwks(self, config)
+    }
   end
-
-  local uri = openid_configuration_url(service.oidc.issuer_endpoint)
-
-  if not uri then
-    return nil, 'no OIDC endpoint'
-  end
-
-  local res = http_client.get(uri)
-
-  if res.status ~= 200 then
-    ngx.log(oidc_log_level, 'failed to get OIDC Provider from ', uri, ' status: ', res.status, ' body: ', res.body)
-    return nil, 'could not get OpenID Connect configuration'
-  end
-
-  local config = res.headers.content_type == 'application/json' and cjson.decode(res.body)
-
-  if not config then
-    ngx.log(oidc_log_level, 'invalid OIDC Provider, expected application/json got:  ', res.headers.content_type, ' body: ', res.body)
-    return nil, 'invalid JSON'
-  end
-
-  res = http_client.get(config.issuer)
-
-  if res.status ~= 200 then
-    ngx.log(oidc_log_level, 'failed to get OIDC Issuer from ', uri, ' status: ', res.status, ' body: ', res.body)
-    return nil, 'could not get OpenID Connect Issuer'
-  end
-
-  local issuer = res.headers.content_type == 'application/json' and cjson.decode(res.body)
-
-  if not issuer then
-    ngx.log(oidc_log_level, 'invalid OIDC Issuer, expected application/json got:  ', res.headers.content_type, ' body: ', res.body)
-    return nil, 'invalid JSON'
-  end
-
-  issuer.openid = config
-
-  return config.issuer, issuer
 end
 
 function _M:config(service, environment, version)
@@ -331,11 +289,7 @@ function _M:config(service, environment, version)
     local original_proxy_config = deepcopy(proxy_config)
 
     local config_service = configuration.parse_service(proxy_config.content)
-    local issuer, oidc_config = self:oidc_issuer_configuration(config_service)
-
-    if issuer then
-      original_proxy_config.oidc = { issuer = issuer, config = oidc_config }
-    end
+    original_proxy_config.oidc = self:oidc_issuer_configuration(config_service)
 
     return original_proxy_config
   else

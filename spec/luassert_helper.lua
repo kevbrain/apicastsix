@@ -40,18 +40,19 @@ end
 
 do -- adding assert.returns_error(error_text, ok, ret) : assert.returns_error('not initialized', _M:call())
   local tostring = tostring
-  local tonumber = tonumber
   local s = require('say')
 
   local function returns_error(state, arguments, level)
     local argc = arguments.n
     assert(argc == 3, say("assertion.internal.argtolittle", { "error_matches", 3, tostring(argc) }), level)
 
-    local expected = tonumber(arguments[1])
-    local ok = tonumber(arguments[2])
-    local actual = tonumber(arguments[3])
+    local expected = arguments[1]
+    local ok = arguments[2]
+    local actual = arguments[3]
 
+    assert(expected, 'missing expected message')
     local result = not ok and expected == actual
+
     -- switch arguments for proper output message
     util.tinsert(arguments, 1, util.tremove(arguments, 3))
     state.failure_message = arguments[3]
@@ -127,4 +128,8 @@ do -- adding assert.returns_error(error_text, ok, ret) : assert.returns_error('n
 
   assert:register("assertion", "contains", contains_assertion, "assertion.contains.positive", "assertion.contains.negative")
   assert:register("matcher", "contains", contains_matcher)
+
+  assert.has_error(function()
+    assert.returns_error('failure', true, 'wrong')
+  end)
 end

@@ -1,7 +1,22 @@
 use lib 't';
 use Test::APIcast::Blackbox 'no_plan';
-use Cwd qw(abs_path);
-our $rsa = `cat t/fixtures/rsa.pem`;
+use Crypt::JWT qw(encode_jwt);
+
+my $rsa = `cat t/fixtures/rsa.pem`;
+
+sub authorization_bearer_jwt (@) {
+    my ($aud, $payload, $kid) = @_;
+
+    my $jwt = encode_jwt(payload => {
+        aud => $aud,
+        nbf => 0,
+        iss => 'https://example.com/auth/realms/apicast',
+        exp => time + 3600,
+        %$payload,
+    }, key => \$rsa, alg => 'RS256', extra_headers => { kid => $kid });
+
+    return "Authorization: Bearer $jwt";
+}
 
 run_tests();
 
@@ -21,10 +36,8 @@ The client which has the appropriate role accesses the resource.
   "oidc": [
     {
       "issuer": "https://example.com/auth/realms/apicast",
-      "config": {
-        "public_key": "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2KNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==",
-        "openid": { "id_token_signing_alg_values_supported": [ "RS256" ] }
-      }
+      "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
     }
   ],
   "services": [
@@ -67,23 +80,19 @@ The client which has the appropriate role accesses the resource.
 --- request
 GET /confidential
 --- more_headers eval
-use Crypt::JWT qw(encode_jwt);
-my $jwt = encode_jwt(payload => {
-  aud => 'the_token_audience',
-  nbf => 0,
-  iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600,
+::authorization_bearer_jwt('audience', {
   realm_access => {
     roles => [ 'director' ]
   }
-}, key => \$::rsa, alg => 'RS256');
-"Authorization: Bearer $jwt"
+}, 'somekid')
 --- error_code: 200
 --- response_body
 yay, api backend
 --- no_error_log
 [error]
 oauth failed with
+
+
 
 === TEST2: Role check succeeds (blacklist)
 The client which doesn't have the inappropriate role accesses the resource.
@@ -99,10 +108,8 @@ The client which doesn't have the inappropriate role accesses the resource.
   "oidc": [
     {
       "issuer": "https://example.com/auth/realms/apicast",
-      "config": {
-        "public_key": "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2KNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==",
-        "openid": { "id_token_signing_alg_values_supported": [ "RS256" ] }
-      }
+      "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
     }
   ],
   "services": [
@@ -146,25 +153,21 @@ The client which doesn't have the inappropriate role accesses the resource.
 --- request
 GET /confidential
 --- more_headers eval
-use Crypt::JWT qw(encode_jwt);
-my $jwt = encode_jwt(payload => {
-  aud => 'the_token_audience',
-  nbf => 0,
-  iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600,
+::authorization_bearer_jwt('audience', {
   resource_access => {
     bank_A => {
       roles => [ 'director' ]
     }
   }
-}, key => \$::rsa, alg => 'RS256');
-"Authorization: Bearer $jwt"
+}, 'somekid');
 --- error_code: 200
 --- response_body
 yay, api backend
 --- no_error_log
 [error]
 oauth failed with
+
+
 
 === TEST3: Role check fails (whitelist)
 The client which doesn't have the appropriate role accesses the resource.
@@ -180,10 +183,8 @@ The client which doesn't have the appropriate role accesses the resource.
   "oidc": [
     {
       "issuer": "https://example.com/auth/realms/apicast",
-      "config": {
-        "public_key": "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2KNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==",
-        "openid": { "id_token_signing_alg_values_supported": [ "RS256" ] }
-      }
+      "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
     }
   ],
   "services": [
@@ -228,20 +229,16 @@ The client which doesn't have the appropriate role accesses the resource.
 --- request
 GET /confidential
 --- more_headers eval
-use Crypt::JWT qw(encode_jwt);
-my $jwt = encode_jwt(payload => {
-  aud => 'the_token_audience',
-  nbf => 0,
-  iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600,
+::authorization_bearer_jwt('audience', {
   realm_access => {
     roles => [ 'employee' ]
   }
-}, key => \$::rsa, alg => 'RS256');
-"Authorization: Bearer $jwt"
+}, 'somekid')
 --- error_code: 403
 --- response_body chomp
 auth failed
+
+
 
 === TEST4: Role check fails (blacklist)
 The client which has the inappropriate role accesses the resource.
@@ -257,10 +254,8 @@ The client which has the inappropriate role accesses the resource.
   "oidc": [
     {
       "issuer": "https://example.com/auth/realms/apicast",
-      "config": {
-        "public_key": "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2KNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==",
-        "openid": { "id_token_signing_alg_values_supported": [ "RS256" ] }
-      }
+      "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
     }
   ],
   "services": [
@@ -306,22 +301,18 @@ The client which has the inappropriate role accesses the resource.
 --- request
 GET /confidential
 --- more_headers eval
-use Crypt::JWT qw(encode_jwt);
-my $jwt = encode_jwt(payload => {
-  aud => 'the_token_audience',
-  nbf => 0,
-  iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600,
+::authorization_bearer_jwt('audience', {
   resource_access => {
     bank_A => {
       roles => [ 'employee' ]
     }
   }
-}, key => \$::rsa, alg => 'RS256');
-"Authorization: Bearer $jwt"
+}, 'somekid')
 --- error_code: 403
 --- response_body chomp
 auth failed
+
+
 
 === TEST5: Role check succeeds with Liquid template (whitelist)
 The client which has the appropriate role accesses the resource.
@@ -337,10 +328,8 @@ The client which has the appropriate role accesses the resource.
   "oidc": [
     {
       "issuer": "https://example.com/auth/realms/apicast",
-      "config": {
-        "public_key": "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2KNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==",
-        "openid": { "id_token_signing_alg_values_supported": [ "RS256" ] }
-      }
+      "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
     }
   ],
   "services": [
@@ -391,19 +380,13 @@ The client which has the appropriate role accesses the resource.
 --- request
 GET /app1
 --- more_headers eval
-use Crypt::JWT qw(encode_jwt);
-my $jwt = encode_jwt(payload => {
-  aud => 'app1',
-  nbf => 0,
-  iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600,
+::authorization_bearer_jwt('app1', {
   resource_access => {
     app1 => {
       roles => [ 'app1' ]
     }
   }
-}, key => \$::rsa, alg => 'RS256');
-"Authorization: Bearer $jwt"
+}, 'somekid')
 --- error_code: 200
 --- response_body
 yay, api backend

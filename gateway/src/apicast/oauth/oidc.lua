@@ -1,13 +1,13 @@
-local jwt = require 'resty.jwt'
+local JWT = require 'resty.jwt'
 local jwt_validators = require 'resty.jwt-validators'
 
 local lrucache = require 'resty.lrucache'
 local util = require 'apicast.util'
 
 local setmetatable = setmetatable
-local len = string.len
 local ngx_now = ngx.now
 local format = string.format
+local type = type
 
 local _M = {
   cache_size = 10000,
@@ -26,18 +26,21 @@ local mt = {
   end
 }
 
+local empty = {}
+
 function _M.new(service)
-  local oidc = service.oidc
-  local issuer = oidc.issuer or oidc.issuer_endpoint
-  local config = oidc.config or {}
-  local openid = config.openid or {}
+  local oidc = service.oidc or empty
+
+  local issuer = oidc.issuer
+  local config = oidc.config or empty
 
   return setmetatable({
     service = service,
     config = config,
     issuer = issuer,
+    keys = oidc.keys or empty,
     clock = ngx_now,
-    alg_whitelist = util.to_hash(openid.id_token_signing_alg_values_supported),
+    alg_whitelist = util.to_hash(config.id_token_signing_alg_values_supported),
     jwt_claims = {
       nbf = jwt_validators.is_not_before(),
       exp = jwt_validators.is_not_expired(),
@@ -53,19 +56,9 @@ local function timestamp_to_seconds_from_now(expiry, clock)
   return ttl
 end
 
--- Formats the realm public key string into Public Key File (PKCS#8) format
-local function format_public_key(key)
-  if not key then
-    return nil, 'missing key'
-  end
-
-  local formatted_key = "-----BEGIN PUBLIC KEY-----\n"
-  local key_len = len(key)
-  for i=1,key_len,64 do
-    formatted_key = formatted_key..string.sub(key, i, i+63).."\n"
-  end
-  formatted_key = formatted_key.."-----END PUBLIC KEY-----"
-  return formatted_key
+local function find_public_key(jwt, keys)
+  local jwk = keys and keys[jwt.header.kid]
+  if jwk then return jwk.pem end
 end
 
 -- Parses the token - in this case we assume it's a JWT token
@@ -86,7 +79,7 @@ local function parse_and_verify_token(self, jwt_token)
     return jwt_obj
   end
 
-  jwt_obj = jwt:load_jwt(jwt_token)
+  jwt_obj = JWT:load_jwt(jwt_token)
 
   if not jwt_obj.valid then
     ngx.log(ngx.WARN, jwt_obj.reason)
@@ -97,7 +90,7 @@ local function parse_and_verify_token(self, jwt_token)
     return jwt_obj, '[jwt] invalid alg'
   end
   -- TODO: this should be able to use DER format instead of PEM
-  local pubkey = format_public_key(self.config.public_key)
+  local pubkey = find_public_key(jwt_obj, self.keys)
 
   -- This is keycloak-specific. Its tokens have a 'typ' and we need to verify
   -- it's Bearer.
@@ -106,7 +99,7 @@ local function parse_and_verify_token(self, jwt_token)
     claims.typ = jwt_validators.equals('Bearer')
   end
 
-  jwt_obj = jwt:verify_jwt_obj(pubkey, jwt_obj, self.jwt_claims)
+  jwt_obj = JWT:verify_jwt_obj(pubkey, jwt_obj, self.jwt_claims)
 
   if not jwt_obj.verified then
     ngx.log(ngx.DEBUG, "[jwt] failed verification for token, reason: ", jwt_obj.reason)

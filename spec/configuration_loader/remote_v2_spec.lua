@@ -171,49 +171,70 @@ describe('Configuration Remote Loader V2', function()
     it('includes OIDC configuration', function()
       test_backend.expect{ url = 'http://example.com/admin/api/services/42/proxy/configs/staging/latest.json' }.
       respond_with{ status = 200, body = cjson.encode(
-        {
-          proxy_config = {
-            version = 2,
-            environment = 'sandbox',
-            content = {
-              id = 42, backend_version = 1,
-              proxy = { oidc_issuer_endpoint = 'http://idp.example.com/auth/realms/foo/' }
-            }
-          }
-        }
+              {
+                proxy_config = {
+                  version = 2,
+                  environment = 'sandbox',
+                  content = {
+                    id = 42, backend_version = 1,
+                    proxy = { oidc_issuer_endpoint = 'http://idp.example.com/auth/realms/foo/' }
+                  }
+                }
+              }
       ) }
 
       test_backend.expect{ url = "http://idp.example.com/auth/realms/foo/.well-known/openid-configuration" }.
-        respond_with{
-          status = 200,
-          headers = { content_type = 'application/json' },
-          body = [[
+      respond_with{
+        status = 200,
+        headers = { content_type = 'application/json' },
+        body = [[
             {
               "issuer": "https://idp.example.com/auth/realms/foo",
+              "jwks_uri": "https://idp.example.com/auth/realms/foo/jwks",
               "id_token_signing_alg_values_supported": [ "RS256" ]
             }
           ]]
       }
-      test_backend.expect{ url = "https://idp.example.com/auth/realms/foo" }.
-        respond_with{
-          status = 200,
-          headers = { content_type = 'application/json' },
-          body =  [[
-            { "public_key": "foobar" }
-          ]]
+      test_backend.expect{ url = "https://idp.example.com/auth/realms/foo/jwks" }.
+      respond_with{
+        status = 200,
+        headers = { content_type = 'application/json' },
+        body =  [[
+            { "keys": [{
+                "kid": "3g-I9PWt6NrznPLcbE4zZrakXar27FDKEpqRPlD2i2Y",
+                "kty": "RSA",
+                "n": "iqXwBiZgN2q1dCKU1P_vzyiGacdQhfqgxQST7GFlWU_PUljV9uHrLOadWadpxRAuskNpXWsrKoU_hDxtSpUIRJj6hL5YTlrvv-IbFwPNtD8LnOfKL043_ZdSOe3aT4R4NrBxUomndILUESlhqddylVMCGXQ81OB73muc9ovR68Ajzn8KzpU_qegh8iHwk-SQvJxIIvgNJCJTC6BWnwS9Bw2ns0fQOZZRjWFRVh8BjkVdqa4vCAb6zw8hpR1y9uSNG-fqUAPHy5IYQaD8k8QX0obxJ0fld61fH-Wr3ENpn9YZWYBcKvnwLm2bvxqmNVBzW4rhGEZb9mf-KrSagD5GUw",
+                "e": "AQAB"
+            }] }
+        ]]
       }
 
       local config = assert(loader:config({ id = 42 }, 'staging', 'latest'))
 
       assert.same({
         config = {
-          openid = {
-            id_token_signing_alg_values_supported = { 'RS256' },
-            issuer = 'https://idp.example.com/auth/realms/foo',
-          },
-          public_key = "foobar",
+          id_token_signing_alg_values_supported = { 'RS256' },
+          issuer = 'https://idp.example.com/auth/realms/foo',
+          jwks_uri = 'https://idp.example.com/auth/realms/foo/jwks'
         },
         issuer = 'https://idp.example.com/auth/realms/foo',
+        keys = { ['3g-I9PWt6NrznPLcbE4zZrakXar27FDKEpqRPlD2i2Y'] = {
+          e = 'AQAB',
+          kid = '3g-I9PWt6NrznPLcbE4zZrakXar27FDKEpqRPlD2i2Y',
+          kty = 'RSA',
+          n = 'iqXwBiZgN2q1dCKU1P_vzyiGacdQhfqgxQST7GFlWU_PUljV9uHrLOadWadpxRAuskNpXWsrKoU_hDxtSpUIRJj6hL5YTlrvv-IbFwPNtD8LnOfKL043_ZdSOe3aT4R4NrBxUomndILUESlhqddylVMCGXQ81OB73muc9ovR68Ajzn8KzpU_qegh8iHwk-SQvJxIIvgNJCJTC6BWnwS9Bw2ns0fQOZZRjWFRVh8BjkVdqa4vCAb6zw8hpR1y9uSNG-fqUAPHy5IYQaD8k8QX0obxJ0fld61fH-Wr3ENpn9YZWYBcKvnwLm2bvxqmNVBzW4rhGEZb9mf-KrSagD5GUw',
+          pem = [[
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiqXwBiZgN2q1dCKU1P/v
+zyiGacdQhfqgxQST7GFlWU/PUljV9uHrLOadWadpxRAuskNpXWsrKoU/hDxtSpUI
+RJj6hL5YTlrvv+IbFwPNtD8LnOfKL043/ZdSOe3aT4R4NrBxUomndILUESlhqddy
+lVMCGXQ81OB73muc9ovR68Ajzn8KzpU/qegh8iHwk+SQvJxIIvgNJCJTC6BWnwS9
+Bw2ns0fQOZZRjWFRVh8BjkVdqa4vCAb6zw8hpR1y9uSNG+fqUAPHy5IYQaD8k8QX
+0obxJ0fld61fH+Wr3ENpn9YZWYBcKvnwLm2bvxqmNVBzW4rhGEZb9mf+KrSagD5G
+UwIDAQAB
+-----END PUBLIC KEY-----
+]],
+        } },
       }, config.oidc)
     end)
   end)

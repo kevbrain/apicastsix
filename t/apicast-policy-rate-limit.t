@@ -987,8 +987,6 @@ Return 200 code.
 Rate Limit policy accesses to the jwt
 which the apicast policy stores to the context.
 This test uses "jwt.aud" as key name.
-Notice that in the configuration, oidc.config.public_key is the one in
-"/fixtures/rsa.pub".
 This test calls the service 3 times,
 and the second call has a different jwt.aud,
 so only the third call returns 429.
@@ -1036,9 +1034,8 @@ so only the third call returns 429.
       oidc = {
         {
           issuer = 'https://example.com/auth/realms/apicast',
-          config = { 
-            public_key = require('fixtures.rsa').pub, openid = { id_token_signing_alg_values_supported = { 'RS256' } } 
-          }
+          config = { id_token_signing_alg_values_supported = { 'RS256' } },
+          keys = { somekid = { pem = require('fixtures.rsa').pub } },
         }
       }
     })
@@ -1082,12 +1079,12 @@ my $jwt1 = encode_jwt(payload => {
   aud => 'test17_1',
   nbf => 0,
   iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600 }, key => \$::rsa, alg => 'RS256');
+  exp => time + 3600 }, key => \$::rsa, alg => 'RS256', extra_headers => { kid => 'somekid' });
 my $jwt2 = encode_jwt(payload => {
   aud => 'test17_2',
   nbf => 0,
   iss => 'https://example.com/auth/realms/apicast',
-  exp => time + 3600 }, key => \$::rsa, alg => 'RS256');
+  exp => time + 3600 }, key => \$::rsa, alg => 'RS256', extra_headers => { kid => 'somekid' });
 ["Authorization: Bearer $jwt1", "Authorization: Bearer $jwt1", "Authorization: Bearer $jwt2", "Authorization: Bearer $jwt1"]
 --- error_code eval
 [200, 200, 200, 429]

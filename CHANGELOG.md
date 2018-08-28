@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `bin/apicast console` to start Lua REPL with APIcast code loaded [PR #853](https://github.com/3scale/apicast/pull/853)
 - Liquid Context Debugging policy. It's a policy only meant for debugging purposes, returns the context available when evaluating liquid [PR #849](https://github.com/3scale/apicast/pull/849)
 - Logging policy. It allows to enable/disable access logs per service [PR #856](https://github.com/3scale/apicast/pull/856), [THREESCALE-1148](https://issues.jboss.org/browse/THREESCALE-1148)
+- Support JWK through OIDC Discovery [PR #850](https://github.com/3scale/apicast/pull/850)
 
 ### Changed
 

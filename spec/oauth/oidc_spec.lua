@@ -12,7 +12,8 @@ describe('OIDC', function()
       id = 1,
       oidc = {
         issuer = 'https://example.com/auth/realms/apicast',
-        config = { public_key = rsa.pub, openid = { id_token_signing_alg_values_supported = { 'RS256' } } }
+        config = { id_token_signing_alg_values_supported = { 'RS256' } },
+        keys = { somekid = { pem = rsa.pub } },
       }
     }
 
@@ -21,7 +22,7 @@ describe('OIDC', function()
     it('successfully verifies token', function()
       local oidc = _M.new(service)
       local access_token = jwt:sign(rsa.private, {
-        header = { typ = 'JWT', alg = 'RS256' },
+        header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
         payload = {
           iss = service.oidc.issuer,
           aud = 'notused',
@@ -42,7 +43,7 @@ describe('OIDC', function()
     it('caches verification', function()
       local oidc = _M.new(service)
       local access_token = jwt:sign(rsa.private, {
-        header = { typ = 'JWT', alg = 'RS256' },
+        header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
         payload = {
           iss = service.oidc.issuer,
           aud = {'ce3b2e5e','notused'},
@@ -66,7 +67,7 @@ describe('OIDC', function()
     it('verifies iss', function()
       local oidc = _M.new(service)
       local access_token = jwt:sign(rsa.private, {
-        header = { typ = 'JWT', alg = 'RS256' },
+        header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
         payload = {
           iss = service.oidc.issuer,
           aud = 'foobar',
@@ -84,7 +85,7 @@ describe('OIDC', function()
     it('verifies nbf', function()
       local oidc = _M.new(service)
       local access_token = jwt:sign(rsa.private, {
-        header = { typ = 'JWT', alg = 'RS256' },
+        header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
         payload = {
           iss = service.oidc.issuer,
           aud = 'foobar',
@@ -102,7 +103,7 @@ describe('OIDC', function()
     it('verifies exp', function()
       local oidc = _M.new(service)
       local access_token = jwt:sign(rsa.private, {
-        header = { typ = 'JWT', alg = 'RS256' },
+        header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
         payload = {
           iss = service.oidc.issuer,
           aud = 'foobar',
@@ -139,7 +140,7 @@ describe('OIDC', function()
     it('validation fails when typ is invalid', function()
       local oidc = _M.new(service)
       local access_token = jwt:sign(rsa.private, {
-        header = { typ = 'JWT', alg = 'RS256' },
+        header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
         payload = {
           iss = service.oidc.issuer,
           aud = 'notused',
@@ -158,7 +159,7 @@ describe('OIDC', function()
     it('validation is successful when typ is included and is Bearer', function()
       local oidc = _M.new(service)
       local access_token = jwt:sign(rsa.private, {
-        header = { typ = 'JWT', alg = 'RS256' },
+        header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
         payload = {
           iss = service.oidc.issuer,
           aud = 'notused',

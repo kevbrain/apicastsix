@@ -21,7 +21,7 @@ local function connect_direct(httpc, request)
 
     if not ok then return nil, err end
 
-    ngx.log(ngx.DEBUG, 'connection to ', host, ':', port, ' established',
+    ngx.log(ngx.DEBUG, 'connection to ', host, ':', httpc.port, ' established',
         ', reused times: ', httpc:get_reused_times())
 
     if uri.scheme == 'https' then

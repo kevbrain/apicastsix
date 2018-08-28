@@ -115,3 +115,10 @@ do
     end
   end
 end
+
+_G.fixture = function (...)
+  local path = require('pl.path')
+  local file = require('pl.file')
+
+   return file.read(path.join('spec', 'fixtures', ...))
+end

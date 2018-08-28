@@ -1,25 +1,3 @@
-s2i-image: &s2i-image
-  image: quay.io/3scale/s2i-openresty-centos7:1.13.6.2-1
-  environment:
-    TEST_NGINX_BINARY: openresty
-    LUA_BIN_PATH: /opt/app-root/bin
-restore-lua-cache: &restore-lua-cache
-  restore_cache:
-    keys:
-      - apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
-      - apicast-rocks-{{ arch }}-{{ .Branch }}
-      - apicast-rocks-{{ arch }}-master
-
-restore-perl-cache: &restore-perl-cache
-  restore_cache:
-    keys:
-      - apicast-cpanm-v2-{{ arch }}-{{ checksum "gateway/cpanfile.snapshot" }}
-      - apicast-cpanm-v2-{{ arch }}-{{ .Branch }}
-      - apicast-cpanm-v2-{{ arch }}-master
-
-base-job: &base-job
-  working_directory: /opt/app-root/apicast
-
 perl-cache-paths: &perl-cache-paths
   paths:
     - ./local
@@ -30,34 +8,100 @@ lua-cache-paths: &lua-cache-paths
   paths:
     - ./lua_modules
 
-setup-docker: &setup-docker
-  setup_remote_docker:
-    docker_layer_caching: true
-
-docker-compose: &docker-compose
-  run: |
-    pip install "docker-compose==${DOCKER_COMPOSE_VERSION}"
-    docker-compose version
-
-attach-workspace: &attach-workspace
-  attach_workspace:
-    at: .
-
 # ------------------------------------------------------------------------
 
-version: 2
-jobs:
+version: 2.1
 
-  build-s2i: &s2i-job
-    <<: *base-job
+commands:
+  restore-lua-cache:
+    steps:
+      - restore_cache:
+          keys:
+          - apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
+          - apicast-rocks-{{ arch }}-{{ .Branch }}
+          - apicast-rocks-{{ arch }}-master
+
+  restore-perl-cache:
+    steps:
+      - restore_cache:
+          keys:
+          - apicast-cpanm-v2-{{ arch }}-{{ checksum "gateway/cpanfile.snapshot" }}
+          - apicast-cpanm-v2-{{ arch }}-{{ .Branch }}
+          - apicast-cpanm-v2-{{ arch }}-master
+
+  install-docker-compose:
+    steps:
+      - run: |
+          pip install "docker-compose==${DOCKER_COMPOSE_VERSION}"
+          docker-compose version
+
+  setup-docker:
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+  attach-workspace:
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+  setup-s2i:
+    steps:
+      - run: apk update && apk add wget make bash curl py-pip git openssh-client
+      - install-docker-compose
+      - setup-docker
+      - attach-workspace
+      - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
+
+  store-junit-results:
+    steps:
+      - store_test_results:
+          path: tmp/junit
+      - store_artifacts:
+          path: tmp/junit
+          destination: junit
+
+  report-codecov:
+    parameters:
+      suite:
+        type: string
+      flags:
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: Report << parameters.suite >> Code Coverage
+          command: |
+            set +x # allow failures
+            curl -s https://codecov.io/bash | bash -s - << parameters.flags >> -F << parameters.suite >>
+          when: always
+
+executors:
+  s2i:
+    working_directory: /opt/app-root/apicast
     docker:
-      - image: docker:stable
+    - image: docker:stable
     environment:
       S2I_VERSION: "1.1.9a-40ad911d"
       DOCKER_COMPOSE_VERSION: "1.16.1"
       OPENRESTY_VERSION: "1.13.6.2-1"
+
+  openresty:
+    working_directory: /opt/app-root/apicast
+    docker:
+    - image: quay.io/3scale/s2i-openresty-centos7:1.13.6.2-1
+    - image: redis:3.2.8-alpine
+    environment:
+      TEST_NGINX_BINARY: openresty
+      LUA_BIN_PATH: /opt/app-root/bin
+jobs:
+
+  build-s2i:
+    executor: s2i
+
     steps:
-      - <<: *setup-docker
+      - setup-docker
       - run: |
           docker pull quay.io/3scale/s2i-openresty-centos7:${OPENRESTY_VERSION} &
           docker pull quay.io/3scale/s2i-openresty-centos7:${OPENRESTY_VERSION}-runtime &
@@ -66,14 +110,10 @@ jobs:
   # Try to build s2i runtime image and run smoke tests
 
   s2i-runtime:
-    <<: *s2i-job
+    executor: s2i
+
     steps:
-      - run: apk update && apk add wget make bash curl py-pip git openssh-client
-      - <<: *docker-compose
-      - <<: *setup-docker
-      - checkout
-      - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
-      - <<: *attach-workspace
+      - setup-s2i
       - run:
           command: make runtime-image
           environment:
@@ -83,14 +123,10 @@ jobs:
   # Try to build s2i builder image and run smoke tests
 
   s2i-builder:
-    <<: *s2i-job
+    executor: s2i
+
     steps:
-      - run: apk update && apk add wget make bash curl py-pip git openssh-client
-      - <<: *docker-compose
-      - <<: *setup-docker
-      - checkout
-      - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
-      - <<: *attach-workspace
+      - setup-s2i
       - run:
           name: "Build image"
           command: make builder-image
@@ -106,16 +142,15 @@ jobs:
   # Download, build and store Lua dependencies.
 
   build-lua:
-    <<: *base-job
-    docker:
-      - <<: *s2i-image
+    executor: openresty
+
     steps:
       - checkout
       - run:
           # This can happen when doing local build: lua_modules is copied from the host
           name: Cleanup local dependencies
           command: rm -rf lua_modules
-      - <<: *restore-lua-cache
+      - restore-lua-cache
       - run: make dependencies
       - save_cache:
           key: apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
@@ -127,12 +162,11 @@ jobs:
   # Download, build and store Perl dependencies.
 
   build-perl:
-    <<: *base-job
-    docker:
-      - <<: *s2i-image
+    executor: openresty
+
     steps:
       - checkout
-      - <<: *restore-perl-cache
+      - restore-perl-cache
       - run: make carton
       - save_cache:
           key: apicast-cpanm-v2-{{ arch }}-{{ checksum "gateway/cpanfile.snapshot" }}
@@ -144,40 +178,27 @@ jobs:
   # Run unit tests (busted)
 
   busted:
-      <<: *base-job
-      docker:
-        - <<: *s2i-image
-        - image: redis:3.2.8-alpine
+      executor: openresty
+
       parallelism: 1
       steps:
-        - checkout
-        - <<: *attach-workspace
+        - attach-workspace
         - run:
             name: 'busted'
             command: $(make rover) exec make busted
             environment:
               JUNIT_OUTPUT_FILE: tmp/junit/busted/report.xml
-        - run:
-            name: Report Unit Test Code Coverage
-            command: |
-              set +x # allow failures
-              curl -s https://codecov.io/bash | bash -s - -F busted
-            when: always
-        - store_test_results:
-            path: tmp/junit
-        - store_artifacts:
-            path: tmp/junit
-            destination: junit
+        - report-codecov:
+            suite: busted
+        - store-junit-results
 
   # Generate documentation
 
   docs:
-    <<: *base-job
-    docker:
-      - <<: *s2i-image
+    executor: openresty
+
     steps:
-      - checkout
-      - <<: *attach-workspace
+      - attach-workspace
       - run: make doc
       - store_artifacts:
           path: doc/lua
@@ -186,14 +207,11 @@ jobs:
   # Run integration tests
 
   prove:
-    <<: *base-job
-    docker:
-      - <<: *s2i-image
-      - image: redis:3.2.8-alpine
+    executor: openresty
+
     parallelism: 1
     steps:
-      - checkout
-      - <<: *attach-workspace
+      - attach-workspace
       - run:
           name: 'prove'
           command: /usr/libexec/s2i/entrypoint make prove
@@ -201,22 +219,15 @@ jobs:
             JUNIT_OUTPUT_FILE: tmp/junit/prove/report.xml
             TEST_NGINX_ERROR_LOG: tmp/junit/prove/error.log
             HARNESS: TAP::Harness::JUnit
-      - run:
-          name: Report Integration Test Code Coverage
-          command: |
-            set +x # allow failures
-            curl -s https://codecov.io/bash | bash -s - -f 'luacov.report.*.out' -F prove
-          when: always
-      - store_test_results:
-          path: tmp/junit
-      - store_artifacts:
-          path: tmp/junit
-          destination: junit
+      - report-codecov:
+          suite: prove
+          flags: -f 'luacov.report.*.out'
+      - store-junit-results
 
   # Build and push image to docker registry
 
   deploy:
-    <<: *s2i-job
+    executor: s2i
     steps:
       - run: apk update && apk add wget make bash curl git openssh-client
       - setup_remote_docker:

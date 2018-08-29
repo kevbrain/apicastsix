@@ -1,5 +1,6 @@
 local _M = require('apicast.policy').new('Metrics')
 
+local resty_env = require('resty.env')
 local errlog = require('ngx.errlog')
 local prometheus = require('apicast.prometheus')
 local tonumber = tonumber
@@ -20,6 +21,11 @@ local log_levels_list = {
   'debug',
 }
 
+local log_level_env = 'NGINX_METRICS_LOG_LEVEL'
+local max_logs_env = 'NGINX_METRICS_MAX_LOGS'
+
+local log_level_default = 'error'
+local max_logs_default = 100
 
 local function find_i(t, value)
   for i=1, #t do
@@ -33,22 +39,28 @@ local function get_logs(max)
   return errlog.get_logs(max) or empty
 end
 
+local function filter_level()
+  local level = resty_env.value(log_level_env) or log_level_default
+
+  local level_index = find_i(log_levels_list, level)
+
+  if not level_index then
+    ngx.log(ngx.WARN, _M._NAME, ': invalid level: ', level, ' using error instead')
+    level_index = find_i(log_levels_list, 'error')
+  end
+
+  return level_index
+end
+
 function _M.new(configuration)
   local m = new()
 
   local config = configuration or empty
-  local filter_level = config.log_level or 'error'
 
-  local i = find_i(log_levels_list, filter_level)
-
-  if not i then
-    ngx.log(ngx.WARN, _M._NAME, ': invalid level: ', filter_level, ' using error instead')
-    i = find_i(log_levels_list, 'error')
-  end
-
-  m.filter_level = i
   -- how many logs to take in one iteration
-  m.max_logs = tonumber(config.max_logs) or 100
+  m.max_logs = tonumber(config.max_logs) or
+               resty_env.value(max_logs_env) or
+               max_logs_default
 
   return m
 end
@@ -75,14 +87,10 @@ local function metric_inc(metric, label)
   return metric_op('inc', metric, 1, label)
 end
 
-function _M:init()
-  local ok, err = errlog.set_filter_level(self.filter_level)
+function _M.init()
+  errlog.set_filter_level(filter_level())
 
   get_logs(100) -- to throw them away after setting the filter level (and get rid of debug ones)
-
-  if not ok then
-    ngx.log(ngx.WARN, self._NAME, ' failed to set errlog filter level: ', err)
-  end
 
   for name,dict in pairs(ngx.shared) do
     metric_set(shdict_capacity_metric, dict:capacity(), name)

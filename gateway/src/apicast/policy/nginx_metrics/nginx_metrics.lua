@@ -3,6 +3,7 @@ local _M = require('apicast.policy').new('Metrics')
 local resty_env = require('resty.env')
 local errlog = require('ngx.errlog')
 local prometheus = require('apicast.prometheus')
+local metrics_updater = require('apicast.metrics.updater')
 local tonumber = tonumber
 local select = select
 local find = string.find
@@ -70,30 +71,13 @@ local http_connections_metric =  prometheus('gauge', 'nginx_http_connections', '
 local shdict_capacity_metric = prometheus('gauge', 'openresty_shdict_capacity', 'OpenResty shared dictionary capacity', {'dict'})
 local shdict_free_space_metric = prometheus('gauge', 'openresty_shdict_free_space', 'OpenResty shared dictionary free space', {'dict'})
 
-
-local metric_labels = {}
-
-local function metric_op(op, metric, value, label)
-  if not metric then return end
-  metric_labels[1] = label
-  metric[op](metric, tonumber(value) or 0, metric_labels)
-end
-
-local function metric_set(metric, value, label)
-  return metric_op('set', metric, value, label)
-end
-
-local function metric_inc(metric, label)
-  return metric_op('inc', metric, 1, label)
-end
-
 function _M.init()
   errlog.set_filter_level(filter_level())
 
   get_logs(100) -- to throw them away after setting the filter level (and get rid of debug ones)
 
   for name,dict in pairs(ngx.shared) do
-    metric_set(shdict_capacity_metric, dict:capacity(), name)
+    metrics_updater.set(shdict_capacity_metric, dict:capacity(), name)
   end
 end
 
@@ -101,7 +85,7 @@ function _M:metrics()
   local logs = get_logs(self.max_logs)
 
   for i = 1, #logs, 3 do
-    metric_inc(logs_metric, log_levels_list[logs[i]] or 'unknown')
+    metrics_updater.inc(logs_metric, log_levels_list[logs[i]] or 'unknown')
   end
 
   local response = ngx.location.capture("/nginx_status")
@@ -110,19 +94,19 @@ function _M:metrics()
     local accepted, handled, total = select(3, find(response.body, [[accepts handled requests%s+(%d+) (%d+) (%d+)]]))
     local var = ngx.var
 
-    metric_set(http_connections_metric, var.connections_reading, 'reading')
-    metric_set(http_connections_metric, var.connections_waiting, 'waiting')
-    metric_set(http_connections_metric, var.connections_writing, 'writing')
-    metric_set(http_connections_metric, var.connections_active, 'active')
-    metric_set(http_connections_metric, accepted, 'accepted')
-    metric_set(http_connections_metric, handled, 'handled')
-    metric_set(http_connections_metric, total, 'total')
+    metrics_updater.set(http_connections_metric, var.connections_reading, 'reading')
+    metrics_updater.set(http_connections_metric, var.connections_waiting, 'waiting')
+    metrics_updater.set(http_connections_metric, var.connections_writing, 'writing')
+    metrics_updater.set(http_connections_metric, var.connections_active, 'active')
+    metrics_updater.set(http_connections_metric, accepted, 'accepted')
+    metrics_updater.set(http_connections_metric, handled, 'handled')
+    metrics_updater.set(http_connections_metric, total, 'total')
   else
     prometheus:log_error('Could not get status from nginx')
   end
 
   for name,dict in pairs(ngx.shared) do
-    metric_set(shdict_free_space_metric, dict:free_space(), name)
+    metrics_updater.set(shdict_free_space_metric, dict:free_space(), name)
   end
 end
 

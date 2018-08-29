@@ -19,7 +19,7 @@ describe('OIDC Discovery', function()
         it('loads configuration from the discovery endpoint', function()
             test_backend
                 .expect{ url = "https://idp.example.com/auth/realms/foo/.well-known/openid-configuration" }
-                .respond_with{ status = 200, headers = { content_type = 'application/json' }, body = [[
+                .respond_with{ status = 200, headers = { content_type = 'application/json;charset=UTF-8' }, body = [[
                     {
                       "issuer": "https://idp.example.com/auth/realms/foo",
                       "jwks_uri": "https://idp.example.com/auth/realms/foo/jwks",

@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `init` and `init_worker` phases are executed on the policy module, not the instance of a policy with a configuration [PR #770](https://github.com/3scale/apicast/pull/770)
 - `timer_resolution` set only in development environment [PR #815](https://github.com/3scale/apicast/pull/815)
 - The rate-limit policy, when `redis_url` is empty, now applies per-gateway limits instead of trying to use a localhost Redis [PR #842](https://github.com/3scale/apicast/pull/842)
+- Changed the display name of some policies. This only affects how the name shows in the UI [THREESCALE-1232](https://issues.jboss.org/browse/THREESCALE-1232)
 
 ### Fixed
 

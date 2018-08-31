@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [3.3.0-beta1] - 2018-08-31
+
 ### Added
 
 - OpenTracing support [PR #669](https://github.com/3scale/apicast/pull/669), [THREESCALE-1159](https://issues.jboss.org/browse/THREESCALE-1159)
@@ -465,7 +467,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.2.1...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.3.0-beta1...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -488,3 +490,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.2.0-rc2]: https://github.com/3scale/apicast/compare/v3.2.0-rc1...v3.2.0-rc2
 [3.2.0]: https://github.com/3scale/apicast/compare/v3.2.0-rc2...v3.2.0
 [3.2.1]: https://github.com/3scale/apicast/compare/v3.2.0...v3.2.1
+[3.3.0-beta1]: https://github.com/3scale/apicast/compare/v3.2.1...v3.3.0-beta1

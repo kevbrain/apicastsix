@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## Fixed
+
+- Correct JWT validation according to [RFC 7523 Section 3](https://tools.ietf.org/html/rfc7523#section-3). Like not required `nbf` claim. [THREESCALE-583](https://issues.jboss.org/browse/THREESCALE-583)
+
 ## [3.3.0-beta1] - 2018-08-31
 
 ### Added

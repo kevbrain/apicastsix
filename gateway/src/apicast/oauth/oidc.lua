@@ -41,11 +41,33 @@ function _M.new(service)
     keys = oidc.keys or empty,
     clock = ngx_now,
     alg_whitelist = util.to_hash(config.id_token_signing_alg_values_supported),
+    -- https://tools.ietf.org/html/rfc7523#section-3
     jwt_claims = {
-      nbf = jwt_validators.is_not_before(),
-      exp = jwt_validators.is_not_expired(),
-      aud = jwt_validators.required(),
+      -- 1. The JWT MUST contain an "iss" (issuer) claim that contains a
+      -- unique identifier for the entity that issued the JWT.
       iss = jwt_validators.equals_any_of({ issuer }),
+
+      -- 2. The JWT MUST contain a "sub" (subject) claim identifying the
+      -- principal that is the subject of the JWT.
+      sub = jwt_validators.required(),
+
+      -- 3. The JWT MUST contain an "aud" (audience) claim containing a
+      -- value that identifies the authorization server as an intended
+      -- audience.
+      aud = jwt_validators.required(),
+
+      -- 4. The JWT MUST contain an "exp" (expiration time) claim that
+      -- limits the time window during which the JWT can be used.
+      exp = jwt_validators.is_not_expired(),
+
+      -- 5. The JWT MAY contain an "nbf" (not before) claim that identifies
+      -- the time before which the token MUST NOT be accepted for
+      -- processing.
+      nbf = jwt_validators.opt_is_not_before(),
+
+      -- 6. The JWT MAY contain an "iat" (issued at) claim that identifies
+      -- the time at which the JWT was issued.
+      iat = jwt_validators.opt_greater_than(0),
     },
   }, mt)
 end
@@ -119,7 +141,7 @@ function _M:transform_credentials(credentials)
 
   if err then
     if ngx.config.debug then
-      ngx.log(ngx.DEBUG, 'JWT object: ', require('inspect')(jwt_obj))
+      ngx.log(ngx.DEBUG, 'JWT object: ', require('inspect')(jwt_obj), ' err: ', err, ' reason: ', jwt_obj.reason)
     end
     return nil, nil, nil, jwt_obj and jwt_obj.reason or err
   end

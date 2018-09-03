@@ -13,6 +13,8 @@ local co_yield = coroutine.yield
 local co_create = coroutine.create
 local co_resume = coroutine.resume
 
+local noop = function () end
+
 --- Safely try to get directory iterator
 local function ldir(dir)
   local ok, iter, state = pcall(pl_path_dir, dir)
@@ -20,7 +22,8 @@ local function ldir(dir)
   if ok then
     return iter, state
   else
-    return nil, iter
+    ngx.log(ngx.DEBUG, 'error listing directory: ', dir, ' err: ', iter)
+    return noop
   end
 end
 

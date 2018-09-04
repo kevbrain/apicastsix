@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Correct JWT validation according to [RFC 7523 Section 3](https://tools.ietf.org/html/rfc7523#section-3). Like not required `nbf` claim. [THREESCALE-583](https://issues.jboss.org/browse/THREESCALE-583)
 
+## [3.3.0-beta2] - 2018-09-03
+
+## Fixed
+
+- Capture permission errors when searching for files on filesystem [PR #865](https://github.com/3scale/apicast/pull/865)
+
 ## [3.3.0-beta1] - 2018-08-31
 
 ### Added
@@ -471,7 +477,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.3.0-beta1...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.3.0-beta2...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -495,3 +501,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.2.0]: https://github.com/3scale/apicast/compare/v3.2.0-rc2...v3.2.0
 [3.2.1]: https://github.com/3scale/apicast/compare/v3.2.0...v3.2.1
 [3.3.0-beta1]: https://github.com/3scale/apicast/compare/v3.2.1...v3.3.0-beta1
+[3.3.0-beta2]: https://github.com/3scale/apicast/compare/v3.3.0-beta1...v3.3.0-beta2

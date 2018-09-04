@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Set default errlog level when `APICAST_LOG_LEVEL` is empty [PR #868](https://github.com/3scale/apicast/pull/868)
+
 ## [3.3.0-beta2] - 2018-09-03
 
-## Fixed
+### Fixed
 
 - Capture permission errors when searching for files on filesystem [PR #865](https://github.com/3scale/apicast/pull/865)
 

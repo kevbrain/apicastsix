@@ -94,6 +94,8 @@ find-file = $(shell find $(2) -type f -name $(1))
 
 circleci = $(shell circleci tests glob $(1) 2>/dev/null | grep -v examples/scaffold | circleci tests split --split-by=timings 2>/dev/null)
 
+split-tests = $(shell echo $(1) | xargs -n 1 echo | circleci tests split --split-by=timings 2>/dev/null)
+
 BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
 BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
 busted: $(ROVER) lua_modules ## Test Lua.
@@ -102,11 +104,10 @@ ifeq ($(CI),true)
 	@- luacov
 endif
 
-PROVE_PATTERN = "{t,examples}/**/*.t)"
-prove-files = $(or $(call circleci, $(PROVE_PATTERN)), $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples)))
+PROVE_PATTERN = "{t,examples}/**/*.t"
 
 prove: HARNESS ?= TAP::Harness
-prove: PROVE_FILES ?= $(call prove-files)
+prove: PROVE_FILES ?= $(call circleci, $(PROVE_PATTERN))
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) lua_modules nginx ## Test nginx
 	$(ROVER) exec script/prove --verbose -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)

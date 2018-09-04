@@ -209,7 +209,7 @@ jobs:
   prove:
     executor: openresty
 
-    parallelism: 1
+    parallelism: 3
     steps:
       - attach-workspace
       - run:

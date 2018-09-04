@@ -121,7 +121,7 @@ builder-image: ## Build builder image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --incremental $(S2I_OPTIONS)
 
 runtime-image: PULL_POLICY ?= always
-runtime-image: IMAGE_NAME = apicast-runtime-test
+runtime-image: IMAGE_NAME = apicast-runtime-image
 runtime-image: ## Build runtime image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) \
 		--context-dir=$(S2I_CONTEXT) \
@@ -174,7 +174,7 @@ gateway-logs: export IMAGE_NAME = does-not-matter
 gateway-logs:
 	$(DOCKER_COMPOSE) logs gateway
 
-test-runtime-image: export IMAGE_NAME = apicast-runtime-test
+test-runtime-image: export IMAGE_NAME = apicast-runtime-image
 test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -l -d
 	@echo -e $(SEPARATOR)
@@ -215,7 +215,7 @@ clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes
 
 clean: clean-containers ## Remove all running docker containers and images
-	- docker rmi apicast-test apicast-runtime-test --force
+	- docker rmi apicast-test apicast-runtime-image --force
 	- rm -rf luacov.stats*.out
 
 doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | lua_modules $(ROVER)

@@ -6,13 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## Fixed
+### Fixed
 
+- Set default errlog level when `APICAST_LOG_LEVEL` is empty [PR #868](https://github.com/3scale/apicast/pull/868)
 - Correct JWT validation according to [RFC 7523 Section 3](https://tools.ietf.org/html/rfc7523#section-3). Like not required `nbf` claim. [THREESCALE-583](https://issues.jboss.org/browse/THREESCALE-583)
 
 ## [3.3.0-beta2] - 2018-09-03
 
-## Fixed
+### Fixed
 
 - Capture permission errors when searching for files on filesystem [PR #865](https://github.com/3scale/apicast/pull/865)
 

@@ -94,7 +94,7 @@ if (defined $nginx) {
 }
 
 if (defined $ENV{APICAST_LOG_LEVEL}) {
-    push @resty_args, '--errlog-level', $ENV{APICAST_LOG_LEVEL};
+    push @resty_args, '--errlog-level', $ENV{APICAST_LOG_LEVEL} || 'warn';
 }
 
 # Add directories to the lua load path.

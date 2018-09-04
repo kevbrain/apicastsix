@@ -27,7 +27,7 @@ describe('OIDC', function()
           iss = service.oidc.issuer,
           aud = 'notused',
           azp = 'ce3b2e5e',
-          nbf = 0,
+          sub = 'someone',
           exp = ngx.now() + 10,
         },
       })
@@ -47,7 +47,7 @@ describe('OIDC', function()
         payload = {
           iss = service.oidc.issuer,
           aud = {'ce3b2e5e','notused'},
-          nbf = 0,
+          sub = 'someone',
           exp = ngx.now() + 10,
         },
       })
@@ -71,7 +71,7 @@ describe('OIDC', function()
         payload = {
           iss = service.oidc.issuer,
           aud = 'foobar',
-          nbf = 0,
+          sub = 'someone',
           exp = ngx.now() + 10,
         },
       })
@@ -83,21 +83,42 @@ describe('OIDC', function()
 
 
     it('verifies nbf', function()
+      local now = 1123744391
+      stub(ngx, 'now', now)
+
       local oidc = _M.new(service)
       local access_token = jwt:sign(rsa.private, {
         header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
         payload = {
           iss = service.oidc.issuer,
           aud = 'foobar',
-          nbf = 1,
+          sub = 'someone',
+          nbf = now + 5,
+          exp = now + 10,
+        },
+      })
+
+      local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
+
+      assert.returns_error([['nbf' claim not valid until ]] .. ngx.http_time(now + 5), credentials, err)
+    end)
+
+    it('verifies iat', function()
+      local oidc = _M.new(service)
+      local access_token = jwt:sign(rsa.private, {
+        header = { typ = 'JWT', alg = 'RS256', kid = 'somekid' },
+        payload = {
+          iss = service.oidc.issuer,
+          aud = 'foobar',
+          sub = 'someone',
+          iat = 0,
           exp = ngx.now() + 10,
         },
       })
 
       local credentials, _, _, err = oidc:transform_credentials({ access_token = access_token })
 
-      assert.falsy(credentials)
-      assert.truthy(err)
+      assert.returns_error([[Claim 'iat' ('0') returned failure]], credentials, err)
     end)
 
     it('verifies exp', function()
@@ -107,7 +128,7 @@ describe('OIDC', function()
         payload = {
           iss = service.oidc.issuer,
           aud = 'foobar',
-          nbf = 0,
+          sub = 'someone',
           exp = 1,
         },
       })
@@ -145,6 +166,7 @@ describe('OIDC', function()
           iss = service.oidc.issuer,
           aud = 'notused',
           azp = 'ce3b2e5e',
+          sub = 'someone',
           nbf = 0,
           exp = ngx.now() + 10,
           typ = 'Not-Bearer'
@@ -164,6 +186,7 @@ describe('OIDC', function()
           iss = service.oidc.issuer,
           aud = 'notused',
           azp = 'ce3b2e5e',
+          sub = 'someone',
           nbf = 0,
           exp = ngx.now() + 10,
           typ = 'Bearer'

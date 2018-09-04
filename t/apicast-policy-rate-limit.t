@@ -1077,12 +1077,12 @@ so only the third call returns 429.
 use Crypt::JWT qw(encode_jwt);
 my $jwt1 = encode_jwt(payload => {
   aud => 'test17_1',
-  nbf => 0,
+  sub => 'someone',
   iss => 'https://example.com/auth/realms/apicast',
   exp => time + 3600 }, key => \$::rsa, alg => 'RS256', extra_headers => { kid => 'somekid' });
 my $jwt2 = encode_jwt(payload => {
   aud => 'test17_2',
-  nbf => 0,
+  sub => 'someone',
   iss => 'https://example.com/auth/realms/apicast',
   exp => time + 3600 }, key => \$::rsa, alg => 'RS256', extra_headers => { kid => 'somekid' });
 ["Authorization: Bearer $jwt1", "Authorization: Bearer $jwt1", "Authorization: Bearer $jwt2", "Authorization: Bearer $jwt1"]

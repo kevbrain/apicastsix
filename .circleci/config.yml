@@ -151,7 +151,7 @@ jobs:
           name: Cleanup local dependencies
           command: rm -rf lua_modules
       - restore-lua-cache
-      - run: make dependencies
+      - run: make lua_modules
       - save_cache:
           key: apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
           <<: *lua-cache-paths
@@ -209,7 +209,7 @@ jobs:
   prove:
     executor: openresty
 
-    parallelism: 1
+    parallelism: 3
     steps:
       - attach-workspace
       - run:

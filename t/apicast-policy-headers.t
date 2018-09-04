@@ -593,7 +593,7 @@ GET /
 use Crypt::JWT qw(encode_jwt);
 my $jwt = encode_jwt(payload => {
   aud => 'the_token_audience',
-  nbf => 0,
+  sub => 'someone',
   iss => 'https://example.com/auth/realms/apicast',
   exp => time + 3600 }, key => \$::rsa, alg => 'RS256', extra_headers=>{ kid => 'somekid' });
 "Authorization: Bearer $jwt"

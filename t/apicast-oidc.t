@@ -52,7 +52,7 @@ to_json({
 use Crypt::JWT qw(encode_jwt);
 my $jwt = encode_jwt(payload => {
   aud => 'appid',
-  nbf => 0,
+  sub => 'someone',
   iss => 'https://example.com/auth/realms/apicast',
   exp => time + 3600 }, key => \$::private_key, alg => 'RS256', extra_headers => { kid => 'somekid' });
 "Authorization: Bearer $jwt"
@@ -107,7 +107,7 @@ to_json({
 use Crypt::JWT qw(encode_jwt);
 my $jwt = encode_jwt(payload => {
   aud => 'appid',
-  nbf => 0,
+  sub => 'someone',
   iss => 'https://example.com/auth/realms/apicast',
   exp => time + 3600 }, key => \$::private_key, alg => 'RS256', extra_headers => { kid => 'somekid' });
 ["Authorization: Bearer $jwt", "Authorization: Bearer $jwt"]

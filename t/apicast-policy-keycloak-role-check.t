@@ -9,7 +9,7 @@ sub authorization_bearer_jwt (@) {
 
     my $jwt = encode_jwt(payload => {
         aud => $aud,
-        nbf => 0,
+        sub => 'someone',
         iss => 'https://example.com/auth/realms/apicast',
         exp => time + 3600,
         %$payload,

@@ -112,7 +112,7 @@ function _M.parse_service(service)
       },
       backend = backend,
       oidc = {
-        issuer = value(proxy.oidc_issuer_endpoint),
+        issuer_endpoint = value(proxy.oidc_issuer_endpoint),
       },
       credentials = {
         location = proxy.credentials_location or 'query',

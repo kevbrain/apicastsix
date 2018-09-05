@@ -238,7 +238,7 @@ function _M:services()
 end
 
 function _M:oidc_issuer_configuration(service)
-  return oidc_discovery.call(self, service.oidc.issuer)
+  return oidc_discovery.call(self, service.oidc.issuer_endpoint)
 end
 
 function _M:config(service, environment, version)

@@ -92,7 +92,7 @@ function _M:access(context)
       return ngx.exit(ngx.status)
     end
 
-    local components = resty_url.parse(context.service.oidc.issuer)
+    local components = resty_url.parse(context.service.oidc.issuer_endpoint)
     self.credential = create_credential(components.user, components.password)
     self.introspection_url = context.proxy.oauth.config.token_introspection_endpoint
   end

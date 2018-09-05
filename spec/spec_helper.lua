@@ -96,6 +96,9 @@ busted.before_each(function()
   resty_proxy:reset()
 end)
 
+local resty_resolver = require 'resty.resolver'
+busted.before_each(resty_resolver.reset)
+
 busted.subscribe({ 'file', 'start' }, function ()
   require('apicast.loader')
   return nil, true -- needs to return true as second return value to continue executing the chain

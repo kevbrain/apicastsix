@@ -19,17 +19,10 @@ end
 
 _M.discovery = require('resty.oidc.discovery').new()
 
-local function load_oidc(issuer)
-    local config = _M.discovery:openid_configuration(issuer)
-    local keys = _M.discovery:jwks(config)
-
-    return { issuer = issuer, config = config, keys = keys }
-end
-
 local function load_service(service)
     if not service or not service.proxy then return nil end
 
-    return load_oidc(service.proxy.oidc_issuer_endpoint)
+    return _M.discovery:call(service.proxy.oidc_issuer_endpoint)
 end
 
 function _M.call(...)

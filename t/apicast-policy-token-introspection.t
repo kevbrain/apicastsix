@@ -396,3 +396,95 @@ Authentication failed
 --- no_error_log
 [error]
 oauth failed with
+
+
+
+=== TEST 8: Token introspection request success with oidc issuer endpoint loaded from the IDP
+Token introspection policy retrieves client_id and client_secret and
+introspection endpoint from the oidc_issuer_endpoint of the service configuration.
+--- env eval
+( 'APICAST_CONFIGURATION_LOADER' => 'lazy' )
+--- backend
+location = /issuer/endpoint/.well-known/openid-configuration {
+  content_by_lua_block {
+    local base = "http://" .. ngx.var.host .. ':' .. ngx.var.server_port
+    ngx.header.content_type = 'application/json;charset=utf-8'
+    ngx.say(require('cjson').encode {
+        issuer = 'https://example.com/auth/realms/apicast',
+        id_token_signing_alg_values_supported = { 'RS256' },
+        jwks_uri = base .. '/jwks',
+    })
+  }
+}
+
+location = /jwks {
+  content_by_lua_block {
+    ngx.header.content_type = 'application/json;charset=utf-8'
+    ngx.say([[
+        { "keys": [
+            { "kty":"RSA","kid":"somekid",
+              "n":"sKXP3pwND3rkQ1gx9nMb4By7bmWnHYo2kAAsFD5xq0IDn26zv64tjmuNBHpI6BmkLPk8mIo0B1E8MkxdKZeozQ","e":"AQAB" }
+        ] }
+    ]])
+  }
+}
+
+location = /token/introspection {
+  content_by_lua_block {
+    local credential = ngx.decode_base64(require('ngx.re').split(ngx.req.get_headers()['Authorization'], ' ', 'oj')[2])
+    require('luassert').are.equal('app:appsec', credential)
+    ngx.say('{"active": true}')
+  }
+}
+
+location = /transactions/oauth_authrep.xml {
+  content_by_lua_block { ngx.exit(200) }
+}
+
+--- configuration
+{
+  "services": [
+    {
+      "backend_version": "oauth",
+      "proxy": {
+        "authentication_method": "oidc",
+        "oidc_issuer_endpoint": "http://app:appsec@test_backend:$TEST_NGINX_SERVER_PORT/issuer/endpoint",
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 1 }
+        ],
+        "policy_chain": [
+          {
+            "name": "apicast.policy.token_introspection",
+            "configuration": {
+              "auth_type": "use_3scale_oidc_issuer_endpoint"
+            }
+          },
+          { "name": "apicast.policy.apicast" }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location /echo {
+    content_by_lua_block {
+      ngx.say('yay, api backend');
+    }
+  }
+--- request
+GET /echo
+--- more_headers eval
+use Crypt::JWT qw(encode_jwt);
+my $jwt = encode_jwt(payload => {
+  aud => 'the_token_audience',
+  sub => 'someone',
+  iss => 'https://example.com/auth/realms/apicast',
+  exp => time + 3600 }, key => \$::rsa, alg => 'RS256', extra_headers => { kid => 'somekid' });
+"Authorization: Bearer $jwt"
+--- error_code: 200
+--- response_body
+yay, api backend
+--- no_error_log
+[error]
+oauth failed with

@@ -121,6 +121,10 @@ local function build_context(options, config)
 
     context.worker_processes = options.workers or context.worker_processes
 
+    if options.pid then
+        context.pid = pl.path.abspath(options.pid)
+    end
+
     if options.daemon then
         context.daemon = 'on'
     end

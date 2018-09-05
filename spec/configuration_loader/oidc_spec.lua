@@ -31,7 +31,7 @@ describe('OIDC Configuration loader', function()
     it('gets openid configuration', function()
       local config = {
         services = {
-          { id = 21, proxy = { oidc_issuer_endpoint = 'https://example.com' } },
+          { id = 21, proxy = { oidc_issuer_endpoint = 'https://user:pass@example.com' } },
         }
       }
 
@@ -40,7 +40,7 @@ describe('OIDC Configuration loader', function()
         .respond_with{
           status = 200,
           headers = { content_type = 'application/json' },
-          body = [[{"jwks_uri":"http://example.com/jwks"}]],
+          body = [[{"jwks_uri":"http://example.com/jwks","issuer":"https://example.com"}]],
         }
 
       test_backend
@@ -52,7 +52,7 @@ describe('OIDC Configuration loader', function()
         }
       local oidc = loader.call(cjson.encode(config))
 
-      assert.same([[{"services":[{"id":21,"proxy":{"oidc_issuer_endpoint":"https:\/\/example.com"}}],"oidc":[{"issuer":"https:\/\/example.com","config":{"jwks_uri":"http:\/\/example.com\/jwks"},"keys":{}}]}]], oidc)
+      assert.same([[{"services":[{"id":21,"proxy":{"oidc_issuer_endpoint":"https:\/\/user:pass@example.com"}}],"oidc":[{"issuer":"https:\/\/example.com","config":{"jwks_uri":"http:\/\/example.com\/jwks","issuer":"https:\/\/example.com"},"keys":{}}]}]], oidc)
     end)
   end)
 end)

@@ -238,15 +238,7 @@ function _M:services()
 end
 
 function _M:oidc_issuer_configuration(service)
-  local config = oidc_discovery.openid_configuration(self, service.oidc.issuer)
-
-  if config then
-    return {
-      config = config,
-      issuer = config.issuer,
-      keys = oidc_discovery.jwks(self, config)
-    }
-  end
+  return oidc_discovery.call(self, service.oidc.issuer)
 end
 
 function _M:config(service, environment, version)

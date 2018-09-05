@@ -107,4 +107,20 @@ function _M:jwks(configuration)
     end
 end
 
+--- Fetch whole OIDC configuration through OIDC Discovery.
+-- @tparam string issuer URL to the Issuer (without the .well-known/openid-configuration)
+-- @treturn table
+function _M:call(issuer)
+    local http_client = self.http_client
+
+    if not http_client then
+        return nil, 'not initialized'
+    end
+
+    local config, err = _M.openid_configuration(self, issuer)
+    if not config then return nil, err end
+
+    return { config = config, issuer = config.issuer, keys = _M.jwks(self, config) }
+end
+
 return _M

@@ -169,6 +169,11 @@ function mt:__call(options)
         insert(cmd, options.debug and '-T' or '-t')
     end
 
+    if options.signal then
+        insert(cmd, '-s')
+        insert(cmd,  options.signal)
+    end
+
     return exec(openresty, cmd, env)
 end
 
@@ -221,6 +226,7 @@ local function configure(cmd)
         "Number of worker processes to start.",
         resty_env.value('APICAST_WORKERS') or Environment.default_config.worker_processes)
     cmd:option("-p --pid", "Path to the PID file.")
+    cmd:option("-s --signal", "Send signal to a master process: stop, quit, reopen, reload")
 
     do
       local target = 'configuration_loader'

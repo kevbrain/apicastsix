@@ -132,6 +132,12 @@ function _M:authorize(service, usage, credentials, ttl)
 
   -- NYI: return to lower frame
   local cached_key = ngx.var.cached_key .. ":" .. encoded_usage
+
+  local encoded_extra_params = encode_args(self.extra_params_backend_authrep)
+  if encoded_extra_params ~= '' then
+    cached_key = cached_key .. ":" .. encoded_extra_params
+  end
+
   local cache = self.cache
   local is_known = cache:get(cached_key)
 

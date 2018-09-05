@@ -91,6 +91,40 @@ describe('Proxy', function()
       assert.spy(proxy.cache_handler).was.called_with(
         proxy.cache, 'client_id=blah:usage%5Bfoo%5D=0', response, nil)
     end)
+
+    it('does not use cached auth if creds are the same but extra authrep params are not', function()
+      proxy.extra_params_backend_authrep = { referrer = '3scale.net' }
+
+      stub(test_backend, 'send', function() return { status = 200 } end)
+
+      local usage = Usage.new()
+      usage:add('hits', 1)
+      local cache_key = "uk:usage%5Bhits%5D=1" -- Referrer not here
+      proxy.cache:set(cache_key, 200)
+      ngx.var = { cached_key = "uk" } -- authorize() expects creds to be set up
+
+      proxy:authorize(service, usage, { user_key = 'uk' })
+
+      -- Calls backend because the call is not cached
+      assert.stub(test_backend.send).was_called()
+    end)
+
+    it('uses cached auth if creds are the same and authrep params too', function()
+      proxy.extra_params_backend_authrep = { referrer = '3scale.net' }
+
+      stub(test_backend, 'send', function() return { status = 200 } end)
+
+      local usage = Usage.new()
+      usage:add('hits', 1)
+      local cache_key = "uk:usage%5Bhits%5D=1:referrer=3scale.net" -- Referrer here
+      proxy.cache:set(cache_key, 200)
+      ngx.var = { cached_key = "uk" } -- authorize() expects creds to be set up
+
+      proxy:authorize(service, usage, { user_key = 'uk' })
+
+      -- Does not call backend because the call is cached
+      assert.stub(test_backend.send).was_not_called()
+    end)
   end)
 
   describe('.handle_backend_response', function()

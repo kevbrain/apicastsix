@@ -28,8 +28,6 @@ local default_resolver_port = 53
 
 local _M = {
   _VERSION = '0.1',
-  _nameservers = {},
-  search = { '' }
 }
 
 local mt = { __index = _M }
@@ -78,6 +76,12 @@ function nameserver.new(host, port)
     host = format('[%s]', host)
   end
   return setmetatable({ host, port or default_resolver_port }, nameserver.mt)
+end
+
+function _M.reset()
+  _M._nameservers = {}
+  _M.search = { '' }
+  return _M
 end
 
 function _M.parse_resolver(resolver)
@@ -390,4 +394,4 @@ function _M.get_servers(self, qname, opts)
   return servers
 end
 
-return _M
+return _M.reset()

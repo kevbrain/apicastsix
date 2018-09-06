@@ -71,6 +71,18 @@ mapping rules of APIcast will be applied against the rewritten path.
 However, if the URL policy appears after the APIcast one, the mapping rules
 will be applied against the original path.
 
+Regarding policies that run on the `content` phase, it is important to bear in
+mind that only the one that comes first in the chain will output content to the
+response.
+Suppose that we combine the `APIcast` policy and the `upstream` one.
+The `APIcast` policy will try to proxy the request to the upstream defined in
+the configuration of the service, whereas the `upstream` policy will try to
+proxy it to a different one if the request path matches the pattern defined
+in the policy config. Whichever of those 2 policies comes first will output
+content to the response. When the second gets a change to run its content
+phase, the request will already be sent to the client, so it will not output
+anything to the response.
+
 ### Types
 
 There are two types of policy chains in APIcast: per-service chains and a

@@ -121,6 +121,10 @@ local function build_context(options, config)
 
     context.worker_processes = options.workers or context.worker_processes
 
+    if options.pid then
+        context.pid = pl.path.abspath(options.pid)
+    end
+
     if options.daemon then
         context.daemon = 'on'
     end
@@ -163,6 +167,11 @@ function mt:__call(options)
 
     if options.test then
         insert(cmd, options.debug and '-T' or '-t')
+    end
+
+    if options.signal then
+        insert(cmd, '-s')
+        insert(cmd,  options.signal)
     end
 
     return exec(openresty, cmd, env)
@@ -217,6 +226,7 @@ local function configure(cmd)
         "Number of worker processes to start.",
         resty_env.value('APICAST_WORKERS') or Environment.default_config.worker_processes)
     cmd:option("-p --pid", "Path to the PID file.")
+    cmd:option("-s --signal", "Send signal to a master process: stop, quit, reopen, reload")
 
     do
       local target = 'configuration_loader'

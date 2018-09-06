@@ -1,5 +1,4 @@
 .s2i/bin
 conf/ca-bundle.crt
-apicast.d/proxy_ssl.conf
 lua_modules
 .cache

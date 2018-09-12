@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Mismatch in OIDC issuer when loading configuration through a configuration file [PR #872](https://github.com/3scale/apicast/pull/872)
 - When the 3scale referrer filters was enabled, cached requests were not handled correctly [PR #875](https://github.com/3scale/apicast/issues/875)
 
+### Added
+
+- Expose `http_method` in Liquid [PR #888](https://github.com/3scale/apicast/pull/888)
+
 ## [3.3.0-beta2] - 2018-09-03
 
 ### Fixed

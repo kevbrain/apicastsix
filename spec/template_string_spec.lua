@@ -1,6 +1,13 @@
 local TemplateString = require 'apicast.template_string'
+local ngx_variable = require 'apicast.policy.ngx_variable'
+local LinkedList = require('apicast.linked_list')
 
 describe('template string', function()
+  before_each(function()
+    -- Stub the available context to avoid depending on ngx.var.*
+    stub(ngx_variable, 'available_context', function(context) return context end)
+  end)
+
   it('renders plain text', function()
     local plain_text_template = TemplateString.new('{{ a_key }}', 'plain')
     assert.equals('{{ a_key }}', plain_text_template:render())
@@ -9,6 +16,16 @@ describe('template string', function()
   it('renders liquid', function()
     local liquid_template = TemplateString.new('{{ a_key }}', 'liquid')
     assert.equals('a_value', liquid_template:render({ a_key = 'a_value' }))
+  end)
+
+  it('when rendering liquid, it can use the vars exposed in ngx_variable', function()
+    stub(ngx_variable, 'available_context', function(policies_context)
+      local exposed = { a_key_exposed_in_ngx_var = 'a_value' }
+      return LinkedList.readonly(exposed, policies_context)
+    end)
+
+    local liquid_template = TemplateString.new('{{ a_key_exposed_in_ngx_var }}', 'liquid')
+    assert.equals('a_value', liquid_template:render({}))
   end)
 
   it('can apply liquid filters', function()

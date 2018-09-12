@@ -1,6 +1,12 @@
 local HeadersPolicy = require('apicast.policy.headers')
+local ngx_variable = require 'apicast.policy.ngx_variable'
 
 describe('Headers policy', function()
+  before_each(function()
+    -- avoid stubbing all the ngx.var.* and ngx.req.* in the available context
+    stub(ngx_variable, 'available_context', function(context) return context end)
+  end)
+
   -- Apply the operations to the same header in all the tests for simplicity
   local header = 'test_header'
 

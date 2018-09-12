@@ -1,6 +1,12 @@
 local Operation = require('apicast.policy.conditional.operation')
+local ngx_variable = require('apicast.policy.ngx_variable')
 
 describe('Operation', function()
+  before_each(function()
+    -- avoid stubbing all the ngx.var.* and ngx.req.* in the available context
+    stub(ngx_variable, 'available_context', function(context) return context end)
+  end)
+
   describe('.new', function()
     it('raises error with an unsupported operation', function()
       local res, err = pcall(Operation.new, '1', 'plain', '<>', '1', 'plain')

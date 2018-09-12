@@ -624,3 +624,60 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 12: modify query args using liquid and one of the vars exposed
+The goal of this test is to check that we can use liquid with the vars that are
+not in the policies context, but are exposed by default (uri, host, etc.).
+We are going to use "uri" in this case.
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=uk"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+    }
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          {
+            "name": "apicast.policy.url_rewriting",
+            "configuration": {
+              "query_args_commands": [
+                { "op": "push", "arg": "new_arg", "value": "{{ uri }}", "value_type": "liquid" }
+              ]
+            }
+          },
+          { "name": "apicast.policy.apicast" }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+     ngx.log(ngx.WARN, 'request: ', ngx.var.request)
+
+       require('luassert').are.equal('GET /abc?user_key=uk&new_arg=%2Fabc HTTP/1.1',
+                                     ngx.var.request)
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /abc?user_key=uk
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

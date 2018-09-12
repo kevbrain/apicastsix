@@ -1,10 +1,14 @@
 local KeycloakRoleCheckPolicy = require('apicast.policy.keycloak_role_check')
+local ngx_variable = require('apicast.policy.ngx_variable')
 
 describe('Keycloak Role check policy', function()
 
   before_each(function()
     ngx.header = {}
     stub(ngx, 'print')
+
+    -- avoid stubbing all the ngx.var.* and ngx.req.* in the available context
+    stub(ngx_variable, 'available_context', function(context) return context end)
   end)
 
   describe('.access', function()

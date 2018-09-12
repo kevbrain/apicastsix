@@ -1,4 +1,5 @@
 local URLRewriting = require('apicast.policy.url_rewriting')
+local ngx_variable = require('apicast.policy.ngx_variable')
 
 -- Mock QueryParams module. In these tests we are only interested in checking
 -- that a QueryParams instance is called with the appropriate params. We do
@@ -16,6 +17,9 @@ describe('URL rewriting policy', function()
 
   before_each(function ()
     stub(QueryParams, 'new', function() return mocked_query_params end)
+
+    -- avoid stubbing all the ngx.var.* and ngx.req.* in the available context
+    stub(ngx_variable, 'available_context', function(context) return context end)
   end)
 
   describe('.rewrite', function()

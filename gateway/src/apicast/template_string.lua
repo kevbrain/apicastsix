@@ -9,6 +9,8 @@ local setmetatable = setmetatable
 local pairs = pairs
 local format = string.format
 
+local ngx_variable = require('apicast.policy.ngx_variable')
+
 local LiquidTemplateString = {}
 local liquid_template_string_mt = { __index = LiquidTemplateString }
 
@@ -72,8 +74,10 @@ function LiquidTemplateString.new(string)
 end
 
 function LiquidTemplateString:render(context)
+  local available_context = ngx_variable.available_context(context)
+
   return self.template:render(
-    LiquidInterpreterContext:new(context),
+    LiquidInterpreterContext:new(available_context),
     liquid_filter_set,
     liquid_resource_limit
   )

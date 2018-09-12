@@ -7,7 +7,6 @@ local resty_limit_count = require('resty.limit.count-inc')
 
 local ngx_semaphore = require "ngx.semaphore"
 local limit_traffic = require "resty.limit.traffic"
-local ngx_variable = require ('apicast.policy.ngx_variable')
 local redis_shdict = require('redis_shdict')
 
 local Condition = require('apicast.policy.conditional.condition')
@@ -101,10 +100,6 @@ local function build_condition(config_condition)
   )
 end
 
-local function liquid_context(policy_context)
-  return ngx_variable.available_context(policy_context)
-end
-
 local function build_limiters_and_keys(type, limiters, redis, error_settings, context)
   local res_limiters = {}
   local res_keys = {}
@@ -120,16 +115,14 @@ local function build_limiters_and_keys(type, limiters, redis, error_settings, co
 
     lim.dict = redis or lim.dict
 
-    lim.condition_is_true = function(policy_context)
+    lim.condition_is_true = function(context)
       local condition = build_condition(limiter.condition)
-      local liquid_ctx = liquid_context(policy_context)
-      return condition:evaluate(liquid_ctx)
+      return condition:evaluate(context)
     end
 
     insert(res_limiters, lim)
 
-    local key = limiter.template_string:render(
-      ngx_variable.available_context(context))
+    local key = limiter.template_string:render(context)
     if limiter.key.scope == "global" then
       key = format("%s_%s", type, key)
     else

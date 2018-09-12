@@ -94,6 +94,8 @@ find-file = $(shell find $(2) -type f -name $(1))
 
 circleci = $(shell circleci tests glob $(1) 2>/dev/null | grep -v examples/scaffold | circleci tests split --split-by=timings 2>/dev/null)
 
+split-tests = $(shell echo $(1) | xargs -n 1 echo | circleci tests split --split-by=timings 2>/dev/null)
+
 BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
 BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
 busted: $(ROVER) lua_modules ## Test Lua.
@@ -102,11 +104,10 @@ ifeq ($(CI),true)
 	@- luacov
 endif
 
-PROVE_PATTERN = "{t,examples}/**/*.t)"
-prove-files = $(or $(call circleci, $(PROVE_PATTERN)), $(filter-out $(call find-file, "*.t", examples/scaffold),$(call find-file, *.t, t examples)))
+PROVE_PATTERN = "{t,examples}/**/*.t"
 
 prove: HARNESS ?= TAP::Harness
-prove: PROVE_FILES ?= $(call prove-files)
+prove: PROVE_FILES ?= $(call circleci, $(PROVE_PATTERN))
 prove: export TEST_NGINX_RANDOMIZE=1
 prove: $(ROVER) lua_modules nginx ## Test nginx
 	$(ROVER) exec script/prove --verbose -j$(NPROC) --harness=$(HARNESS) $(PROVE_FILES)
@@ -120,7 +121,7 @@ builder-image: ## Build builder image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) --context-dir=$(S2I_CONTEXT) --incremental $(S2I_OPTIONS)
 
 runtime-image: PULL_POLICY ?= always
-runtime-image: IMAGE_NAME = apicast-runtime-test
+runtime-image: IMAGE_NAME = apicast-runtime-image
 runtime-image: ## Build runtime image
 	$(S2I) build . $(BUILDER_IMAGE) $(IMAGE_NAME) \
 		--context-dir=$(S2I_CONTEXT) \
@@ -173,7 +174,7 @@ gateway-logs: export IMAGE_NAME = does-not-matter
 gateway-logs:
 	$(DOCKER_COMPOSE) logs gateway
 
-test-runtime-image: export IMAGE_NAME = apicast-runtime-test
+test-runtime-image: export IMAGE_NAME = apicast-runtime-image
 test-runtime-image: clean-containers ## Smoke test the runtime image. Pass any docker image in IMAGE_NAME parameter.
 	$(DOCKER_COMPOSE) run --rm --user 100001 gateway apicast -l -d
 	@echo -e $(SEPARATOR)
@@ -214,7 +215,7 @@ clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes
 
 clean: clean-containers ## Remove all running docker containers and images
-	- docker rmi apicast-test apicast-runtime-test --force
+	- docker rmi apicast-test apicast-runtime-image --force
 	- rm -rf luacov.stats*.out
 
 doc/lua/index.html: $(shell find gateway/src -name '*.lua' 2>/dev/null) | lua_modules $(ROVER)

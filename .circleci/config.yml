@@ -77,6 +77,19 @@ commands:
             curl -s https://codecov.io/bash | bash -s - << parameters.flags >> -F << parameters.suite >>
           when: always
 
+  login-docker:
+    parameters:
+      command:
+        type: string
+    steps:
+      - deploy:
+          name: "Push image to the container registry"
+          command: |
+            ([ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]) && (echo "Skipping docker registry push."; return 0);
+            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" "${DOCKER_REGISTRY}";
+            sh -ec '<< parameters.command >>'
+            echo "Successfully pushed image to ${DOCKER_REGISTRY}"
+
 executors:
   s2i:
     working_directory: /opt/app-root/apicast
@@ -108,23 +121,27 @@ jobs:
           wait
 
   # Try to build s2i runtime image and run smoke tests
-
   s2i-runtime:
     executor: s2i
-
+    environment:
+      IMAGE_NAME: apicast-runtime-image
     steps:
       - setup-s2i
       - run:
           command: make runtime-image
-          environment:
-            IMAGE_NAME: apicast-runtime-test
+
       - run: make test-runtime-image gateway-logs --keep-going
+      - login-docker:
+          command: |
+            IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}"
+            docker tag apicast-runtime-image ${IMAGE_NAME}
+            make push
 
   # Try to build s2i builder image and run smoke tests
-
   s2i-builder:
     executor: s2i
-
+    environment:
+      IMAGE_NAME: apicast-builder-image
     steps:
       - setup-s2i
       - run:
@@ -139,6 +156,12 @@ jobs:
           make test-builder-image gateway-logs --keep-going
           make lint-schema
 
+      - login-docker:
+          command: |
+            IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder"
+            docker tag apicast-builder-image ${IMAGE_NAME}
+            make push
+
   # Download, build and store Lua dependencies.
 
   build-lua:
@@ -151,7 +174,7 @@ jobs:
           name: Cleanup local dependencies
           command: rm -rf lua_modules
       - restore-lua-cache
-      - run: make dependencies
+      - run: make lua_modules
       - save_cache:
           key: apicast-rocks-{{ arch }}-{{ checksum "gateway/Roverfile.lock" }}
           <<: *lua-cache-paths
@@ -209,7 +232,7 @@ jobs:
   prove:
     executor: openresty
 
-    parallelism: 1
+    parallelism: 3
     steps:
       - attach-workspace
       - run:
@@ -223,26 +246,6 @@ jobs:
           suite: prove
           flags: -f 'luacov.report.*.out'
       - store-junit-results
-
-  # Build and push image to docker registry
-
-  deploy:
-    executor: s2i
-    steps:
-      - run: apk update && apk add wget make bash curl git openssh-client
-      - setup_remote_docker:
-          reusable: true
-          exclusive: false
-      - checkout
-      - run: travis/install-s2i.sh /usr/local/bin # needs to be after checkout because it uses script from the repo
-      - deploy:
-          # In PRs coming from forks, the docker credentials are not set.
-          # In that case, we just skip the step of pushing to the registry.
-          command: |
-            ([ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]) && return 0;
-            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" quay.io;
-            make runtime-image push IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}";
-            make builder-image push IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder";
 
   # Run benchmark on master and this branch
 
@@ -289,7 +292,9 @@ workflows:
                only:
                  - master
      jobs:
-       - deploy:
+       - s2i-runtime:
+          context: org-global
+       - s2i-builder:
           context: org-global
   build-test-deploy:
     jobs:
@@ -312,22 +317,13 @@ workflows:
             - build-lua
       - s2i-builder:
           <<: *build-tags
+          context: org-global
           requires:
             - build-lua
             - build-perl
       - s2i-runtime:
           <<: *build-tags
+          context: org-global
           requires:
             - build-lua
             - build-perl
-      - deploy:
-          context: org-global
-          requires:
-            - prove
-            - busted
-            - s2i-runtime
-            - s2i-builder
-          filters:
-            <<: *ignore-forks
-            tags:
-              only: /^v\d+\..+/

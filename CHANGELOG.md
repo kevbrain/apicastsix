@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Invalid SNI when connecting to 3scale backend over HTTPS [THREESCALE-1269](https://issues.jboss.org/browse/THREESCALE-1269)
 - Fix handling --pid and --signal on the CLI [PR #880](https://github.com/3scale/apicast/pull/880)
 
+### Added
+
+- Expose `http_method` in Liquid [PR #888](https://github.com/3scale/apicast/pull/888)
+
 ## [3.3.0-beta2] - 2018-09-03
 
 ### Fixed

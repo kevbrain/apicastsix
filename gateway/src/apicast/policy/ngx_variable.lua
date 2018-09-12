@@ -7,7 +7,8 @@ local function context_values()
     uri = ngx.var.uri,
     host = ngx.var.host,
     remote_addr = ngx.var.remote_addr,
-    headers = ngx.req.get_headers()
+    headers = ngx.req.get_headers(),
+    http_method = ngx.req.get_method(),
   }
 end
 

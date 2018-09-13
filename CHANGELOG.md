@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix handling --pid and --signal on the CLI [PR #880](https://github.com/3scale/apicast/pull/880)
 - Some policies did not have access to the vars exposed when using Liquid (`uri`, `path`, etc.) [PR #891](https://github.com/3scale/apicast/pull/891)
 - Fix error when loading certain configurations that use OIDC [PR #893](https://github.com/3scale/apicast/pull/893)
+- Fix error that appeared when combining the liquid context debug policy with policies that contain liquid templates [PR #895](https://github.com/3scale/apicast/pull/895)
 
 ### Added
 

@@ -1,5 +1,7 @@
 local LinkedList = require 'apicast.linked_list'
 local context_content = require 'apicast.policy.liquid_context_debug.context_content'
+local TemplateString = require 'apicast.template_string'
+local ngx_variable = require 'apicast.policy.ngx_variable'
 
 describe('Context content', function()
   describe('.from', function()
@@ -69,6 +71,20 @@ describe('Context content', function()
 
     it('returns empty if the context is empty', function()
       assert.same({}, context_content.from({}))
+    end)
+
+    it('does not crash when there is a rendered liquid template in the context', function()
+      -- avoid stubbing all the ngx.var.* and ngx.req.* in the available context
+      stub(ngx_variable, 'available_context', function(context) return context end)
+
+      local template_string = TemplateString.new('{{ service.id }}', 'liquid')
+      local context = LinkedList.readonly({ template_string = template_string })
+
+      -- template_string stores the context passed, so now we have a reference
+      -- to the context in an element of the context.
+      template_string:render(context)
+
+      assert(context_content.from(context))
     end)
   end)
 end)

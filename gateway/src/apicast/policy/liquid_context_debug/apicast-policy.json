@@ -11,7 +11,9 @@
     "want to develop a policy can use this one to know the context available ",
     "in their configuration. ",
     "When combined with the APIcast policy or the upstream one, this policy ",
-    "needs to be placed before them in the chain in order to work correctly."
+    "needs to be placed before them in the chain in order to work correctly. ",
+    "Note: This policy only returns duplicated objects once to avoid circular ",
+    "references."
   ],
   "version": "builtin",
   "configuration": {

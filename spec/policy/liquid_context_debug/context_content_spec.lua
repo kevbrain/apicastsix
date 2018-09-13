@@ -70,7 +70,7 @@ describe('Context content', function()
     end)
 
     it('returns empty if the context is empty', function()
-      assert.same({}, context_content.from({}))
+      assert.same({}, context_content.from(LinkedList.readonly({})))
     end)
 
     it('does not crash when there is a rendered liquid template in the context', function()

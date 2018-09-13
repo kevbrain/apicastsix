@@ -125,9 +125,10 @@ function _M:index(host)
       local service = configuration.parse_service(proxy_config.content)
       local oidc = self:oidc_issuer_configuration(service)
 
-      if oidc then
-        config.oidc[i] = oidc
-      end
+      -- Assign false instead of nil to avoid sparse arrays. cjson raises an
+      -- error by default when converting sparse arrays.
+      config.oidc[i] = oidc or false
+
       config.services[i] = original_proxy_config.content
     end
 
@@ -183,7 +184,11 @@ function _M:call(environment)
 
   for i=1, #configs do
     configs.services[i] = configs[i].content
-    configs.oidc[i] = configs[i].oidc
+
+    -- Assign false instead of nil to avoid sparse arrays. cjson raises an
+    -- error by default when converting sparse arrays.
+    configs.oidc[i] = configs[i].oidc or false
+
     configs[i] = nil
   end
 

@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Expose `http_method` in Liquid [PR #888](https://github.com/3scale/apicast/pull/888)
+- Print error message when OIDC configuration is missing for a request [PR #894](https://github.com/3scale/apicast/pull/894)
+- Print whole stderr in 4k chunks when executing external commands [PR #894](https://github.com/3scale/apicast/pull/894)
 
 ## [3.3.0-beta2] - 2018-09-03
 

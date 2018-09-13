@@ -5,6 +5,8 @@ local _M = {
 local ngx_now = ngx.now
 
 local len = string.len
+local sub = string.sub
+local errlog = require('ngx.errlog')
 
 local open = io.open
 local execute = os.execute
@@ -34,6 +36,8 @@ local function read(file)
   return output
 end
 
+local max_log_line_len = 4096-96 -- 96 chars for our error message
+
 function _M.system(command)
   local tmpout = tmpname()
   local tmperr = tmpname()
@@ -57,8 +61,13 @@ function _M.system(command)
   -- os.execute returns exit code as first return value on OSX
   -- even though the documentation says otherwise (true/false)
   if success == 0 or success == true then
-    if len(tmperr) > 0 then
-      ngx.log(ngx.WARN, 'os execute stderr: \n', tmperr)
+    local max = len(tmperr)
+    if max > 0 then
+      errlog.raw_log(ngx.WARN, 'os execute stderr:')
+
+      for start=0, max , max_log_line_len do
+        errlog.raw_log(ngx.WARN, sub(tmperr, start, start + max_log_line_len - 1))
+      end
     end
 
     return tmpout

@@ -33,6 +33,13 @@ local accepted_types_for_values = {
 -- workaround.
 local max_integer_key = 1000
 
+-- Liquid.Template instances of the 'liquid-lua' library that we use store the
+-- context when they render a template. Specifically,
+-- template_instance.interpreter.interpretercontext contains the context.
+-- In order to avoid entering in a infinite loop when parsing the context,
+-- we just discard keys with this name.
+local liquid_template_context_key = 'interpretercontext'
+
 local function key(k)
   if type(k) ~= 'number' then return k end
 
@@ -54,7 +61,7 @@ local value_from_fun = {
       local wanted_types = accepted_types_for_keys[type(k)] and
                            accepted_types_for_values[type(v)]
 
-      if wanted_types then
+      if wanted_types and k ~= liquid_template_context_key then
         res[key(k)] = value_from(v)
       end
     end

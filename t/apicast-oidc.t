@@ -113,3 +113,43 @@ my $jwt = encode_jwt(payload => {
 ["Authorization: Bearer $jwt", "Authorization: Bearer $jwt"]
 --- no_error_log
 [error]
+
+
+
+=== TEST 3: Invalid OIDC configuration
+Prints error message in the log.
+--- configuration env eval
+use JSON qw(to_json);
+
+to_json({
+  services => [{
+    id => 42,
+    backend_version => 'oauth',
+    backend_authentication_type => 'provider_key',
+    backend_authentication_value => 'fookey',
+    proxy => {
+        authentication_method => 'oidc',
+        oidc_issuer_endpoint => 'https://example.com/auth/realms/apicast',
+        api_backend => "http://test:$TEST_NGINX_SERVER_PORT/",
+        proxy_rules => [
+          { pattern => '/', http_method => 'GET', metric_system_name => 'hits', delta => 1  }
+        ]
+    }
+  }],
+  oidc => [{
+    keys => { somekid => { pem => $::public_key } },
+  }]
+});
+--- request: GET /test
+--- error_code: 403
+--- more_headers eval
+use Crypt::JWT qw(encode_jwt);
+my $jwt = encode_jwt(payload => {
+  aud => 'appid',
+  sub => 'someone',
+  iss => 'https://example.com/auth/realms/apicast',
+  exp => time + 3600 }, key => \$::private_key, alg => 'RS256', extra_headers => { kid => 'somekid' });
+"Authorization: Bearer $jwt"
+--- error_log
+failed to initialize OpenID Connect for service 42: missing OIDC configuration
+--- log_level: warn

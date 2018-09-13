@@ -7,6 +7,37 @@ local rsa = require('fixtures.rsa')
 
 describe('OIDC', function()
 
+  describe('.new', function()
+    it('returns error when issuer is missing', function()
+      local oidc, err = _M.new({ oidc = {
+        config = { id_token_signing_alg_values_supported = { 'RS256' } }
+      }})
+
+      assert(oidc, 'still returns oidc object')
+      assert.equal('missing OIDC configuration', err)
+    end)
+
+    it('returns error when supported algorithms are missing', function()
+      local oidc, err = _M.new({ oidc = {
+        issuer = 'http://example.com',
+        config = { id_token_signing_alg_values_supported = {} }
+      }})
+
+      assert(oidc, 'still returns oidc object')
+      assert.equal('missing OIDC configuration', err)
+    end)
+
+    it('returns no error with valid OIDC configuration', function()
+      local oidc, err = _M.new({ oidc = {
+        issuer = 'http://example.com',
+        config = { id_token_signing_alg_values_supported = { 'RS256' } }
+      }})
+
+      assert(oidc, 'still returns oidc object')
+      assert.falsy(err)
+    end)
+  end)
+
   describe(':transform_credentials', function()
     local service = {
       id = 1,

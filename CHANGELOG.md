@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Invalid SNI when connecting to 3scale backend over HTTPS [THREESCALE-1269](https://issues.jboss.org/browse/THREESCALE-1269)
 - Fix handling --pid and --signal on the CLI [PR #880](https://github.com/3scale/apicast/pull/880)
 - Some policies did not have access to the vars exposed when using Liquid (`uri`, `path`, etc.) [PR #891](https://github.com/3scale/apicast/pull/891)
+- Fix error when loading certain configurations that use OIDC [PR #893](https://github.com/3scale/apicast/pull/893)
 
 ### Added
 

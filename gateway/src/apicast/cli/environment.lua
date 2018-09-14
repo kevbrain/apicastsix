@@ -110,6 +110,7 @@ _M.default_config = {
     proxy_ssl_certificate_key = env_value_ref('APICAST_PROXY_HTTPS_CERTIFICATE_KEY'),
     proxy_ssl_session_reuse = env_value_ref('APICAST_PROXY_HTTPS_SESSION_REUSE'),
     proxy_ssl_password_file = env_value_ref('APICAST_PROXY_HTTPS_PASSWORD_FILE'),
+    proxy_ssl_verify = resty_env.enabled('OPENSSL_VERIFY'),
     opentracing_tracer = env_value_ref('OPENTRACING_TRACER'),
     opentracing_config = env_value_ref('OPENTRACING_CONFIG'),
     opentracing_forward_header = env_value_ref('OPENTRACING_FORWARD_HEADER'),

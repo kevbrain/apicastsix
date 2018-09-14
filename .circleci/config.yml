@@ -85,11 +85,14 @@ commands:
       - deploy:
           name: "Push image to the container registry"
           command: |
-            ([ -z "${DOCKER_USERNAME}" ] || [ -z "${DOCKER_PASSWORD}" ]) && (echo "Skipping docker registry push."; return 0);
-            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" "${DOCKER_REGISTRY}";
-            sh -ec '<< parameters.command >>'
-            echo "Successfully pushed image to ${DOCKER_REGISTRY}"
-
+            if [ -n "${DOCKER_USERNAME}" ] && [ -n "${DOCKER_PASSWORD}" ] && [ -n "${DOCKER_REGISTRY}" ]
+            then
+              docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}" "${DOCKER_REGISTRY}";
+              sh -ec '<< parameters.command >>'
+              echo "Successfully pushed image to ${DOCKER_REGISTRY}"
+            else
+              echo "Skipping docker registry push."
+            fi
 executors:
   s2i:
     working_directory: /opt/app-root/apicast

@@ -194,10 +194,14 @@ function _M.get_upstream(service)
 end
 
 local function handle_oauth(service)
-  local oauth = service:oauth()
+  local oauth, err = service:oauth()
 
   if oauth then
     ngx.log(ngx.DEBUG, 'using OAuth: ', oauth)
+
+    if err then
+      ngx.log(ngx.WARN, 'failed to initialize ', oauth, ' for service ', service.id, ': ', err)
+    end
   end
 
   if oauth and oauth.call then

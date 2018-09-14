@@ -31,8 +31,14 @@ local empty = {}
 function _M.new(service)
   local oidc = service.oidc or empty
 
-  local issuer = oidc.issuer
+  local issuer = oidc.issuer or ""
   local config = oidc.config or empty
+  local alg_values = config.id_token_signing_alg_values_supported or empty
+
+  local err
+  if #issuer == 0 or #alg_values == 0 then
+    err = 'missing OIDC configuration'
+  end
 
   return setmetatable({
     service = service,
@@ -40,7 +46,7 @@ function _M.new(service)
     issuer = issuer,
     keys = oidc.keys or empty,
     clock = ngx_now,
-    alg_whitelist = util.to_hash(config.id_token_signing_alg_values_supported),
+    alg_whitelist = util.to_hash(alg_values),
     -- https://tools.ietf.org/html/rfc7523#section-3
     jwt_claims = {
       -- 1. The JWT MUST contain an "iss" (issuer) claim that contains a
@@ -69,7 +75,7 @@ function _M.new(service)
       -- the time at which the JWT was issued.
       iat = jwt_validators.opt_greater_than(0),
     },
-  }, mt)
+  }, mt), err
 end
 
 local function timestamp_to_seconds_from_now(expiry, clock)

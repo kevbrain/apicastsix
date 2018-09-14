@@ -34,7 +34,7 @@ local http_ng_backend_phase = {
 }
 
 local _M = {
-  endpoint = resty_env.get("BACKEND_ENDPOINT_OVERRIDE")
+  endpoint = resty_env.value("BACKEND_ENDPOINT_OVERRIDE")
 }
 
 local mt = { __index = _M }

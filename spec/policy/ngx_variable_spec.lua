@@ -11,9 +11,14 @@ describe('ngx_variable', function()
         return { some_header = 'some_val' }
       end)
 
+      stub(ngx.req, 'get_method', function()
+        return 'GET'
+      end)
+
       local context = ngx_variable.available_context()
 
       assert.equals('some_val', context.headers['some_header'])
+      assert.equals('GET', context.http_method)
     end)
 
     it('gives precedence to what is exposed in "ngx_variable"', function()
@@ -22,6 +27,10 @@ describe('ngx_variable', function()
 
       stub(ngx.req, 'get_headers', function()
         return headers_in_ngx_variable
+      end)
+
+      stub(ngx.req, 'get_method', function()
+        return 'GET'
       end)
 
       local policies_context = { headers = headers_in_context }

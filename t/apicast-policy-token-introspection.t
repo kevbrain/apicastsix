@@ -111,6 +111,9 @@ Authorization: Bearer testaccesstoken
 --- error_code: 403
 --- no_error_log
 [error]
+--- error_log: token introspection for access token testaccesstoken: token not active
+
+
 
 === TEST 3: Token introspection request is failed due to IdP error
 Token introspection policy return "403 Unauthorized" if IdP response error status.

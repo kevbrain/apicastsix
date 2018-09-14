@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Correct JWT validation according to [RFC 7523 Section 3](https://tools.ietf.org/html/rfc7523#section-3). Like not required `nbf` claim. [THREESCALE-583](https://issues.jboss.org/browse/THREESCALE-583)
 - Mismatch in OIDC issuer when loading configuration through a configuration file [PR #872](https://github.com/3scale/apicast/pull/872)
 - When the 3scale referrer filters was enabled, cached requests were not handled correctly [PR #875](https://github.com/3scale/apicast/issues/875)
+- Invalid SNI when connecting to 3scale backend over HTTPS [THREESCALE-1269](https://issues.jboss.org/browse/THREESCALE-1269)
+- Fix handling --pid and --signal on the CLI [PR #880](https://github.com/3scale/apicast/pull/880)
+- Some policies did not have access to the vars exposed when using Liquid (`uri`, `path`, etc.) [PR #891](https://github.com/3scale/apicast/pull/891)
+- Fix error when loading certain configurations that use OIDC [PR #893](https://github.com/3scale/apicast/pull/893)
+- Fix error that appeared when combining the liquid context debug policy with policies that contain liquid templates [PR #895](https://github.com/3scale/apicast/pull/895)
+- Thread safety issues when rendering Liquid templates [PR #896](https://github.com/3scale/apicast/pull/896)
+
+### Added
+
+- Expose `http_method` in Liquid [PR #888](https://github.com/3scale/apicast/pull/888)
+- Print error message when OIDC configuration is missing for a request [PR #894](https://github.com/3scale/apicast/pull/894)
+- Print whole stderr in 4k chunks when executing external commands [PR #894](https://github.com/3scale/apicast/pull/894)
 
 ## [3.3.0-beta2] - 2018-09-03
 

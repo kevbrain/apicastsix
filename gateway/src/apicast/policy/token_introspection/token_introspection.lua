@@ -103,6 +103,7 @@ function _M:access(context)
     --- Introspection Response must have an "active" boolean value.
     -- https://tools.ietf.org/html/rfc7662#section-2.2
     if not introspect_token(self, access_token).active == true then
+      ngx.log(ngx.INFO, 'token introspection for access token ', access_token, ': token not active')
       ngx.status = context.service.auth_failed_status
       ngx.say(context.service.error_auth_failed)
       return ngx.exit(ngx.status)

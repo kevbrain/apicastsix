@@ -1,5 +1,4 @@
 local Liquid = require 'liquid'
-local LiquidTemplate = Liquid.Template
 local LiquidInterpreterContext = Liquid.InterpreterContext
 local LiquidFilterSet = Liquid.FilterSet
 local LiquidResourceLimit = Liquid.ResourceLimit
@@ -68,15 +67,33 @@ end
 -- Set resource limits to avoid loops
 local liquid_resource_limit = LiquidResourceLimit:new(nil, nil, 0)
 
+-- TODO: we should move this to liquid-lua and fix it's broken Template interface
+local CachedParser = { }
+local CachedParser_mt = { __index = CachedParser }
+
+function CachedParser.new(parser)
+  local doc = parser:document()
+  return setmetatable({ doc = doc }, CachedParser_mt)
+end
+
+function CachedParser:document() return self.doc end
+
+local function liquid_parser(text)
+  local lexer = Liquid.Lexer:new(text)
+  local parser = Liquid.Parser:new(lexer)
+
+  return CachedParser.new(parser)
+end
+
 function LiquidTemplateString.new(string)
-  return setmetatable({ template = LiquidTemplate:parse(string) },
+  return setmetatable({ parser = liquid_parser(string) },
                       liquid_template_string_mt)
 end
 
 function LiquidTemplateString:render(context)
   local available_context = ngx_variable.available_context(context)
 
-  return self.template:render(
+  return Liquid.Interpreter:new(self.parser):interpret(
     LiquidInterpreterContext:new(available_context),
     liquid_filter_set,
     liquid_resource_limit

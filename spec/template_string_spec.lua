@@ -33,6 +33,35 @@ describe('template string', function()
     assert.equals(ngx.md5('something'), liquid_template:render({}))
   end)
 
+  describe(':render', function()
+    it('it allows context to be garbage collected #gc', function()
+      local template =  TemplateString.new('string', 'liquid')
+      local context = { 'value' }
+
+      template:render(context)
+
+      -- store the object so we can verify it was GC'd later
+      local gc = setmetatable({ context = context }, { __mode = 'vk' })
+      -- luassert stub takes a reference to parameters passed through
+      ngx_variable.available_context:revert()
+      context = nil
+
+      collectgarbage()
+      assert.is_nil(gc.context)
+    end)
+
+    it('does not parse the document twice', function()
+      local template = TemplateString.new('string', 'liquid')
+
+      stub(require('liquid').Parser, 'document', function()
+        error('this should not be called')
+      end)
+
+      assert.same('string', template:render({}))
+      assert.same('string', template:render({}))
+    end)
+  end)
+
   describe('.new', function()
     it('returns nil and an error with invalid type', function()
       local template, err = TemplateString.new('some_string', 'invalid_type')

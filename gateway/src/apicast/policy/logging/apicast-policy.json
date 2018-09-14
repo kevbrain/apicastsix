@@ -1,7 +1,7 @@
 {
   "$schema": "http://apicast.io/policy-v1/schema#manifest#",
   "name": "Logging",
-  "summary": "Controls logging",
+  "summary": "Controls logging.",
   "description": [
     "Controls logging. It allows to enable and disable access logs per ",
     "service."

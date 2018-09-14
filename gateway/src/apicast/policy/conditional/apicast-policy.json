@@ -3,7 +3,8 @@
   "name": "Conditional policy",
   "summary": "Executes a policy chain conditionally.",
   "description": [
-    "Evaluates a condition, and when it's true, it calls its policy chain."
+    "Evaluates a condition, and when it's true, it calls its policy chain. ",
+    "This policy cannot be configured from the 3scale UI."
   ],
   "version": "builtin",
   "configuration": {

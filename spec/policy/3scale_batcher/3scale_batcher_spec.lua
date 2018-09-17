@@ -5,6 +5,7 @@ local Usage = require('apicast.usage')
 local configuration = require('apicast.configuration')
 local lrucache = require('resty.lrucache')
 local TimerTask = require('resty.concurrent.timer_task')
+local Metrics = require('apicast.policy.3scale_batcher.metrics')
 
 describe('3scale batcher policy', function()
   before_each(function()
@@ -63,7 +64,13 @@ describe('3scale batcher policy', function()
       -- no pending reports.
       stub(batcher_policy.reports_batcher, 'get_all').returns({})
 
-      stub(batcher_policy, 'backend_downtime_cache')
+      -- By default return a hit in the caches to simplify tests
+      local backend_client = require('apicast.backend_client')
+      stub(backend_client, 'authorize').returns({ status = 200 })
+      stub(batcher_policy,'backend_downtime_cache')
+      stub(batcher_policy.backend_downtime_cache, 'get').returns(200)
+
+      stub(Metrics, 'update_cache_counters')
 
       context = {
         service = service,
@@ -77,6 +84,14 @@ describe('3scale batcher policy', function()
     end)
 
     describe('when the request is cached', function()
+      it('updates the auths cache counter sending a hit', function()
+        batcher_policy.auths_cache:set(transaction, 200)
+
+        batcher_policy:access(context)
+
+        assert.stub(Metrics.update_cache_counters).was_called_with(true)
+      end)
+
       describe('and it is authorized', function()
         it('adds the report to the batcher', function()
           batcher_policy.auths_cache:set(transaction, 200)
@@ -108,6 +123,12 @@ describe('3scale batcher policy', function()
     end)
 
     describe('when the request is not cached', function()
+      it('updates the auths cache counter sending a miss', function()
+        batcher_policy:access(context)
+
+        assert.stub(Metrics.update_cache_counters).was_called_with(false)
+      end)
+
       describe('and backend is available', function()
         before_each(function()
           local backend_client = require('apicast.backend_client')

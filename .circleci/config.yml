@@ -286,19 +286,6 @@ ignore-forks: &ignore-forks
 
 workflows:
   version: 2
-  nightly:
-     triggers:
-       - schedule:
-           cron: "0 0 * * *"
-           filters:
-             branches:
-               only:
-                 - master
-     jobs:
-       - s2i-runtime:
-          context: org-global
-       - s2i-builder:
-          context: org-global
   build-test-deploy:
     jobs:
       - build-lua:

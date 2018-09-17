@@ -175,6 +175,14 @@ local function handle_backend_error(self, service, transaction, cache_handler)
   end
 end
 
+local function handle_cached_auth(self, cached_auth, service, transaction)
+  if cached_auth.status == 200 then
+    self.reports_batcher:add(transaction)
+  else
+    return error(service, cached_auth.rejection_reason)
+  end
+end
+
 function _M.rewrite(_, context)
   -- The APIcast policy reads these flags in the access() and post_action()
   -- phases. That's why we need to set them before those phases. If we set
@@ -203,7 +211,9 @@ function _M:access(context)
   local auth_is_cached = (cached_auth and true) or false
   metrics.update_cache_counters(auth_is_cached)
 
-  if not auth_is_cached then
+  if cached_auth then
+    handle_cached_auth(self, cached_auth, service, transaction)
+  else
     local formatted_usage = format_usage(usage)
     local backend_res = backend:authorize(formatted_usage, credentials)
     local backend_status = backend_res.status
@@ -216,12 +226,6 @@ function _M:access(context)
         self, service, transaction, backend_status, backend_res.headers, cache_handler)
     else
       handle_backend_error(self, service, transaction, cache_handler)
-    end
-  else
-    if cached_auth.status == 200 then
-      self.reports_batcher:add(transaction)
-    else
-      return error(service, cached_auth.rejection_reason)
     end
   end
 end

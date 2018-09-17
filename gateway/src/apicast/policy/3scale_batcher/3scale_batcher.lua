@@ -10,6 +10,8 @@ local http_ng_resty = require('resty.http_ng.backend.resty')
 local semaphore = require('ngx.semaphore')
 local TimerTask = require('resty.concurrent.timer_task')
 
+local metrics = require('apicast.policy.3scale_batcher.metrics')
+
 local ipairs = ipairs
 
 local default_auths_ttl = 10
@@ -198,8 +200,10 @@ function _M:access(context)
   ensure_timer_task_created(self, service_id, backend)
 
   local cached_auth = self.auths_cache:get(transaction)
+  local auth_is_cached = (cached_auth and true) or false
+  metrics.update_cache_counters(auth_is_cached)
 
-  if not cached_auth then
+  if not auth_is_cached then
     local formatted_usage = format_usage(usage)
     local backend_res = backend:authorize(formatted_usage, credentials)
     local backend_status = backend_res.status

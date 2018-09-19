@@ -8,6 +8,8 @@ local setmetatable = setmetatable
 local ngx_now = ngx.now
 local format = string.format
 local type = type
+local tostring = tostring
+local assert = assert
 
 local _M = {
   cache_size = 10000,
@@ -28,20 +30,18 @@ local mt = {
 
 local empty = {}
 
-function _M.new(service)
-  local oidc = service.oidc or empty
-
-  local issuer = oidc.issuer or ""
+function _M.new(oidc_config)
+  local oidc = oidc_config or empty
+  local issuer = oidc.issuer
   local config = oidc.config or empty
   local alg_values = config.id_token_signing_alg_values_supported or empty
 
   local err
-  if #issuer == 0 or #alg_values == 0 then
+  if not issuer or #alg_values == 0 then
     err = 'missing OIDC configuration'
   end
 
   return setmetatable({
-    service = service,
     config = config,
     issuer = issuer,
     keys = oidc.keys or empty,
@@ -51,7 +51,7 @@ function _M.new(service)
     jwt_claims = {
       -- 1. The JWT MUST contain an "iss" (issuer) claim that contains a
       -- unique identifier for the entity that issued the JWT.
-      iss = jwt_validators.equals_any_of({ issuer }),
+      iss = jwt_validators.chain(jwt_validators.required(), issuer and jwt_validators.equals_any_of({ issuer })),
 
       -- 2. The JWT MUST contain a "sub" (subject) claim identifying the
       -- principal that is the subject of the JWT.
@@ -74,6 +74,9 @@ function _M.new(service)
       -- 6. The JWT MAY contain an "iat" (issued at) claim that identifies
       -- the time at which the JWT was issued.
       iat = jwt_validators.opt_greater_than(0),
+
+      -- This is keycloak-specific. Its tokens have a 'typ' and we need to verify
+      typ = jwt_validators.opt_equals_any_of({ 'Bearer' }),
     },
   }, mt), err
 end
@@ -92,64 +95,102 @@ end
 -- Parses the token - in this case we assume it's a JWT token
 -- Here we can extract authenticated user's claims or other information returned in the access_token
 -- or id_token by RH SSO
-local function parse_and_verify_token(self, jwt_token)
+local function parse_and_verify_token(self, namespace, jwt_token)
   local cache = self.cache
 
   if not cache then
     return nil, 'not initialized'
   end
-  local cache_key = format('%s:%s', self.service.id, jwt_token)
+  local cache_key = format('%s:%s', namespace or '<empty>', jwt_token)
 
-  local jwt_obj = cache:get(cache_key)
+  local jwt = self:parse(jwt_token, cache_key)
 
-  if jwt_obj then
-    ngx.log(ngx.DEBUG, 'found JWT in cache for ', cache_key)
-    return jwt_obj
+  if jwt.verified then
+    return jwt
   end
 
-  jwt_obj = JWT:load_jwt(jwt_token)
+  local _, err = self:verify(jwt, cache_key)
 
-  if not jwt_obj.valid then
-    ngx.log(ngx.WARN, jwt_obj.reason)
-    return jwt_obj, 'JWT not valid'
-  end
-
-  if not self.alg_whitelist[jwt_obj.header.alg] then
-    return jwt_obj, '[jwt] invalid alg'
-  end
-  -- TODO: this should be able to use DER format instead of PEM
-  local pubkey = find_public_key(jwt_obj, self.keys)
-
-  -- This is keycloak-specific. Its tokens have a 'typ' and we need to verify
-  -- it's Bearer.
-  local claims = self.jwt_claims
-  if jwt_obj.payload and jwt_obj.payload.typ then
-    claims.typ = jwt_validators.equals('Bearer')
-  end
-
-  jwt_obj = JWT:verify_jwt_obj(pubkey, jwt_obj, self.jwt_claims)
-
-  if not jwt_obj.verified then
-    ngx.log(ngx.DEBUG, "[jwt] failed verification for token, reason: ", jwt_obj.reason)
-    return jwt_obj, "JWT not verified"
-  end
-
-  ngx.log(ngx.DEBUG, 'adding JWT to cache ', cache_key)
-  local ttl = timestamp_to_seconds_from_now(jwt_obj.payload.exp, self.clock)
-  cache:set(cache_key, jwt_obj, ttl)
-
-  return jwt_obj
+  return jwt, err
 end
 
-
-function _M:transform_credentials(credentials)
-  local jwt_obj, err = parse_and_verify_token(self, credentials.access_token)
+function _M:parse_and_verify(access_token, cache_key)
+  local jwt_obj, err = parse_and_verify_token(self, assert(cache_key, 'missing cache key'), access_token)
 
   if err then
     if ngx.config.debug then
       ngx.log(ngx.DEBUG, 'JWT object: ', require('inspect')(jwt_obj), ' err: ', err, ' reason: ', jwt_obj.reason)
     end
-    return nil, nil, nil, jwt_obj and jwt_obj.reason or err
+    return nil, jwt_obj and jwt_obj.reason or err
+  end
+
+  return jwt_obj
+end
+
+local jwt_mt = {
+  __tostring = function(jwt)
+    return jwt.token
+  end
+}
+
+local function load_jwt(token)
+  local jwt = JWT:load_jwt(tostring(token))
+
+  jwt.token = token
+
+  return setmetatable(jwt, jwt_mt)
+end
+
+function _M:parse(jwt, cache_key)
+  local cached = cache_key and self.cache:get(cache_key)
+
+  if cached then
+    ngx.log(ngx.DEBUG, 'found JWT in cache for ', cache_key)
+    return cached
+  end
+
+  return load_jwt(jwt)
+end
+
+function _M:verify(jwt, cache_key)
+  if not jwt then
+    return false, 'JWT missing'
+  end
+
+  if not jwt.valid then
+    ngx.log(ngx.WARN, jwt.reason)
+    return false, 'JWT not valid'
+  end
+
+  if not self.alg_whitelist[jwt.header.alg] then
+    return false, '[jwt] invalid alg'
+  end
+
+  -- TODO: this should be able to use DER format instead of PEM
+  local pubkey = find_public_key(jwt, self.keys)
+
+  jwt = JWT:verify_jwt_obj(pubkey, jwt, self.jwt_claims)
+
+  if not jwt.verified then
+    ngx.log(ngx.DEBUG, "[jwt] failed verification for token, reason: ", jwt.reason)
+    return false, "JWT not verified"
+  end
+
+  if cache_key then
+    ngx.log(ngx.DEBUG, 'adding JWT to cache ', cache_key)
+    local ttl = timestamp_to_seconds_from_now(jwt.payload.exp, self.clock)
+    -- use the JWT itself in case there is no cache key
+    self.cache:set(cache_key, jwt, ttl)
+  end
+
+  return true
+end
+
+function _M:transform_credentials(credentials, cache_key)
+  local jwt_obj, err = self:parse_and_verify(credentials.access_token, cache_key or '<shared>')
+
+  if err then
+    return nil, nil, nil, err
   end
 
   local payload = jwt_obj.payload

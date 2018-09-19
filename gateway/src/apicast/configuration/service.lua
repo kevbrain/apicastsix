@@ -213,7 +213,7 @@ function _M:oauth()
   local authentication = self.authentication_method or self.backend_version
 
   if authentication == 'oidc' then
-    return oauth.oidc.new(self)
+    return oauth.oidc.new(self.oidc)
   elseif authentication == 'oauth' then
     return oauth.apicast.new(self)
   else

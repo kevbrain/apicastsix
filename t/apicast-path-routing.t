@@ -22,7 +22,7 @@ env APICAST_PATH_ROUTING;
           id = 42,
           backend_version = 1,
           proxy = {
-            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/one/",
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/foo/",
             hosts = { 'same' },
             backend_authentication_type = 'service_token',
             backend_authentication_value = 'service-one',
@@ -35,7 +35,7 @@ env APICAST_PATH_ROUTING;
           id = 21,
           backend_version = 2,
           proxy = {
-            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/two/",
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/bar/",
             hosts = { 'same' },
             backend_authentication_type = 'service_token',
             backend_authentication_value = 'service-two',
@@ -71,8 +71,8 @@ env APICAST_PATH_ROUTING;
 --- request
 GET /t
 --- response_body
-yay, api backend: /one/
-yay, api backend: /two/
+yay, api backend: /foo/one
+yay, api backend: /bar/two
 --- error_code: 200
 --- grep_error_log eval: qr/apicast cache (?:hit|miss|write) key: [^,\s]+/
 --- grep_error_log_out

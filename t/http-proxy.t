@@ -381,7 +381,7 @@ apicast cache write key: 42:value:usage%5Bhits%5D=2, ttl: nil, context: ngx.time
     {
       "backend_version":  1,
       "proxy": {
-        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT",
         "proxy_rules": [
           { "pattern": "/test", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
         ]
@@ -420,7 +420,7 @@ proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/test?user_key=value 
     {
       "backend_version":  1,
       "proxy": {
-        "api_backend": "https://test:$TEST_NGINX_RANDOM_PORT/",
+        "api_backend": "https://test:$TEST_NGINX_RANDOM_PORT",
         "proxy_rules": [
           { "pattern": "/test", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
         ]
@@ -685,3 +685,78 @@ proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
 --- no_error_log
 [error]
 --- user_files fixture=tls.pl eval
+
+
+
+=== TEST 14: upstream API connection uses proxy and correctly routes to a path.
+--- env eval
+("http_proxy" => $ENV{TEST_NGINX_HTTP_PROXY})
+--- configuration
+{
+  "services": [
+    {
+      "backend_version":  1,
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/foo",
+        "proxy_rules": [
+          { "pattern": "/test", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ]
+      }
+    }
+  ]
+}
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      ngx.exit(ngx.OK)
+    }
+  }
+--- upstream
+  location / {
+     echo $request;
+  }
+--- request
+GET /test?user_key=value
+--- response_body
+GET /foo/test?user_key=value HTTP/1.1
+--- error_code: 200
+--- error_log env
+proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/foo/test?user_key=value HTTP/1.1
+--- no_error_log
+[error]
+
+
+
+=== TEST 15: Upstream Policy connection uses proxy and correctly routes to a path.
+--- env eval
+("http_proxy" => $ENV{TEST_NGINX_HTTP_PROXY})
+--- configuration
+{
+  "services": [
+    {
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.upstream",
+            "configuration":
+              {
+                "rules": [ { "regex": "/test", "url": "http://test/foo" } ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+    echo $request;
+  }
+--- request
+GET /test?user_key=value
+--- response_body
+GET /foo/test?user_key=value HTTP/1.1
+--- error_code: 200
+--- error_log env
+proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/foo/test?user_key=value HTTP/1.1
+--- no_error_log
+[error]

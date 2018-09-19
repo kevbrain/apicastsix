@@ -117,6 +117,21 @@ function _M:port()
     return self.uri.port or resty_url.default_port(self.uri.scheme)
 end
 
+local root_uri = {
+    ['/'] = true,
+    [''] = true,
+}
+
+local function prefix_path(prefix)
+    local uri = ngx.var.uri or ''
+
+    if root_uri[uri] then return prefix end
+
+    uri = resty_url.join(prefix, uri)
+
+    return uri
+end
+
 --- Rewrite request Host header to what is provided in the argument or in the URL.
 function _M:rewrite_request()
     local uri = self.uri
@@ -126,7 +141,7 @@ function _M:rewrite_request()
     ngx.req.set_header('Host', self.host or uri.host)
 
     if uri.path then
-        ngx.req.set_uri(uri.path)
+        ngx.req.set_uri(prefix_path(uri.path))
     end
 
     if uri.query then

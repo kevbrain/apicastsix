@@ -119,3 +119,74 @@ METRICS_OUTPUT
 ]
 --- no_error_log
 [error]
+
+=== TEST 3: metrics endpoint shows auth cache hits and misses when using the 3scale batching policy
+We make 3 requests with the same user key. In the output we'll see a miss
+from the first request and 2 hits from the others.
+We use and env file without the nginx metrics to simplify the output of the
+/metrics endpoint.
+--- environment_file: t/fixtures/configs/without_nginx_metrics.lua
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 1 }
+        ],
+        "policy_chain": [
+          { "name": "apicast.policy.apicast" },
+          { "name": "apicast.policy.3scale_batcher", "configuration": {} }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+       ngx.say('yay, api backend');
+     }
+  }
+--- backend
+  location /transactions/authorize.xml {
+    content_by_lua_block {
+      ngx.exit(200)
+    }
+  }
+
+  location /transactions.xml {
+    content_by_lua_block {
+      ngx.exit(200)
+    }
+  }
+--- request eval
+["GET /?user_key=valid", "GET /?user_key=valid", "GET /?user_key=valid", "GET /metrics"]
+--- more_headers eval
+["", "", "", "Host: metrics"]
+--- error_code eval
+[ 200, 200, 200, 200 ]
+--- response_body eval
+[ "yay, api backend\x{0a}", "yay, api backend\x{0a}", "yay, api backend\x{0a}",
+<<'METRICS_OUTPUT'
+# HELP backend_response Response status codes from 3scale's backend
+# TYPE backend_response counter
+backend_response{status="2xx"} 1
+# HELP batching_policy_auths_cache_hits Hits in the auths cache of the 3scale batching policy
+# TYPE batching_policy_auths_cache_hits counter
+batching_policy_auths_cache_hits 2
+# HELP batching_policy_auths_cache_misses Misses in the auths cache of the 3scale batching policy
+# TYPE batching_policy_auths_cache_misses counter
+batching_policy_auths_cache_misses 1
+# HELP nginx_metric_errors_total Number of nginx-lua-prometheus errors
+# TYPE nginx_metric_errors_total counter
+nginx_metric_errors_total 0
+METRICS_OUTPUT
+]
+--- no_error_log
+[error]

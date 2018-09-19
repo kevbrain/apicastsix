@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Prometheus metrics for the 3scale batching policy [PR #902](https://github.com/3scale/apicast/pull/902)
+
 ## [3.3.0-cr1] - 2018-09-14
 
 ### Fixed

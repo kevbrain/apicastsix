@@ -10,6 +10,8 @@ local http_ng_resty = require('resty.http_ng.backend.resty')
 local semaphore = require('ngx.semaphore')
 local TimerTask = require('resty.concurrent.timer_task')
 
+local metrics = require('apicast.policy.3scale_batcher.metrics')
+
 local ipairs = ipairs
 
 local default_auths_ttl = 10
@@ -173,6 +175,14 @@ local function handle_backend_error(self, service, transaction, cache_handler)
   end
 end
 
+local function handle_cached_auth(self, cached_auth, service, transaction)
+  if cached_auth.status == 200 then
+    self.reports_batcher:add(transaction)
+  else
+    return error(service, cached_auth.rejection_reason)
+  end
+end
+
 function _M.rewrite(_, context)
   -- The APIcast policy reads these flags in the access() and post_action()
   -- phases. That's why we need to set them before those phases. If we set
@@ -198,8 +208,12 @@ function _M:access(context)
   ensure_timer_task_created(self, service_id, backend)
 
   local cached_auth = self.auths_cache:get(transaction)
+  local auth_is_cached = (cached_auth and true) or false
+  metrics.update_cache_counters(auth_is_cached)
 
-  if not cached_auth then
+  if cached_auth then
+    handle_cached_auth(self, cached_auth, service, transaction)
+  else
     local formatted_usage = format_usage(usage)
     local backend_res = backend:authorize(formatted_usage, credentials)
     local backend_status = backend_res.status
@@ -212,12 +226,6 @@ function _M:access(context)
         self, service, transaction, backend_status, backend_res.headers, cache_handler)
     else
       handle_backend_error(self, service, transaction, cache_handler)
-    end
-  else
-    if cached_auth.status == 200 then
-      self.reports_batcher:add(transaction)
-    else
-      return error(service, cached_auth.rejection_reason)
     end
   end
 end

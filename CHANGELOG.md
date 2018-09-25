@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Handles properly policies that raise an error when initialized [PR #911](https://github.com/3scale/apicast/pull/911), [THREESCALE-1332](https://issues.jboss.org/browse/THREESCALE-1332)
+
 ## [3.3.0-cr1] - 2018-09-14
 
 ### Fixed

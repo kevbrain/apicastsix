@@ -76,7 +76,7 @@ local function absolute_url(uri)
             uri.scheme,
             host,
             port,
-            uri.path or ngx.var.uri or ''
+            uri.path or ''
     )
 end
 

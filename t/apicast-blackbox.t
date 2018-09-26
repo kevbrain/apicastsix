@@ -136,3 +136,37 @@ location /transactions/authrep.xml {
 --- no_error_log
 [error]
 --- user_files fixture=tls.pl eval
+
+
+
+=== TEST 4: api backend gets the request on its subpath
+The request url is concatenated with the api backend url.
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/foo",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ]
+      }
+    }
+  ]
+}
+--- backend
+location /transactions/authrep.xml {
+    echo 'ok';
+}
+--- upstream
+location / {
+    echo 'path: $uri';
+}
+--- request
+GET /bar?user_key=value
+--- response_body
+path: /foo/bar
+--- no_error_log
+[error]

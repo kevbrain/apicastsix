@@ -95,6 +95,38 @@ describe('Upstream', function()
             assert.spy(ngx.req.set_uri).was_called_with('/test-path')
         end)
 
+        for url, path in pairs({
+            ['http://example.com'] = '/',
+            ['http://example.com/path'] = '/path',
+            ['http://example.com/path/'] = '/path/',
+            ['http://example.com/path/foo'] = '/path/foo',
+            ['http://example.com/path/foo/'] = '/path/foo/',
+            ['http://example.com/path?test=value/'] = '/path',
+        }) do
+            it(('/ uses path %s for upstream %s'):format(path, url), function()
+                ngx.var.uri = '/'
+                local upstream = Upstream.new(url)
+                upstream:rewrite_request()
+                assert.same(path, ngx.var.uri)
+            end)
+        end
+
+        for url, path in pairs({
+            ['http://example.com'] = '/test',
+            ['http://example.com/path'] = '/path/test',
+            ['http://example.com/path/'] = '/path/test',
+            ['http://example.com/path/foo'] = '/path/foo/test',
+            ['http://example.com/path/foo/'] = '/path/foo/test',
+            ['http://example.com/path?test=value/'] = '/path/test',
+        }) do
+            it(('/test uses path %s for upstream %s'):format(path, url), function()
+                ngx.var.uri = '/test'
+                local upstream = Upstream.new(url)
+                upstream:rewrite_request()
+                assert.same(path, ngx.var.uri)
+            end)
+        end
+
         it('sets request query params to the upstream query params', function()
             assert(Upstream.new('http://example.com/?query=param')):rewrite_request()
 

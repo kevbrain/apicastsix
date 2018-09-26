@@ -76,7 +76,7 @@ Two services can exist together and are split by their hostname.
           backend_authentication_type = 'service_token',
           backend_authentication_value = 'service-one',
           proxy = {
-            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/one/",
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/foo/",
             hosts = { 'one' },
             proxy_rules = {
               { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1 }
@@ -89,7 +89,7 @@ Two services can exist together and are split by their hostname.
           backend_authentication_type = 'service_token',
           backend_authentication_value = 'service-two',
           proxy = {
-            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/two/",
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/bar/",
             hosts = { 'two' },
             proxy_rules = {
               { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 2 }
@@ -135,8 +135,8 @@ Two services can exist together and are split by their hostname.
 --- request
 GET /t
 --- response_body
-yay, api backend: /one/
-yay, api backend: /two/
+yay, api backend: /foo/one
+yay, api backend: /bar/two
 --- error_code: 200
 --- no_error_log
 [error]

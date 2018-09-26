@@ -215,16 +215,12 @@ yay, api backend
 }
 --- upstream
   location /path_in_the_rule {
-     content_by_lua_block {
-       require('luassert').are.equal('GET /path_in_the_rule?user_key=uk&a_param=a_value HTTP/1.1',
-                                     ngx.var.request)
-       ngx.say('yay, api backend');
-     }
+     echo $request;
   }
 --- request
 GET /some_path?user_key=uk&a_param=a_value
 --- response_body
-yay, api backend
+GET /path_in_the_rule/some_path?user_key=uk&a_param=a_value HTTP/1.1
 --- error_code: 200
 --- no_error_log
 [error]

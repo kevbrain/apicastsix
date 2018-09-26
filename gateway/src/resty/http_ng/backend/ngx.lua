@@ -60,6 +60,7 @@ function backend.resolver()
     ngx.req.set_header(name, headers[name])
   end
 
+  ngx.req.set_uri('/') -- reset the original PROXY_LOCATION path
   ngx.var.connection_header = headers.connection
   ngx.var.host_header = headers.host
   ngx.var.options = headers['3scale-options']

@@ -2,6 +2,9 @@
 -- so we can copy ngx object and compare it later to check modifications
 require('resty.core')
 
+-- so test can't exit and can verify the return status easily
+ngx.exit = function(...) return ... end
+
 local busted = require('busted')
 local misc = require('resty.core.misc')
 local tablex = require('pl.tablex')

@@ -1,4 +1,5 @@
 local IpCheckPolicy = require('apicast.policy.ip_check')
+local ClientIP = require('apicast.policy.ip_check.client_ip')
 local iputils = require("resty.iputils")
 
 describe('Headers policy', function()
@@ -41,7 +42,7 @@ describe('Headers policy', function()
       )
 
       it('denies the request when the IP is in one of the CIDRs', function()
-        ngx.var = { remote_addr = '2.3.4.1' }
+        stub(ClientIP, 'get_from', function() return '2.3.4.1' end)
 
         ip_check:access()
 
@@ -49,7 +50,7 @@ describe('Headers policy', function()
       end)
 
       it('denies the request when the IP is among them', function()
-        ngx.var = { remote_addr = '3.4.5.6' }
+        stub(ClientIP, 'get_from', function() return '3.4.5.6' end)
 
         ip_check:access()
 
@@ -57,7 +58,7 @@ describe('Headers policy', function()
       end)
 
       it('does not deny the request when the IP is not among them', function()
-        ngx.var = { remote_addr = '3.3.3.3' }
+        stub(ClientIP, 'get_from', function() return '3.3.3.3' end)
 
         ip_check:access()
 
@@ -74,7 +75,7 @@ describe('Headers policy', function()
       )
 
       it('denies the requests when the IP is not among them', function()
-        ngx.var = { remote_addr = '3.3.3.3' }
+        stub(ClientIP, 'get_from', function() return '3.3.3.3' end)
 
         ip_check:access()
 
@@ -82,7 +83,7 @@ describe('Headers policy', function()
       end)
 
       it('does not deny the request when the IP is in one of the CIDRs', function()
-        ngx.var = { remote_addr = '2.3.4.1' }
+        stub(ClientIP, 'get_from', function() return '2.3.4.1' end)
 
         ip_check:access()
 
@@ -90,7 +91,7 @@ describe('Headers policy', function()
       end)
 
       it('does not deny the request when the IP is among them', function()
-        ngx.var = { remote_addr = '3.4.5.6' }
+        stub(ClientIP, 'get_from', function() return '3.4.5.6' end)
 
         ip_check:access()
 
@@ -101,7 +102,7 @@ describe('Headers policy', function()
     describe('when an error msg is not provided', function()
       it('returns the default one when the request is denied', function()
         local ip = '1.2.3.4'
-        ngx.var = { remote_addr = ip }
+        stub(ClientIP, 'get_from', function() return ip end)
         local ip_check = IpCheckPolicy.new(
           { ips = { ip }, check_type = 'blacklist' }
         )
@@ -116,7 +117,7 @@ describe('Headers policy', function()
       it('returns it when the request is denied', function()
         local err_msg = 'A custom error msg'
         local ip = '1.2.3.4'
-        ngx.var = { remote_addr = ip }
+        stub(ClientIP, 'get_from', function() return ip end)
         local ip_check = IpCheckPolicy.new(
           { ips = { ip }, check_type = 'blacklist', error_msg = err_msg }
         )

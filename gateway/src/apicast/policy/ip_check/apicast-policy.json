@@ -37,6 +37,30 @@
         "description": "",
         "type": "string",
         "default": "IP address not allowed"
+      },
+      "client_ip_sources": {
+        "description": "Specifies how to get the client IP and in which order the options are tried",
+        "type": "array",
+        "default": ["last_caller"],
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "anyOf": [
+            {
+              "enum": ["X-Forwarded-For"],
+              "title": "Get the IP from the X-Forwarded-For header (first IP of the list)"
+            },
+            {
+              "enum": ["X-Real-IP"],
+              "title": "Get the IP from the X-Real-IP header"
+            },
+            {
+              "enum": ["last_caller"],
+              "title": "Use the IP of the last caller"
+            }
+          ]
+        }
       }
     },
     "required": ["ips", "check_type"]

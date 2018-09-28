@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Handles properly policies that raise an error when initialized [PR #911](https://github.com/3scale/apicast/pull/911), [THREESCALE-1332](https://issues.jboss.org/browse/THREESCALE-1332)
+- IP check policy. This policy allows to accept or deny requests based on the IP [PR #907](https://github.com/3scale/apicast/pull/907)
 
 ## [3.3.0-cr1] - 2018-09-14
 

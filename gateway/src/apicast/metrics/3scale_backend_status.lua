@@ -7,7 +7,7 @@ local _M = {}
 
 local backend_response_metric = prometheus(
   'counter',
-  'backend_response',
+  'threescale_backend_response',
   "Response status codes from 3scale's backend",
   { 'status' }
 )

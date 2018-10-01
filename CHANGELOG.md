@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Prometheus metrics for the 3scale batching policy [PR #902](https://github.com/3scale/apicast/pull/902)
 - Support for path in the upstream URL [PR #905](https://github.com/3scale/apicast/pull/905)
 
+### Changed
+
+- Renamed the `backend_response` Prometheus metric to `threescale_backend_response` to avoid confusion with the upstream response [PR #917](https://github.com/3scale/apicast/pull/917)
+
 ## [3.3.0-cr2] - 2018-09-25
 
 ### Fixed

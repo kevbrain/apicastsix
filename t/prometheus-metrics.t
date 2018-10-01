@@ -108,13 +108,13 @@ that does not include the nginx metrics (tested in the previous test).
 --- response_body eval
 [ "yay, api backend\x{0a}", "yay, api backend\x{0a}", "Authentication failed", "Authentication failed",
 <<'METRICS_OUTPUT'
-# HELP backend_response Response status codes from 3scale's backend
-# TYPE backend_response counter
-backend_response{status="2xx"} 2
-backend_response{status="4xx"} 2
 # HELP nginx_metric_errors_total Number of nginx-lua-prometheus errors
 # TYPE nginx_metric_errors_total counter
 nginx_metric_errors_total 0
+# HELP threescale_backend_response Response status codes from 3scale's backend
+# TYPE threescale_backend_response counter
+threescale_backend_response{status="2xx"} 2
+threescale_backend_response{status="4xx"} 2
 METRICS_OUTPUT
 ]
 --- no_error_log
@@ -174,9 +174,6 @@ We use and env file without the nginx metrics to simplify the output of the
 --- response_body eval
 [ "yay, api backend\x{0a}", "yay, api backend\x{0a}", "yay, api backend\x{0a}",
 <<'METRICS_OUTPUT'
-# HELP backend_response Response status codes from 3scale's backend
-# TYPE backend_response counter
-backend_response{status="2xx"} 1
 # HELP batching_policy_auths_cache_hits Hits in the auths cache of the 3scale batching policy
 # TYPE batching_policy_auths_cache_hits counter
 batching_policy_auths_cache_hits 2
@@ -186,6 +183,9 @@ batching_policy_auths_cache_misses 1
 # HELP nginx_metric_errors_total Number of nginx-lua-prometheus errors
 # TYPE nginx_metric_errors_total counter
 nginx_metric_errors_total 0
+# HELP threescale_backend_response Response status codes from 3scale's backend
+# TYPE threescale_backend_response counter
+threescale_backend_response{status="2xx"} 1
 METRICS_OUTPUT
 ]
 --- no_error_log

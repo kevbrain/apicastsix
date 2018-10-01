@@ -243,9 +243,13 @@ local function generate_client_method(client, method_or_format)
   return add_http_method(client, method_or_format) or chain_serializer(client, method_or_format)
 end
 
+function http.backend()
+  return resty_backend
+end
+
 function http.new(client)
   client = client or { }
-  client.backend = client.backend or resty_backend
+  client.backend = client.backend or http.backend()
 
   return setmetatable(client, { __index  = generate_client_method  })
 end

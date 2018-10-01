@@ -131,3 +131,21 @@ _G.fixture = function (...)
 
    return file.read(path.join('spec', 'fixtures', ...))
 end
+
+do -- stub http_ng
+  local http_ng = require('resty.http_ng')
+  local test_backend_client = require 'resty.http_ng.backend.test'
+  local test_backend
+  local stub = require('luassert.stub')
+  local stubbed
+
+  busted.before_each(function()
+    test_backend = test_backend_client.new()
+    stubbed = stub(http_ng, 'backend', test_backend)
+  end)
+
+  busted.after_each(function()
+    test_backend.verify_no_outstanding_expectations()
+    stubbed:revert()
+  end)
+end

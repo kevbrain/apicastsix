@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Prometheus metrics for the 3scale batching policy [PR #902](https://github.com/3scale/apicast/pull/902)
 - Support for path in the upstream URL [PR #905](https://github.com/3scale/apicast/pull/905)
+- OIDC Authentication policy (only useable directly by the configuration file) [PR #904](https://github.com/3scale/apicast/pull/904)
 
 ## [3.3.0-cr2] - 2018-09-25
 

@@ -1,12 +1,12 @@
 local http_ng = require 'resty.http_ng'
 local fake_backend = require 'fake_backend_helper'
-
+local resty_backend = require 'resty.http_ng.backend.resty'
 
 describe('http_ng', function()
   local http, backend
   before_each(function()
     backend = fake_backend.new()
-    http = http_ng.new({backend = backend})
+    http = http_ng.new{ backend = backend }
   end)
 
   for _,method in ipairs{ 'get', 'head', 'options', 'delete' } do
@@ -210,7 +210,7 @@ describe('http_ng', function()
   describe('when there is no error', function()
     local response
     before_each(function()
-      http = http_ng.new{}
+      http = http_ng.new{ backend = resty_backend }
       response = http.get('http://127.0.0.1:1984')
     end)
 
@@ -226,7 +226,7 @@ describe('http_ng', function()
   describe('when there is error #network', function()
     local response
     before_each(function()
-      http = http_ng.new{}
+      http = http_ng.new{ backend = resty_backend }
       response = http.get('http://127.0.0.1:1')
     end)
 
@@ -242,7 +242,7 @@ describe('http_ng', function()
   describe('works with api.twitter.com #network', function()
 
     it('connects #twitter', function()
-      local client = http_ng.new{}
+      local client = http_ng.new{ backend = resty_backend }
       local response = client.get('http://api.twitter.com/')
       assert(response.ok, 'response is not ok')
     end)

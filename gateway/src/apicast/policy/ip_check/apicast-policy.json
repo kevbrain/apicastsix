@@ -1,0 +1,68 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "IP check",
+  "summary": "Accepts or denies a request based on the IP.",
+  "description": [
+    "Accepts or denies requests according to a whitelist or a blacklist of ",
+    "IPs. \n",
+    "In the configuration, both single IPs (like 172.18.0.1) and CIDR ",
+    "ranges (like 172.18.0.0/16) can be used."
+  ],
+  "version": "builtin",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "check_type": {
+        "description": "The type of check to apply",
+        "type": "string",
+        "oneOf": [
+          {
+            "enum": ["blacklist"],
+            "title": "Block the IPs included in the list"
+          },
+          {
+            "enum": ["whitelist"],
+            "title": "Allow only the IPs included in the list"
+          }
+        ]
+      },
+      "ips": {
+        "description": "List of IPs",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "error_msg": {
+        "description": "",
+        "type": "string",
+        "default": "IP address not allowed"
+      },
+      "client_ip_sources": {
+        "description": "Specifies how to get the client IP and in which order the options are tried",
+        "type": "array",
+        "default": ["last_caller"],
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "anyOf": [
+            {
+              "enum": ["X-Forwarded-For"],
+              "title": "Get the IP from the X-Forwarded-For header (first IP of the list)"
+            },
+            {
+              "enum": ["X-Real-IP"],
+              "title": "Get the IP from the X-Real-IP header"
+            },
+            {
+              "enum": ["last_caller"],
+              "title": "Use the IP of the last caller"
+            }
+          ]
+        }
+      }
+    },
+    "required": ["ips", "check_type"]
+  }
+}

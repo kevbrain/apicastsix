@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Support for path in the upstream URL [PR #905](https://github.com/3scale/apicast/pull/905)
 - OIDC Authentication policy (only useable directly by the configuration file) [PR #904](https://github.com/3scale/apicast/pull/904)
 
+### Changed
+
+- Renamed the `backend_response` Prometheus metric to `threescale_backend_response` to avoid confusion with the upstream response [PR #917](https://github.com/3scale/apicast/pull/917)
+
 ## [3.3.0-cr2] - 2018-09-25
 
 ### Fixed

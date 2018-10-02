@@ -190,3 +190,48 @@ METRICS_OUTPUT
 ]
 --- no_error_log
 [error]
+
+=== TEST 4: the metrics endpoint shows metrics about the upstream
+In particular, it shows the status codes and the response times
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.upstream",
+            "configuration": {
+              "rules": [
+                {
+                  "regex": "/",
+                  "url": "http://test:$TEST_NGINX_SERVER_PORT"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+       ngx.exit(200);
+     }
+  }
+--- request eval
+["GET /", "GET /metrics"]
+--- more_headers eval
+["", "Host: metrics"]
+--- error_code eval
+[ 200, 200 ]
+--- response_body_like eval
+[
+"",
+qr/upstream_resp_times(.|\n)*upstream_status\{status="200"\} 1/
+]
+--- no_error_log
+[error]

@@ -171,102 +171,102 @@ describe('backend client', function()
 
       assert.equal(200, res.status)
     end)
+  end)
 
-    describe('report', function()
-      describe('when the service is configured to use app IDs', function()
-        it('makes the call to backend with the right params', function()
-          local service = configuration.parse_service({
-            id = '42',
-            backend_version = '2',
-            proxy = { backend = { endpoint = 'http://example.com' } },
-            backend_authentication_type = 'auth', backend_authentication_value = 'val'
-          })
+  describe('report', function()
+    describe('when the service is configured to use app IDs', function()
+      it('makes the call to backend with the right params', function()
+        local service = configuration.parse_service({
+          id = '42',
+          backend_version = '2',
+          proxy = { backend = { endpoint = 'http://example.com' } },
+          backend_authentication_type = 'auth', backend_authentication_value = 'val'
+        })
 
-          -- It's tricky to test with several reports because they can go in
-          -- any order in the request.
-          local reports = { { app_id = 'id1', metric = 'm1', value = 1 } }
+        -- It's tricky to test with several reports because they can go in
+        -- any order in the request.
+        local reports = { { app_id = 'id1', metric = 'm1', value = 1 } }
 
-          local transactions = {}
-          transactions["transactions[0][app_id]"] = 'id1'
-          transactions["transactions[0][usage][m1]"] = 1
+        local transactions = {}
+        transactions["transactions[0][app_id]"] = 'id1'
+        transactions["transactions[0][usage][m1]"] = 1
 
-          local reports_batch = ReportsBatch.new(service.id, reports)
+        local reports_batch = ReportsBatch.new(service.id, reports)
 
-          test_backend.expect{
-            url = 'http://example.com/transactions.xml?' ..
-                ngx.encode_args({ auth = service.backend_authentication.value,
-                                  service_id = service.id }),
-            body = ngx.encode_args(transactions)
-          }.respond_with{ status = 200 }
+        test_backend.expect{
+          url = 'http://example.com/transactions.xml?' ..
+              ngx.encode_args({ auth = service.backend_authentication.value,
+                                service_id = service.id }),
+          body = ngx.encode_args(transactions)
+        }.respond_with{ status = 200 }
 
-          local backend_client = assert(_M:new(service, test_backend))
-          local res = backend_client:report(reports_batch)
-          assert.equal(200, res.status)
-        end)
+        local backend_client = assert(_M:new(service, test_backend))
+        local res = backend_client:report(reports_batch)
+        assert.equal(200, res.status)
       end)
+    end)
 
-      describe('when the service is configured to use user keys', function()
-        it('makes the call to backend with the right params', function()
-          local service = configuration.parse_service({
-            id = '42',
-            backend_version = '1',
-            proxy = { backend = { endpoint = 'http://example.com' } },
-            backend_authentication_type = 'auth', backend_authentication_value = 'val'
-          })
+    describe('when the service is configured to use user keys', function()
+      it('makes the call to backend with the right params', function()
+        local service = configuration.parse_service({
+          id = '42',
+          backend_version = '1',
+          proxy = { backend = { endpoint = 'http://example.com' } },
+          backend_authentication_type = 'auth', backend_authentication_value = 'val'
+        })
 
-          -- It's tricky to test with several reports because they can go in
-          -- any order in the request.
-          local reports = { { user_key = 'uk1', metric = 'm1', value = 1 } }
+        -- It's tricky to test with several reports because they can go in
+        -- any order in the request.
+        local reports = { { user_key = 'uk1', metric = 'm1', value = 1 } }
 
-          local transactions = {}
-          transactions["transactions[0][user_key]"] = 'uk1'
-          transactions["transactions[0][usage][m1]"] = 1
+        local transactions = {}
+        transactions["transactions[0][user_key]"] = 'uk1'
+        transactions["transactions[0][usage][m1]"] = 1
 
-          local reports_batch = ReportsBatch.new(service.id, reports)
+        local reports_batch = ReportsBatch.new(service.id, reports)
 
-          test_backend.expect{
-            url = 'http://example.com/transactions.xml?' ..
-                ngx.encode_args({ auth = service.backend_authentication.value,
-                                  service_id = service.id }),
-            body = ngx.encode_args(transactions)
-          }.respond_with{ status = 200 }
+        test_backend.expect{
+          url = 'http://example.com/transactions.xml?' ..
+              ngx.encode_args({ auth = service.backend_authentication.value,
+                                service_id = service.id }),
+          body = ngx.encode_args(transactions)
+        }.respond_with{ status = 200 }
 
-          local backend_client = assert(_M:new(service, test_backend))
-          local res = backend_client:report(reports_batch)
-          assert.equal(200, res.status)
-        end)
+        local backend_client = assert(_M:new(service, test_backend))
+        local res = backend_client:report(reports_batch)
+        assert.equal(200, res.status)
       end)
+    end)
 
-      describe('when the service is configured to use oauth tokens', function()
-        it('makes the call to backend with the right params', function()
-          local service = configuration.parse_service({
-            id = '42',
-            backend_version = 'oauth',
-            proxy = { backend = { endpoint = 'http://example.com' } },
-            backend_authentication_type = 'auth', backend_authentication_value = 'val'
-          })
+    describe('when the service is configured to use oauth tokens', function()
+      it('makes the call to backend with the right params', function()
+        local service = configuration.parse_service({
+          id = '42',
+          backend_version = 'oauth',
+          proxy = { backend = { endpoint = 'http://example.com' } },
+          backend_authentication_type = 'auth', backend_authentication_value = 'val'
+        })
 
-          -- It's tricky to test with several reports because they can go in
-          -- any order in the request.
-          local reports = { { access_token = 'token', metric = 'm1', value = 1 } }
+        -- It's tricky to test with several reports because they can go in
+        -- any order in the request.
+        local reports = { { access_token = 'token', metric = 'm1', value = 1 } }
 
-          local transactions = {}
-          transactions["transactions[0][access_token]"] = 'token'
-          transactions["transactions[0][usage][m1]"] = 1
+        local transactions = {}
+        transactions["transactions[0][access_token]"] = 'token'
+        transactions["transactions[0][usage][m1]"] = 1
 
-          local reports_batch = ReportsBatch.new(service.id, reports)
+        local reports_batch = ReportsBatch.new(service.id, reports)
 
-          test_backend.expect{
-            url = 'http://example.com/transactions.xml?' ..
-                ngx.encode_args({ auth = service.backend_authentication.value,
-                                  service_id = service.id }),
-            body = ngx.encode_args(transactions)
-          }.respond_with{ status = 200 }
+        test_backend.expect{
+          url = 'http://example.com/transactions.xml?' ..
+              ngx.encode_args({ auth = service.backend_authentication.value,
+                                service_id = service.id }),
+          body = ngx.encode_args(transactions)
+        }.respond_with{ status = 200 }
 
-          local backend_client = assert(_M:new(service, test_backend))
-          local res = backend_client:report(reports_batch)
-          assert.equal(200, res.status)
-        end)
+        local backend_client = assert(_M:new(service, test_backend))
+        local res = backend_client:report(reports_batch)
+        assert.equal(200, res.status)
       end)
     end)
   end)

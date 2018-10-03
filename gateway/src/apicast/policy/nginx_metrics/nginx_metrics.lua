@@ -9,6 +9,8 @@ local select = select
 local find = string.find
 local pairs = pairs
 
+local upstream_metrics = require('apicast.metrics.upstream')
+
 local new = _M.new
 
 local log_levels_list = {
@@ -108,6 +110,10 @@ function _M:metrics()
   for name,dict in pairs(ngx.shared) do
     metrics_updater.set(shdict_free_space_metric, dict:free_space(), name)
   end
+end
+
+function _M.log()
+  upstream_metrics.report(ngx.var.upstream_status, ngx.var.upstream_response_time)
 end
 
 return _M

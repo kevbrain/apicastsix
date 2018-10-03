@@ -1,7 +1,8 @@
 local _M = require('apicast.backend_client')
 local configuration = require('apicast.configuration')
-local test_backend_client = require 'resty.http_ng.backend.test'
+local http_ng = require 'resty.http_ng'
 local ReportsBatch = require 'apicast.policy.3scale_batcher.reports_batch'
+local backend_calls_metrics = require 'apicast.metrics.3scale_backend_calls'
 
 describe('backend client', function()
 
@@ -9,7 +10,10 @@ describe('backend client', function()
   local options_header_oauth = 'rejection_reason_header=1'
   local options_header_no_oauth = 'rejection_reason_header=1&no_body=1'
 
-  before_each(function() test_backend = test_backend_client.new() end)
+  before_each(function()
+    test_backend = http_ng.backend()
+    stub(backend_calls_metrics, 'report')
+  end)
 
   describe('authrep', function()
     it('works without params', function()
@@ -89,6 +93,17 @@ describe('backend client', function()
       local res = backend_client:authrep()
 
       assert.equal(200, res.status)
+    end)
+
+    it('reports the call with the status', function()
+      local service = configuration.parse_service({ id = '42' })
+      local status = 200
+      test_backend.expect({}).respond_with({ status = status })
+      local backend_client = assert(_M:new(service, test_backend))
+
+      backend_client:authrep()
+
+      assert.stub(backend_calls_metrics.report).was_called_with('authrep', status)
     end)
   end)
 
@@ -170,6 +185,17 @@ describe('backend client', function()
       local res = backend_client:authorize()
 
       assert.equal(200, res.status)
+    end)
+
+    it('reports the call with the status', function()
+      local service = configuration.parse_service({ id = '42' })
+      local status = 200
+      test_backend.expect({}).respond_with({ status = status })
+      local backend_client = assert(_M:new(service, test_backend))
+
+      backend_client:authorize()
+
+      assert.stub(backend_calls_metrics.report).was_called_with('auth', status)
     end)
   end)
 
@@ -268,6 +294,17 @@ describe('backend client', function()
         local res = backend_client:report(reports_batch)
         assert.equal(200, res.status)
       end)
+    end)
+
+    it('reports the call with the status', function()
+      local service = configuration.parse_service({ id = '42' })
+      local status = 200
+      test_backend.expect({}).respond_with({ status = status })
+      local backend_client = assert(_M:new(service, test_backend))
+
+      backend_client:report(ReportsBatch.new(service.id, {}))
+
+      assert.stub(backend_calls_metrics.report).was_called_with('report', status)
     end)
   end)
 

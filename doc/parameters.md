@@ -118,7 +118,7 @@ When this parameter is set to _true_, the gateway will use path-based routing in
 
 **Default**: `APICAST_DIR/policies`  
 **Value:**: string\[:<string>\]  
-**Example**: ~/apicast/policies:$PWD/policies
+**Example**: `~/apicast/policies:$PWD/policies`
 
 Double colon (`:`) separated list of paths where APIcast should look for policies.
 It can be used to first load policies from a development directory or to load examples.
@@ -314,14 +314,34 @@ Path to a file with X.509 certificate in the PEM format for HTTPS.
 
 Path to a file with the X.509 certificate secret key in the PEM format.
 
+### `all_proxy`, `ALL_PROXY`
+
+**Default:** no value
+**Value:** string  
+**Example:** `http://forward-proxy:80`
+
+Defines a HTTP proxy to be used for connecting to services if a protocol-specific proxy is not specified. Authentication is not supported.
+
 ### `http_proxy`, `HTTP_PROXY`
 
 **Default:** no value
+**Value:** string  
+**Example:** `http://forward-proxy:80`
 
-Defines a HTTP proxy to be used for connecting to HTTP services.
+Defines a HTTP proxy to be used for connecting to HTTP services. Authentication is not supported.
 
 ### `https_proxy`, `HTTPS_PROXY`
 
 **Default:** no value
+**Value:** string  
+**Example:** `http://forward-proxy:80`
 
-Defines a HTTPS (TLS) proxy to be used for connecting to HTTPS services.
+Defines a HTTP proxy to be used for connecting to HTTPS services. Authentication is not supported.
+
+### `no_proxy`, `NO_PROXY`
+
+**Default:** no value
+**Values:** string\[,<string>\]; `*`  
+**Example:** `foo,bar.com,.extra.dot.com`
+
+Defines a comma-separated list of hostnames and domain names for which the requests should not be proxied. Setting to a single `*` character, which matches all hosts, effectively disables the proxy.

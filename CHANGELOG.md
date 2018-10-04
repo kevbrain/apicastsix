@@ -10,11 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Prometheus metrics for: the 3scale batching policy and the upstream API [PR #902](https://github.com/3scale/apicast/pull/902), [PR #918](https://github.com/3scale/apicast/pull/918)
 - Support for path in the upstream URL [PR #905](https://github.com/3scale/apicast/pull/905)
-- OIDC Authentication policy (only useable directly by the configuration file) [PR #904](https://github.com/3scale/apicast/pull/904)
+- OIDC Authentication policy (only usable directly by the configuration file) [PR #904](https://github.com/3scale/apicast/pull/904)
 
 ### Changed
 
-- Renamed the `backend_response` Prometheus metric to `threescale_backend_response` to avoid confusion with the upstream response [PR #917](https://github.com/3scale/apicast/pull/917)
+- The `threescale_backend_calls` Prometheus metric now includes the response (used to be in `backend_response`) and also the kind of call (auth, authrep, report)[PR #919](https://github.com/3scale/apicast/pull/919)
 
 ## [3.3.0-cr2] - 2018-09-25
 

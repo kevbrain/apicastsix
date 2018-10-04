@@ -21,8 +21,10 @@ Resilient will do so only on getting authorization denied from backend.
 **Values:** _a number_  
 **Default:** 0
 
-Specifies the interval (in seconds) that the configuration will be stored for. The value should be set to 0 (not compatible with boot value of `APICAST_CONFIGURATION_LOADER`) or more than 60. For example, if `APICAST_CONFIGURATION_CACHE` is set to 120, the gateway will reload the configuration from the API manager every 2 minutes (120 seconds).
-A value < 0 disables reloading.
+Specifies the period (in seconds) that the configuration will be stored in the cache for. Can take the following values:
+- `0`: disables the cache. The configuration will not be not stored. This is not compatible with `boot` mode of `APICAST_CONFIGURATION_LOADER` parameter. When used together with `lazy` value of `APICAST_CONFIGURATION_LOADER`, APIcast will reload the configuration on every request.
+- a positive number ( > 0 ): specifies the interval in seconds between configuration reload. For example, when APIcast is started with `APICAST_CONFIGURATION_CACHE=300` and `APICAST_CONFIGURATION_CACHE=boot`, it will load the configuration on boot, and will reload it every 5 minutes (300 seconds).
+- a negative number ( < 0 ): disables reloading. The cache entries will never be removed from the cache once stored, and the configuration will never be reloaded.
 
 ### `APICAST_CONFIGURATION_LOADER`
 
@@ -30,8 +32,8 @@ A value < 0 disables reloading.
 **Default:** lazy
 
 Defines how to load the configuration.
-Boot will request the configuration to the API manager when the gateway starts.
-Lazy will load it on demand for each incoming request (to guarantee a complete refresh on each request `APICAST_CONFIGURATION_CACHE` should be 0).
+In `boot` mode APIcast will request the configuration to the API manager when the gateway starts.
+In `lazy` mode APIcast will load the configuration on demand for each incoming request (to guarantee a complete refresh on each request `APICAST_CONFIGURATION_CACHE` should be set to `0`).
 
 ### `APICAST_CUSTOM_CONFIG`
 

@@ -20,7 +20,7 @@ local http_ng = require('resty.http_ng')
 local user_agent = require('apicast.user_agent')
 local resty_url = require('resty.url')
 local resty_env = require('resty.env')
-local threescale_backend_status_counters = require('apicast.metrics.3scale_backend_status')
+local backend_calls_metrics = require('apicast.metrics.3scale_backend_calls')
 
 local http_proxy = require('resty.http.proxy')
 local http_ng_ngx = require('resty.http_ng.backend.ngx')
@@ -98,8 +98,8 @@ function _M:new(service, http_client)
   }, mt)
 end
 
-local function inc_backend_status_metric(status)
-  threescale_backend_status_counters.inc(status)
+local function inc_metrics(endpoint, status)
+  backend_calls_metrics.report(endpoint, status)
 end
 
 local function build_args(args)
@@ -137,8 +137,6 @@ local function call_backend_transaction(self, path, options, ...)
   local res = http_client.get(url, options)
 
   ngx.log(ngx.INFO, 'backend client uri: ', url, ' ok: ', res.ok, ' status: ', res.status, ' body: ', res.body, ' error: ', res.error)
-
-  inc_backend_status_metric(res.status)
 
   return res
 end
@@ -213,7 +211,11 @@ function _M:authrep(...)
 
   local using_oauth = self.version == 'oauth'
   local auth_uri = authrep_path(using_oauth)
-  return call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
+  local res = call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
+
+  inc_metrics('authrep', res.status)
+
+  return res
 end
 
 --- Call authorize (oauth_authorize) on backend.
@@ -226,7 +228,11 @@ function _M:authorize(...)
 
   local using_oauth = self.version == 'oauth'
   local auth_uri = auth_path(using_oauth)
-  return call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
+  local res = call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
+
+  inc_metrics('auth', res.status)
+
+  return res
 end
 
 function _M:report(reports_batch)
@@ -236,7 +242,7 @@ function _M:report(reports_batch)
   local report_body = format_transactions(reports_batch)
   local res = http_client.post(report_uri, report_body)
 
-  inc_backend_status_metric(res.status)
+  inc_metrics('report', res.status)
 
   return res
 end

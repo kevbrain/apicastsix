@@ -111,10 +111,10 @@ that does not include the nginx metrics (tested in the previous test).
 # HELP nginx_metric_errors_total Number of nginx-lua-prometheus errors
 # TYPE nginx_metric_errors_total counter
 nginx_metric_errors_total 0
-# HELP threescale_backend_response Response status codes from 3scale's backend
-# TYPE threescale_backend_response counter
-threescale_backend_response{status="2xx"} 2
-threescale_backend_response{status="4xx"} 2
+# HELP threescale_backend_calls Calls to the 3scale backend
+# TYPE threescale_backend_calls counter
+threescale_backend_calls{endpoint="authrep",status="2xx"} 2
+threescale_backend_calls{endpoint="authrep",status="4xx"} 2
 METRICS_OUTPUT
 ]
 --- no_error_log
@@ -183,9 +183,9 @@ batching_policy_auths_cache_misses 1
 # HELP nginx_metric_errors_total Number of nginx-lua-prometheus errors
 # TYPE nginx_metric_errors_total counter
 nginx_metric_errors_total 0
-# HELP threescale_backend_response Response status codes from 3scale's backend
-# TYPE threescale_backend_response counter
-threescale_backend_response{status="2xx"} 1
+# HELP threescale_backend_calls Calls to the 3scale backend
+# TYPE threescale_backend_calls counter
+threescale_backend_calls{endpoint="auth",status="2xx"} 1
 METRICS_OUTPUT
 ]
 --- no_error_log

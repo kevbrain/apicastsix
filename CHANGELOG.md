@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - The `threescale_backend_calls` Prometheus metric now includes the response (used to be in `backend_response`) and also the kind of call (auth, authrep, report)[PR #919](https://github.com/3scale/apicast/pull/919)
 
+## [3.3.0] - 2018-10-05
+
+`3.3.0-cr2` was considered final and became `3.3.0`.
+
+- The configuration schema of the rate-limit policy has changed from `3.2.0` so
+if you were using it, please adapt your configuration file accordingly.
+- The Native OAuth 2.0 flow is deprecated. Please consider using the OIDC
+integration instead.
+- The new conditional policy is considered experimental. The way conditions are
+expressed might change in future releases.
+
 ## [3.3.0-cr2] - 2018-09-25
 
 ### Fixed
@@ -511,7 +522,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.3.0-cr2...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.3.0...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -538,3 +549,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [3.3.0-beta2]: https://github.com/3scale/apicast/compare/v3.3.0-beta1...v3.3.0-beta2
 [3.3.0-cr1]: https://github.com/3scale/apicast/compare/v3.3.0-beta2...v3.3.0-cr1
 [3.3.0-cr2]: https://github.com/3scale/apicast/compare/v3.3.0-cr1...v3.3.0-cr2
+[3.3.0]: https://github.com/3scale/apicast/compare/v3.3.0-cr2...v3.3.0

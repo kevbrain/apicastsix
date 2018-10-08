@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Prometheus metrics for: the 3scale batching policy and the upstream API [PR #902](https://github.com/3scale/apicast/pull/902), [PR #918](https://github.com/3scale/apicast/pull/918)
 - Support for path in the upstream URL [PR #905](https://github.com/3scale/apicast/pull/905)
 - OIDC Authentication policy (only usable directly by the configuration file) [PR #904](https://github.com/3scale/apicast/pull/904)
+- IP check policy. This policy allows to accept or deny requests based on the IP [PR #907](https://github.com/3scale/apicast/pull/907), [PR #923](https://github.com/3scale/apicast/pull/923), [THREESCALE-1353](https://issues.jboss.org/browse/THREESCALE-1353)
 - Delete operation in the headers policy [PR #928](https://github.com/3scale/apicast/pull/928), [THREESCALE-1354](https://issues.jboss.org/browse/THREESCALE-1354)
 
 ### Changed
@@ -37,7 +38,6 @@ expressed might change in future releases.
 ### Fixed
 
 - Handles properly policies that raise an error when initialized [PR #911](https://github.com/3scale/apicast/pull/911), [THREESCALE-1332](https://issues.jboss.org/browse/THREESCALE-1332)
-- IP check policy. This policy allows to accept or deny requests based on the IP [PR #907](https://github.com/3scale/apicast/pull/907)
 
 ## [3.3.0-cr1] - 2018-09-14
 

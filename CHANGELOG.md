@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix `APICAST_PROXY_HTTPS_PASSWORD_FILE` and `APICAST_PROXY_HTTPS_SESSION_REUSE` parameters for Mutual SSL [PR #927](https://github.com/3scale/apicast/pull/927)
+
 ### Added
 
 - Prometheus metrics for: the 3scale batching policy and the upstream API [PR #902](https://github.com/3scale/apicast/pull/902), [PR #918](https://github.com/3scale/apicast/pull/918)

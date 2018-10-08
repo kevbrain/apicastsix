@@ -59,16 +59,26 @@ local function add_resp_header(header_name, value)
   end
 end
 
+local function delete_request_header(header_name)
+  ngx.req.clear_header(header_name)
+end
+
+local function delete_resp_header(header_name)
+  ngx.header[header_name] = nil
+end
+
 local command_functions = {
   request = {
     push = push_request_header,
     add = add_request_header,
-    set = set_request_header
+    set = set_request_header,
+    delete = delete_request_header
   },
   response = {
     push = push_resp_header,
     add = add_resp_header,
-    set = set_resp_header
+    set = set_resp_header,
+    delete = delete_resp_header
   }
 }
 
@@ -103,7 +113,7 @@ end
 -- @field[opt] request Table with the operations to apply to the request headers
 -- @field[opt] response Table with the operations to apply to the response headers
 -- Each operation is a table with three elements:
---   1) op: can be 'add', 'set' or 'push'.
+--   1) op: can be 'add', 'set', 'push' or 'delete'.
 --   2) header
 --   3) value
 --   4) value_type (can be 'liquid' or 'plain'). Defaults to 'plain'.
@@ -119,6 +129,8 @@ end
 --   1) When the header is not set, it does nothing.
 --   2) When the header is set, it creates a new header with the same name and
 --      the given value.
+-- The delete operation:
+--   1) Deletes a header when it is set.
 function _M.new(config)
   local self = new(config)
   self.config = init_config(config)

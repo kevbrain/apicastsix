@@ -48,6 +48,31 @@ describe('Headers policy', function()
 
         assert.same({ '1', '2', '3' }, ngx.req.get_headers()[header])
       end)
+
+      describe('when no value is provided', function()
+        describe('and the header is not set', function()
+          it('does not create it', function()
+            local config = { [request_headers] = { { op = push, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:rewrite()
+
+            assert.is_nil(ngx.req.get_headers()[header])
+          end)
+        end)
+
+        describe('and the header is set', function()
+          it('does not add a nil value to the header', function()
+            ngx_req_headers[header] = { '1', '2' }
+            local config = { [request_headers] = { { op = push, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:rewrite()
+
+            assert.same({ '1', '2' }, ngx.req.get_headers()[header])
+          end)
+        end)
+      end)
     end)
 
     describe('the set operation', function()
@@ -71,6 +96,31 @@ describe('Headers policy', function()
 
         assert.same('2', ngx.req.get_headers()[header])
       end)
+
+      describe('when no value is provided', function()
+        describe('and the header is not set', function()
+          it('does not create it', function()
+            local config = { [request_headers] = { { op = set, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:rewrite()
+
+            assert.is_nil(ngx.req.get_headers()[header])
+          end)
+        end)
+
+        describe('and the header is already set', function()
+          it('deletes it', function()
+            ngx_req_headers[header] = '1'
+            local config = { [request_headers] = { { op = set, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:rewrite()
+
+            assert.is_nil(ngx.req.get_headers()[header])
+          end)
+        end)
+      end)
     end)
 
     describe('the add operation', function()
@@ -93,6 +143,31 @@ describe('Headers policy', function()
         headers_policy:rewrite()
 
         assert.same({ '1', '2', '3' }, ngx.req.get_headers()[header])
+      end)
+
+      describe('when no value is provided', function()
+        describe('and the header is not set', function()
+          it('does not create it', function()
+            local config = { [request_headers] = { { op = add, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:rewrite()
+
+            assert.is_nil(ngx.req.get_headers()[header])
+          end)
+        end)
+
+        describe('and the header is set', function()
+          it('does not add a nil value to the header', function()
+            ngx_req_headers[header] = { '1', '2' }
+            local config = { [request_headers] = { { op = add, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:rewrite()
+
+            assert.same({ '1', '2' }, ngx.req.get_headers()[header])
+          end)
+        end)
       end)
     end)
 
@@ -226,6 +301,31 @@ describe('Headers policy', function()
 
         assert.same({ '1', '2', '3' }, ngx.header[header])
       end)
+
+      describe('when no value is provided', function()
+        describe('and the header is not set', function()
+          it('does not create it', function()
+            local config = { [response_headers] = { { op = push, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:header_filter()
+
+            assert.is_nil(ngx.header[header])
+          end)
+        end)
+
+        describe('and the header is set', function()
+          it('does not add a nil value to the header', function()
+            ngx.header[header] = { '1', '2' }
+            local config = { [response_headers] = { { op = push, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:header_filter()
+
+            assert.same({ '1', '2' }, ngx.header[header])
+          end)
+        end)
+      end)
     end)
 
     describe('the set operation', function()
@@ -249,6 +349,31 @@ describe('Headers policy', function()
 
         assert.same('2', ngx.header[header])
       end)
+
+      describe('when no value is provided', function()
+        describe('and the header is not set', function()
+          it('does not create it', function()
+            local config = { [response_headers] = { { op = set, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:header_filter()
+
+            assert.is_nil(ngx.header[header])
+          end)
+        end)
+
+        describe('and the header is already set', function()
+          it('deletes it', function()
+            ngx.header[header] = '1'
+            local config = { [response_headers] = { { op = set, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:header_filter()
+
+            assert.is_nil(ngx.header[header])
+          end)
+        end)
+      end)
     end)
 
     describe('the add operation', function()
@@ -271,6 +396,31 @@ describe('Headers policy', function()
         headers_policy:header_filter()
 
         assert.same({ '1', '2', '3' }, ngx.header[header])
+      end)
+
+      describe('when no value is provided', function()
+        describe('and the header is not set', function()
+          it('does not create it', function()
+            local config = { [response_headers] = { { op = add, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:header_filter()
+
+            assert.is_nil(ngx.header[header])
+          end)
+        end)
+
+        describe('and the header is set', function()
+          it('does not add a nil value to the header', function()
+            ngx.header[header] = { '1', '2' }
+            local config = { [response_headers] = { { op = add, header = header } } }
+            local headers_policy = HeadersPolicy.new(config)
+
+            headers_policy:header_filter()
+
+            assert.same({ '1', '2' }, ngx.header[header])
+          end)
+        end)
       end)
     end)
 

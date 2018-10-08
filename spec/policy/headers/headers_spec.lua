@@ -16,14 +16,15 @@ describe('Headers policy', function()
     local ngx_req_headers = {}
 
     before_each(function()
-      -- ngx.req.get_headers and ngx.set_headers are not available in these tests
-      -- so we need to mock them.
+      -- ngx.req.get_headers, ngx.set_headers and ngx.req.clear_header are not
+      -- available in these tests, so we need to mock them.
       -- Note: ngx.req_headers()['some_header'] can return a single value or a
       -- table.
 
       ngx_req_headers = {}
       stub(ngx.req, 'get_headers', function() return ngx_req_headers end)
       stub(ngx.req, 'set_header', function(name, value) ngx_req_headers[name] = value end)
+      stub(ngx.req, 'clear_header', function(name) ngx_req_headers[name] = nil end)
     end)
 
     describe('the push operation', function()
@@ -92,6 +93,39 @@ describe('Headers policy', function()
         headers_policy:rewrite()
 
         assert.same({ '1', '2', '3' }, ngx.req.get_headers()[header])
+      end)
+    end)
+
+    describe('the delete operation', function()
+      local delete = 'delete'
+
+      it('does nothing when the header is not set', function()
+        local config = { [request_headers] = { { op = delete, header = header } } }
+        local headers_policy = HeadersPolicy.new(config)
+
+        headers_policy:rewrite()
+
+        assert.is_nil(ngx.req.get_headers()[header])
+      end)
+
+      it('deletes the header when it is set', function()
+        ngx_req_headers[header] = { 'some_value' }
+        local config = { [request_headers] = { { op = delete, header = header } } }
+        local headers_policy = HeadersPolicy.new(config)
+
+        headers_policy:rewrite()
+
+        assert.is_nil(ngx.req.get_headers()[header])
+      end)
+
+      it('ignores the value when provided', function()
+        ngx_req_headers[header] = { 'some_value' }
+        local config = { [request_headers] = { { op = delete, header = header, value = '1' } } }
+        local headers_policy = HeadersPolicy.new(config)
+
+        headers_policy:rewrite()
+
+        assert.is_nil(ngx.req.get_headers()[header])
       end)
     end)
 
@@ -237,6 +271,39 @@ describe('Headers policy', function()
         headers_policy:header_filter()
 
         assert.same({ '1', '2', '3' }, ngx.header[header])
+      end)
+    end)
+
+    describe('the delete operation', function()
+      local delete = 'delete'
+
+      it('does nothing then the header is not set', function()
+        local config = { [response_headers] = { { op = delete, header = header } } }
+        local headers_policy = HeadersPolicy.new(config)
+
+        headers_policy:header_filter()
+
+        assert.is_nil(ngx.header[header])
+      end)
+
+      it('deletes the header when it is set', function()
+        ngx.header[header] = { 'some_value' }
+        local config = { [response_headers] = { { op = delete, header = header } } }
+        local headers_policy = HeadersPolicy.new(config)
+
+        headers_policy:header_filter()
+
+        assert.is_nil(ngx.header[header])
+      end)
+
+      it('ignores the value when provided', function()
+        ngx.header[header] = { 'some_value' }
+        local config = { [response_headers] = { { op = delete, header = header, value = '1' } } }
+        local headers_policy = HeadersPolicy.new(config)
+
+        headers_policy:header_filter()
+
+        assert.is_nil(ngx.header[header])
       end)
     end)
 

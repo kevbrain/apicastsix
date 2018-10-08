@@ -19,6 +19,8 @@ local _M = policy.new('Headers policy')
 local new = _M.new
 
 local function new_header_value(current_value, value_to_add)
+  if not value_to_add then return current_value end
+
   local new_value = current_value or {}
 
   if type(new_value) == 'string' then

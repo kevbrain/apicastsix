@@ -32,6 +32,10 @@
                 {
                   "enum": ["push"],
                   "title": "Create the header when not set, add the value when set."
+                },
+                {
+                  "enum": ["delete"],
+                  "title": "Delete a header."
                 }
               ]
             },
@@ -40,7 +44,7 @@
               "type": "string"
             },
             "value": {
-              "description": "Value that will be added, set or pushed in the header",
+              "description": "Value that will be added, set or pushed in the header. Not needed when deleting.",
               "type": "string"
             },
             "value_type": {
@@ -59,7 +63,7 @@
               "default": "plain"
             }
           },
-          "required": ["op", "header", "value"]
+          "required": ["op", "header"]
         }
       }
     },

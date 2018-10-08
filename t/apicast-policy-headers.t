@@ -220,7 +220,70 @@ Existing-Header:
 --- no_error_log
 [error]
 
-=== TEST 4: 'set' operation in response headers
+=== TEST 4: 'delete' operation in request headers
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+    }
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          { "name": "apicast.policy.apicast" },
+          {
+            "name": "apicast.policy.headers",
+            "configuration":
+              {
+                "request":
+                  [
+                    { "op": "delete", "header": "Non-Existing-Header" },
+                    { "op": "delete", "header": "Existing-Header" }
+                  ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+       local assert = require('luassert')
+       assert.is_nil(ngx.req.get_headers()['Existing-Header'])
+       local header_not_to_be_deleted = ngx.req.get_headers()['Header-Not-To-Be-Deleted']
+       assert.same('another_value', header_not_to_be_deleted)
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /?user_key=value
+--- more_headers
+Existing-Header: some_value
+Header-Not-To-Be-Deleted: another_value
+--- response_body
+yay, api backend
+--- response_headers
+Existing-Header:
+Header-Not-To-Be-Deleted:
+--- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 5: 'set' operation in response headers
 We test 3 things:
 1) Set op with a header that does not exit creates it with the given value.
 2) Set op with a header that exists, clears it and sets the given value.
@@ -284,7 +347,7 @@ Header-To-Delete:
 --- no_error_log
 [error]
 
-=== TEST 5: 'push' operation in response headers
+=== TEST 6: 'push' operation in response headers
 We test 2 things:
 1) Push op with a header that does not exist creates it with the given value.
 2) Push op with a header that exists, creates a new header with the same name
@@ -346,7 +409,7 @@ Header-To-Delete:
 --- no_error_log
 [error]
 
-=== TEST 6: 'add' operation in response headers
+=== TEST 7: 'add' operation in response headers
 We test 3 things:
 1) Add op with a header that does not exist, does not change anything.
 2) Add op with a header that exists, adds a new header with the same name and
@@ -409,7 +472,64 @@ New-Header:
 --- no_error_log
 [error]
 
-=== TEST 7: headers policy without a configuration
+=== TEST 8: 'delete' operation in response headers
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected = "service_token=token-value&service_id=42&usage%5Bhits%5D=2&user_key=value"
+      require('luassert').same(ngx.decode_args(expected), ngx.req.get_uri_args(0))
+    }
+  }
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "backend_authentication_type": "service_token",
+      "backend_authentication_value": "token-value",
+      "proxy": {
+        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          { "name": "apicast.policy.apicast" },
+          {
+            "name": "apicast.policy.headers",
+            "configuration":
+              {
+                "response":
+                  [
+                    { "op": "delete", "header": "Header-Set-In-Upstream" },
+                    { "op": "delete", "header": "Non-Existing-Header" }
+                  ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+       ngx.header['Header-Set-In-Upstream'] = 'upstream_value'
+       ngx.say('yay, api backend')
+     }
+  }
+--- request
+GET /?user_key=value
+--- response_body
+yay, api backend
+--- response_headers
+Header-Set-In-Upstream:
+Non-Existing-Header:
+--- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 9: headers policy without a configuration
 Just to make sure that APIcast does not crash when the policy does not have a
 configuration.
 --- backend
@@ -456,7 +576,7 @@ yay, api backend
 --- no_error_log
 [error]
 
-=== TEST 8: config with liquid templating
+=== TEST 10: config with liquid templating
 Test that we can apply filters and also get values from the policies context
 --- backend
   location /transactions/authrep.xml {
@@ -523,7 +643,7 @@ yay, api backend
 --- no_error_log
 [error]
 
-=== TEST 9: templating with jwt token information
+=== TEST 11: templating with jwt token information
 This tests that the headers policy can send headers with jwt information.
 The APIcast policy stores the jwt in the policies context, so the headers
 policy has access to it.

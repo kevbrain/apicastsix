@@ -5,6 +5,7 @@ local configuration_store = require 'apicast.configuration_store'
 local Service = require 'apicast.configuration.service'
 local Usage = require 'apicast.usage'
 local test_backend_client = require 'resty.http_ng.backend.test'
+local errors = require 'apicast.errors'
 
 describe('Proxy', function()
   local configuration, proxy, test_backend
@@ -124,6 +125,29 @@ describe('Proxy', function()
 
       -- Does not call backend because the call is cached
       assert.stub(test_backend.send).was_not_called()
+    end)
+
+    it('returns "limits exceeded" with the "Retry-After" given by the 3scale backend', function()
+      ngx.header = {}
+      ngx.var = { cached_key = "uk" } -- authorize() expects creds to be set up
+      stub(errors, 'limits_exceeded')
+      local retry_after = 60
+      local usage = Usage.new()
+      usage:add('hits', 1)
+
+      test_backend.expect({}).respond_with(
+        {
+          status = 409,
+          headers = {
+            ['3scale-limit-reset'] = retry_after,
+            ['3scale-rejection-reason'] = 'limits_exceeded'
+          }
+        }
+      )
+
+      proxy:authorize(service, usage, { user_key = 'uk' })
+
+      assert.stub(errors.limits_exceeded).was_called_with(service, retry_after)
     end)
   end)
 

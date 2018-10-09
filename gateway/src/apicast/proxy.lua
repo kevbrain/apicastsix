@@ -153,10 +153,13 @@ function _M:authorize(service, usage, credentials, ttl)
     local backend = build_backend_client(self, service)
     local res = backend:authrep(formatted_usage, credentials, self.extra_params_backend_authrep)
 
-    local authorized, rejection_reason = self:handle_backend_response(cached_key, res, ttl)
+    local authorized, rejection_reason, retry_after = self:handle_backend_response(
+      cached_key, res, ttl
+    )
+
     if not authorized then
       if rejection_reason == 'limits_exceeded' then
-        return errors.limits_exceeded(service)
+        return errors.limits_exceeded(service, retry_after)
       else -- Generic error for now. Maybe return different ones in the future.
         return errors.authorization_failed(service)
       end
@@ -348,6 +351,14 @@ local function rejection_reason(response_headers)
   return response_headers and response_headers['3scale-rejection-reason']
 end
 
+-- Returns the '3scale-limit-reset' from the headers of a 3scale backend
+-- response.
+-- This header is set only when enabled via the '3scale-options' header of the
+-- request.
+local function limit_reset(response_headers)
+  return response_headers and response_headers['3scale-limit-reset']
+end
+
 function _M:handle_backend_response(cached_key, response, ttl)
   ngx.log(ngx.DEBUG, '[backend] response status: ', response.status, ' body: ', response.body)
 
@@ -355,8 +366,9 @@ function _M:handle_backend_response(cached_key, response, ttl)
 
   local authorized = (response.status == 200)
   local unauthorized_reason = not authorized and rejection_reason(response.headers)
+  local retry_after = not authorized and limit_reset(response.headers)
 
-  return authorized, unauthorized_reason
+  return authorized, unauthorized_reason, retry_after
 end
 
 if custom_config then

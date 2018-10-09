@@ -158,15 +158,21 @@ local function create_token_path(service_id)
 end
 
 -- Returns the authorize options that 3scale backend accepts. Those options
--- are specified via headers. Right now there are 2:
+-- are specified via headers:
 --  - rejection_reason_header: asks backend to return why a call is denied
 --    (limits exceeded, application key invalid, etc.)
---  - no_nody: when enabled, backend will not return a response body. The
+--  - no_body: when enabled, backend will not return a response body. The
 --    body has many information like metrics, limits, etc. This information is
 --    parsed only when using oauth. By enabling this option will save some work
 --    to the 3scale backend and reduce network traffic.
+--  - limit_headers: when enabled and the request is rate-limited, backend
+--    returns the number of seconds remaining until the limit expires. It
+--    returns -1 when there are no limits. With this header, backend returns
+--    more information but we do not need it for now.
+-- For the complete specs check:
+-- https://github.com/3scale/apisonator/blob/master/docs/extensions.md
 local function authorize_options(using_oauth)
-  local headers = { ['3scale-options'] = 'rejection_reason_header=1' }
+  local headers = { ['3scale-options'] = 'rejection_reason_header=1&limit_headers=1' }
 
   if not using_oauth then
     headers['3scale-options'] = headers['3scale-options'] .. '&no_body=1'

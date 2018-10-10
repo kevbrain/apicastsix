@@ -22,9 +22,14 @@ function _M.authorization_failed(service)
   return exit()
 end
 
-function _M.limits_exceeded(service)
+function _M.limits_exceeded(service, retry_after)
   ngx.log(ngx.INFO, 'limits exceeded for service ', service.id)
   ngx.var.cached_key = nil
+
+  if retry_after then
+    ngx.header['Retry-After'] = retry_after
+  end
+
   ngx.status = service.limits_exceeded_status
   ngx.header.content_type = service.limits_exceeded_headers
   ngx.print(service.error_limits_exceeded)

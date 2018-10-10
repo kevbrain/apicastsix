@@ -7,8 +7,8 @@ local backend_calls_metrics = require 'apicast.metrics.3scale_backend_calls'
 describe('backend client', function()
 
   local test_backend
-  local options_header_oauth = 'rejection_reason_header=1'
-  local options_header_no_oauth = 'rejection_reason_header=1&no_body=1'
+  local options_header_oauth = 'rejection_reason_header=1&limit_headers=1'
+  local options_header_no_oauth = 'rejection_reason_header=1&limit_headers=1&no_body=1'
 
   before_each(function()
     test_backend = http_ng.backend()

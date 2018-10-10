@@ -648,7 +648,7 @@ status code (429).
 
   location /transactions/authrep.xml {
     content_by_lua_block {
-      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1&no_body=1' then
+      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1&limit_headers=1&no_body=1' then
         ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
       end
       ngx.status = 409;
@@ -695,7 +695,7 @@ Limits exceeded
 
   location /transactions/authrep.xml {
     content_by_lua_block {
-      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1&no_body=1' then
+      if ngx.var['http_3scale_options'] == 'rejection_reason_header=1&limit_headers=1&no_body=1' then
         ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
       end
       ngx.status = 409;
@@ -764,5 +764,52 @@ user_key=value-".( "1" x 1024)
 --- response_body chomp
 credentials missing!
 --- error_code: 401
+--- no_error_log
+[error]
+
+=== TEST 21: returns 'Retry-After' header when rate-limited by 3scale backend
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  init_by_lua_block {
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local expected_3scale_opts = 'rejection_reason_header=1&limit_headers=1&no_body=1'
+      if ngx.var['http_3scale_options'] == expected_3scale_opts then
+        ngx.header['3scale-rejection-reason'] = 'limits_exceeded';
+        ngx.header['3scale-limit-reset'] = 60
+      end
+      ngx.status = 409;
+      ngx.exit(ngx.HTTP_OK);
+    }
+  }
+
+  location /api-backend/ {
+     echo 'yay';
+  }
+--- request
+GET /?user_key=value
+--- response_headers
+Retry-After: 60
+--- response_body chomp
+Limits exceeded
+--- error_code: 429
 --- no_error_log
 [error]

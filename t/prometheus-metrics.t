@@ -231,7 +231,7 @@ In particular, it shows the status codes and the response times
 --- response_body_like eval
 [
 "",
-qr/upstream_resp_times(.|\n)*upstream_status\{status="200"\} 1/
+qr/upstream_response_time_seconds(.|\n)*upstream_response_time_seconds_bucket\{le=".*"\} 1(.|\n)*upstream_status\{status="200"\} 1/
 ]
 --- no_error_log
 [error]

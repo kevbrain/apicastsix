@@ -13,7 +13,7 @@ local upstream_status_codes = prometheus(
 
 local upstream_resp_times = prometheus(
   'histogram',
-  'upstream_resp_times',
+  'upstream_response_time_seconds',
   'Response times from upstream servers'
 )
 

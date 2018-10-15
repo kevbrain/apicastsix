@@ -73,6 +73,12 @@ local http_connections_metric =  prometheus('gauge', 'nginx_http_connections', '
 local shdict_capacity_metric = prometheus('gauge', 'openresty_shdict_capacity', 'OpenResty shared dictionary capacity', {'dict'})
 local shdict_free_space_metric = prometheus('gauge', 'openresty_shdict_free_space', 'OpenResty shared dictionary free space', {'dict'})
 
+local response_times = prometheus(
+  'histogram',
+  'total_response_time_seconds',
+  'Time needed to sent a response to the client (in seconds).'
+)
+
 function _M.init()
   errlog.set_filter_level(filter_level())
 
@@ -112,8 +118,19 @@ function _M:metrics()
   end
 end
 
+local function report_req_response_time()
+  -- Use ngx.var.original_request_time instead of ngx.var.request_time so
+  -- the time spent in the post_action phase is not taken into account.
+  local resp_time = tonumber(ngx.var.original_request_time)
+
+  if resp_time and response_times then
+    response_times:observe(resp_time)
+  end
+end
+
 function _M.log()
   upstream_metrics.report(ngx.var.upstream_status, ngx.var.upstream_response_time)
+  report_req_response_time()
 end
 
 return _M

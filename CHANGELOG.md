@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Prometheus metrics for: the 3scale batching policy, the upstream API and request response times [PR #902](https://github.com/3scale/apicast/pull/902), [PR #918](https://github.com/3scale/apicast/pull/918), [PR #930](https://github.com/3scale/apicast/pull/930)
+- Prometheus metrics for: the 3scale batching policy, the upstream API and request response times [PR #902](https://github.com/3scale/apicast/pull/902), [PR #918](https://github.com/3scale/apicast/pull/918), [PR #930](https://github.com/3scale/apicast/pull/930), [THREESCALE-1383](https://issues.jboss.org/browse/THREESCALE-1383)
 - Support for path in the upstream URL [PR #905](https://github.com/3scale/apicast/pull/905)
 - OIDC Authentication policy (only usable directly by the configuration file) [PR #904](https://github.com/3scale/apicast/pull/904)
 - IP check policy. This policy allows to accept or deny requests based on the IP [PR #907](https://github.com/3scale/apicast/pull/907), [PR #923](https://github.com/3scale/apicast/pull/923), [THREESCALE-1353](https://issues.jboss.org/browse/THREESCALE-1353)
@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- The `threescale_backend_calls` Prometheus metric now includes the response (used to be in `backend_response`) and also the kind of call (auth, authrep, report)[PR #919](https://github.com/3scale/apicast/pull/919)
+- The `threescale_backend_calls` Prometheus metric now includes the response (used to be in `backend_response`) and also the kind of call (auth, authrep, report) [PR #919](https://github.com/3scale/apicast/pull/919), [THREESCALE-1383](https://issues.jboss.org/browse/THREESCALE-1383)
 
 ## [3.3.0] - 2018-10-05
 

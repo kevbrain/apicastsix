@@ -179,9 +179,8 @@ auth error in the odd ones.
 [ 200, 403, 200, 403 ]
 
 === TEST 4: Caching policy configured as 'allow' with unseen request
-When the cache is configured as 'allow', all requests after the first one will
-be authorized when backend returns a 5XX if they do not have a 'denied' entry
-in the cache.
+When the cache is configured as 'allow', all requests are authorized when
+backend returns a 5XX if they do not have a 'denied' entry in the cache.
 --- configuration
 {
   "services": [
@@ -221,9 +220,9 @@ in the cache.
 --- request eval
 ["GET /?user_key=uk1", "GET /?user_key=uk1", "GET /?user_key=uk1"]
 --- response_body eval
-["Authentication failed", "yay, api backend\x{0a}", "yay, api backend\x{0a}"]
+["yay, api backend\x{0a}", "yay, api backend\x{0a}", "yay, api backend\x{0a}"]
 --- error_code eval
-[403, 200, 200]
+[200, 200, 200]
 
 === TEST 5: Caching policy configured as 'allow' with previously denied request
 When the cache is configured as 'allow', requests will be denied if the last

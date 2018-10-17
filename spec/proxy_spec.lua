@@ -161,5 +161,43 @@ describe('Proxy', function()
       assert.falsy(authorized)
       assert.equal('some_reason', rejection_reason)
     end)
+
+    describe('when backend is unavailable', function()
+      local backend_unavailable_statuses = { 0, 499, 502 } -- Not exhaustive
+      local cache_key = 'a_cache_key'
+
+      before_each(function()
+        -- So we can set the value for the cached auth ensuring that the
+        -- handler will not modify it.
+        proxy.cache_handler = function() end
+      end)
+
+      it('returns true when the cached authorization is authorized', function()
+        proxy.cache:set(cache_key, 200)
+
+        for _, status in ipairs(backend_unavailable_statuses) do
+          local authorized = proxy:handle_backend_response(cache_key, { status = status })
+          assert(authorized)
+        end
+      end)
+
+      it('returns false when the authorization is not cached', function()
+        proxy.cache:delete(cache_key)
+
+        for _, status in ipairs(backend_unavailable_statuses) do
+          local authorized = proxy:handle_backend_response(cache_key, { status = status })
+          assert.falsy(authorized)
+        end
+      end)
+
+      it('returns false when the authorization is cached and denied', function()
+        proxy.cache:set(cache_key, 429)
+
+        for _, status in ipairs(backend_unavailable_statuses) do
+          local authorized = proxy:handle_backend_response(cache_key, { status = status })
+          assert.falsy(authorized)
+        end
+      end)
+    end)
   end)
 end)

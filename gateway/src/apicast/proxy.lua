@@ -359,10 +359,19 @@ local function limit_reset(response_headers)
   return response_headers and response_headers['3scale-limit-reset']
 end
 
+local function backend_is_unavailable(response_status)
+  -- 499 is a non-standard error returned by NGINX (client closed request)
+  return not response_status or response_status == 0 or response_status >= 499
+end
+
 function _M:handle_backend_response(cached_key, response, ttl)
   ngx.log(ngx.DEBUG, '[backend] response status: ', response.status, ' body: ', response.body)
 
   self.cache_handler(self.cache, cached_key, response, ttl)
+
+  if backend_is_unavailable(response.status) then
+    return self.cache:get(cached_key) == 200
+  end
 
   local authorized = (response.status == 200)
   local unauthorized_reason = not authorized and rejection_reason(response.headers)

@@ -61,7 +61,7 @@ function _M.new(...)
   local self = new(...)
 
   if configuration_store.path_routing then
-    ngx.log(ngx.WARN, 'apicast experimental path routing enabled')
+    ngx.log(ngx.WARN, 'apicast path routing enabled')
     self.find_service = find_service_cascade
   else
     self.find_service = find_service_strict

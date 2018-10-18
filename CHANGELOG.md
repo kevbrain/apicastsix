@@ -128,6 +128,8 @@ expressed might change in future releases.
 
 ## [3.2.1] - 2018-06-26
 
+- Path routing feature enabled by the `APICAST_PATH_ROUTING` environment variable is not considered experimental anymore.
+
 ### Fixed
 
 - Reporting only 50% calls to 3scale backend when using OIDC [PR #779](https://github.com/3scale/apicast/pull/779)

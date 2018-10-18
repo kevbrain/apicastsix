@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - The `threescale_backend_calls` Prometheus metric now includes the response (used to be in `backend_response`) and also the kind of call (auth, authrep, report) [PR #919](https://github.com/3scale/apicast/pull/919), [THREESCALE-1383](https://issues.jboss.org/browse/THREESCALE-1383)
+- Performance improvement: replaced some varargs in hot paths [PR #937](https://github.com/3scale/apicast/pull/937)
 
 ## [3.3.0] - 2018-10-05
 

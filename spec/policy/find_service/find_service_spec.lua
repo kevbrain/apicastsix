@@ -91,4 +91,41 @@ describe('find_service', function()
       end)
     end)
   end)
+
+  describe('.ssl_certificate', function()
+    -- Path based routing is not used when using ssl. It fallbacks to finding
+    -- the service by host.
+    for _, path_routing in ipairs({ true, false }) do
+      describe("when path routing = " .. tostring(path_routing), function()
+        ConfigurationStore.path_routing = path_routing
+
+        it('finds the service by host and stores it in the context', function()
+          local service = { id = '1' }
+          local context = { configuration = ConfigurationStore.new(), host = 'example.com' }
+          stub(HostBasedFinder, 'find_service', function(config_store, host)
+            if config_store == context.configuration and host == context.host then
+              return service
+            end
+          end)
+          stub(PathBasedFinder, 'find_service')
+          local find_service = FindService.new()
+
+          find_service:ssl_certificate(context)
+
+          assert.stub(PathBasedFinder.find_service).was_not_called()
+          assert.equals(service, context.service)
+        end)
+
+        it('stores nil in the context if there is not a service for the host', function()
+          local context = { }
+          stub(HostBasedFinder, 'find_service', function() return nil end)
+          local find_service = FindService.new()
+
+          find_service:ssl_certificate(context)
+
+          assert.is_nil(context.service)
+        end)
+      end)
+    end
+  end)
 end)

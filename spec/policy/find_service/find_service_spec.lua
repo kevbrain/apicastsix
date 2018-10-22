@@ -1,146 +1,131 @@
-local configuration = require('apicast.configuration')
+local FindService = require('apicast.policy.find_service')
+local HostBasedFinder = require('apicast.policy.find_service.host_based_finder')
+local PathBasedFinder = require('apicast.policy.find_service.path_based_finder')
+local ConfigurationStore = require('apicast.configuration_store')
 
 describe('find_service', function()
   describe('.rewrite', function()
     describe('when path routing is enabled', function()
-      it('finds the service by matching rules and stores it in the given context', function()
-        require('apicast.configuration_store').path_routing = true
+      describe('and there is a service with a matching path', function()
+        it('stores that service in the context', function()
+          ConfigurationStore.path_routing = true
+          local service = { id = '1' }
+          local context = { configuration = ConfigurationStore.new(), host = 'example.com' }
+          stub(PathBasedFinder, 'find_service', function(config_store, host)
+            if config_store == context.configuration and host == context.host then
+              return service
+            end
+          end)
+          stub(HostBasedFinder, 'find_service')
+          local find_service = FindService.new()
 
-        -- We access ngx.var.uri, ngx.req.get_method, and ngx.req.get_uri_args
-        -- directly in the code, so we need to mock them. We should probably
-        -- try to avoid this kind of coupling.
-        ngx.var = { uri = '/def' }
-        stub(ngx.req, 'get_uri_args', function() return {} end)
-        stub(ngx.req, 'get_method', function() return 'GET' end)
+          find_service:rewrite(context)
 
-        local find_service_policy = require('apicast.policy.find_service').new()
-        local host = 'example.com'
-
-        local service_1 = configuration.parse_service({
-          id = 42,
-          proxy = {
-            hosts = { host },
-            proxy_rules = { { pattern = '/abc', http_method = 'GET',
-                              metric_system_name = 'hits', delta = 1 } }
-          }
-        })
-
-        local service_2 = configuration.parse_service({
-          id = 43,
-          proxy = {
-            hosts = { host },
-            proxy_rules = { { pattern = '/def', http_method = 'GET',
-                              metric_system_name = 'hits', delta = 2 } }
-          }
-        })
-
-        local service_3 = configuration.parse_service({
-          id = 44,
-          proxy = {
-            hosts = { host },
-            proxy_rules = { { pattern = '/ghi', http_method = 'GET',
-                              metric_system_name = 'hits', delta = 3 } }
-          }
-        })
-
-        local configuration_store = require('apicast.configuration_store').new()
-        configuration_store:store(
-          { services = { service_1, service_2, service_3 } })
-
-        local context = { host = host, configuration = configuration_store }
-        find_service_policy:rewrite(context)
-
-        assert.equal(service_2, context.service)
-      end)
-
-      describe('and no rules are matched', function()
-        it('finds a service for the host in the context and stores the service there', function()
-          require('apicast.configuration_store').path_routing = true
-          ngx.var = { uri = '/abc' }
-
-          stub(ngx.req, 'get_uri_args', function() return {} end)
-          stub(ngx.req, 'get_method', function() return 'GET' end)
-
-          local host = 'example.com'
-          local find_service_policy = require('apicast.policy.find_service').new()
-
-          local service = configuration.parse_service({
-            id = 42,
-            proxy = {
-              hosts = { host },
-              proxy_rules = { { pattern = '/', http_method = 'GET',
-                                metric_system_name = 'hits', delta = 1 } }
-            }
-          })
-
-          local configuration_store = require('apicast.configuration_store').new()
-          configuration_store:add(service)
-
-          local context = { host = host, configuration = configuration_store }
-
-          find_service_policy:rewrite(context)
-          assert.same(service, context.service)
+          assert.stub(HostBasedFinder.find_service).was_not_called()
+          assert.equals(service, context.service)
         end)
       end)
 
-      describe('and no rules are matched and there is not a service for the host', function()
-        it('stores nil in the service field of the given context', function()
-          require('apicast.configuration_store').path_routing = true
-          ngx.var = { uri = '/abc' }
-          stub(ngx.req, 'get_uri_args', function() return {} end)
-          stub(ngx.req, 'get_method', function() return 'GET' end)
+      describe('and there is not a service with a matching path', function()
+        it('fallbacks to find a service by host and stores it in the context', function()
+          ConfigurationStore.path_routing = true
+          local service = { id = '1' }
+          local context = { configuration = ConfigurationStore.new(), host = 'example.com' }
+          stub(PathBasedFinder, 'find_service', function() return nil end)
+          stub(HostBasedFinder, 'find_service', function(config_store, host)
+            if config_store == context.configuration and host == context.host then
+              return service
+            end
+          end)
 
-          local find_service_policy = require('apicast.policy.find_service').new()
-          local configuration_store = require('apicast.configuration_store').new()
+          local find_service = FindService.new()
 
-          local context = {
-            host = 'example.com',
-            configuration = configuration_store
-          }
+          find_service:rewrite(context)
 
-          find_service_policy:rewrite(context)
+          assert.equals(service, context.service)
+        end)
+
+        it('stores nil in the context if there is not a service for the host', function()
+          ConfigurationStore.path_routing = true
+          local context = { }
+          stub(PathBasedFinder, 'find_service', function() return nil end)
+          stub(HostBasedFinder, 'find_service', function() return nil end)
+
+          local find_service = FindService.new()
+
+          find_service:rewrite(context)
+
           assert.is_nil(context.service)
         end)
       end)
     end)
 
     describe('when path routing is disabled', function()
-      require('apicast.configuration_store').path_routing = false
+      it('finds the service by host and stores it in the context', function()
+        ConfigurationStore.path_routing = false
+        local service = { id = '1' }
+        local context = { configuration = ConfigurationStore.new(), host = 'example.com' }
+        stub(HostBasedFinder, 'find_service', function(config_store, host)
+          if config_store == context.configuration and host == context.host then
+            return service
+          end
+        end)
+        stub(PathBasedFinder, 'find_service')
+        local find_service = FindService.new()
 
-      it('finds the service of the host in the given context and stores it there', function()
-        local find_service_policy = require('apicast.policy.find_service').new()
+        find_service:rewrite(context)
 
-        local host = 'example.com'
-        local service = configuration.parse_service({
-          id = 42,
-          proxy = {
-            hosts = { host },
-            proxy_rules = { { pattern = '/', http_method = 'GET',
-                              metric_system_name = 'hits', delta = 1 } }
-          }
-        })
-        local configuration_store = require('apicast.configuration_store').new()
-        configuration_store:add(service)
-
-        local context = { host = host, configuration = configuration_store }
-        find_service_policy:rewrite(context)
-        assert.same(service, context.service)
+        assert.stub(PathBasedFinder.find_service).was_not_called()
+        assert.equals(service, context.service)
       end)
 
-      describe('and there is not a service for the host', function()
-        it('stores nil in the service field of the given context', function()
-          local find_service_policy = require('apicast.policy.find_service').new()
-          local configuration_store = require('apicast.configuration_store').new()
+      it('stores nil in the context if there is not a service for the host', function()
+        ConfigurationStore.path_routing = false
+        local context = { }
+        stub(HostBasedFinder, 'find_service', function() return nil end)
+        local find_service = FindService.new()
 
-          local context = {
-            host = 'example.com',
-            configuration = configuration_store
-          }
+        find_service:rewrite(context)
 
-          find_service_policy:rewrite(context)
+        assert.is_nil(context.service)
+      end)
+    end)
+  end)
+
+  describe('.ssl_certificate', function()
+    -- Path based routing is not used when using ssl. It fallbacks to finding
+    -- the service by host.
+    for _, path_routing in ipairs({ true, false }) do
+      describe("when path routing = " .. tostring(path_routing), function()
+        ConfigurationStore.path_routing = path_routing
+
+        it('finds the service by host and stores it in the context', function()
+          local service = { id = '1' }
+          local context = { configuration = ConfigurationStore.new(), host = 'example.com' }
+          stub(HostBasedFinder, 'find_service', function(config_store, host)
+            if config_store == context.configuration and host == context.host then
+              return service
+            end
+          end)
+          stub(PathBasedFinder, 'find_service')
+          local find_service = FindService.new()
+
+          find_service:ssl_certificate(context)
+
+          assert.stub(PathBasedFinder.find_service).was_not_called()
+          assert.equals(service, context.service)
+        end)
+
+        it('stores nil in the context if there is not a service for the host', function()
+          local context = { }
+          stub(HostBasedFinder, 'find_service', function() return nil end)
+          local find_service = FindService.new()
+
+          find_service:ssl_certificate(context)
+
           assert.is_nil(context.service)
         end)
       end)
-    end)
+    end
   end)
 end)

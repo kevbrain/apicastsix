@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fix `APICAST_PROXY_HTTPS_PASSWORD_FILE` and `APICAST_PROXY_HTTPS_SESSION_REUSE` parameters for Mutual SSL [PR #927](https://github.com/3scale/apicast/pull/927)
 - The "allow" mode of the caching policy now accepts the request when it's authorization is not cached [PR #934](https://github.com/3scale/apicast/pull/934), [THREESCALE-1396](https://issues.jboss.org/browse/THREESCALE-1396)
+- When using SSL certs with path-based routing enabled, now APIcast falls backs to host-based routing instead of crashing [PR #938](https://github.com/3scale/apicast/pull/938), [THREESCALE-1430](https://issues.jboss.org/browse/THREESCALE-1430)
 
 ### Added
 

@@ -54,5 +54,25 @@ describe('OIDC Configuration loader', function()
 
       assert.same([[{"services":[{"id":21,"proxy":{"oidc_issuer_endpoint":"https:\/\/user:pass@example.com"}}],"oidc":[{"issuer":"https:\/\/example.com","config":{"jwks_uri":"http:\/\/example.com\/jwks","issuer":"https:\/\/example.com"},"keys":{}}]}]], oidc)
     end)
+
+    -- This is a regression test. cjson crashed when parsing a config where
+    -- only some of the services have OIDC enabled. In particular, it crashed
+    -- when it tried to convert into JSON a "sparse array":
+    -- https://www.kyne.com.au/~mark/software/lua-cjson-manual.html#encode_sparse_array
+    -- The easiest way to create a sparse array with the default cjson config
+    -- is to create a table that has 11 positions and only the last one is !=
+    -- false/nil.
+    it('works correctly when only some of the services have OIDC enabled', function()
+      local oidc = {}
+      for _=1, 10 do table.insert(oidc, false) end
+      oidc[11] = { issuer = "https://example.com" }
+
+      local services = {}
+      for i=1, 11 do table.insert(services, { id = i }) end
+
+      local config = { services = services, oidc = oidc }
+
+      loader.call(cjson.encode(config))
+    end)
   end)
 end)

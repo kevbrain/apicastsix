@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fix `APICAST_PROXY_HTTPS_PASSWORD_FILE` and `APICAST_PROXY_HTTPS_SESSION_REUSE` parameters for Mutual SSL [PR #927](https://github.com/3scale/apicast/pull/927)
 - The "allow" mode of the caching policy now accepts the request when it's authorization is not cached [PR #934](https://github.com/3scale/apicast/pull/934), [THREESCALE-1396](https://issues.jboss.org/browse/THREESCALE-1396)
+- The port is now included in the Host header when the request is proxied [PR #942](https://github.com/3scale/apicast/pull/942)
 
 ### Added
 

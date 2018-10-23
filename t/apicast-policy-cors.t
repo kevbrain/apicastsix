@@ -89,8 +89,8 @@ GET /?user_key=value
 Origin: http://example.com
 Access-Control-Request-Method: GET
 Access-Control-Request-Headers: Content-Type
---- response_body
-yay, api backend: test
+--- response_body env
+yay, api backend: test:$TEST_NGINX_SERVER_PORT
 --- response_headers
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Methods: GET
@@ -145,8 +145,8 @@ GET /?user_key=value
 Origin: http://example.com
 Access-Control-Request-Method: GET
 Access-Control-Request-Headers: Content-Type
---- response_body
-yay, api backend: test
+--- response_body env
+yay, api backend: test:$TEST_NGINX_SERVER_PORT
 --- response_headers
 Access-Control-Allow-Headers: X-Custom-Header-1, X-Custom-Header-2
 Access-Control-Allow-Methods: POST, GET, OPTIONS

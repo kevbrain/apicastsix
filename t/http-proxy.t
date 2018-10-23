@@ -46,8 +46,8 @@ It connects to backened and forwards request to the upstream.
   }
 --- request
 GET /?user_key=value
---- response_body
-yay, api backend: test
+--- response_body env
+yay, api backend: test:$TEST_NGINX_SERVER_PORT
 --- error_code: 200
 --- no_error_log
 
@@ -217,8 +217,8 @@ location /transactions/authrep.xml {
   }
 --- request
 GET /?user_key=value
---- response_body
-yay, api backend: test
+--- response_body env
+yay, api backend: test:$TEST_NGINX_SERVER_PORT
 --- error_code: 200
 --- error_log env
 proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
@@ -360,8 +360,8 @@ location /apicast {
   proxy_set_header Host localhost;
   proxy_pass http://$server_addr:$apicast_port;
 }
---- response_body
-yay, api backend: test
+--- response_body env
+yay, api backend: test:$TEST_NGINX_SERVER_PORT
 --- error_code: 200
 --- error_log env
 proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT
@@ -457,12 +457,12 @@ GET /test?user_key=test3
 --- more_headers
 User-Agent: Test::APIcast::Blackbox
 ETag: foobar
---- response_body
+--- response_body env
 GET /test?user_key=test3 HTTP/1.1
 User-Agent: Test::APIcast::Blackbox
 ETag: foobar
 Connection: close
-Host: test
+Host: test:$TEST_NGINX_RANDOM_PORT
 --- error_code: 200
 --- error_log env
 proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
@@ -560,12 +560,12 @@ GET /test?user_key=test3
 --- more_headers
 User-Agent: Test::APIcast::Blackbox
 ETag: foobar
---- response_body
+--- response_body env
 GET /test?user_key=test3 HTTP/1.1
 User-Agent: Test::APIcast::Blackbox
 ETag: foobar
 Connection: close
-Host: test
+Host: test:$TEST_NGINX_RANDOM_PORT
 --- error_code: 200
 --- error_log env
 proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
@@ -671,12 +671,12 @@ POST /test?user_key=test3
 this-is-some-request-body
 --- more_headers
 User-Agent: Test::APIcast::Blackbox
---- response_body
+--- response_body env
 POST /test?user_key=test3 HTTP/1.1
 User-Agent: Test::APIcast::Blackbox
 Content-Length: 25
 Connection: close
-Host: test
+Host: test:$TEST_NGINX_RANDOM_PORT
 
 this-is-some-request-body
 --- error_code: 200

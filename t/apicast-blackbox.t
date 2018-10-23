@@ -63,8 +63,8 @@ It asks backend and then forwards the request to the api.
   }
 --- request
 GET /?user_key=value
---- response_body
-yay, api backend: test
+--- response_body env
+yay, api backend: test:$TEST_NGINX_SERVER_PORT
 --- error_code: 200
 --- error_log
 apicast cache miss key: 42:value:usage%5Bhits%5D=2
@@ -127,8 +127,8 @@ location /transactions/authrep.xml {
   }
 --- request eval
 ['GET /?user_key=value', 'GET /?user_key=value']
---- response_body eval
-['yay, api backend: test', 'yay, api backend: test']
+--- response_body env eval
+['yay, api backend: test:$TEST_NGINX_SERVER_PORT', 'yay, api backend: test:$TEST_NGINX_SERVER_PORT']
 --- error_code eval
 [ 200, 200 ]
 --- error_log

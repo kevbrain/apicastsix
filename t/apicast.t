@@ -248,8 +248,8 @@ It asks backend and then forwards the request to the api.
   }
 --- request
 GET /?user_key=value
---- response_body
-yay, api backend: 127.0.0.1
+--- response_body env
+yay, api backend: 127.0.0.1:$TEST_NGINX_SERVER_PORT
 --- error_code: 200
 --- error_log
 apicast cache miss key: 42:value:usage%5Bhits%5D=2

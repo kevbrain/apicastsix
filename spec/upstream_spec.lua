@@ -138,6 +138,22 @@ describe('Upstream', function()
 
             assert.spy(ngx.req.set_uri).was_not_called()
         end)
+
+        for url, host in pairs({
+            ['http://example.com'] = 'example.com',
+            ['http://example.com:80'] = 'example.com',
+            ['http://example.com:8080'] = 'example.com:8080',
+            ['https://example.com:80'] = 'example.com:80',
+            ['https://example.com:443'] = 'example.com',
+            ['https://example.com:8080'] = 'example.com:8080',
+        }) do
+            it(('upstream %s sets Host header to %s'):format(url, host), function()
+                local upstream = Upstream.new(url)
+                upstream:rewrite_request()
+                assert.spy(ngx.req.set_header).was_called_with('Host', host)
+            end)
+        end
+
     end)
 
     describe(':call', function()

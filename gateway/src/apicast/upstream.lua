@@ -16,6 +16,7 @@ local core_base = require('resty.core.base')
 local http_proxy = require('apicast.http_proxy')
 local str_find = string.find
 local str_sub = string.sub
+local format = string.format
 local new_tab = core_base.new_tab
 
 local _M = {
@@ -132,13 +133,24 @@ local function prefix_path(prefix)
     return uri
 end
 
+local function host_header(uri)
+    local port = uri.port
+    local default_port = resty_url.default_port(uri.scheme)
+
+    if port and port ~= default_port then
+        return format('%s:%s', uri.host, port)
+    else
+        return uri.host
+    end
+end
+
 --- Rewrite request Host header to what is provided in the argument or in the URL.
 function _M:rewrite_request()
     local uri = self.uri
 
     if not uri then return nil, 'not initialized' end
 
-    ngx.req.set_header('Host', self.host or uri.host)
+    ngx.req.set_header('Host', self.host or host_header(uri))
 
     if uri.path then
         ngx.req.set_uri(prefix_path(uri.path))

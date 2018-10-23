@@ -33,7 +33,9 @@ function _M.call(...)
         local oidc = array(config.oidc)
 
         for i,service in ipairs(config.services or empty) do
-            oidc[i] = oidc[i] or load_service(service)
+            -- Assign false instead of nil to avoid sparse arrays. cjson raises
+            -- an error by default when converting sparse arrays.
+            oidc[i] = oidc[i] or load_service(service) or false
         end
 
         config.oidc = oidc

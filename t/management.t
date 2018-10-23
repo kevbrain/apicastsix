@@ -164,7 +164,7 @@ include $TEST_NGINX_MANAGEMENT_CONFIG;
 --- request
 POST /boot
 --- response_body
-{"status":"ok","config":{"services":[{"id":42}],"oidc":{}}}
+{"status":"ok","config":{"services":[{"id":42}],"oidc":[false]}}
 --- error_code: 200
 --- udp_listen random_port env chomp
 $TEST_NGINX_RANDOM_PORT
@@ -193,8 +193,8 @@ location = /test {
 --- request
 POST /test
 --- response_body
-{"status":"ok","config":{"services":[{"id":42}],"oidc":{}}}
-{"status":"ok","config":{"services":[{"id":42}],"oidc":{}}}
+{"status":"ok","config":{"services":[{"id":42}],"oidc":[false]}}
+{"status":"ok","config":{"services":[{"id":42}],"oidc":[false]}}
 --- error_code: 200
 --- udp_listen random_port env chomp
 $TEST_NGINX_RANDOM_PORT

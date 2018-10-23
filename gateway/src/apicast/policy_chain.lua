@@ -157,10 +157,10 @@ function _M:insert(policy, position)
 end
 
 local function call_chain(phase_name)
-    return function(self, ...)
+    return function(self, context)
         for i=1, #self do
             ngx.log(ngx.DEBUG, 'policy chain execute phase: ', phase_name, ', policy: ', self[i]._NAME, ', i: ', i)
-            self[i][phase_name](self[i], ...)
+            self[i][phase_name](self[i], context)
         end
 
         return ipairs(self)

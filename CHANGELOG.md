@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fix `APICAST_PROXY_HTTPS_PASSWORD_FILE` and `APICAST_PROXY_HTTPS_SESSION_REUSE` parameters for Mutual SSL [PR #927](https://github.com/3scale/apicast/pull/927)
 - The "allow" mode of the caching policy now accepts the request when it's authorization is not cached [PR #934](https://github.com/3scale/apicast/pull/934), [THREESCALE-1396](https://issues.jboss.org/browse/THREESCALE-1396)
+- When using SSL certs with path-based routing enabled, now APIcast falls backs to host-based routing instead of crashing [PR #938](https://github.com/3scale/apicast/pull/938), [THREESCALE-1430](https://issues.jboss.org/browse/THREESCALE-1430)
+- Fixed error that happened when loading certain configurations that use OIDC [PR #940](https://github.com/3scale/apicast/pull/940), [THREESCALE-1289](https://issues.jboss.org/browse/THREESCALE-1289)
 - The port is now included in the Host header when the request is proxied [PR #942](https://github.com/3scale/apicast/pull/942)
 
 ### Added
@@ -24,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - The `threescale_backend_calls` Prometheus metric now includes the response (used to be in `backend_response`) and also the kind of call (auth, authrep, report) [PR #919](https://github.com/3scale/apicast/pull/919), [THREESCALE-1383](https://issues.jboss.org/browse/THREESCALE-1383)
+- Performance improvement: replaced some varargs in hot paths [PR #937](https://github.com/3scale/apicast/pull/937)
 
 ## [3.3.0] - 2018-10-05
 
@@ -128,6 +131,8 @@ expressed might change in future releases.
 - Skip invalid policies in the policy chain [PR #854](https://github.com/3scale/apicast/pull/854)
 
 ## [3.2.1] - 2018-06-26
+
+- Path routing feature enabled by the `APICAST_PATH_ROUTING` environment variable is not considered experimental anymore.
 
 ### Fixed
 

@@ -81,7 +81,7 @@ local function absolute_url(uri)
 end
 
 local function current_path(uri)
-    return format('%s%s%s', uri.path or ngx.var.uri, ngx.var.is_args, ngx.var.query_string)
+    return format('%s%s%s', uri.path or ngx.var.uri, ngx.var.is_args, ngx.var.query_string or '')
 end
 
 local function forward_https_request(proxy_uri, uri)

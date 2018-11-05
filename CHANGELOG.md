@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix "nil" being added to the end of URL Path in some cases when using http_proxy [PR #946](https://github.com/3scale/apicast/pull/946)
+
 ## [3.4.0-beta1] - 2018-10-24
 
 ### Fixed

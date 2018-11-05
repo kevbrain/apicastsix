@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - When using SSL certs with path-based routing enabled, now APIcast falls backs to host-based routing instead of crashing [PR #938](https://github.com/3scale/apicast/pull/938), [THREESCALE-1430](https://issues.jboss.org/browse/THREESCALE-1430)
 - Fixed error that happened when loading certain configurations that use OIDC [PR #940](https://github.com/3scale/apicast/pull/940), [THREESCALE-1289](https://issues.jboss.org/browse/THREESCALE-1289)
 - The port is now included in the Host header when the request is proxied [PR #942](https://github.com/3scale/apicast/pull/942)
+- Fix "nil" being added to the end of URL Path in some cases when using http_proxy [PR #946](https://github.com/3scale/apicast/pull/946)
 
 ### Added
 

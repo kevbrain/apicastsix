@@ -8,12 +8,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+- Fix "nil" being added to the end of URL Path in some cases when using http_proxy [PR #946](https://github.com/3scale/apicast/pull/946)
+
+## [3.4.0-beta1] - 2018-10-24
+
+### Fixed
+
 - Fix `APICAST_PROXY_HTTPS_PASSWORD_FILE` and `APICAST_PROXY_HTTPS_SESSION_REUSE` parameters for Mutual SSL [PR #927](https://github.com/3scale/apicast/pull/927)
 - The "allow" mode of the caching policy now accepts the request when it's authorization is not cached [PR #934](https://github.com/3scale/apicast/pull/934), [THREESCALE-1396](https://issues.jboss.org/browse/THREESCALE-1396)
 - When using SSL certs with path-based routing enabled, now APIcast falls backs to host-based routing instead of crashing [PR #938](https://github.com/3scale/apicast/pull/938), [THREESCALE-1430](https://issues.jboss.org/browse/THREESCALE-1430)
 - Fixed error that happened when loading certain configurations that use OIDC [PR #940](https://github.com/3scale/apicast/pull/940), [THREESCALE-1289](https://issues.jboss.org/browse/THREESCALE-1289)
 - The port is now included in the Host header when the request is proxied [PR #942](https://github.com/3scale/apicast/pull/942)
-- Fix "nil" being added to the end of URL Path in some cases when using http_proxy [PR #946](https://github.com/3scale/apicast/pull/946)
 
 ### Added
 
@@ -536,7 +541,7 @@ expressed might change in future releases.
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.4.0-beta1...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -564,3 +569,4 @@ expressed might change in future releases.
 [3.3.0-cr1]: https://github.com/3scale/apicast/compare/v3.3.0-beta2...v3.3.0-cr1
 [3.3.0-cr2]: https://github.com/3scale/apicast/compare/v3.3.0-cr1...v3.3.0-cr2
 [3.3.0]: https://github.com/3scale/apicast/compare/v3.3.0-cr2...v3.3.0
+[3.4.0-beta1]: https://github.com/3scale/apicast/compare/v3.3.0...v3.4.0-beta1

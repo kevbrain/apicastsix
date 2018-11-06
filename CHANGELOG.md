@@ -134,6 +134,9 @@ expressed might change in future releases.
 
 ## [3.2.1] - 2018-06-26
 
+### Changed
+
+- `APICAST_BACKEND_CACHE_HANDLER` environment variable is now deprecated. Use caching policy instead. `APICAST_CUSTOM_CONFIG`, `APICAST_MODULE` environment variables are now deprecated. Use policies instead. [PR #746](https://github.com/3scale/apicast/pull/746), [THREESCALE-1034](https://issues.jboss.org/browse/THREESCALE-1034)
 - Path routing feature enabled by the `APICAST_PATH_ROUTING` environment variable is not considered experimental anymore.
 
 ### Fixed

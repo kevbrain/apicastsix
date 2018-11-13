@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [3.4.0-rc1] - 2018-11-13
+
 ### Fixed
 
 - Fix "nil" being added to the end of URL Path in some cases when using http_proxy [PR #946](https://github.com/3scale/apicast/pull/946)
@@ -544,7 +546,7 @@ expressed might change in future releases.
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.4.0-beta1...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.4.0-rc1...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -573,3 +575,4 @@ expressed might change in future releases.
 [3.3.0-cr2]: https://github.com/3scale/apicast/compare/v3.3.0-cr1...v3.3.0-cr2
 [3.3.0]: https://github.com/3scale/apicast/compare/v3.3.0-cr2...v3.3.0
 [3.4.0-beta1]: https://github.com/3scale/apicast/compare/v3.3.0...v3.4.0-beta1
+[3.4.0-rc1]: https://github.com/3scale/apicast/compare/v3.4.0-beta1...v3.4.0-rc1

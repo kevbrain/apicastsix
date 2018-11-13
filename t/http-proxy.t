@@ -760,3 +760,98 @@ GET /foo/test?user_key=value HTTP/1.1
 proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/foo/test?user_key=value HTTP/1.1
 --- no_error_log
 [error]
+
+=== TEST 16: The path is set correctly when there are no args and proxied to an http upstream
+--- env eval
+("http_proxy" => $ENV{TEST_NGINX_HTTP_PROXY})
+--- configuration
+{
+  "services": [
+    {
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.upstream",
+            "configuration":
+              {
+                "rules": [ { "regex": "/test", "url": "http://test" } ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location /test {
+    echo_foreach_split '\r\n' $echo_client_request_headers;
+    echo $echo_it;
+    echo_end;
+  }
+--- request
+GET /test
+--- response_body
+GET /test HTTP/1.1
+X-Real-IP: 127.0.0.1
+Host: test
+--- error_code: 200
+--- error_log env
+proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/test HTTP/1.1
+--- no_error_log
+[error]
+
+=== TEST 17: The path is set correctly when there are no args and proxied to an https upstream
+Regression test: the string 'nil' was appended to the path
+--- env eval
+("https_proxy" => $ENV{TEST_NGINX_HTTPS_PROXY})
+--- configuration random_port env
+{
+  "services": [
+    {
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.upstream",
+            "configuration":
+              {
+                "rules": [ { "regex": "/test", "url": "https://test:$TEST_NGINX_RANDOM_PORT" } ]
+              }
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream env
+listen $TEST_NGINX_RANDOM_PORT ssl;
+
+ssl_certificate $TEST_NGINX_SERVER_ROOT/html/server.crt;
+ssl_certificate_key $TEST_NGINX_SERVER_ROOT/html/server.key;
+
+location /test {
+    echo_foreach_split '\r\n' $echo_client_request_headers;
+    echo $echo_it;
+    echo_end;
+
+    access_by_lua_block {
+       assert = require('luassert')
+       assert.equal('https', ngx.var.scheme)
+       assert.equal('$TEST_NGINX_RANDOM_PORT', ngx.var.server_port)
+       assert.equal('test', ngx.var.ssl_server_name)
+    }
+}
+--- request
+GET /test
+--- more_headers
+User-Agent: Test::APIcast::Blackbox
+ETag: foobar
+--- response_body env
+GET /test HTTP/1.1
+User-Agent: Test::APIcast::Blackbox
+ETag: foobar
+Connection: close
+Host: test:$TEST_NGINX_RANDOM_PORT
+--- error_code: 200
+--- error_log env
+proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
+--- no_error_log
+[error]
+--- user_files fixture=tls.pl eval

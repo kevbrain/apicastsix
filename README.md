@@ -1,207 +1,118 @@
-
 # APIcast
 
 [![CircleCI](https://circleci.com/gh/3scale/apicast/tree/master.svg?style=shield)](https://circleci.com/gh/3scale/apicast/tree/master)
 [![Docker Repository on Quay](https://quay.io/repository/3scale/apicast/status "Docker Repository on Quay")](https://quay.io/repository/3scale/apicast)
 [![codecov](https://codecov.io/gh/3scale/apicast/branch/master/graph/badge.svg)](https://codecov.io/gh/3scale/apicast)
 
-APIcast is an NGINX based API gateway used to integrate your internal and external API services with 3scale’s API Management Platform.
+APIcast is an API gateway built on top of [NGINX](https://www.nginx.com/). It is
+part of the [Red Hat 3scale API Management
+Platform](https://www.redhat.com/en/technologies/jboss-middleware/3scale).
 
-To learn more about deployment options, environments provided, and how to get started, go to the [APIcast overview](doc/overview.md).
+- [**Getting started**](#getting-started)
+- [**Features**](#features)
+- [**Development**](#development)
+- [**Documentation**](#documentation)
+- [**License**](#license)
 
-`master` branch is **not stable** and **not recommended for production** use. For the latest release, go to [Releases page](https://github.com/3scale/apicast/releases).
+## Getting started
 
-## Description
+`master` branch is **not recommended** for production use. For the latest
+release, go to the [Releases page](https://github.com/3scale/apicast/releases)
 
-This Dockerfile creates a [3scale](http://www.3scale.net) gateway, and configures itself according to your 3scale params.
+### Docker
 
-## OpenShift
-
-To run APIcast on OpenShift, just use template and create a Secret to point to your 3scale Admin Portal.
-
-```shell
-oc secret new-basicauth apicast-configuration-url-secret --password=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net
-oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml
-```
-
-## Docker
-
-You can download a ready to use Docker image from our repository:
+You need to specify an `ACCESS_TOKEN`, that you can get from the 3scale admin
+portal, and also your `ADMIN_PORTAL_DOMAIN`. If you are using SaaS, it is
+`YOUR_ACCOUNT-admin.3scale.net`.
 
 ```shell
-docker pull quay.io/3scale/apicast:master
+docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS_TOKEN@ADMIN_PORTAL_DOMAIN quay.io/3scale/apicast:master
 ```
 
-The 3scale gateway image requires one of two environment variables. The first option will pull the latest gateway configuration from the 3scale API Manager. The second points to a local configuration file which has already been downloaded from 3scale:
-
-* **THREESCALE_PORTAL_ENDPOINT**
-
-URI that includes your password and portal endpoint in following format: `schema://access-token@domain`. The password can be either the [provider key](https://support.3scale.net/docs/terminology#apikey) or an [access token](https://support.3scale.net/docs/terminology#tokens) for the 3scale Account Management API. Note: these should not be confused with [service tokens](https://support.3scale.net/docs/terminology#tokens)
-Example: `https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net` (where the host name is the same as the domain for the URL when you are logged into the admin portal from a browser.
-
-When `THREESCALE_PORTAL_ENDPOINT` environment variable is provided, the gateway will download the configuration from the 3scale on initializing. The configuration includes all the settings provided on the Integration page of the API(s).
-
-```shell
-docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net quay.io/3scale/apicast:master
-```
-
-* **THREESCALE_CONFIG_FILE**
-
-Path to saved JSON file with configuration for the gateway. The configuration can be downloaded from the 3scale admin portal using the URL `https://ACCOUNT-admin.3scale.net/admin/api/nginx/spec.json` (replace `ACCOUNT` with your 3scale account name). The file has to be injected to the docker image as read only volume, and the path should indicate where the volume is mounted, i.e. path local to the docker container.
+You can use a JSON configuration file instead:
 
 ```shell
 docker run --name apicast --rm -p 8080:8080 -v $(pwd)/config.json:/opt/app/config.json:ro -e THREESCALE_CONFIG_FILE=/opt/app/config.json quay.io/3scale/apicast:master
 ```
 
-In this example `config.json` is located in the same directory where the `docker` command is executed, and it is mounted as a volume at `/opt/app/config.json`. `:ro` indicates that the volume will be read-only.
+In this example `config.json` is located in the same directory where the
+`docker` command is executed, and it is mounted as a volume at
+`/opt/app/config.json`. `:ro` indicates that the volume will be read-only.
 
-The JSON file needs to follow the [schema](schema.json), see an [example file](examples/configuration/example-config.json) with the fields that are used by the gateway.
+The JSON file needs to follow the [schema](schema.json), see an [example
+file](examples/configuration/example-config.json) with the fields that are used
+by APIcast.
 
-In some 3scale plans it is possible to create multiple API services (see an [example of the configuration file](examples/configuration/multiservice.json)). The _optional_ **APICAST_SERVICES** environment variable allows filtering the list of services, so that the gateway only includes the services explicitly specified, the value of the variable should be a comma-separated list of service IDs. This setting is useful when you have many services configured on 3scale, but you want to expose just a subset of them in the gateway.
+### Openshift
 
-```shell
-docker run --name apicast --rm -p 8080:8080 -e THREESCALE_PORTAL_ENDPOINT=https://ACCESS-TOKEN@ACCOUNT-admin.3scale.net -e APICAST_SERVICES=1234567890987 quay.io/3scale/apicast:master
-```
-
-### Docker options
-
-Here are some useful options that can be used with `docker run` command:
-
-- `--rm`
-  Automatically remove the container when it exits
-
-- `-d` or `--detach`
-  Run container in background and print container ID. When it is not specified, the container runs in foreground mode, and you can stop it by `CTRL + c`. When started in detached mode, you can reattach to the container with the _docker attach_ command, for example, `docker attach apicast`.
-
-- `-p` or `--publish` Publish a container's port to the host. The value should have the format `<host port>:<container port>`, so `-p 80:8080` will bind port `8080` of the container to port `80` of the host machine.
-
- For example, the [Management API](doc/management-api.md) uses port `8090`, so you may want to publish this port by adding `-p 8090:8090` to the `docker run` command.
-
-- `-e` or `--env` Set environment variables
-- `-v` or `--volume` Mount a volume. The value is typically represented as `<host path>:<container path>[:<options>]`. `<options>` is an optional attribute, it can be set to `:ro` to specify that the volume will be read only (it is mounted in read-write mode by default). Example: `-v /host/path:/container/path:ro`.
-
-See the Docker [commands reference](https://docs.docker.com/engine/reference/commandline/) for more information on available options.
-
-### Auto updating
-
-The gateway is able of checking the configuration from time to time and self update, you can enable this by adjusting the APICAST_CONFIGURATION_CACHE (seconds) to some value greater than 60:
-
-```
--e APICAST_CONFIGURATION_CACHE=300
-```
-
-This variable is set to 0 by default.
-
-### Signals
-
-Signals are the same as normal NGINX.
-
-Use `docker kill -s $SIGNAL CONTAINER` to send them, where _CONTAINER_ is the container ID or name.
-
-# Development & Testing
-
-## Tools and dependencies
-
-For developing and testing APIcast the following tools are needed:
-
-- [OpenResty](http://openresty.org/en/) - a bundle based on NGINX core and including LuaJIT and Lua modules. Follow the [installation instructions](http://openresty.org/en/installation.html) according to your OS.
-   On macOS you can run `brew bundle` to install OpenResty and LuaRocks.
-
-- [LuaRocks](https://luarocks.org/) - the Lua package manager.
-   You can find [installation instructions](https://github.com/keplerproject/luarocks/wiki/Download#installing) for different platforms in the documentation.
-
-- Install the APIcast [development dependencies](gateway/Roverfile)
-```shell
- make lua_modules
-```
-
-- [busted](https://github.com/Olivine-Labs/busted) - unit testing framework, used for unit testing.
-```shell
- luarocks install busted
-```
-
-- [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx/lib/Test/Nginx/Socket.pm) – used for integration testing.
-```shell
- cpan install Carton
- cpan install Test::Nginx
-```
-
-- [redis](http://redis.io/) in-memory data store is used for caching. The tests for the OAuth flow require a redis instance running on `localhost`.
-
-- Docker and `s2i`
-
- Having dependency errors? Majority of the time the below will resolve it:
-```shell
- rm -rf lua_modules
- make lua_modules
-```
-
- There are tests that run in Docker container, to execute these Docker needs to be installed, and to build the images [Source-To-Image](https://github.com/openshift/source-to-image) is used. To install it, download it from the [releases page](https://github.com/openshift/source-to-image/releases), and put the extracted `s2i` executable on your PATH.
-
-## Running the tests
-
-To run all the tests at once, execute:
+You need to create a secret with your `ACCESS_TOKEN` and your `ADMIN_PORTAL_DOMAIN`:
 
 ```shell
-make test
+oc secret new-basicauth apicast-configuration-url-secret --password=https://ACCESS_TOKEN@ADMIN_PORTAL_DOMAIN
+oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml
 ```
 
-To run just the unit tests:
 
-```shell
-make busted
-```
+## Features
 
-To run just the integration tests:
+- Performance: it is fast because it's built on top of [NGINX](https://www.nginx.com/) and uses [LuaJIT](https://luajit.org/).
+- Scalability: APIcast is stateless, so it scales horizontally.
+- Request transformation: allows to modify the headers, the path and the arguments of a request.
+- Rate-limit: can apply limits based on a header, [JWT](https://jwt.io/) claims, the IP of the request and many more.
+- Modular and extensible: thanks to the APIcast [policies framework](doc/policies.md).
+- Monitoring with [Prometheus](https://prometheus.io/).
+- [OpenTracing](https://opentracing.io/) integration with [Jaeger](https://www.jaegertracing.io/).
+- Can be deployed in [Openshift](https://www.openshift.com/).
+- Integrates with IDPs like [Keycloak](https://www.keycloak.org) to provide authentication based on [OIDC](https://openid.net/connect/).
 
-```shell
-make prove
-```
 
-To see additional test targets (such as testing produced Docker images) use:
-```shell
-make help
-```
+## Development
 
-## Development using Docker
-
-This option requires a single step:
-
+Using Docker you just need to run:
 ```shell
 make development
 ```
 
-That will create a Docker container and run bash inside it. This command will
-take care of installing all dependencies.
+That will create a Docker container and run bash inside it. The project's source
+code will be available in the container and sync'ed with your local `apicast`
+directory, so you can edit files in your preferred environment and still be able
+to run whatever you need inside the Docker container.
 
-The project's source code will be available in the container and sync'ed with
-your local `apicast` directory, so you can edit files in your preferred
-environment and still be able to run whatever you need inside the Docker container.
-
-To run the tests inside the container, just run:
+To install the dependencies inside the container run:
 ```shell
-script/test
+make dependencies
 ```
 
-# Contributing
-For details on how to contribute to this repo see [CONTRIBUTING](.github/CONTRIBUTING.md)
-
-# Releasing
-
-To build a release run:
-
+To run the unit tests inside the container:
 ```shell
-make runtime-image IMAGE_NAME=apicast:release-name
+make busted
 ```
 
-Test the release:
-
+To run the integration tests inside the container:
 ```shell
-make test-runtime-image IMAGE_NAME=apicast:release-name
+make prove
 ```
 
-Push the release to the registry (optional REGISTRY value, defaults to quay.io):
-
+To learn about the other available make targets:
 ```shell
-make push IMAGE_NAME=apicast:release-name
+make help
 ```
+
+APIcast uses:
+
+- [OpenResty](http://openresty.org/en/): a platform that includes NGINX, LuaJIT and Lua modules.
+- [busted](https://github.com/Olivine-Labs/busted): for the unit tests.
+- [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx/lib/Test/Nginx/Socket.pm): for the integration tests.
+
+## Documentation
+
+- [Configuration parameters](doc/parameters.md)
+- [Get started with Lua and OpenResty](doc/policy-development.md)
+- [Learn about policies and write your own](doc/policies.md)
+- [Available Prometheus metrics](doc/prometheus-metrics.md)
+- [Management API](doc/management-api.md)
+- [Contribute](.github/CONTRIBUTING.md)
+
+
+## License
+[Apache 2.0](LICENSE)

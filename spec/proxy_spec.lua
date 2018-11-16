@@ -38,7 +38,8 @@ describe('Proxy', function()
       service.credentials = { location = 'headers' }
       service.backend_version = 2
       ngx.var.http_app_key = 'key'
-      assert.falsy(proxy:rewrite(service))
+      local context = {}
+      assert.falsy(proxy:rewrite(service, context))
     end)
   end)
 

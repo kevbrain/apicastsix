@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed 
+
+- Fix bug in the Default credentials policy. It was using the default credentials in some cases where it should not [PR #954](https://github.com/3scale/apicast/pull/954), [THREESCALE-1547](https://issues.jboss.org/browse/THREESCALE-1547)
+
 ## [3.4.0-rc1] - 2018-11-13
 
 ### Fixed

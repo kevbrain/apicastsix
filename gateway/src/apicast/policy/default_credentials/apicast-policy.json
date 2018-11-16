@@ -3,12 +3,13 @@
   "name": "Anonymous access",
   "summary": "Provides default credentials for unauthenticated requests.",
   "description":
-    ["This policy allows to expose a service without authentication. ",
+    ["This policy allows to expose a service without authentication. \n",
      "It can be useful, for example, for legacy apps that cannot be adapted to ",
-     "send the auth params. ",
+     "send the auth params. \n",
      "When the credentials are not provided in the request, this policy ",
-     "provides the default ones configured. ",
-     "An app_id + app_key or a user_key should be configured."],
+     "provides the default ones configured. \n",
+     "An app_id + app_key or a user_key should be configured. \n",
+     "Note: this policy should be placed before the APIcast policy in the chain."],
   "version": "builtin",
   "configuration": {
     "type":"object",

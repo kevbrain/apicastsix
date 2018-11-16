@@ -36,10 +36,10 @@ local function creds_missing(service)
   end
 end
 
-local function provide_creds_for_version_1(service, default_creds)
+local function provide_creds_for_version_1(context, default_creds)
   if default_creds.user_key then
     -- follows same format as Service.extract_credentials()
-    service.extracted_credentials = {
+    context.extracted_credentials = {
       default_creds.user_key,
       user_key = default_creds.user_key
     }
@@ -50,10 +50,10 @@ local function provide_creds_for_version_1(service, default_creds)
   end
 end
 
-local function provide_creds_for_version_2(service, default_creds)
+local function provide_creds_for_version_2(context, default_creds)
   if default_creds.app_id and default_creds.app_key then
     -- follows same format as Service.extract_credentials()
-    service.extracted_credentials = {
+    context.extracted_credentials = {
       default_creds.app_id,
       default_creds.app_key,
       app_id = default_creds.app_id,
@@ -75,9 +75,8 @@ local function backend_version_is_supported(backend_version)
   return creds_provider[backend_version] ~= nil
 end
 
-local function provide_creds(service, default_creds)
-  local backend_version = tostring(service.backend_version)
-  creds_provider[backend_version](service, default_creds)
+local function provide_creds(context, backend_version, default_creds)
+  creds_provider[tostring(backend_version)](context, default_creds)
 end
 
 function _M:rewrite(context)
@@ -95,7 +94,7 @@ function _M:rewrite(context)
   end
 
   if creds_missing(service) then
-    provide_creds(service, self.default_credentials)
+    provide_creds(context, service.backend_version, self.default_credentials)
   end
 end
 

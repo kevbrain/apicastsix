@@ -29,7 +29,7 @@ describe('Keys Helper', function()
   end)
 
   describe('.report_from_key_batched_report', function()
-    it('returns a report given a key of a batched report with app ID', function()
+    it('returns a report given a key of a batched report with app ID and app key', function()
       local key = 'service_id:s1,app_id:ai,app_key:ak,metric:m1'
 
       local report = keys_helper.report_from_key_batched_report(key)
@@ -48,6 +48,13 @@ describe('Keys Helper', function()
 
       local report = keys_helper.report_from_key_batched_report(key)
       assert.same({ service_id = 's1', access_token = 'at', metric = 'm1' }, report)
+    end)
+
+    it('returns a report given a key of a batched report with app ID only', function()
+      local key = 'service_id:s1,app_id:ai,metric:m1'
+
+      local report = keys_helper.report_from_key_batched_report(key)
+      assert.same({ service_id = 's1', app_id = 'ai', metric = 'm1'}, report)
     end)
   end)
 end)

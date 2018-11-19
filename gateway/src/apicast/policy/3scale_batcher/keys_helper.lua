@@ -16,6 +16,8 @@ local function creds_part_in_key(creds)
     return format("user_key:%s", creds.user_key)
   elseif creds.access_token then
     return format("access_token:%s", creds.access_token)
+  elseif creds.app_id then
+    return format("app_id:%s", creds.app_id)
   end
 end
 
@@ -39,7 +41,8 @@ end
 local regexes_report_key = {
   "service_id:(?<service_id>[\\w-]+),user_key:(?<user_key>[\\w-]+),metric:(?<metric>[\\w-]+)",
   "service_id:(?<service_id>[\\w-]+),access_token:(?<access_token>[\\w-]+),metric:(?<metric>[\\w-]+)",
-  "service_id:(?<service_id>[\\w-]+),app_id:(?<app_id>[\\w-]+),app_key:(?<app_key>[\\w-]+),metric:(?<metric>[\\w-]+)"
+  "service_id:(?<service_id>[\\w-]+),app_id:(?<app_id>[\\w-]+),app_key:(?<app_key>[\\w-]+),metric:(?<metric>[\\w-]+)",
+  "service_id:(?<service_id>[\\w-]+),app_id:(?<app_id>[\\w-]+),metric:(?<metric>[\\w-]+)"
 }
 
 function _M.key_for_cached_auth(transaction)

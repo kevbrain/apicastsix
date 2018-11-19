@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Fix "nil" being added to the end of URL Path in some cases when using http_proxy [PR #946](https://github.com/3scale/apicast/pull/946)
+- Fix 3scale Batcher policy failing to cache and report requests containing app ID only [PR #956](https://github.com/3scale/apicast/pull/956), [THREESCALE-1515](https://issues.jboss.org/browse/THREESCALE-1515)
 
 ## [3.4.0-beta1] - 2018-10-24
 

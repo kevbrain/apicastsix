@@ -72,7 +72,7 @@ Now, scroll down to the section **Production: Self-managed Gateway** at the bott
 ### Setup OpenShift
 
 For production deployments you can follow the [instructions for OpenShift installation](https://docs.openshift.com/container-platform/3.3/install_config/install/quick_install.html). In order to get started quickly in development environments, there are many ways you can install OpenShift:
-- Using `oc cluster up` command &ndash; https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md (used in this tutorial, with detailed instructions for Mac and Windows in addition to Linux which we cover here)
+- Using `oc cluster up` command &ndash; https://github.com/openshift/origin/blob/v3.10.0/docs/cluster_up_down.md (used in this tutorial, with detailed instructions for Mac and Windows in addition to Linux which we cover here)
 - All-In-One Virtual Machine using Vagrant &ndash; https://www.openshift.org/vm
 
 In this tutorial the OpenShift cluster will be installed using:
@@ -108,7 +108,7 @@ In this tutorial the OpenShift cluster will be installed using:
      $ sudo systemctl restart docker
      ```
 
-  If you are using another operating system, follow the instructions for [Docker for Mac](https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#macos-with-docker-for-mac), [Docker for Windows](https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md#windows-with-docker-for-windows), or check out [Docker documentation](https://docs.docker.com/registry/insecure/) for how to add an insecure registry.
+  If you are using another operating system, follow the instructions for [Docker for Mac](https://github.com/openshift/origin/blob/v3.10.0/docs/cluster_up_down.md#macos-with-docker-for-mac), [Docker for Windows](https://github.com/openshift/origin/blob/v3.10.0/docs/cluster_up_down.md#windows-with-docker-for-windows), or check out [Docker documentation](https://docs.docker.com/registry/insecure/) for how to add an insecure registry.
 
 3. Download the client tools release
    [openshift-origin-client-tools-VERSION-linux-64bit.tar.gz](https://github.com/openshift/origin/releases)

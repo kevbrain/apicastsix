@@ -548,7 +548,9 @@ init_by_lua_block {
       local post_args = ngx.req.get_post_args()
       local app_id_match, usage_match
       for k, v in pairs(post_args) do
-        if k == 'transactions[0][usage][hits]' then
+        if k == 'transactions[0][app_key]' then
+          ngx.exit(500)
+        elseif k == 'transactions[0][usage][hits]' then
           usage_match = v == '2'
         elseif k == 'transactions[0][app_id]' then
           app_id_match = v == 'appid'

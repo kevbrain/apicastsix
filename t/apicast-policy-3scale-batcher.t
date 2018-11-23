@@ -1,6 +1,12 @@
 use lib 't';
 use Test::APIcast 'no_plan';
 
+use Cwd qw(abs_path);
+
+$ENV{TEST_NGINX_LUA_PATH} = "$Test::APIcast::spec/?.lua;$ENV{TEST_NGINX_LUA_PATH}";
+
+our $rsa = `cat t/fixtures/rsa.pem`;
+
 # Can't run twice because of the report batches
 repeat_each(1);
 
@@ -475,5 +481,139 @@ rewrite_by_lua_block {
 ["Limits exceeded", "Authentication failed", "Authentication failed"]
 --- error_code eval
 [ 429, 403, 403 ]
+--- no_error_log
+[error]
+
+=== TEST 6: caches successful authorizations with app_id only
+This test checks that the policy a) caches successful authorizations and b) reports correctly.
+For a) we define a backend that makes sure that it's called only once.
+For b) we force the batch reporting and check that transactions.xml receive it in the expected format.
+--- http_config
+include $TEST_NGINX_UPSTREAM_CONFIG;
+lua_shared_dict cached_auths 1m;
+lua_shared_dict batched_reports 1m;
+lua_shared_dict batched_reports_locks 1m;
+lua_package_path "$TEST_NGINX_LUA_PATH";
+
+init_by_lua_block {
+  require('apicast.configuration_loader').mock({
+    oidc = {
+      {
+        issuer = "https://example.com/auth/realms/apicast",
+        config = { id_token_signing_alg_values_supported = { "RS256" } },
+        keys = { somekid = { pem = require('fixtures.rsa').pub } },
+      }
+    },
+    services = {
+      {
+        id = 42,
+        backend_version = 'oauth',
+        backend_authentication_type = 'service_token',
+        backend_authentication_value = 'token-value',
+        proxy = {
+          authentication_method = 'oidc',
+          oidc_issuer_endpoint = 'https://example.com/auth/realms/apicast',
+          backend = { endpoint = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT" },
+          api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+          proxy_rules = {
+            { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1 }
+          },
+          policy_chain = {
+            { name = 'apicast.policy.3scale_batcher', configuration = {} },
+            { name = 'apicast.policy.apicast' }
+          }
+        }
+      }
+    }
+  })
+}
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/oauth_authorize.xml {
+    content_by_lua_block {
+      local test_counter = ngx.shared.test_counter or 0
+      if test_counter == 0 then
+        ngx.shared.test_counter = test_counter + 1
+        ngx.exit(200)
+      else
+        ngx.log(ngx.ERR, 'auth should be cached but called backend anyway')
+        ngx.exit(502)
+      end
+    }
+  }
+  location /transactions.xml {
+    content_by_lua_block {
+      ngx.req.read_body()
+      local post_args = ngx.req.get_post_args()
+      local app_id_match, usage_match
+      for k, v in pairs(post_args) do
+        if k == 'transactions[0][app_key]' then
+          ngx.exit(500)
+        elseif k == 'transactions[0][usage][hits]' then
+          usage_match = v == '2'
+        elseif k == 'transactions[0][app_id]' then
+          app_id_match = v == 'appid'
+        end
+      end
+      ngx.shared.result = usage_match and app_id_match
+    }
+  }
+
+  location /force_report_to_backend {
+    content_by_lua_block {
+      local ReportsBatcher = require ('apicast.policy.3scale_batcher.reports_batcher')
+      local reporter = require ('apicast.policy.3scale_batcher.reporter')
+      local http_ng_resty = require('resty.http_ng.backend.resty')
+      local backend_client = require('apicast.backend_client')
+
+      local service_id = '42'
+
+      local reports_batcher = ReportsBatcher.new(
+        ngx.shared.batched_reports, 'batched_reports_locks')
+
+      local reports = reports_batcher:get_all(service_id)
+
+      local backend = backend_client:new(
+        {
+          id = service_id,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'token-value',
+          backend = { endpoint = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT" }
+        }, http_ng_resty)
+
+      reporter.report(reports, service_id, backend, reports_batcher)
+      ngx.print('force report OK')
+    }
+  }
+  location /check_reports {
+    content_by_lua_block {
+      if ngx.shared.result then
+        ngx.print('report OK')
+        ngx.exit(ngx.HTTP_OK)
+      else
+        ngx.status = 400
+        ngx.print('report not OK')
+        ngx.exit(ngx.HTTP_OK)
+      end
+    }
+  }
+  location /api-backend {
+     echo 'yay, api backend';
+  }
+--- request eval
+[ "GET /test", "GET /test", "GET /force_report_to_backend", "GET /check_reports"]
+--- error_code eval
+[ 200, 200 , 200, 200 ]
+--- response_body eval
+["yay, api backend\x{0a}","yay, api backend\x{0a}","force report OK", "report OK"]
+--- more_headers eval
+use Crypt::JWT qw(encode_jwt);
+my $jwt = encode_jwt(payload => {
+  aud => 'appid',
+  sub => 'someone',
+  iss => 'https://example.com/auth/realms/apicast',
+  exp => time + 3600 }, key => \$::rsa, alg => 'RS256', extra_headers => { kid => 'somekid' });
+["Authorization: Bearer $jwt", "Authorization: Bearer $jwt", "" , ""]
 --- no_error_log
 [error]

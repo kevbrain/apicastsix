@@ -24,6 +24,7 @@ local backend_calls_metrics = require('apicast.metrics.3scale_backend_calls')
 
 local http_proxy = require('resty.http.proxy')
 local http_ng_ngx = require('resty.http_ng.backend.ngx')
+local http_ng_resty = require('resty.http_ng.backend.resty')
 -- resty.http_ng.backend.ngx is using ngx.location.capture, which is available only
 -- on rewrite, access and content phases. We need to use cosockets (http_ng default backend)
 -- everywhere else (like timers).
@@ -207,6 +208,19 @@ local function format_transactions(reports_batch)
   return res
 end
 
+-- This is a temporary fix.
+-- We know that auths are idempotent so they can be retried safely when there
+-- is an error caused by the 3scale backend closing the connection.
+-- In the future, we should probably include the logic for retries in the
+-- different backends of the http ng libs.
+-- This only works with the "resty" backend because the "ngx" has its own logic
+-- for retrying.
+local function retry_auth(auth_resp, http_backend)
+  return http_backend == http_ng_resty and
+         auth_resp.status == 0 and
+         auth_resp.error == "closed"
+end
+
 --- Call authrep (oauth_authrep) on backend.
 -- @tparam ?{table,...} query list of query parameters
 -- @treturn http_ng.response http response
@@ -235,6 +249,10 @@ function _M:authorize(...)
   local using_oauth = self.version == 'oauth'
   local auth_uri = auth_path(using_oauth)
   local res = call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
+
+  if retry_auth(res, self.http_client.backend) then
+    res = call_backend_transaction(self, auth_uri, authorize_options(using_oauth), ...)
+  end
 
   inc_metrics('auth', res.status)
 

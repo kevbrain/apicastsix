@@ -1,6 +1,7 @@
 local _M = require('apicast.backend_client')
 local configuration = require('apicast.configuration')
 local http_ng = require 'resty.http_ng'
+local http_ng_resty = require 'resty.http_ng.backend.resty'
 local ReportsBatch = require 'apicast.policy.3scale_batcher.reports_batch'
 local backend_calls_metrics = require 'apicast.metrics.3scale_backend_calls'
 
@@ -196,6 +197,19 @@ describe('backend client', function()
       backend_client:authorize()
 
       assert.stub(backend_calls_metrics.report).was_called_with('auth', status)
+    end)
+
+    it('retries when auth return a "closed" error and uses the "resty" http backend', function()
+      local service = configuration.parse_service({ id = '42' })
+
+      local backend_client = assert(_M:new(service, http_ng_resty))
+      stub(backend_client.http_client, 'get').returns(
+        { status = 0, error = 'closed' }
+      )
+
+      backend_client:authorize()
+
+      assert.stub(backend_client.http_client.get).was_called(2)
     end)
   end)
 

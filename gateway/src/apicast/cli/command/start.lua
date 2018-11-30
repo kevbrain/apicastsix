@@ -81,7 +81,7 @@ end
 
 
 local function build_environment_config(options)
-    local config = Environment.new()
+    local config = Environment.new(options)
 
     resty_env.set('APICAST_POLICY_LOAD_PATH', concat(options.policy_load_path,':'))
 
@@ -138,6 +138,9 @@ local function build_context(options, config)
     context.ca_bundle = pl.path.abspath(tostring(context.ca_bundle) or pl.path.join(context.prefix, 'conf', 'ca-bundle.crt'))
 
     context.access_log_file = options.access_log_file
+
+    -- expose parsed CLI options
+    context.options = options
 
     return context
 end

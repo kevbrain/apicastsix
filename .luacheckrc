@@ -4,3 +4,5 @@ busted = {std = "+busted", globals = { 'fixture' } }
 files["**/spec/**/*_spec.lua"] = busted
 
 globals = { 'rawlen' }
+
+files['gateway/config/*.lua'] = { globals = { 'context' } }

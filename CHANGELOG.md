@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Improve startup time by improving templating performance and caching filesystem access [PR #964](https://github.com/3scale/apicast/pull/964)
+- Liquid `default` filter now does not override `false` values [PR #964](https://github.com/3scale/apicast/pull/964)
 
 ### Fixed
 

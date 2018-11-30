@@ -120,7 +120,7 @@ function _M:interpret(str)
     end)
 
     filter_set:add_filter('default', function(value, default)
-        return value or default
+        if value == nil then return default else return value end
     end)
 
     filter_set:add_filter('starts_with', function(string, ...)

@@ -107,7 +107,7 @@ executors:
     docker:
     - image: docker:stable
     environment:
-      S2I_VERSION: "1.1.9a-40ad911d"
+      S2I_VERSION: "1.1.12-2a783420"
       DOCKER_COMPOSE_VERSION: "1.16.1"
       OPENRESTY_VERSION: "1.13.6.2-1"
 

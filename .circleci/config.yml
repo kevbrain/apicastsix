@@ -139,7 +139,9 @@ jobs:
     steps:
       - setup-s2i
       - run:
-          command: make runtime-image
+          command: |
+            docker rmi --no-prune ${IMAGE_NAME} 2>/dev/null || :
+            make runtime-image
 
       - run: make test-runtime-image gateway-logs --keep-going
       - login-docker:
@@ -158,7 +160,9 @@ jobs:
       - setup-s2i
       - run:
           name: "Build image"
-          command: make builder-image
+          command: |
+            docker rmi --no-prune ${IMAGE_NAME} 2>/dev/null || :
+            make builder-image
 
       - run:
           name: "Build image (incremental)"

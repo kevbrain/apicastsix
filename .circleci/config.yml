@@ -93,6 +93,14 @@ commands:
             else
               echo "Skipping docker registry push."
             fi
+
+  cleanup-docker:
+    steps:
+      - run:
+          name: "Cleanup docker images"
+          command: docker system prune -f
+          when: always
+
 executors:
   s2i:
     working_directory: /opt/app-root/apicast
@@ -139,6 +147,7 @@ jobs:
             IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}"
             docker tag apicast-runtime-image ${IMAGE_NAME}
             make push
+      - cleanup-docker
 
   # Try to build s2i builder image and run smoke tests
   s2i-builder:
@@ -164,6 +173,8 @@ jobs:
             IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder"
             docker tag apicast-builder-image ${IMAGE_NAME}
             make push
+
+      - cleanup-docker
 
   # Download, build and store Lua dependencies.
 

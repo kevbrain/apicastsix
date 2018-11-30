@@ -1,0 +1,108 @@
+log_format time '[$time_local] $host:$server_port $remote_addr:$remote_port "$request" $status $body_bytes_sent ($request_time) $post_action_impact';
+
+server {
+  listen {{ port.management | default: 8090 }};
+  server_name {{ server_name.management | default: 'management _' }};
+
+  {% if opentracing_tracer != empty %}
+  opentracing_operation_name "apicast_management";
+  opentracing_trace_locations off;
+  {% endif %}
+
+  {% include "conf.d/management.conf" %}
+}
+
+server {
+  listen {{ port.backend | default: 8081 }};
+  server_name backend;
+
+  {% if opentracing_tracer != empty %}
+  opentracing_operation_name "apicast_mockbackend";
+  opentracing_trace_locations off;
+  {% endif %}
+
+  {% include "conf.d/backend.conf" %}
+}
+
+upstream echo {
+  server 127.0.0.1:{{ port.echo | default: 8081 }};
+  keepalive 1024;
+}
+
+server {
+  listen {{ port.echo | default: 8081 }} default_server;
+  server_name echo _;
+
+  {% if opentracing_tracer != empty %}
+  opentracing_operation_name "apicast_echo";
+  opentracing_trace_locations off;
+  {% endif %}
+
+  {% include "conf.d/echo.conf" %}
+}
+
+server {
+
+  set $access_logs_enabled '1';
+  access_log {{ access_log_file | default: "/dev/stdout" }} time if=$access_logs_enabled;
+
+  {%- assign http_port = port.apicast | default: 8080 %}
+  {%- assign https_port = env.APICAST_HTTPS_PORT %}
+
+  {% if http_port != https_port -%}
+    listen {{ http_port }};
+  {% endif %}
+
+  {% if https_port -%}
+  listen {{ https_port }} ssl;
+
+  {%- assign https_certificate = env.APICAST_HTTPS_CERTIFICATE -%}
+  ssl_certificate {% if https_certificate -%}
+    {{  https_certificate }}
+  {%- else -%}
+    {{ "conf/server.crt" | filesystem | first }}
+  {%- endif %};
+
+  {%- assign https_certificate_key = env.APICAST_HTTPS_CERTIFICATE_KEY -%}
+  ssl_certificate_key {% if https_certificate_key -%}
+    {{  https_certificate_key }}
+  {%- else -%}
+    {{ "conf/server.key" | filesystem | first }}
+  {%- endif %};
+
+  ssl_verify_client optional_no_ca;
+  ssl_certificate_by_lua_block { require('apicast.executor'):ssl_certificate() }
+  {%- endif %}
+
+  server_name _;
+
+  {% if opentracing_tracer != empty %}
+  opentracing_operation_name "apicast";
+  opentracing_trace_locations on;
+  {% endif %}
+
+  {% include "http.d/ssl.conf" %}
+
+  {% for file in "apicast.d/*.conf" | filesystem %}
+    {% include file %}
+  {% endfor %}
+  {% include "conf.d/apicast.conf" %}
+}
+
+{% if port.metrics %}
+  lua_shared_dict prometheus_metrics 16M;
+  server {
+    access_log off;
+    listen {{ port.metrics }};
+    server_name metrics prometheus _;
+
+    location /metrics {
+      content_by_lua_block { require('apicast.executor'):metrics() }
+    }
+
+    location /nginx_status {
+      internal;
+      stub_status;
+    }
+  }
+{% endif %}

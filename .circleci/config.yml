@@ -93,20 +93,28 @@ commands:
             else
               echo "Skipping docker registry push."
             fi
+
+  cleanup-docker:
+    steps:
+      - run:
+          name: "Cleanup docker images"
+          command: docker system prune -f
+          when: always
+
 executors:
   s2i:
     working_directory: /opt/app-root/apicast
     docker:
     - image: docker:stable
     environment:
-      S2I_VERSION: "1.1.9a-40ad911d"
+      S2I_VERSION: "1.1.12-2a783420"
       DOCKER_COMPOSE_VERSION: "1.16.1"
-      OPENRESTY_VERSION: "1.13.6.2-1"
+      OPENRESTY_VERSION: "1.13.6.2-2"
 
   openresty:
     working_directory: /opt/app-root/apicast
     docker:
-    - image: quay.io/3scale/s2i-openresty-centos7:1.13.6.2-1
+    - image: quay.io/3scale/s2i-openresty-centos7:1.13.6.2-2
     - image: redis:3.2.8-alpine
     environment:
       TEST_NGINX_BINARY: openresty
@@ -131,7 +139,9 @@ jobs:
     steps:
       - setup-s2i
       - run:
-          command: make runtime-image
+          command: |
+            docker rmi --no-prune ${IMAGE_NAME} 2>/dev/null || :
+            make runtime-image
 
       - run: make test-runtime-image gateway-logs --keep-going
       - login-docker:
@@ -139,6 +149,7 @@ jobs:
             IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}"
             docker tag apicast-runtime-image ${IMAGE_NAME}
             make push
+      - cleanup-docker
 
   # Try to build s2i builder image and run smoke tests
   s2i-builder:
@@ -149,7 +160,9 @@ jobs:
       - setup-s2i
       - run:
           name: "Build image"
-          command: make builder-image
+          command: |
+            docker rmi --no-prune ${IMAGE_NAME} 2>/dev/null || :
+            make builder-image
 
       - run:
           name: "Build image (incremental)"
@@ -164,6 +177,8 @@ jobs:
             IMAGE_NAME="apicast:${CIRCLE_TAG:-${CIRCLE_BRANCH}}-builder"
             docker tag apicast-builder-image ${IMAGE_NAME}
             make push
+
+      - cleanup-docker
 
   # Download, build and store Lua dependencies.
 

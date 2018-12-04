@@ -126,6 +126,8 @@ VZ5Wr10wCgYIKoZIzj0EAwIDSAAwRQIhAPRkfbxowt0H7p5xZYpwoMKanUXz9eKQ
 0sGkOw+TqqGXAiAMKJRqtjnCF2LIjGygHG6BlgjM4NgIMDHteZPEr4qEmw==
 -----END CERTIFICATE-----
 
+
+
 === TEST 3: Listen on HTTPS with path-based routing enabled
 Regression test. APIcast was crashing because path-based routing needs the http
 method and the path. However, those are not available when trying to find the
@@ -138,35 +140,86 @@ This test checks that APIcast falls back to finding the service by host.
     'APICAST_HTTPS_CERTIFICATE_KEY' => "$Test::Nginx::Util::ServRoot/html/server.key",
     'APICAST_PATH_ROUTING' => "true",
 )
---- configuration fixture=echo.json
+--- configuration
+{
+  "services": [
+    {
+      "id": 1,
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.echo", "configuration": {"status": 202 } }
+        ],
+        "proxy_rules": [
+          {
+            "http_method": "GET",
+            "pattern": "/two",
+            "metric_system_name": "hits",
+            "delta": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": 1234,
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.echo", "configuration": {"status": 201 } }
+        ],
+        "proxy_rules": [
+          {
+            "http_method": "GET",
+            "pattern": "/one",
+            "metric_system_name": "hits",
+            "delta": 1
+          }
+        ]
+      }
+    }
+  ]
+}
+
 --- test env
 lua_ssl_trusted_certificate $TEST_NGINX_HTML_DIR/server.crt;
 content_by_lua_block {
-    local sock = ngx.socket.tcp()
-    sock:settimeout(2000)
+    local function request(path)
+        local sock = ngx.socket.tcp()
+        sock:settimeout(2000)
 
-    local ok, err = sock:connect(ngx.var.server_addr, ngx.var.apicast_port)
-    if not ok then
-        ngx.say("failed to connect: ", err)
-        return
+        local ok, err = sock:connect(ngx.var.server_addr, ngx.var.apicast_port)
+        if not ok then
+            ngx.say("failed to connect: ", err)
+            return
+        end
+
+        ngx.say("connected: ", ok)
+
+        local sess, err = sock:sslhandshake(nil, "localhost", true)
+        if not sess then
+            ngx.say("failed to do SSL handshake: ", err)
+            return
+        end
+
+        ngx.say("ssl handshake: ", type(sess))
+        sock:send("GET " .. path .. " HTTP/1.1\r\nHost: localhost\r\n\r\n")
+        ngx.say(sock:receive())
     end
 
-    ngx.say("connected: ", ok)
-
-    local sess, err = sock:sslhandshake(nil, "localhost", true)
-    if not sess then
-        ngx.say("failed to do SSL handshake: ", err)
-        return
-    end
-
-    ngx.say("ssl handshake: ", type(sess))
+    request('/one')
+    ngx.say()
+    request('/two')
 }
 --- response_body
 connected: 1
 ssl handshake: userdata
+HTTP/1.1 201 Created
+
+connected: 1
+ssl handshake: userdata
+HTTP/1.1 202 Accepted
 --- error_code: 200
 --- grep_error_log eval: qr/Falling back to routing by host/
 --- grep_error_log_out
+Falling back to routing by host
 Falling back to routing by host
 --- no_error_log
 [error]

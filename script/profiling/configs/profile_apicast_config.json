@@ -1,0 +1,18 @@
+{
+  "services": [
+    {
+      "proxy": {
+        "policy_chain": [
+          { "name": "apicast.policy.upstream",
+            "configuration": {
+              "rules": [{
+                "regex": "/",
+                "url": "http://127.0.0.1:9001"
+              }]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

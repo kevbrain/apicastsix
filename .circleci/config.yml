@@ -285,7 +285,7 @@ jobs:
       - run: sudo --preserve-env script/install/circleci.sh
       - run: sudo --preserve-env script/install/utilities.sh
       - run: script/install/apicast.sh
-      - run: bin/apicast --dev --test
+      - run: sudo lua script/profiling/profile.lua
       - store_artifacts:
           path: tmp/profile
           destination: profile
@@ -329,6 +329,11 @@ workflows:
       - s2i-runtime:
           <<: *build-tags
           context: org-global
+          requires:
+            - build-lua
+            - build-perl
+      - profile:
+          <<: *build-tags
           requires:
             - build-lua
             - build-perl

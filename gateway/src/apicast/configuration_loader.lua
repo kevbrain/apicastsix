@@ -32,7 +32,7 @@ function _M.load(host)
     local scheme = uri.scheme
 
     if scheme == 'file' then
-      env.set('THREESCALE_CONFIG_FILE', uri.path)
+      env.set('THREESCALE_CONFIG_FILE', uri.opaque or uri.path)
     elseif scheme == 'http' or scheme == 'https' then
       env.set('THREESCALE_PORTAL_ENDPOINT', uri)
     elseif scheme == 'data' then -- TODO: this requires upgrading lua-resty-env
@@ -212,6 +212,9 @@ function lazy.rewrite(configuration, host)
   if ok and not _M.configured(configuration, host) then
     ngx.log(ngx.INFO, 'lazy loading configuration for: ', host)
     local config = _M.load(host)
+    if not config then
+      ngx.log(ngx.WARN, 'failed to get config for host: ', host)
+    end
     _M.configure(configuration, config)
   end
 

@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added "last" attribute in the mapping rules. When set to true indicates that, if the rule matches, APIcast should not try to match the rules placed after this one [PR #982](https://github.com/3scale/apicast/pull/982), [THREESCALE-1344](https://issues.jboss.org/browse/THREESCALE-1344)
 - Added TLS Validation policy to verify TLS Client Certificate against a whitelist. [PR #966](https://github.com/3scale/apicast/pull/966), [THREESCALE-1671](https://issues.jboss.org/browse/THREESCALE-1671)
 - New CLI command "push_policy" that pushes a policy schema to the 3scale admin portal [PR #986](https://github.com/3scale/apicast/pull/986), [THREESCALE-871](https://issues.jboss.org/browse/THREESCALE-871)
+- Added support for experimental standalone YAML configuration [PR #926](https://github.com/3scale/apicast/pull/926)
 
 ### Changed
 

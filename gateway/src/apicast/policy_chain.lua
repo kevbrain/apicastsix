@@ -150,7 +150,7 @@ end
 --- Insert a policy into the chain
 -- @tparam Policy policy the policy to be added to the chain
 -- @tparam[opt] int position the position to add the policy to, defaults to last one
--- @treturn int lenght of the chain
+-- @treturn int length of the chain
 -- @error frozen | returned when chain is not modifiable
 -- @see freeze
 function _M:insert(policy, position)
@@ -159,6 +159,27 @@ function _M:insert(policy, position)
     else
         insert(self, position or #self+1, policy)
         return #self
+    end
+end
+
+--- Load and insert policy into the chain
+-- @tparam string name policy name
+-- @tparam[opt] string version policy version
+-- @tparam[opt] table configuration policy configuration
+-- @treturn length of the chain
+-- @error frozen | returned when chain is not modifiable
+-- @see insert
+function _M:add_policy(name, version, ...)
+    local policy, err = _M.load_policy(name, version, ...)
+
+    if policy then
+        return self:insert(policy)
+
+    elseif err then
+        ngx.log(ngx.WARN, 'failed to load policy: ', name, ' version: ', version)
+        ngx.log(ngx.DEBUG, err)
+
+        return false, err
     end
 end
 

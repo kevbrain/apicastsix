@@ -40,6 +40,10 @@ function _M:rewrite(context)
 
   local p = context.proxy
 
+  if not p then
+    return nil, 'no proxy object'
+  end
+
   if context.cache_handler then
     p.cache_handler = context.cache_handler
   end

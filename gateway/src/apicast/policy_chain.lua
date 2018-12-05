@@ -51,7 +51,13 @@ function _M.build(modules)
 
     for i=1, #list do
         -- TODO: make this error better, possibly not crash and just log and skip the module
-        chain[i] = _M.load_policy(list[i]) or error(format('module %q could not be loaded', list[i]))
+        local policy, err = _M.load_policy(list[i])
+
+        if policy then
+            chain[i] = policy
+        else
+            error(format('module %q could not be loaded: %s', list[i], err))
+        end
     end
 
     return _M.new(chain)

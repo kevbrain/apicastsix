@@ -20,10 +20,13 @@ apt update
 
 echo manual > /etc/init/openresty.override
 
-apt install -y cpanminus liblocal-lib-perl libev-dev luarocks python-pip systemtap
+apt install -y cpanminus liblocal-lib-perl libev-dev luarocks python-pip systemtap libyaml-dev
 apt install -y openresty openresty-debug-dbgsym openresty-openssl-debug-dbgsym openresty-pcre-dbgsym openresty-zlib-dbgsym
 
 kernel=$(uname -r)
 apt install -y "linux-headers-${kernel}" "linux-image-${kernel}-dbgsym"
+
+# make ubuntu look more like RHEL
+ln -s /usr/lib/x86_64-linux-gnu /usr/lib64
 
 service openresty stop

@@ -44,7 +44,7 @@ do -- adding assert.returns_error(error_text, ok, ret) : assert.returns_error('n
 
   local function returns_error(state, arguments, level)
     local argc = arguments.n
-    assert(argc == 3, say("assertion.internal.argtolittle", { "error_matches", 3, tostring(argc) }), level)
+    assert(argc >= 2, say("assertion.internal.argtolittle", { "error_matches", 2, tostring(argc) }), level)
 
     local expected = arguments[1]
     local ok = arguments[2]

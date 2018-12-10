@@ -281,7 +281,7 @@ jobs:
   profile:
     machine: true
     steps:
-      - checkout
+      - attach-workspace
       - run: sudo --preserve-env script/install/circleci.sh
       - run: sudo --preserve-env script/install/utilities.sh
       - run: script/install/apicast.sh

@@ -38,7 +38,7 @@
         }
       },
       "allow_origin": {
-        "description": "Origins for which the response can be shared with",
+        "description": "Origin allowed for CORS requests. The field expects only one origin (e.g. https://example.com) or '*'. If left blank, the value of the 'Origin' request header will be used.",
         "type": "string"
       },
       "allow_credentials": {

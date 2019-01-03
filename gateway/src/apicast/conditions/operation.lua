@@ -1,6 +1,7 @@
 local setmetatable = setmetatable
 local assert = assert
 local tostring = tostring
+local match = ngx.re.match
 
 local TemplateString = require 'apicast.template_string'
 
@@ -16,7 +17,13 @@ end
 
 local evaluate_func = {
   ['=='] = function(left, right) return tostring(left) == tostring(right) end,
-  ['!='] = function(left, right) return tostring(left) ~= tostring(right) end
+  ['!='] = function(left, right) return tostring(left) ~= tostring(right) end,
+
+  -- Implemented on top of ngx.re.match. Returns true when there is a match and
+  -- false otherwise.
+  ['matches'] = function(left, right)
+    return (match(tostring(left), tostring(right)) and true) or false
+  end
 }
 
 --- Initialize an operation

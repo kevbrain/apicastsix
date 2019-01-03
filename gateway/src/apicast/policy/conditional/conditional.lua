@@ -4,8 +4,8 @@ local insert = table.insert
 local policy = require('apicast.policy')
 local policy_phases = require('apicast.policy').phases
 local PolicyChain = require('apicast.policy_chain')
-local Condition = require('apicast.policy.conditional.condition')
-local Operation = require('apicast.policy.conditional.operation')
+local Condition = require('apicast.conditions.condition')
+local Operation = require('apicast.conditions.operation')
 local ngx_variable = require('apicast.policy.ngx_variable')
 
 local _M = policy.new('Conditional policy')

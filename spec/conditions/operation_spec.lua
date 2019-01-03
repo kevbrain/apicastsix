@@ -1,4 +1,4 @@
-local Operation = require('apicast.policy.conditional.operation')
+local Operation = require('apicast.conditions.operation')
 local ngx_variable = require('apicast.policy.ngx_variable')
 
 describe('Operation', function()

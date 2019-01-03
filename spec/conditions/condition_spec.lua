@@ -1,5 +1,5 @@
-local Condition = require('apicast.policy.conditional.condition')
-local Operation = require('apicast.policy.conditional.operation')
+local Condition = require('apicast.conditions.condition')
+local Operation = require('apicast.conditions.operation')
 
 describe('Engine', function()
   describe('.new', function()

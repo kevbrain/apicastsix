@@ -27,6 +27,28 @@ describe('Operation', function()
       assert.is_false(Operation.new('1', 'plain', '!=', '1', 'plain'):evaluate({}))
     end)
 
+    it('evaluates "matches"', function()
+      assert.is_true(
+        Operation.new('something_abc_something', 'plain', 'matches', '.*_abc_.*', 'plain')
+                 :evaluate({})
+      )
+
+      assert.is_false(
+        Operation.new('something_abc_something', 'plain', 'matches', 'abc_$', 'plain')
+                 :evaluate({})
+      )
+
+      assert.is_true(
+        Operation.new('12345', 'plain', 'matches', '^123', 'plain')
+                 :evaluate({})
+      )
+
+      assert.is_false(
+        Operation.new('abc', 'plain', 'matches', '^123', 'plain')
+                 :evaluate({})
+      )
+    end)
+
     it('evaluates values as plain text by default', function()
       assert.is_true(Operation.new('1', nil, '==', '1', nil):evaluate({}))
       assert.is_false(Operation.new('1', nil, '==', '2', nil):evaluate({}))

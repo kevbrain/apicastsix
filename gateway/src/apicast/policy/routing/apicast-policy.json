@@ -1,0 +1,129 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Routing",
+  "summary": "Allows to modify the upstream URL of the request.",
+  "description": [
+    "This policy allows to modify the upstream URL (scheme, host and port) of ",
+    "the request based on its path, its query arguments, a header, or a JWT ",
+    "claim. \n",
+    "When combined with the APIcast policy, the upstream policy should be ",
+    "placed before it in the policy chain."
+  ],
+  "version": "builtin",
+  "configuration": {
+    "type": "object",
+    "definitions": {
+      "operation": {
+        "type": "object",
+        "$id": "#/definitions/operation",
+        "properties": {
+          "thing_to_match": {
+            "type": "string",
+            "enum": [
+              "path",
+              "header",
+              "query_arg",
+              "jwt_claim"
+            ]
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "==",
+              "!=",
+              "matches"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "thing_to_match",
+          "op",
+          "value"
+        ],
+        "dependencies": {
+          "thing_to_match": {
+            "oneOf": [
+              {
+                "properties": {
+                  "thing_to_match": {
+                    "enum": [
+                      "header"
+                    ]
+                  },
+                  "header_name" : {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "header_name"
+                ]
+              },
+              {
+                "properties": {
+                  "thing_to_match": {
+                    "enum": [
+                      "query_arg"
+                    ]
+                  },
+                  "query_arg_name" : {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query_arg_name"
+                ]
+              },
+              {
+                "properties": {
+                  "thing_to_match": {
+                    "enum": [
+                      "jwt_claim"
+                    ]
+                  },
+                  "jwt_claim_name" : {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "jwt_claim_name"
+                ]
+              },
+              {
+                "properties": {
+                  "thing_to_match": {
+                    "enum": [
+                      "path"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "properties": {
+      "rules": {
+        "description": "list of rules to be applied",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "condition": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/operation"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -116,9 +116,19 @@
               "type": "string"
             },
             "condition": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/operation"
+              "type": "object",
+              "properties": {
+                "operations": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/operation"
+                  }
+                },
+                "combine_op": {
+                  "type": "string",
+                  "enum": ["and", "or"],
+                  "default": "and"
+                }
               }
             }
           }

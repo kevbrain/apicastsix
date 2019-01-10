@@ -21,13 +21,15 @@ __DATA__
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "==",
-                      "value": "/a_path"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/a_path"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -68,13 +70,15 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "==",
-                      "value": "/"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -115,13 +119,15 @@ GET /i_dont_match HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "!=",
-                      "value": "/"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "!=",
+                        "value": "/"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -162,13 +168,15 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "!=",
-                      "value": "/a_path"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "!=",
+                        "value": "/a_path"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -209,13 +217,15 @@ GET /a_path HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "matches",
-                      "value": ".*123.*"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "matches",
+                        "value": ".*123.*"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -256,13 +266,15 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "matches",
-                      "value": "^123$"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "matches",
+                        "value": "^123$"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -303,14 +315,16 @@ GET /something_123_something HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "Test-Header",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -353,14 +367,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "Test-Header",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -403,14 +419,16 @@ GET / HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "Test-Header",
-                      "op": "!=",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "!=",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -453,14 +471,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "Test-Header",
-                      "op": "!=",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "!=",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -503,14 +523,16 @@ GET / HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "Test-Header",
-                      "op": "matches",
-                      "value": ".*123.*"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "matches",
+                        "value": ".*123.*"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -553,14 +575,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "Test-Header",
-                      "op": "matches",
-                      "value": ".*123.*"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "matches",
+                        "value": ".*123.*"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -603,14 +627,16 @@ GET / HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "query_arg",
-                      "query_arg_name": "test_arg",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "test_arg",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -651,14 +677,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "query_arg",
-                      "query_arg_name": "test_arg",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "test_arg",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -699,14 +727,16 @@ GET /a_path?test_arg=i_dont_match HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "query_arg",
-                      "query_arg_name": "test_arg",
-                      "op": "!=",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "test_arg",
+                        "op": "!=",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -747,14 +777,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "query_arg",
-                      "query_arg_name": "test_arg",
-                      "op": "!=",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "test_arg",
+                        "op": "!=",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -795,14 +827,16 @@ GET /a_path?test_arg=some_value HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "query_arg",
-                      "query_arg_name": "test_arg",
-                      "op": "matches",
-                      "value": ".*123.*"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "test_arg",
+                        "op": "matches",
+                        "value": ".*123.*"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -843,14 +877,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "query_arg",
-                      "query_arg_name": "test_arg",
-                      "op": "matches",
-                      "value": ".*123.*"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "test_arg",
+                        "op": "matches",
+                        "value": ".*123.*"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -926,14 +962,16 @@ GET /a_path?test_arg=i_dont_match HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "jwt_claim",
-                      "jwt_claim_name": "test_jwt_claim",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "jwt_claim",
+                        "jwt_claim_name": "test_jwt_claim",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1021,14 +1059,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "jwt_claim",
-                      "jwt_claim_name": "test_jwt_claim",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "jwt_claim",
+                        "jwt_claim_name": "test_jwt_claim",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1116,14 +1156,16 @@ GET / HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "jwt_claim",
-                      "jwt_claim_name": "test_jwt_claim",
-                      "op": "!=",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "jwt_claim",
+                        "jwt_claim_name": "test_jwt_claim",
+                        "op": "!=",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1211,14 +1253,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "jwt_claim",
-                      "jwt_claim_name": "test_jwt_claim",
-                      "op": "!=",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "jwt_claim",
+                        "jwt_claim_name": "test_jwt_claim",
+                        "op": "!=",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1306,14 +1350,16 @@ GET / HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "jwt_claim",
-                      "jwt_claim_name": "test_jwt_claim",
-                      "op": "matches",
-                      "value": ".*123.*"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "jwt_claim",
+                        "jwt_claim_name": "test_jwt_claim",
+                        "op": "matches",
+                        "value": ".*123.*"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1401,14 +1447,16 @@ yay, api backend
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "jwt_claim",
-                      "jwt_claim_name": "test_jwt_claim",
-                      "op": "matches",
-                      "value": ".*123.*"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "jwt_claim",
+                        "jwt_claim_name": "test_jwt_claim",
+                        "op": "matches",
+                        "value": ".*123.*"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1463,23 +1511,27 @@ the first rule that matches.
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "==",
-                      "value": "/a_path"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/a_path"
+                      }
+                    ]
+                  }
                 },
                 {
                   "url": "http://example.com",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "==",
-                      "value": "/a_path"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/a_path"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1523,13 +1575,15 @@ The path of the upstream is appended to the path of the request.
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT/the_path_in_the_rule",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "==",
-                      "value": "/the_request_path"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/the_request_path"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1607,36 +1661,42 @@ does not raise any errors and rules do not match.
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "header_not_in_the_request",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "header_not_in_the_request",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 },
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "query_arg",
-                      "query_arg_name": "arg_not_in_the_request",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "arg_not_in_the_request",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 },
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "jwt_claim",
-                      "jwt_claim_name": "claim_not_in_the_request",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "jwt_claim",
+                        "jwt_claim_name": "claim_not_in_the_request",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1675,7 +1735,10 @@ GET / HTTP/1.1
 --- no_error_log
 [error]
 
-=== TEST 28: upstream with several conditions and all of them are true
+=== TEST 28: upstream with several operations and all of them are true
+When the "combine_op" (and, or) is not set, APIcast defaults to 'and'.
+So the condition evaluates to true only when all the operations evaluate to
+true as well.
 --- configuration
 {
   "services": [
@@ -1689,19 +1752,21 @@ GET / HTTP/1.1
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "==",
-                      "value": "/a_path"
-                    },
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "Test-Header",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/a_path"
+                      },
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1745,19 +1810,21 @@ When one or more conditions are false, the request is not routed
               "rules": [
                 {
                   "url": "http://test:$TEST_NGINX_SERVER_PORT",
-                  "condition": [
-                    {
-                      "thing_to_match": "path",
-                      "op": "==",
-                      "value": "/a_path"
-                    },
-                    {
-                      "thing_to_match": "header",
-                      "header_name": "Test-Header",
-                      "op": "==",
-                      "value": "some_value"
-                    }
-                  ]
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/a_path"
+                      },
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "==",
+                        "value": "some_value"
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -1782,6 +1849,182 @@ GET /a_path
 Test-Header: i_dont_match
 --- response_body
 GET /a_path HTTP/1.1
+--- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 30: conditions combined with 'or'
+In this test, we define a rule with two operations that evaluate to false
+combined with 'or', and a second rule with two operations combined with 'or'
+and only the second operation evaluates to true.
+The test checks that the upstream selected is the one of the second rule.
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.routing",
+            "configuration": {
+              "rules": [
+                {
+                  "url": "http://test:$TEST_NGINX_SERVER_PORT/wrong",
+                  "condition": {
+                    "combine_op": "or",
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/rule_path"
+                      },
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "==",
+                        "value": "rule_header_value"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "url": "http://test:$TEST_NGINX_SERVER_PORT",
+                  "condition": {
+                    "combine_op": "or",
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/rule_path"
+                      },
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "test_arg",
+                        "op": "==",
+                        "value": "rule_arg_value"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "apicast.policy.echo"
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location /request_path {
+     content_by_lua_block {
+       ngx.say('yay, api backend');
+     }
+  }
+
+  location /wrong {
+     content_by_lua_block {
+       ngx.status = 403
+       ngx.say('Selected wrong upstream');
+     }
+  }
+--- request
+GET /request_path?test_arg=rule_arg_value
+--- more_headers
+Test-Header: i_dont_match
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]
+
+=== TEST 31: conditions combined with 'and'
+In this test, we define a rule with two operations combined with 'and' where
+only one of them evaluates to true, and a second rule with two operations
+combined with 'and' where both of them evaluate to true.
+The test checks that the upstream selected is the one of the second rule.
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.routing",
+            "configuration": {
+              "rules": [
+                {
+                  "url": "http://test:$TEST_NGINX_SERVER_PORT/wrong",
+                  "condition": {
+                    "combine_op": "and",
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/rule_path"
+                      },
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Test-Header",
+                        "op": "==",
+                        "value": "rule_header_value"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "url": "http://test:$TEST_NGINX_SERVER_PORT",
+                  "condition": {
+                    "combine_op": "and",
+                    "operations": [
+                      {
+                        "thing_to_match": "path",
+                        "op": "==",
+                        "value": "/rule_path"
+                      },
+                      {
+                        "thing_to_match": "query_arg",
+                        "query_arg_name": "test_arg",
+                        "op": "==",
+                        "value": "rule_arg_value"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "apicast.policy.echo"
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location /rule_path {
+     content_by_lua_block {
+       ngx.say('yay, api backend');
+     }
+  }
+
+  location /wrong {
+     content_by_lua_block {
+       ngx.status = 403
+       ngx.say('Selected wrong upstream');
+     }
+  }
+--- request
+GET /rule_path?test_arg=rule_arg_value
+--- more_headers
+Test-Header: i_dont_match
+--- response_body
+yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]

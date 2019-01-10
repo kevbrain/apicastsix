@@ -38,14 +38,14 @@ local function init_operation(config_operation)
   end
 end
 
-local function init_condition(config_operations)
-  local operations = tab_new(#config_operations, 0)
+local function init_condition(config_condition)
+  local operations = tab_new(#config_condition.operations, 0)
 
-  for _, operation in ipairs(config_operations) do
+  for _, operation in ipairs(config_condition.operations) do
     tab_insert(operations, init_operation(operation))
   end
 
-  return Condition.new(operations, 'and')
+  return Condition.new(operations, config_condition.combine_op)
 end
 
 -- config_rule is a rule as defined in the Routing policy

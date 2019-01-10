@@ -24,15 +24,16 @@ local function init_operation(config_operation)
   local thing_to_match_val = value_of_thing_to_match(thing_to_match, config_operation)
   local op = config_operation.op
   local value = config_operation.value
+  local value_type = config_operation.value_type
 
   if thing_to_match == 'path' then
-    return RoutingOperation.new_op_with_path(op, value)
+    return RoutingOperation.new_op_with_path(op, value, value_type)
   elseif thing_to_match == 'header' then
-    return RoutingOperation.new_op_with_header(thing_to_match_val, op, value)
+    return RoutingOperation.new_op_with_header(thing_to_match_val, op, value, value_type)
   elseif thing_to_match == 'query_arg' then
-    return RoutingOperation.new_op_with_query_arg(thing_to_match_val, op, value)
+    return RoutingOperation.new_op_with_query_arg(thing_to_match_val, op, value, value_type)
   elseif thing_to_match == 'jwt_claim' then
-    return RoutingOperation.new_op_with_jwt_claim(thing_to_match_val, op, value)
+    return RoutingOperation.new_op_with_jwt_claim(thing_to_match_val, op, value, value_type)
   else
     error('Thing to be matched not supported: ' .. thing_to_match)
   end

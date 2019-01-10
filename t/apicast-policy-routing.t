@@ -2028,3 +2028,56 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 32: conditions with liquid templating
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.routing",
+            "configuration": {
+              "rules": [
+                {
+                  "url": "http://test:$TEST_NGINX_SERVER_PORT",
+                  "condition": {
+                    "operations": [
+                      {
+                        "thing_to_match": "header",
+                        "header_name": "Service-Id",
+                        "op": "==",
+                        "value": "{{ service.id }}",
+                        "value_type": "liquid"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "apicast.policy.echo"
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /
+--- more_headers
+Service-Id: 42
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

@@ -1,4 +1,5 @@
 local RoutingOperation = require('apicast.policy.routing.routing_operation')
+local ngx_variable = require 'apicast.policy.ngx_variable'
 
 describe('RoutingOperation', function()
   describe('.evaluate', function()
@@ -212,6 +213,28 @@ describe('RoutingOperation', function()
 
         assert.is_false(operation:evaluate(context))
       end)
+    end)
+
+    it('can evaluate the right operand as liquid', function()
+      -- Stub the available context to avoid depending on ngx.var.*
+      stub(ngx_variable, 'available_context', function(context) return context end)
+
+      local path = '/a_path'
+
+      local operation = RoutingOperation.new_op_with_path(
+        '==', '{{ value_in_liquid_ctx }}', 'liquid'
+      )
+
+      local request_with_matching_path = {
+        get_uri = function() return path end
+      }
+
+      local context = {
+        request = request_with_matching_path,
+        value_in_liquid_ctx = path
+      }
+
+      assert.is_true(operation:evaluate(context))
     end)
   end)
 end)

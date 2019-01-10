@@ -48,7 +48,9 @@ by APIcast.
 You need to create a secret with your `ACCESS_TOKEN` and your `ADMIN_PORTAL_DOMAIN`:
 
 ```shell
-oc secret new-basicauth apicast-configuration-url-secret --password=https://ACCESS_TOKEN@ADMIN_PORTAL_DOMAIN
+oc create secret generic apicast-configuration-url-secret \
+   --from-literal=password=https://ACCESS_TOKEN@ADMIN_PORTAL_DOMAIN \
+   --type=kubernetes.io/basic-auth
 oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml
 ```
 

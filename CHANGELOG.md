@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - "Matches" operation that can be used when defining conditionals [PR #975](https://github.com/3scale/apicast/pull/975)
+- New routing policy that selects an upstream based on the request path, a header, a query argument, or a jwt claim [PR #976](https://github.com/3scale/apicast/pull/976), [THREESCALE-1709](https://issues.jboss.org/browse/THREESCALE-1709)
 
 ### Changed
 

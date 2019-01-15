@@ -9,8 +9,8 @@ local ngx_semaphore = require "ngx.semaphore"
 local limit_traffic = require "resty.limit.traffic"
 local redis_shdict = require('redis_shdict')
 
-local Condition = require('apicast.policy.conditional.condition')
-local Operation = require('apicast.policy.conditional.operation')
+local Condition = require('apicast.conditions.condition')
+local Operation = require('apicast.conditions.operation')
 
 local tonumber = tonumber
 local next = next

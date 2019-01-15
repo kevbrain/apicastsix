@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix 3scale Batcher policy failing to cache and report requests containing app ID only [PR #956](https://github.com/3scale/apicast/pull/956), [THREESCALE-1515](https://issues.jboss.org/browse/THREESCALE-1515)
 - Auths against the 3scale backend are now retried when using the 3scale batching policy [PR #961](https://github.com/3scale/apicast/pull/961)
 
+### Changed
+
+- The modules used to build conditions have been extracted from the conditional policy so they can be used from other policies [PR #974](https://github.com/3scale/apicast/pull/974).
+
 ## [3.4.0] - 2018-12-11
 
 `3.4.0-rc2` was considered final and became `3.4.0`.

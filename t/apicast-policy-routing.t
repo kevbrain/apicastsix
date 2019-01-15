@@ -24,7 +24,7 @@ __DATA__
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/a_path"
                       }
@@ -73,7 +73,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/"
                       }
@@ -122,7 +122,7 @@ GET /i_dont_match HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "!=",
                         "value": "/"
                       }
@@ -171,7 +171,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "!=",
                         "value": "/a_path"
                       }
@@ -220,7 +220,7 @@ GET /a_path HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "matches",
                         "value": ".*123.*"
                       }
@@ -269,7 +269,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "matches",
                         "value": "^123$"
                       }
@@ -318,7 +318,7 @@ GET /something_123_something HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "==",
                         "value": "some_value"
@@ -370,7 +370,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "==",
                         "value": "some_value"
@@ -422,7 +422,7 @@ GET / HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "!=",
                         "value": "some_value"
@@ -474,7 +474,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "!=",
                         "value": "some_value"
@@ -526,7 +526,7 @@ GET / HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "matches",
                         "value": ".*123.*"
@@ -578,7 +578,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "matches",
                         "value": ".*123.*"
@@ -630,7 +630,7 @@ GET / HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "test_arg",
                         "op": "==",
                         "value": "some_value"
@@ -680,7 +680,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "test_arg",
                         "op": "==",
                         "value": "some_value"
@@ -730,7 +730,7 @@ GET /a_path?test_arg=i_dont_match HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "test_arg",
                         "op": "!=",
                         "value": "some_value"
@@ -780,7 +780,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "test_arg",
                         "op": "!=",
                         "value": "some_value"
@@ -830,7 +830,7 @@ GET /a_path?test_arg=some_value HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "test_arg",
                         "op": "matches",
                         "value": ".*123.*"
@@ -880,7 +880,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "test_arg",
                         "op": "matches",
                         "value": ".*123.*"
@@ -965,7 +965,7 @@ GET /a_path?test_arg=i_dont_match HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "jwt_claim",
+                        "match": "jwt_claim",
                         "jwt_claim_name": "test_jwt_claim",
                         "op": "==",
                         "value": "some_value"
@@ -1062,7 +1062,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "jwt_claim",
+                        "match": "jwt_claim",
                         "jwt_claim_name": "test_jwt_claim",
                         "op": "==",
                         "value": "some_value"
@@ -1159,7 +1159,7 @@ GET / HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "jwt_claim",
+                        "match": "jwt_claim",
                         "jwt_claim_name": "test_jwt_claim",
                         "op": "!=",
                         "value": "some_value"
@@ -1256,7 +1256,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "jwt_claim",
+                        "match": "jwt_claim",
                         "jwt_claim_name": "test_jwt_claim",
                         "op": "!=",
                         "value": "some_value"
@@ -1353,7 +1353,7 @@ GET / HTTP/1.1
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "jwt_claim",
+                        "match": "jwt_claim",
                         "jwt_claim_name": "test_jwt_claim",
                         "op": "matches",
                         "value": ".*123.*"
@@ -1450,7 +1450,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "jwt_claim",
+                        "match": "jwt_claim",
                         "jwt_claim_name": "test_jwt_claim",
                         "op": "matches",
                         "value": ".*123.*"
@@ -1514,7 +1514,7 @@ the first rule that matches.
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/a_path"
                       }
@@ -1526,7 +1526,7 @@ the first rule that matches.
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/a_path"
                       }
@@ -1578,7 +1578,7 @@ The path of the upstream is appended to the path of the request.
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/the_request_path"
                       }
@@ -1664,7 +1664,7 @@ does not raise any errors and rules do not match.
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "header_not_in_the_request",
                         "op": "==",
                         "value": "some_value"
@@ -1677,7 +1677,7 @@ does not raise any errors and rules do not match.
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "arg_not_in_the_request",
                         "op": "==",
                         "value": "some_value"
@@ -1690,7 +1690,7 @@ does not raise any errors and rules do not match.
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "jwt_claim",
+                        "match": "jwt_claim",
                         "jwt_claim_name": "claim_not_in_the_request",
                         "op": "==",
                         "value": "some_value"
@@ -1755,12 +1755,12 @@ true as well.
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/a_path"
                       },
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "==",
                         "value": "some_value"
@@ -1813,12 +1813,12 @@ When one or more conditions are false, the request is not routed
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/a_path"
                       },
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "==",
                         "value": "some_value"
@@ -1875,12 +1875,12 @@ The test checks that the upstream selected is the one of the second rule.
                     "combine_op": "or",
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/rule_path"
                       },
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "==",
                         "value": "rule_header_value"
@@ -1894,12 +1894,12 @@ The test checks that the upstream selected is the one of the second rule.
                     "combine_op": "or",
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/rule_path"
                       },
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "test_arg",
                         "op": "==",
                         "value": "rule_arg_value"
@@ -1963,12 +1963,12 @@ The test checks that the upstream selected is the one of the second rule.
                     "combine_op": "and",
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/rule_path"
                       },
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Test-Header",
                         "op": "==",
                         "value": "rule_header_value"
@@ -1982,12 +1982,12 @@ The test checks that the upstream selected is the one of the second rule.
                     "combine_op": "and",
                     "operations": [
                       {
-                        "thing_to_match": "path",
+                        "match": "path",
                         "op": "==",
                         "value": "/rule_path"
                       },
                       {
-                        "thing_to_match": "query_arg",
+                        "match": "query_arg",
                         "query_arg_name": "test_arg",
                         "op": "==",
                         "value": "rule_arg_value"
@@ -2046,7 +2046,7 @@ yay, api backend
                   "condition": {
                     "operations": [
                       {
-                        "thing_to_match": "header",
+                        "match": "header",
                         "header_name": "Service-Id",
                         "op": "==",
                         "value": "{{ service.id }}",

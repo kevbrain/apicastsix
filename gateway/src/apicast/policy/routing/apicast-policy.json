@@ -17,7 +17,7 @@
         "type": "object",
         "$id": "#/definitions/operation",
         "properties": {
-          "thing_to_match": {
+          "match": {
             "type": "string",
             "enum": [
               "path",
@@ -54,16 +54,16 @@
           }
         },
         "required": [
-          "thing_to_match",
+          "match",
           "op",
           "value"
         ],
         "dependencies": {
-          "thing_to_match": {
+          "match": {
             "oneOf": [
               {
                 "properties": {
-                  "thing_to_match": {
+                  "match": {
                     "enum": [
                       "header"
                     ]
@@ -78,7 +78,7 @@
               },
               {
                 "properties": {
-                  "thing_to_match": {
+                  "match": {
                     "enum": [
                       "query_arg"
                     ]
@@ -93,7 +93,7 @@
               },
               {
                 "properties": {
-                  "thing_to_match": {
+                  "match": {
                     "enum": [
                       "jwt_claim"
                     ]
@@ -108,7 +108,7 @@
               },
               {
                 "properties": {
-                  "thing_to_match": {
+                  "match": {
                     "enum": [
                       "path"
                     ]

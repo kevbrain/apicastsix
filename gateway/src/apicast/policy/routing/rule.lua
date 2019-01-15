@@ -12,7 +12,7 @@ local _M = {}
 
 local mt = { __index = _M }
 
-local function value_of_thing_to_match(thing_to_be_matched, config_condition)
+local function value_of_match(thing_to_be_matched, config_condition)
   return (thing_to_be_matched == 'header' and config_condition.header_name) or
     (thing_to_be_matched == 'query_arg' and config_condition.query_arg_name) or
     (thing_to_be_matched == 'jwt_claim' and config_condition.jwt_claim_name) or
@@ -20,22 +20,22 @@ local function value_of_thing_to_match(thing_to_be_matched, config_condition)
 end
 
 local function init_operation(config_operation)
-  local thing_to_match = config_operation.thing_to_match
-  local thing_to_match_val = value_of_thing_to_match(thing_to_match, config_operation)
+  local match = config_operation.match
+  local match_val = value_of_match(match, config_operation)
   local op = config_operation.op
   local value = config_operation.value
   local value_type = config_operation.value_type
 
-  if thing_to_match == 'path' then
+  if match == 'path' then
     return RoutingOperation.new_op_with_path(op, value, value_type)
-  elseif thing_to_match == 'header' then
-    return RoutingOperation.new_op_with_header(thing_to_match_val, op, value, value_type)
-  elseif thing_to_match == 'query_arg' then
-    return RoutingOperation.new_op_with_query_arg(thing_to_match_val, op, value, value_type)
-  elseif thing_to_match == 'jwt_claim' then
-    return RoutingOperation.new_op_with_jwt_claim(thing_to_match_val, op, value, value_type)
+  elseif match == 'header' then
+    return RoutingOperation.new_op_with_header(match_val, op, value, value_type)
+  elseif match == 'query_arg' then
+    return RoutingOperation.new_op_with_query_arg(match_val, op, value, value_type)
+  elseif match == 'jwt_claim' then
+    return RoutingOperation.new_op_with_jwt_claim(match_val, op, value, value_type)
   else
-    error('Thing to be matched not supported: ' .. thing_to_match)
+    error('Thing to be matched not supported: ' .. match)
   end
 end
 

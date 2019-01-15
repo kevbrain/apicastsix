@@ -36,7 +36,7 @@ This is a configuration that routes to `http://example.com` when the path is
           "condition": {
             "operations": [
               {
-                "thing_to_match": "path",
+                "match": "path",
                 "op": "==",
                 "value": "/accounts"
               }
@@ -64,7 +64,7 @@ the header `Test-Header` is `123`:
           "condition": {
             "operations": [
               {
-                "thing_to_match": "header",
+                "match": "header",
                 "header_name": "Test-Header",
                 "op": "==",
                 "value": "123"
@@ -93,7 +93,7 @@ the query argument `test_query_arg` is `123`:
           "condition": {
             "operations": [
               {
-                "thing_to_match": "query_arg",
+                "match": "query_arg",
                 "query_arg_name": "test_query_arg",
                 "op": "==",
                 "value": "123"
@@ -126,7 +126,7 @@ the jwt claim `test_claim` is `123`:
           "condition": {
             "operations": [
               {
-                "thing_to_match": "jwt_claim",
+                "match": "jwt_claim",
                 "jwt_claim_name": "test_claim",
                 "op": "==",
                 "value": "123"
@@ -161,12 +161,12 @@ request is `/accounts` and when the value of the header `Test-Header` is `123`:
             "combine_op": "and",
             "operations": [
               {
-                "thing_to_match": "path",
+                "match": "path",
                 "op": "==",
                 "value": "/accounts"
               },
               {
-                "thing_to_match": "header",
+                "match": "header",
                 "header_name": "Test-Header",
                 "op": "==",
                 "value": "123"
@@ -194,12 +194,12 @@ request is `/accounts` or when the value of the header `Test-Header` is `123`:
             "combine_op": "or",
             "operations": [
               {
-                "thing_to_match": "path",
+                "match": "path",
                 "op": "==",
                 "value": "/accounts"
               },
               {
-                "thing_to_match": "header",
+                "match": "header",
                 "header_name": "Test-Header",
                 "op": "==",
                 "value": "123"
@@ -229,7 +229,7 @@ This is a configuration with several rules:
           "condition": {
             "operations": [
               {
-                "thing_to_match": "path",
+                "match": "path",
                 "op": "==",
                 "value": "/accounts"
               }
@@ -241,7 +241,7 @@ This is a configuration with several rules:
           "condition": {
             "operations": [
               {
-                "thing_to_match": "path",
+                "match": "path",
                 "op": "==",
                 "value": "/users"
               }
@@ -272,7 +272,7 @@ the path is not `/accounts`:
           "condition": {
             "operations": [
               {
-                "thing_to_match": "path",
+                "match": "path",
                 "op": "!=",
                 "value": "/accounts"
               }
@@ -301,7 +301,7 @@ configuration that uses that value to route the request:
           "condition": {
             "operations": [
               {
-                "thing_to_match": "header",
+                "match": "header",
                 "header_name": "Test-Header",
                 "op": "==",
                 "value": "{{ my_var }}",

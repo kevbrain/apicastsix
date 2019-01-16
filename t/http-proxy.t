@@ -470,9 +470,52 @@ proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
 [error]
 --- user_files fixture=tls.pl eval
 
+=== TEST 10: Upstream API with HTTPS POST request, HTTPS_PROXY and HTTPS api_backend
+--- env eval
+("https_proxy" => $ENV{TEST_NGINX_HTTPS_PROXY})
+--- configuration random_port env
+{
+  "services": [
+    {
+      "backend_version":  1,
+      "proxy": {
+        "api_backend": "https://test:$TEST_NGINX_RANDOM_PORT",
+        "proxy_rules": [
+          { "pattern": "/test", "http_method": "POST", "metric_system_name": "hits", "delta": 2 }
+        ]
+      }
+    }
+  ]
+}
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      ngx.exit(ngx.OK)
+    }
+  }
+--- upstream env
+listen $TEST_NGINX_RANDOM_PORT ssl;
 
+ssl_certificate $TEST_NGINX_SERVER_ROOT/html/server.crt;
+ssl_certificate_key $TEST_NGINX_SERVER_ROOT/html/server.key;
 
-=== TEST 10: Upstream Policy connection uses proxy
+location /test {
+    echo_read_request_body;
+    echo $request_body;
+}
+--- request
+POST https://localhost/test?user_key=test3
+{ "some_param": "some_value" }
+--- response_body
+{ "some_param": "some_value" }
+--- error_code: 200
+--- error_log env
+proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
+--- no_error_log
+[error]
+--- user_files fixture=tls.pl eval
+
+=== TEST 11: Upstream Policy connection uses proxy
 --- env eval
 ("http_proxy" => $ENV{TEST_NGINX_HTTP_PROXY})
 --- configuration
@@ -517,7 +560,7 @@ proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/test?user_key=test3 
 
 
 
-=== TEST 11: Upstream Policy connection uses proxy for https
+=== TEST 12: Upstream Policy connection uses proxy for https
 --- env eval
 ("https_proxy" => $ENV{TEST_NGINX_HTTPS_PROXY})
 --- configuration random_port env
@@ -574,8 +617,7 @@ proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
 --- user_files fixture=tls.pl eval
 
 
-
-=== TEST 12: Upstream Policy connection uses proxy
+=== TEST 13: Upstream Policy connection uses proxy
 --- env eval
 ("http_proxy" => $ENV{TEST_NGINX_HTTP_PROXY})
 --- configuration
@@ -624,8 +666,7 @@ proxy request: POST http://127.0.0.1:$TEST_NGINX_SERVER_PORT/test?user_key=test3
 [error]
 
 
-
-=== TEST 13: Upstream Policy connection uses proxy for https and forwards request body
+=== TEST 14: Upstream Policy connection uses proxy for https and forwards request body
 --- env eval
 ("https_proxy" => $ENV{TEST_NGINX_HTTPS_PROXY})
 --- configuration random_port env
@@ -687,8 +728,7 @@ proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
 --- user_files fixture=tls.pl eval
 
 
-
-=== TEST 14: upstream API connection uses proxy and correctly routes to a path.
+=== TEST 15: upstream API connection uses proxy and correctly routes to a path.
 --- env eval
 ("http_proxy" => $ENV{TEST_NGINX_HTTP_PROXY})
 --- configuration
@@ -726,8 +766,7 @@ proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/foo/test?user_key=va
 [error]
 
 
-
-=== TEST 15: Upstream Policy connection uses proxy and correctly routes to a path.
+=== TEST 16: Upstream Policy connection uses proxy and correctly routes to a path.
 --- env eval
 ("http_proxy" => $ENV{TEST_NGINX_HTTP_PROXY})
 --- configuration
@@ -761,7 +800,63 @@ proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/foo/test?user_key=va
 --- no_error_log
 [error]
 
-=== TEST 16: The path is set correctly when there are no args and proxied to an http upstream
+=== TEST 17: Upstream policy with HTTPS POST request, HTTPS_PROXY and HTTPS backend
+--- env eval
+("https_proxy" => $ENV{TEST_NGINX_HTTPS_PROXY})
+--- configuration random_port env
+{
+  "services": [
+    {
+      "backend_version":  1,
+      "proxy": {
+        "api_backend": "https://test:$TEST_NGINX_RANDOM_PORT",
+        "proxy_rules": [
+          { "pattern": "/test", "http_method": "POST", "metric_system_name": "hits", "delta": 2 }
+        ],
+        "policy_chain": [
+          { "name": "apicast.policy.upstream",
+            "configuration":
+              {
+                "rules": [ { "regex": "/test", "url": "https://test:$TEST_NGINX_RANDOM_PORT" } ]
+              }
+          },
+          {
+            "name": "apicast.policy.apicast"
+          }
+        ]
+      }
+    }
+  ]
+}
+--- backend
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      ngx.exit(ngx.OK)
+    }
+  }
+--- upstream env
+listen $TEST_NGINX_RANDOM_PORT ssl;
+
+ssl_certificate $TEST_NGINX_SERVER_ROOT/html/server.crt;
+ssl_certificate_key $TEST_NGINX_SERVER_ROOT/html/server.key;
+
+location /test {
+    echo_read_request_body;
+    echo $request_body;
+}
+--- request
+POST https://localhost/test?user_key=test3
+{ "some_param": "some_value" }
+--- response_body
+{ "some_param": "some_value" }
+--- error_code: 200
+--- error_log env
+proxy request: CONNECT 127.0.0.1:$TEST_NGINX_RANDOM_PORT HTTP/1.1
+--- no_error_log
+[error]
+--- user_files fixture=tls.pl eval
+
+=== TEST 18: The path is set correctly when there are no args and proxied to an http upstream
 --- env eval
 ("http_proxy" => $ENV{TEST_NGINX_HTTP_PROXY})
 --- configuration
@@ -799,7 +894,7 @@ proxy request: GET http://127.0.0.1:$TEST_NGINX_SERVER_PORT/test HTTP/1.1
 --- no_error_log
 [error]
 
-=== TEST 17: The path is set correctly when there are no args and proxied to an https upstream
+=== TEST 19: The path is set correctly when there are no args and proxied to an https upstream
 Regression test: the string 'nil' was appended to the path
 --- env eval
 ("https_proxy" => $ENV{TEST_NGINX_HTTPS_PROXY})

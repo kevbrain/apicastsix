@@ -1,6 +1,5 @@
 local format = string.format
 
-local http = require 'resty.resolver.http'
 local resty_url = require "resty.url"
 local resty_resolver = require 'resty.resolver'
 local round_robin = require 'resty.balancer.round_robin'
@@ -85,12 +84,19 @@ local function current_path(uri)
 end
 
 local function forward_https_request(proxy_uri, uri)
+    -- This is needed to call ngx.req.get_body_data() below.
+    ngx.req.read_body()
+
     local request = {
         uri = uri,
         method = ngx.req.get_method(),
         headers = ngx.req.get_headers(0, true),
         path = current_path(uri),
-        body = http:get_client_body_reader(),
+
+        -- We cannot use resty.http's .get_client_body_reader().
+        -- In POST requests with HTTPS, the result of that call is nil, and it
+        -- results in a time-out.
+        body = ngx.req.get_body_data(),
     }
 
     local httpc, err = http_proxy.new(request)

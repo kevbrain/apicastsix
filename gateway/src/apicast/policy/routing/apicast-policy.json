@@ -6,7 +6,7 @@
     "This policy allows to modify the upstream URL (scheme, host and port) of ",
     "the request based on its path, its query arguments, a header, or a JWT ",
     "claim. \n",
-    "When combined with the APIcast policy, the upstream policy should be ",
+    "When combined with the APIcast policy, the routing policy should be ",
     "placed before it in the policy chain."
   ],
   "version": "builtin",

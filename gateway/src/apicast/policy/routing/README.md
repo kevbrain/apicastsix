@@ -20,6 +20,12 @@ based on:
 - A query argument
 - A jwt claim
 
+When combined with the APIcast policy, the routing policy should be placed
+before the APIcast one in the chain. The reason is that whichever of those 2
+policies comes first will output content to the response. When the second gets a
+change to run its content phase, the request will already be sent to the client,
+so it will not output anything to the response.
+
 ## Rule that uses the request path
 
 This is a configuration that routes to `http://example.com` when the path is

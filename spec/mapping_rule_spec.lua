@@ -1,6 +1,33 @@
 local MappingRule = require('apicast.mapping_rule')
 
 describe('mapping_rule', function()
+  describe('.from_proxy_rule', function()
+    it('sets "last"', function()
+      local mapping_rule = MappingRule.from_proxy_rule({
+        last = true,
+        http_method = 'GET',
+        pattern = '/abc',
+        querystring_parameters = { a_param = '1' },
+        metric_system_name = 'hits',
+        delta = 1
+      })
+
+      assert.is_true(mapping_rule.last)
+    end)
+
+    it('sets "last" to false by default', function()
+      local mapping_rule = MappingRule.from_proxy_rule({
+        http_method = 'GET',
+        pattern = '/abc',
+        querystring_parameters = { a_param = '1' },
+        metric_system_name = 'hits',
+        delta = 1
+      })
+
+      assert.is_false(mapping_rule.last)
+    end)
+  end)
+
   describe('.matches', function()
     it('returns true when method, URI, and args match', function()
       local mapping_rule = MappingRule.from_proxy_rule({

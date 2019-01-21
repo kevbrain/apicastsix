@@ -271,4 +271,18 @@ describe('Upstream', function()
             end)
         end)
     end)
+
+    describe('.use_host_header', function()
+        before_each(stub_ngx_request)
+
+        it('allows to set the host used when setting the Host Header', function()
+            local upstream = Upstream.new('http://example.com')
+            local host = 'http://another_host'
+
+            upstream:use_host_header(host)
+
+            upstream:rewrite_request()
+            assert.spy(ngx.req.set_header).was_called_with('Host', host)
+        end)
+    end)
 end)

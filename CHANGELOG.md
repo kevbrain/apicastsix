@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - "Matches" operation that can be used when defining conditionals [PR #975](https://github.com/3scale/apicast/pull/975)
 - New routing policy that selects an upstream based on the request path, a header, a query argument, or a jwt claim [PR #976](https://github.com/3scale/apicast/pull/976), [THREESCALE-1709](https://issues.jboss.org/browse/THREESCALE-1709)
+- Added "last" attribute in the mapping rules. When set to true indicates that, if the rule matches, APIcast should not try to match the rules placed after this one [PR #982](https://github.com/3scale/apicast/pull/982), [THREESCALE-1344](https://issues.jboss.org/browse/THREESCALE-1344)
 
 ### Changed
 

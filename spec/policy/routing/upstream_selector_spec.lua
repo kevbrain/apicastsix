@@ -101,5 +101,37 @@ describe('UpstreamSelector', function()
         assert.is_nil(upstream)
       end)
     end)
+
+    describe('when a rule that matches has a host for the Host header', function()
+      describe('and it is not empty', function()
+        it('sets the host for the header', function()
+          local rule = {
+            url = 'http://example.com',
+            condition = true_condition,
+            host_header = 'some_host.com'
+          }
+
+          local upstream_selector = UpstreamSelector.new()
+          local upstream = upstream_selector:select({ rule }, {})
+
+          assert.equals(rule.host_header, upstream.host)
+        end)
+      end)
+
+      describe('and it is empty', function()
+        it('does not set the host for the header', function()
+          local rule = {
+            url = 'http://example.com',
+            condition = true_condition,
+            host_header = ''
+          }
+
+          local upstream_selector = UpstreamSelector.new()
+          local upstream = upstream_selector:select({ rule }, {})
+
+          assert.is_nil(upstream.host)
+        end)
+      end)
+    end)
   end)
 end)

@@ -25,7 +25,13 @@ function _M.select(_, rules, context)
     local cond_is_true = rule.condition:evaluate(context)
 
     if cond_is_true then
-      return Upstream.new(rule.url)
+      local upstream = Upstream.new(rule.url)
+
+      if rule.host_header and rule.host_header ~= '' then
+        upstream:use_host_header(rule.host_header)
+      end
+
+      return upstream
     end
   end
 

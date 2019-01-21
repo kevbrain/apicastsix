@@ -200,3 +200,83 @@ api response
 --- response_headers
 X-3scale-matched-rules: /foo?a_param=val1&another_param=val2
 X-3scale-usage: usage%5Bbar%5D=7
+
+=== TEST 5: mapping rules with "last" attribute
+Mapping rules can have a "last" attribute. When this attribute is set to true,
+and the rule matches, it indicates that the matcher should stop processing the
+rules that come after.
+In the example, we have 4 rules:
+- the first one matches and last = false, so the matcher will continue.
+- the second has last = true but does not match, so the matcher will continue.
+- the third one matches and has last = true so the matcher will stop here.
+The usage is checked in the 3scale backend endpoint.
+--- http_config
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  init_by_lua_block {
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          id = 42,
+          backend_version = 1,
+          backend_authentication_type = 'service_token',
+          backend_authentication_value = 'token-value',
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              {
+                last = false,
+                id = 1,
+                http_method = "GET",
+                pattern = "/",
+                metric_system_name = "hits",
+                delta = 1
+              },
+              {
+                last = true,
+                id = 2,
+                http_method = "GET",
+                pattern = "/i_dont_match",
+                metric_system_name = "hits",
+                delta = 100
+              },
+              {
+                last = true,
+                id = 3,
+                http_method = "GET",
+                pattern = "/abc",
+                metric_system_name = "hits",
+                delta = 2
+              },
+              {
+                id = 4,
+                http_method = "GET",
+                pattern = "/abc/def",
+                metric_system_name = "hits",
+                delta = 10
+              }
+            }
+          }
+        }
+      }
+    })
+  }
+  lua_shared_dict api_keys 10m;
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      local hits = tonumber(ngx.req.get_uri_args()["usage[hits]"])
+      require('luassert').equals(3, hits) -- rule 1 + rule 3
+    }
+  }
+
+  location /api-backend/ {
+     echo 'yay, api backend';
+  }
+--- request
+GET /abc/def?user_key=uk
+--- response_body
+yay, api backend
+--- error_code: 200

@@ -77,7 +77,7 @@ local function matches_uri(rule_pattern, uri)
   return re_match(uri, format("^%s", rule_pattern), 'oj')
 end
 
-local function new(http_method, pattern, params, querystring_params, metric, delta)
+local function new(http_method, pattern, params, querystring_params, metric, delta, last)
   local self = setmetatable({}, mt)
 
   local querystring_parameters = hash_to_array(querystring_params)
@@ -88,6 +88,7 @@ local function new(http_method, pattern, params, querystring_params, metric, del
   self.parameters = params
   self.system_name = metric or error('missing metric name of rule')
   self.delta = delta
+  self.last = last or false
 
   self.querystring_params = function(args)
     return matches_querystring_params(querystring_parameters, args)
@@ -107,6 +108,10 @@ end
 -- @tfield string metric_system_name Name of the metric.
 -- @tfield integer delta The usage of the metric will be increased by this
 --         value.
+-- @tfield boolean last When set to true, indicates that if the rule matches,
+--         it should be the last one to match. In other words, if this rule
+--         matches, the mapping rules matcher should not try to match the rules
+--         placed after this one.
 -- @treturn mapping_rule New mapping rule.
 function _M.from_proxy_rule(proxy_rule)
   return new(
@@ -115,7 +120,8 @@ function _M.from_proxy_rule(proxy_rule)
     proxy_rule.parameters,
     proxy_rule.querystring_parameters,
     proxy_rule.metric_system_name,
-    proxy_rule.delta
+    proxy_rule.delta,
+    proxy_rule.last
   )
 end
 

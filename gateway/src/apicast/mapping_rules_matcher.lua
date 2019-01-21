@@ -27,6 +27,8 @@ function _M.get_usage_from_matches(method, uri, args, rules)
       -- Some rules have no delta. Send 0 in that case.
       usage:add(rule.system_name, rule.delta or 0)
       insert(matched_rules, rule)
+
+      if rule.last then break end
     end
   end
 

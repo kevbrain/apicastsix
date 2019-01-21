@@ -320,3 +320,33 @@ configuration that uses that value to route the request:
     }
   }
 ```
+
+## Set the host used in the Host header
+
+By default, when a request is routed, the policy sets the Host header using the
+host of the URL of the rule that matched. However, it is possible to specify a
+different host with the `host_header` attribute. As an example, this is a
+config that specifies `some_host.com` as the host of the Host header:
+```json
+  {
+    "name": "routing",
+    "version": "builtin",
+    "configuration": {
+      "rules": [
+        {
+          "url": "http://example.com",
+          "host_header": "some_host.com",
+          "condition": {
+            "operations": [
+              {
+                "match": "path",
+                "op": "==",
+                "value": "/"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+```

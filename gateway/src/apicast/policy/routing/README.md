@@ -7,6 +7,7 @@
 - [**Rule that uses a jwt claim**](#rule-that-uses-a-jwt-claim)
 - [**Rule with several operations**](#rule-with-several-operations)
 - [**Combining rules**](#combining-rules)
+- [**"Catch-all" rules**](#catch-all-rules)
 - [**Supported operations**](#supported-operations)
 - [**Liquid templating**](#liquid-templating)
 - [**Set the host used in the Host header**](#set-the-host-used-in-the-host-header)
@@ -253,6 +254,55 @@ This is a configuration with several rules:
                 "value": "/users"
               }
             ]
+          }
+        }
+      ]
+    }
+  }
+```
+
+## "Catch-all" rules
+
+A rule without operations always matches. This can be useful to define
+"catch-all" rules. Here's a configuration that routes the request to
+`http://some_upstream.com` if the path is `/abc`, routes the request to
+`http://another_upstream.com` if the path is `/def`, and finally, routes the
+request to `http://default_upstream.com` if none of the previous rules evaluated
+to true:
+```json
+  {
+    "name": "routing",
+    "version": "builtin",
+    "configuration": {
+      "rules": [
+        {
+          "url": "http://some_upstream.com",
+          "condition": {
+            "operations": [
+              {
+                "match": "path",
+                "op": "==",
+                "value": "/abc"
+              }
+            ]
+          }
+        },
+        {
+          "url": "http://another_upstream.com",
+          "condition": {
+            "operations": [
+              {
+                "match": "path",
+                "op": "==",
+                "value": "/def"
+              }
+            ]
+          }
+        },
+        {
+          "url": "http://default_upstream.com",
+          "condition": {
+            "operations": []
           }
         }
       ]

@@ -25,6 +25,8 @@ function _M.select(_, rules, context)
     local cond_is_true = rule.condition:evaluate(context)
 
     if cond_is_true then
+      ngx.log(ngx.DEBUG, 'Rule with URL ', rule.url, ' matched')
+
       local upstream = Upstream.new(rule.url)
 
       if rule.host_header and rule.host_header ~= '' then

@@ -144,6 +144,10 @@ local function host_header(uri)
     end
 end
 
+function _M:use_host_header(host)
+    self.host = host
+end
+
 --- Rewrite request Host header to what is provided in the argument or in the URL.
 function _M:rewrite_request()
     local uri = self.uri

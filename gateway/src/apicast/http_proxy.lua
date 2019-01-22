@@ -138,7 +138,7 @@ function _M.request(upstream, proxy_uri)
     local uri = upstream.uri
 
     if uri.scheme == 'http' then -- rewrite the request to use http_proxy
-        upstream.host = uri.host -- to keep correct Host header in case we need to resolve it to IP
+        upstream:use_host_header(uri.host) -- to keep correct Host header in case we need to resolve it to IP
         upstream.servers = resolve_servers(proxy_uri)
         upstream.uri.path = absolute_url(uri)
         upstream:rewrite_request()

@@ -191,7 +191,7 @@ function _M.get_upstream(service)
     return nil, err
   end
 
-  upstream.host = service.hostname_rewrite
+  upstream:use_host_header(service.hostname_rewrite)
 
   return upstream
 end

@@ -130,6 +130,10 @@
             "url": {
               "type": "string"
             },
+            "host_header": {
+              "description": "Host for the Host header. When not specified, defaults to the host of the URL.",
+              "type": "string"
+            },
             "condition": {
               "type": "object",
               "properties": {

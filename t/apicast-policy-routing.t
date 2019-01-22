@@ -1337,3 +1337,61 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 20: choosing a Host Header in a routing rule
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.routing",
+            "configuration": {
+              "rules": [
+                {
+                  "url": "http://test:$TEST_NGINX_SERVER_PORT",
+                  "host_header": "example.com",
+                  "condition": {
+                    "operations": [
+                      {
+                        "match": "path",
+                        "op": "==",
+                        "value": "/a_path"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "apicast.policy.echo"
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  # We need to put the 'host_header' of the rule here.
+  server_name example.com;
+
+  location /a_path {
+     content_by_lua_block {
+       -- Check that the Host header was rewritten as indicated in the policy
+       -- config.
+       local host_header = ngx.req.get_headers()['Host']
+       require('luassert').equals('example.com', host_header)
+
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /a_path
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

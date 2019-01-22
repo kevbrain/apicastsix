@@ -58,6 +58,7 @@ function _M.new_from_config_rule(config_rule)
 
   if upstream then
     self.url = config_rule.url
+    self.host_header = config_rule.host_header
     self.condition = init_condition(config_rule.condition)
     return self
   else

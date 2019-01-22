@@ -9,6 +9,7 @@
 - [**Combining rules**](#combining-rules)
 - [**Supported operations**](#supported-operations)
 - [**Liquid templating**](#liquid-templating)
+- [**Set the host used in the Host header**](#set-the-host-used-in-the-host-header)
 
 ## Description
 

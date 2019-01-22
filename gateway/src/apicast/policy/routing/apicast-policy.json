@@ -144,6 +144,7 @@
                   }
                 },
                 "combine_op": {
+                  "description": "With 'and', the condition will be true only when all the operations evaluate to true. With 'or', the condition will be true when at least one operation evaluates to true.",
                   "type": "string",
                   "enum": ["and", "or"],
                   "default": "and"

@@ -1395,3 +1395,47 @@ yay, api backend
 --- error_code: 200
 --- no_error_log
 [error]
+
+=== TEST 21: matches a rule with an empty condition (it has no operations)
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "policy_chain": [
+          {
+            "name": "apicast.policy.routing",
+            "configuration": {
+              "rules": [
+                {
+                  "url": "http://test:$TEST_NGINX_SERVER_PORT",
+                  "condition": {
+                    "operations": [
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "apicast.policy.echo"
+          }
+        ]
+      }
+    }
+  ]
+}
+--- upstream
+  location / {
+     content_by_lua_block {
+       ngx.say('yay, api backend');
+     }
+  }
+--- request
+GET /
+--- response_body
+yay, api backend
+--- error_code: 200
+--- no_error_log
+[error]

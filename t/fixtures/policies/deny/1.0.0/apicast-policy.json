@@ -1,0 +1,19 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "Deny policy",
+  "summary": "A policy that denies requests. To be used in integration tests.",
+  "version": "1.0.0",
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "phase": {
+        "type": "string",
+        "enum": [
+          "rewrite",
+          "access"
+        ]
+      }
+    },
+    "required": ["phase"]
+  }
+}

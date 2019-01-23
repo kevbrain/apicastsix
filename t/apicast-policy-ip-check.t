@@ -120,8 +120,9 @@ GET / HTTP/1.1
 --- no_error_log
 [error]
 
-=== TEST 5: IP check policy denies and apicast accepts. IP check goes first in the chain
+=== TEST 5: IP check policy denies and apicast is placed after it in the chain
 The request should be denied with the IP check policy error message.
+Also, APIcast should not call authrep.
 --- configuration
 {
   "services": [
@@ -152,7 +153,7 @@ The request should be denied with the IP check policy error message.
 --- backend
   location /transactions/authrep.xml {
     content_by_lua_block {
-      ngx.exit(200)
+      error('APIcast called authrep, but should not have.')
     }
   }
 --- request
@@ -163,51 +164,9 @@ IP address not allowed
 --- no_error_log
 [error]
 
-=== TEST 6: both IP check and apicast deny. IP check goes first in the chain
+=== TEST 6: apicast accepts and IP check denies. APIcast goes first in the chain
 The request should be denied with the IP check policy error message.
---- configuration
-{
-  "services": [
-    {
-      "id": 42,
-      "backend_version":  1,
-      "backend_authentication_type": "service_token",
-      "backend_authentication_value": "token-value",
-      "proxy": {
-        "policy_chain": [
-          {
-            "name": "apicast.policy.ip_check",
-            "configuration": {
-              "ips": [ "127.0.0.1" ],
-              "check_type": "blacklist"
-            }
-          },
-          { "name": "apicast.policy.apicast" }
-        ],
-        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
-        "proxy_rules": [
-          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
-        ]
-      }
-    }
-  ]
-}
---- backend
-  location /transactions/authrep.xml {
-    content_by_lua_block {
-      ngx.exit(403)
-    }
-  }
---- request
-GET /?user_key=uk
---- response_body
-IP address not allowed
---- error_code: 403
---- no_error_log
-[error]
-
-=== TEST 7: apicast accepts and IP check denies. APIcast goes first in the chain
-The request should be denied with the IP check policy error message.
+In this case, APIcast calls authrep() as it goes before in the chain.
 --- configuration
 {
   "services": [
@@ -249,8 +208,9 @@ IP address not allowed
 --- no_error_log
 [error]
 
-=== TEST 8: both APIcast and IP check deny. APIcast goes first in the chain
+=== TEST 7: both APIcast and IP check deny. APIcast goes first in the chain
 The request should be denied with the APIcast error message.
+In this case, APIcast calls authrep() as it goes before in the chain.
 --- configuration
 {
   "services": [
@@ -292,7 +252,7 @@ Authentication failed
 --- no_error_log
 [error]
 
-=== TEST 9: configure error message
+=== TEST 8: configure error message
 --- configuration
 {
   "services": [

@@ -1,6 +1,14 @@
 use lib 't';
 use Test::APIcast 'no_plan';
 
+BEGIN {
+    $ENV{APICAST_POLICY_LOAD_PATH} = 't/fixtures/policies';
+}
+
+env_to_nginx(
+    'APICAST_POLICY_LOAD_PATH'
+);
+
 run_tests();
 
 __DATA__
@@ -811,5 +819,103 @@ Retry-After: 60
 --- response_body chomp
 Limits exceeded
 --- error_code: 429
+--- no_error_log
+[error]
+
+=== TEST 22: APIcast placed after a policy that denies the request in rewrite()
+This test checks that APIcast does not call authrep.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  init_by_lua_block {
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            },
+            policy_chain = {
+              {
+                name = "deny",
+                version = "1.0.0",
+                configuration =
+                  {
+                    phase = "rewrite",
+                  }
+              },
+              { name = "apicast.policy.apicast" }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      error('APIcast called authrep, but it should not have')
+    }
+  }
+
+  location /api-backend/ {
+     echo 'yay';
+  }
+--- request
+GET /?user_key=value
+--- error_code: 403
+--- no_error_log
+[error]
+
+=== TEST 23: APIcast placed after a policy that denies the request in access()
+This test checks that APIcast does not call authrep.
+--- http_config
+  lua_package_path "$TEST_NGINX_LUA_PATH";
+  include $TEST_NGINX_UPSTREAM_CONFIG;
+  init_by_lua_block {
+    require('apicast.configuration_loader').mock({
+      services = {
+        {
+          backend_version = 1,
+          proxy = {
+            api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
+            proxy_rules = {
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+            },
+            policy_chain = {
+              {
+                name = "deny",
+                version = "1.0.0",
+                configuration =
+                  {
+                    phase = "access",
+                  }
+              },
+              { name = "apicast.policy.apicast" }
+            }
+          }
+        }
+      }
+    })
+  }
+--- config
+  include $TEST_NGINX_APICAST_CONFIG;
+
+  location /transactions/authrep.xml {
+    content_by_lua_block {
+      error('APIcast called authrep, but it should not have')
+    }
+  }
+
+  location /api-backend/ {
+     echo 'yay';
+  }
+--- request
+GET /?user_key=value
+--- error_code: 403
 --- no_error_log
 [error]

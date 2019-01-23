@@ -53,13 +53,14 @@ function _M:rewrite(context)
     p:rewrite(service, context)
   end
 
-  context[self] = p.get_upstream(service)
+  context[self] = context[self] or {}
+  context[self].upstream = p.get_upstream(service)
 
   ngx.ctx.proxy = p
 end
 
 function _M:post_action(context)
-  if context.skip_apicast_post_action then return end
+  if not (context[self] and context[self].run_post_action) then return end
 
   local p = context and context.proxy or ngx.ctx.proxy or self.proxy
 
@@ -74,6 +75,16 @@ end
 function _M:access(context)
   if context.skip_apicast_access then return end
 
+  -- Flag to run post_action() only when access() was executed.
+  -- Other policies can call ngx.exit(4xx) on access() or rewrite. If they're
+  -- placed before APIcast in the chain, the request will be denied and this
+  -- access() phase will no be run. However, ngx.exit(4xx) skips some phases,
+  -- but not post_action. Post_action would run if we did not set this flag,
+  -- and we want to avoid that. Otherwise, post_action could call authrep()
+  -- even when another policy denied the request.
+  context[self] = context[self] or {}
+  context[self].run_post_action = true
+
   local ctx = ngx.ctx
   local p = context and context.proxy or ctx.proxy or self.proxy
 
@@ -83,7 +94,7 @@ function _M:access(context)
 end
 
 function _M:content(context)
-  local upstream = assert(context[self], 'missing upstream')
+  local upstream = assert(context[self].upstream, 'missing upstream')
 
   if upstream then
     upstream:call(context)

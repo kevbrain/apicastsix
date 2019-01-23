@@ -76,9 +76,8 @@ local function format_usage(usage)
   return res
 end
 
-local function set_flags_to_avoid_auths_in_apicast(context)
+local function set_flag_to_avoid_auths_in_apicast(context)
   context.skip_apicast_access = true
-  context.skip_apicast_post_action = true
 end
 
 local function report(service_id, backend, reports_batcher)
@@ -184,12 +183,12 @@ local function handle_cached_auth(self, cached_auth, service, transaction)
 end
 
 function _M.rewrite(_, context)
-  -- The APIcast policy reads these flags in the access() and post_action()
-  -- phases. That's why we need to set them before those phases. If we set
-  -- them in access() and placed the APIcast policy before the batcher in the
-  -- chain, APIcast would read the flags before the batcher set them, and both
-  -- policies would report to the 3scale backend.
-  set_flags_to_avoid_auths_in_apicast(context)
+  -- The APIcast policy reads this flag in the access phase.
+  -- That's why we need to set it before that phase. If we set it in access()
+  -- and placed the APIcast policy before the batcher in the chain, APIcast
+  -- would read the flags before the batcher set them, and both policies would
+  -- report to the 3scale backend.
+  set_flag_to_avoid_auths_in_apicast(context)
 end
 
 -- Note: when an entry in the cache expires, there might be several requests

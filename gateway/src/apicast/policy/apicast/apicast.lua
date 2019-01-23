@@ -60,8 +60,6 @@ function _M:rewrite(context)
 end
 
 function _M:post_action(context)
-  if context.skip_apicast_post_action then return end
-
   if not (context[self] and context[self].run_post_action) then return end
 
   local p = context and context.proxy or ngx.ctx.proxy or self.proxy

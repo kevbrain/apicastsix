@@ -53,7 +53,8 @@ function _M:rewrite(context)
     p:rewrite(service, context)
   end
 
-  context[self] = p.get_upstream(service)
+  context[self] = context[self] or {}
+  context[self].upstream = p.get_upstream(service)
 
   ngx.ctx.proxy = p
 end
@@ -83,7 +84,7 @@ function _M:access(context)
 end
 
 function _M:content(context)
-  local upstream = assert(context[self], 'missing upstream')
+  local upstream = assert(context[self].upstream, 'missing upstream')
 
   if upstream then
     upstream:call(context)

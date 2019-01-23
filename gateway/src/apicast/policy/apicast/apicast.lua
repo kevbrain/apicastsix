@@ -62,6 +62,8 @@ end
 function _M:post_action(context)
   if context.skip_apicast_post_action then return end
 
+  if not (context[self] and context[self].run_post_action) then return end
+
   local p = context and context.proxy or ngx.ctx.proxy or self.proxy
 
   if p then
@@ -74,6 +76,16 @@ end
 
 function _M:access(context)
   if context.skip_apicast_access then return end
+
+  -- Flag to run post_action() only when access() was executed.
+  -- Other policies can call ngx.exit(4xx) on access() or rewrite. If they're
+  -- placed before APIcast in the chain, the request will be denied and this
+  -- access() phase will no be run. However, ngx.exit(4xx) skips some phases,
+  -- but not post_action. Post_action would run if we did not set this flag,
+  -- and we want to avoid that. Otherwise, post_action could call authrep()
+  -- even when another policy denied the request.
+  context[self] = context[self] or {}
+  context[self].run_post_action = true
 
   local ctx = ngx.ctx
   local p = context and context.proxy or ctx.proxy or self.proxy

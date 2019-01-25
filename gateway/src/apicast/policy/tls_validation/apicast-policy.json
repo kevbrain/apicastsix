@@ -1,0 +1,39 @@
+{
+  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+  "name": "TLS validation",
+  "summary": "Validate client TLS certificates",
+  "description": [
+      "Validate client certificates against individual certificates and CA certificates."
+  ],
+  "version": "builtin",
+  "configuration": {
+    "type": "object",
+    "definitions": {
+      "certificate": {
+        "$id": "#/definitions/certificate",
+        "type": "object",
+        "properties": {
+          "pem_certificate": {
+            "type": "string",
+            "title": "PEM formatted certificate",
+            "description": "Certificate including the -----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----"
+          }
+        }
+      },
+      "store": {
+        "$id": "#/definitions/store",
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/certificate"
+        }
+      }
+    },
+    "properties": {
+      "whitelist": {
+        "$ref": "#/definitions/store",
+        "title": "Certificate Whitelist",
+        "description": "Individual certificates and CA certificates to be whitelisted."
+      }
+    }
+  }
+}

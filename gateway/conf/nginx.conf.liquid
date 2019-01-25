@@ -147,6 +147,7 @@ http {
       {{ "conf/server.key" | filesystem | first }}
     {%- endif %};
 
+    ssl_verify_client optional_no_ca;
     ssl_certificate_by_lua_block { require('apicast.executor'):ssl_certificate() }
     {%- endif %}
 

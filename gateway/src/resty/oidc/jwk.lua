@@ -1,9 +1,9 @@
 local ipairs = ipairs
-local error = error
 
 local b64 = require('ngx.base64')
 local ffi = require('ffi')
 local tab_new = require('resty.core.base').new_tab
+local base = require('resty.openssl.base')
 
 ffi.cdef [[
 typedef struct bio_st BIO;
@@ -29,49 +29,15 @@ void RSA_free(RSA *rsa);
 
 int PEM_write_RSA_PUBKEY(FILE *fp, RSA *x);
 int PEM_write_bio_RSA_PUBKEY(BIO *bp, RSA *x);
-
-unsigned long ERR_get_error(void);
-const char *ERR_reason_error_string(unsigned long e);
 ]]
 
 local C = ffi.C
 local ffi_gc = ffi.gc
+local ffi_assert = base.ffi_assert
 
 local _M = { }
 
 _M.jwk_to_pem = { }
-
-local function openssl_error()
-    local code, reason
-
-    while true do
-        --[[
-        https://www.openssl.org/docs/man1.1.0/crypto/ERR_get_error.html
-
-          ERR_get_error() returns the earliest error code
-          from the thread's error queue and removes the entry.
-          This function can be called repeatedly
-          until there are no more error codes to return.
-        ]]--
-        code = C.ERR_get_error()
-
-        if code == 0 then
-            break
-        else
-            reason = C.ERR_reason_error_string(code)
-        end
-    end
-
-    return ffi.string(reason)
-end
-
-local function ffi_assert(ret, expected)
-    if not ret or ret == -1 or (expected and ret ~= expected) then
-        error(openssl_error(), 2)
-    end
-
-    return ret
-end
 
 local function b64toBN(str)
     local val, err = b64.decode_base64url(str)

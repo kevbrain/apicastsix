@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Environment files now can use global `context` variable to share data [PR #964](https://github.com/3scale/apicast/pull/964)
+
+### Changed
+
+- Improve startup time by improving templating performance and caching filesystem access [PR #964](https://github.com/3scale/apicast/pull/964)
+- Liquid `default` filter now does not override `false` values [PR #964](https://github.com/3scale/apicast/pull/964)
+
 ### Fixed
 
 - Fix 3scale Batcher policy failing to cache and report requests containing app ID only [PR #956](https://github.com/3scale/apicast/pull/956), [THREESCALE-1515](https://issues.jboss.org/browse/THREESCALE-1515)

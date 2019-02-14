@@ -200,7 +200,7 @@ stop-development: ## Stop development environment
 rover: $(ROVER)
 	@echo $(ROVER)
 
-$(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile
+$(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile $(S2I_CONTEXT)/apicast-scm-1.rockspec
 	$(ROVER) lock --roverfile=$(S2I_CONTEXT)/Roverfile
 
 lua_modules: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock

@@ -6,11 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-### Added
-
-- Environment files now can use global `context` variable to share data [PR #964](https://github.com/3scale/apicast/pull/964)
-- Adde sevice id and service name headers in debug context [PR #987](https://github.com/3scale/apicast/pull/987)
-
 ### Changed
 
 - Improve startup time by improving templating performance and caching filesystem access [PR #964](https://github.com/3scale/apicast/pull/964)
@@ -31,6 +26,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added TLS Validation policy to verify TLS Client Certificate against a whitelist. [PR #966](https://github.com/3scale/apicast/pull/966), [THREESCALE-1671](https://issues.jboss.org/browse/THREESCALE-1671)
 - New CLI command "push_policy" that pushes a policy schema to the 3scale admin portal [PR #986](https://github.com/3scale/apicast/pull/986), [PR #992](https://github.com/3scale/apicast/pull/992), [THREESCALE-871](https://issues.jboss.org/browse/THREESCALE-871)
 - Added support for experimental standalone YAML configuration [PR #926](https://github.com/3scale/apicast/pull/926)
+- Environment files now can use global `context` variable to share data [PR #964](https://github.com/3scale/apicast/pull/964)
+- Added service id and service name headers in debug context [PR #987](https://github.com/3scale/apicast/pull/987)
 
 ### Changed
 

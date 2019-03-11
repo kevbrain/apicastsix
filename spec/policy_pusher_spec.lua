@@ -32,13 +32,14 @@ describe('Policy pusher', function()
   describe('if the policy exists', function()
     it('pushes the policy to the 3scale admin portal', function()
       local request_body = {
+        access_token = access_token,
         name = policy_name,
         version = policy_version,
         schema = policy_manifest
       }
 
       test_backend.expect{
-        url = 'https://' .. access_token .. ':' .. admin_portal_domain ..
+        url = 'https://' .. admin_portal_domain ..
             '/admin/api/registry/policies',
         body = cjson.encode(request_body)
       }.respond_with{ status = 200 }
@@ -66,6 +67,7 @@ describe('Policy pusher', function()
       stub(ngx, 'log')
 
       local request_body = {
+        access_token = access_token,
         name = policy_name,
         version = policy_version,
         schema = policy_manifest
@@ -74,7 +76,7 @@ describe('Policy pusher', function()
       local error_msg_returned = 'Some error'
 
       test_backend.expect{
-        url = 'https://' .. access_token .. ':' .. admin_portal_domain ..
+        url = 'https://' .. admin_portal_domain ..
             '/admin/api/registry/policies',
         body = cjson.encode(request_body)
       }.respond_with{ status = 400, body = error_msg_returned }

@@ -258,7 +258,7 @@ The value will also be used in the header `X-3scale-User-Agent` in the authorize
 
 ### `THREESCALE_PORTAL_ENDPOINT`
 
-URI that includes your password and portal endpoint in the following format: `<schema>://<password>@<admin-portal-domain>`. The `<password>` can be either the [provider key](https://support.3scale.net/docs/terminology#apikey) or an [access token](https://support.3scale.net/docs/terminology#tokens) for the 3scale Account Management API. `<admin-portal-domain>` is the URL used to log into the admin portal.
+URI that includes your password and portal endpoint in the following format: `<schema>://<password>@<admin-portal-domain>`. The `<password>` can be either the provider key or an access token for the 3scale Account Management API. `<admin-portal-domain>` is the URL used to log into the admin portal.
 
 **Example:** `https://access-token@account-admin.3scale.net`.
 

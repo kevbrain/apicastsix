@@ -17,15 +17,16 @@ end
 
 local system_endpoint = '/admin/api/registry/policies'
 
-local function system_url(access_token, admin_portal_domain)
-  return format('https://%s:%s%s', access_token, admin_portal_domain, system_endpoint)
+local function system_url(admin_portal_domain)
+  return format('https://%s%s', admin_portal_domain, system_endpoint)
 end
 
 local function push_to_system(name, version, manifest, admin_portal_domain, access_token, http_client)
-  local url = system_url(access_token, admin_portal_domain)
+  local url = system_url(admin_portal_domain)
 
   return http_client.json.post(
-    url, { name = name, version = version, schema = manifest }
+    url,
+    { access_token = access_token, name = name, version = version, schema = manifest }
   )
 end
 

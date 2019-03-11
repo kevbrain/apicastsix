@@ -1,5 +1,6 @@
 local policy_manifests_loader = require('apicast.policy_manifests_loader')
 local http_ng = require('resty.http_ng')
+local resty_env = require('resty.env')
 
 local setmetatable = setmetatable
 local format = string.format
@@ -26,7 +27,8 @@ local function push_to_system(name, version, manifest, admin_portal_domain, acce
 
   return http_client.json.post(
     url,
-    { access_token = access_token, name = name, version = version, schema = manifest }
+    { access_token = access_token, name = name, version = version, schema = manifest },
+    { ssl = { verify = resty_env.enabled('OPENSSL_VERIFY') } }
   )
 end
 

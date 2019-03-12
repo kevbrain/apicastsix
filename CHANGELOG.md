@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [3.5.0-beta1] - 2019-03-12
+
 ### Changed
 
 - Improve startup time by improving templating performance and caching filesystem access [PR #964](https://github.com/3scale/apicast/pull/964)
@@ -583,7 +585,7 @@ expressed might change in future releases.
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.4.0-rc2...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.5.0-beta1...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -615,3 +617,4 @@ expressed might change in future releases.
 [3.4.0-rc1]: https://github.com/3scale/apicast/compare/v3.4.0-beta1...v3.4.0-rc1
 [3.4.0-rc2]: https://github.com/3scale/apicast/compare/v3.4.0-rc1...v3.4.0-rc2
 [3.4.0]: https://github.com/3scale/apicast/compare/v3.4.0-rc2...v3.4.0
+[3.5.0-beta1]: https://github.com/3scale/apicast/compare/v3.4.0...v3.5.0-beta1

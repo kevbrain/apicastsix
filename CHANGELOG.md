@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Do not send OpenResty version in the `Server` response header [PR #997](https://github.com/3scale/APIcast/pull/997)
+
 ## [3.5.0-beta1] - 2019-03-12
 
 ### Changed

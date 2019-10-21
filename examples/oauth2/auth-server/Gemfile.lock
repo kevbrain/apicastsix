@@ -2,8 +2,8 @@ GEM
   remote: https://rubygems.org/
   specs:
     dotenv (2.1.1)
-    rack (1.6.5)
-    rack-protection (1.5.3)
+    rack (1.6.11)
+    rack-protection (1.5.5)
       rack
     sinatra (1.4.7)
       rack (~> 1.5)
